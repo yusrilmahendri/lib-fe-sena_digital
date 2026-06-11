@@ -1,43 +1,24 @@
-import { Component, OnInit } from '@angular/core';
-import { Router, NavigationError, NavigationEnd } from '@angular/router';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'wc-hero-section',
   templateUrl: './hero-section.component.html',
-  styleUrls: ['./hero-section.component.scss']
+  styleUrls: ['./hero-section.component.scss'],
 })
-export class HeroSectionComponent implements OnInit {
+export class HeroSectionComponent {
+  constructor(private router: Router) {}
 
-  constructor(private router: Router) { }
-
-  ngOnInit(): void {
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        console.log('Navigation End:', event);
-      }
-      if (event instanceof NavigationError) {
-        console.error('Navigation Error:', event.error);
-      }
-    });
+  // Primary CTA -> invitation builder
+  clickGenerateUndangan(): void {
+    this.router.navigate(['/buat-undangan']);
   }
 
-  clickGenerateUndangan(){
-    this.router.navigate(['/buat-undangan']).then(success => {
-      if (success) {
-        console.log('Navigation successful!');
-      } else {
-        console.log('Navigation failed!');
-      }
-    });
-  }
-  clickButton() {
-    console.log('Button clicked');
-    this.router.navigate(['/login']).then(success => {
-      if (success) {
-        console.log('Navigation successful!');
-      } else {
-        console.log('Navigation failed!');
-      }
-    });
+  // Secondary CTA -> scroll to themes/showcase section
+  scrollToTema(): void {
+    const el = document.getElementById('tema');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 }

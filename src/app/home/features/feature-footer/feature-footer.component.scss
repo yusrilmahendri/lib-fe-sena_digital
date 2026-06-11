@@ -1,149 +1,691 @@
-/* Existing CSS remains unchanged above this line */
+/* ===========================
+   Section: How It Works (FE-LP1B)
+   Component-scoped styles only.
+   =========================== */
 
-/* Fade-in animation */
-@keyframes fadeIn {
-  0% {
-      opacity: 0;
-      transform: translateY(20px);
+$lp-primary: #5c2d4e;
+$lp-primary-soft: #8a5577;
+$lp-ink: #3a2230;
+$lp-muted: #8a7681;
+$lp-cream: #fcf9f7;
+$lp-border: #e8e2e799;
+$lp-serif: Georgia, "Times New Roman", serif;
+
+:host {
+  display: block;
+}
+
+@keyframes lpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
   }
-  100% {
-      opacity: 1;
-      transform: translateY(0);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Add animation to the section */
-.section {
-  animation: fadeIn 1s ease-in-out;
-  animation-fill-mode: forwards;
-}
+.lp-steps {
+  width: 100%;
+  background: linear-gradient(180deg, $lp-cream 0%, #ffffff 100%);
 
-/* Footer hero animation */
-.wc__footer-hero {
-  opacity: 0; /* Initially hidden */
-  animation: fadeIn 1.5s ease-in-out forwards;
-  animation-delay: 0.5s; /* Delay to show after section */
-}
-
-/* Cards fade-in animation */
-.cards {
-  opacity: 0; /* Initially hidden */
-  animation: fadeIn 2s ease-in-out forwards;
-  animation-delay: 1s; /* Delay for the cards to appear */
-}
-
-/* Individual card animations with staggered appearance */
-.card {
-  opacity: 0; /* Initially hidden */
-  animation: fadeIn 0.8s ease-in-out forwards;
-  animation-delay: calc(1.5s + var(--card-index) * 0.2s); /* Staggered appearance */
-}
-
-/* Existing CSS continues unchanged below this line */
-
-
-.section {
-    background-image: url('/assets/bg-feature2.svg');
-    background-repeat: no-repeat;
-    min-height: 100vh; 
-    background-size: cover;
+  &__inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 4.5rem 2rem 5rem;
   }
-  
-  .wc__footer-hero {
+
+  &__head {
+    max-width: 620px;
+    margin: 0 auto 3.25rem;
+    text-align: center;
+  }
+
+  &__ornament {
+    display: block;
+    width: 130px;
+    height: 1px;
+    margin: 0 auto 1.1rem;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(92, 45, 78, 0.45) 50%,
+      transparent 100%
+    );
+    position: relative;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: $lp-cream;
+      padding: 0 0.4rem;
+    }
+  }
+
+  &__label {
+    margin: 0 0 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 2.5rem;
+    line-height: 1.2;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
+    }
+  }
+
+  &__grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+
+    /* Connecting line behind the icons (desktop only) */
+    &::before {
+      content: "";
+      position: absolute;
+      top: 62px;
+      left: 16%;
+      right: 16%;
+      height: 2px;
+      background-image: linear-gradient(
+        90deg,
+        rgba(92, 45, 78, 0.28) 0,
+        rgba(92, 45, 78, 0.28) 8px,
+        transparent 8px,
+        transparent 16px
+      );
+      background-size: 16px 2px;
+      z-index: 0;
+    }
+  }
+}
+
+.step-card {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 24px;
+  padding: 2.25rem 1.75rem;
+  text-align: center;
+  box-shadow: 0 14px 34px rgba(77, 31, 62, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: lpFadeUp 0.7s ease both;
+
+  &:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 44px rgba(77, 31, 62, 0.12);
+  }
+
+  &__icon-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1.35rem;
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fdeaf2 0%, #f9dce8 100%);
+    color: $lp-primary;
+
+    svg {
+      width: 30px;
+      height: 30px;
+    }
+  }
+
+  &__num {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: $lp-primary;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 10px rgba(92, 45, 78, 0.3);
+  }
+
+  &__title {
+    margin: 0 0 0.6rem;
+    font-size: 1.22rem;
+    font-weight: 700;
+    color: $lp-ink;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 0.96rem;
+    line-height: 1.65;
+    color: $lp-muted;
+  }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+
+/* Tablet */
+@media screen and (max-width: 900px) {
+  .lp-steps {
+    &__inner {
+      padding: 4rem 1.5rem 4rem;
+    }
+    &__title {
+      font-size: 2.05rem;
+    }
+    &__grid {
+      gap: 1.25rem;
+
+      &::before {
+        top: 58px;
+        left: 12%;
+        right: 12%;
+      }
+    }
+  }
+}
+
+/* Mobile: single column, hide connecting line */
+@media screen and (max-width: 680px) {
+  .lp-steps {
+    &__inner {
+      padding: 3rem 1.2rem 3rem;
+    }
+    &__title {
+      font-size: 1.75rem;
+    }
+    &__grid {
+      grid-template-columns: 1fr;
+      gap: 1.1rem;
+
+      &::before {
+        display: none;
+      }
+    }
+  }
+
+  .step-card {
+    padding: 1.9rem 1.5rem;
+  }
+}
+
+/* ===========================
+   Section: Kelola Undangan (FE-LP1B-2)
+   =========================== */
+
+.lp-manage {
+  width: 100%;
+  /* Clean soft cream / off-white (not heavy pink) */
+  background: linear-gradient(180deg, #ffffff 0%, #fdf8f4 100%);
+  overflow-x: hidden;
+
+  &__inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 6.25rem 2rem; /* ~100px top & bottom */
+  }
+
+  &__head {
+    max-width: 760px;
+    margin: 0 auto 4.4rem; /* ~70px */
+    text-align: center;
+  }
+
+  &__ornament {
+    display: block;
+    width: 130px;
+    height: 1px;
+    margin: 0 auto 1.1rem;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(92, 45, 78, 0.45) 50%,
+      transparent 100%
+    );
+    position: relative;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: #fffdfb;
+      padding: 0 0.4rem;
+    }
+  }
+
+  &__label {
+    margin: 0 0 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+  }
+
+  &__title {
+    margin: 0 0 1.1rem;
+    padding-top: 0.15em; /* prevent serif ascenders from clipping */
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 2.55rem;
+    line-height: 1.28;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
+    }
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: $lp-muted;
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: auto 1fr; /* visual keeps its size, text flexes */
+    align-items: center;
+    gap: 4.5rem; /* ~72px */
+
+    & + & {
+      margin-top: 6rem; /* ~96px */
+    }
+
+    &--reverse {
+      grid-template-columns: 1fr auto; /* text flexes, visual keeps its size */
+    }
+  }
+
+  &__visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px; /* compact spacing between photo and card */
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  &__photo-card {
+    flex: none;
+    box-sizing: border-box;
+    background: #fff;
+    padding: 12px;
+    border: 1px solid $lp-border;
+    border-radius: 28px;
+    box-shadow: 0 18px 40px rgba(77, 31, 62, 0.15);
+    z-index: 1;
+
+    &--a {
+      width: 200px; /* row 1 photo frame */
+    }
+    &--b {
+      width: 210px; /* row 2 photo frame */
+    }
+  }
+
+  &__photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: center top;
+    border-radius: 22px;
+  }
+
+  &__text {
+    max-width: 520px;
+  }
+
+  &__rtitle {
+    margin: 0 0 0.9rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 1.55rem;
+    line-height: 1.3;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
+    }
+  }
+
+  &__rdesc {
+    margin: 0 0 1.4rem;
+    font-size: 0.96rem;
+    line-height: 1.7;
+    color: $lp-muted;
+  }
+
+  &__bullets {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
-    padding-top: 7.0625rem;
-    justify-content: center;
+    gap: 0.85rem;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 0.95rem;
+      color: $lp-ink;
+    }
+  }
+}
+
+.lp-bullet {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fdeaf2 0%, #f6d3e4 100%);
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid $lp-primary;
+    border-bottom: 2px solid $lp-primary;
+    transform: translate(-50%, -65%) rotate(-45deg);
+  }
+}
+
+/* ---- Mock dashboard cards ---- */
+.mock-card {
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 22px;
+  box-shadow: 0 22px 50px rgba(77, 31, 62, 0.16);
+}
+
+.mock-guest {
+  flex: none;
+  width: 300px;
+  max-width: 100%;
+  padding: 1.1rem 1.2rem 1.25rem;
+
+  &__head {
+    display: grid;
+    grid-template-columns: 28px 1fr 36px;
     align-items: center;
-    h2 {
-      font-weight: 700;
-      font-size: 2rem;
-      line-height: 2.5rem;
-      max-width: 30rem;
-      text-align: center;
-    }
-    b {
-      color: black;
-      font-weight: 700;
-      font-size: 2rem;
-      line-height: 2.5rem;
-      max-width: 30rem;
-      text-align: center;
+    padding: 0 0.4rem 0.65rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+    border-bottom: 1px solid $lp-border;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem 0 0.6rem;
+
+    li {
+      display: grid;
+      grid-template-columns: 28px 1fr 36px;
+      align-items: center;
+      padding: 0.5rem 0.4rem;
+      font-size: 0.82rem;
+      color: $lp-ink;
+      border-bottom: 1px solid rgba(232, 226, 231, 0.5);
+
+      span:first-child {
+        color: $lp-muted;
+      }
     }
   }
-  
-  html, body {
-    background-color: lightgray;
-    height: 100%;
-    width: 100vw;
-  }
-  
-  .container {
+
+  &__btn {
     width: 100%;
-    padding-left: 5rem;
-    padding-right: 5rem;
-    background-color: inherit;
-  
-    display: grid;
-    grid-template-columns: 1fr;
-    justify-content: center;
+    margin-top: 0.4rem;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: none;
+    border-radius: 12px;
+    background: $lp-primary;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
   }
-  
-  .feature {
-    display: grid;
-    padding: 1rem;
-    grid-template-rows: repeat(2, 1fr);
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-    column-gap: 0.5rem;
-  }
-  
-  .item {
-    margin: 0.5rem;
-    padding: 6rem;
+
+  &__foot {
     display: flex;
     justify-content: center;
+    gap: 1.4rem;
+    padding-top: 0.85rem;
+
+    span {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: #efe6ec;
+    }
+  }
+}
+
+.mock-check {
+  justify-self: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e8f6ec;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7px;
+    height: 4px;
+    border-left: 2px solid #3aa66b;
+    border-bottom: 2px solid #3aa66b;
+    transform: translate(-50%, -65%) rotate(-45deg);
+  }
+}
+
+.mock-edit {
+  flex: none;
+  width: 260px;
+  max-width: 100%;
+  padding: 1.1rem 1.15rem 1.25rem;
+
+  &__btn {
+    width: 100%;
+    display: inline-flex;
     align-items: center;
-    transition: all .2s;
-    background-size: contain; /* Ensure the entire image is visible without cropping */
-    background-repeat: no-repeat;
-    background-position: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: none;
+    border-radius: 12px;
+    background: $lp-primary;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 0.8rem;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
   }
-  
-  .item--1 {
-    background-image: url('/assets/feature-box.svg');
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.55rem;
+    border: 1px solid $lp-border;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: $lp-ink;
+    background: #fffdfe;
+
+    svg {
+      width: 16px;
+      height: 16px;
+      color: $lp-primary-soft;
+      flex: none;
+    }
   }
-  
-  .item--2 {
-    background-image: url('/assets/feature-box2.svg');
+
+  &__list {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0;
+
+    li {
+      position: relative;
+      padding: 0.4rem 0 0.4rem 1.1rem;
+      font-size: 0.78rem;
+      color: $lp-muted;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: $lp-primary-soft;
+        transform: translateY(-50%);
+      }
+    }
   }
-  
-  .item--3 {
-    background-image: url('/assets/feature-box3.svg');
+}
+
+/* Responsive: tablet & below — stack to a single column */
+@media screen and (max-width: 900px) {
+  .lp-manage {
+    &__inner {
+      padding: 4.5rem 1.5rem;
+    }
+    &__head {
+      margin-bottom: 3rem;
+    }
+    &__title {
+      font-size: 2.1rem;
+    }
+    &__row,
+    &__row--reverse {
+      grid-template-columns: 1fr;
+      gap: 2.25rem;
+      justify-items: center;
+
+      & + & {
+        margin-top: 3.5rem;
+      }
+    }
+    &__text {
+      max-width: 560px;
+      text-align: left;
+      /* On mobile keep the visual first, then text, for both rows */
+      order: 2;
+    }
+    &__visual {
+      order: 1;
+      width: 100%;
+    }
   }
-  
-  .item--4 {
-    background-image: url('/assets/feature-box4.svg');
+}
+
+/* Responsive: small mobile — stack the photo above the card */
+@media screen and (max-width: 560px) {
+  .lp-manage {
+    &__inner {
+      padding: 3.25rem 1.1rem;
+    }
+    &__title {
+      font-size: 1.72rem;
+
+      br {
+        display: none; /* let it wrap naturally on tiny screens */
+      }
+    }
+    &__visual {
+      flex-direction: column;
+      gap: 16px;
+    }
+    &__photo-card {
+      &--a,
+      &--b {
+        width: 190px;
+      }
+    }
   }
-  
-  .item--5 {
-    background-image: url('/assets/feature-box5.svg');
+
+  .mock-guest,
+  .mock-edit {
+    width: 100%;
+    max-width: 300px;
   }
-  
-  .item--6 {
-    background-image: url('/assets/feature-box6.svg');
-  }
-  
-  .item:hover {
-    transform: translate(0, -0.3rem);
-  }
-  
-  
-  .item:hover {
-    // background-color: lightgray;
-    // color: gray;
-    transform: translate(0,-0.3rem);
-    // box-shadow: 0 1rem 3rem rgba(0,0,0,.50);
-  }
-  
+}
+

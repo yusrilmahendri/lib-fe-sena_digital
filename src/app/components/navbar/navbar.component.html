@@ -1,55 +1,88 @@
-<section class="section">
-  <div class="container">
-    <nav class="wc__nav">
-      <div class="wc__nav-brand">
-        <img src='/assets/logo.svg' style="width: 100%; height: 120%;" alt="Brand Logo">
-      </div>
-      <div class="wc__nav-links">
-        <ul>
-          <li>
-            <a (click)="navigate('')">Beranda</a>
-          </li>
-          <li>
-            <a (click)="navigate('fitur')">Fitur</a>
-          </li>
-          <li>
-            <a (click)="navigate('undangan_website')">Undangan website</a>
-          </li>
-          <li>
-            <a (click)="navigate('undangan_video')">Undangan video</a>
-          </li>
-        </ul>
-      </div>
-      <div class="wc__nav-cta">
-        <button (click)="clickButton()" type="button"><i class="fa fa-user"></i>&nbsp; Login</button>
-        <!-- Mobile Menu -->
-        <div [ngClass]="Cssclass ? 'wc__nav-menu header__toggle' : 'wc__nav-menu'" (click)="onClick()">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-    </nav>
-    <!-- Mobile Menu -->
-    <div [ngClass]="Cssclass ? 'overlay fade-in' : 'overlay fade-out'" [hidden]="!Cssclass"></div>
-    <div class="wc__nav-mobile" [ngClass]="Cssclass ? 'fade-in' : 'fade-out'" [hidden]="!Cssclass">
+<header class="lp-navbar">
+  <div class="lp-navbar__inner">
+    <!-- Brand -->
+    <a
+      class="lp-navbar__brand"
+      role="button"
+      tabindex="0"
+      aria-label="Sena Digital - kembali ke beranda"
+      (click)="navigate('beranda')"
+      (keydown.enter)="navigate('beranda')"
+    >
+      <img class="lp-navbar__logo" src="assets/landing/logo.svg" alt="Sena Digital" />
+      <span class="lp-navbar__brand-text">
+        <span class="lp-navbar__brand-name">Sena</span>
+        <span class="lp-navbar__brand-sub">DIGITAL</span>
+      </span>
+    </a>
+
+    <!-- Desktop menu (center) -->
+    <nav class="lp-navbar__menu" aria-label="Menu utama">
       <ul>
-        <li>
-          <a (click)="navigate('')">Beranda</a>
-        </li>
-        <li>
-          <a (click)="navigate('fitur')">Fitur</a>
-        </li>
-        <li>
-          <a (click)="navigate('undangan_website')">Undangan website</a>
-        </li>
-        <li>
-          <a (click)="navigate('undangan_video')">Undangan video</a>
+        <li *ngFor="let item of menuItems">
+          <a
+            role="button"
+            tabindex="0"
+            (click)="navigate(item.target)"
+            (keydown.enter)="navigate(item.target)"
+            >{{ item.label }}</a
+          >
         </li>
       </ul>
-      <div class="wc__nav-mobile_cta">
-        <button (click)="clickButton()" type="button"><i class="fas fa-user"></i>&nbsp; Login</button>
-      </div>
+    </nav>
+
+    <!-- Desktop actions (right) -->
+    <div class="lp-navbar__actions">
+      <button type="button" class="lp-btn lp-btn--ghost" (click)="goToLogin()">
+        Masuk
+      </button>
+      <button type="button" class="lp-btn lp-btn--pill" (click)="goToBuatUndangan()">
+        Buat Undangan
+      </button>
+    </div>
+
+    <!-- Mobile toggle -->
+    <button
+      type="button"
+      class="lp-navbar__toggle"
+      [class.is-open]="isMobileMenuOpen"
+      [attr.aria-expanded]="isMobileMenuOpen"
+      aria-label="Buka menu navigasi"
+      (click)="toggleMobileMenu()"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <!-- Mobile dropdown menu -->
+  <div class="lp-navbar__mobile" [class.is-open]="isMobileMenuOpen">
+    <ul>
+      <li *ngFor="let item of menuItems">
+        <a
+          role="button"
+          tabindex="0"
+          (click)="navigate(item.target)"
+          (keydown.enter)="navigate(item.target)"
+          >{{ item.label }}</a
+        >
+      </li>
+    </ul>
+    <div class="lp-navbar__mobile-actions">
+      <button type="button" class="lp-btn lp-btn--ghost" (click)="goToLogin()">
+        Masuk
+      </button>
+      <button type="button" class="lp-btn lp-btn--pill" (click)="goToBuatUndangan()">
+        Buat Undangan
+      </button>
     </div>
   </div>
-</section>
+
+  <!-- Mobile backdrop -->
+  <div
+    class="lp-navbar__backdrop"
+    [class.is-open]="isMobileMenuOpen"
+    (click)="closeMobileMenu()"
+  ></div>
+</header>

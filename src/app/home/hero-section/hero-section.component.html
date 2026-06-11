@@ -1,28 +1,109 @@
-<section class="section bg-gradient">
-    <div class="container">
-        <wc-navbar></wc-navbar>
-        <div class="wc__hero">
-            <div class="wc__hero-content">
-                <h1>Platform</h1>
-                <h1>Pernikahan</h1>
-                <h1
-                    style="background: linear-gradient(248.12deg, #486EF0 0%, #3CA6F9 100%);-webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Digital</h1>
-                <p>Solusi pernikahan lebih hemat, praktis, dan kekinian dengan
-                    e-invitation yang disebar otomatis.</p>
-                <div class="wc__hero-content_cta">
-                    <button (click)="clickGenerateUndangan()">Buat sekarang</button>
-                </div>
-            </div>
+<wc-navbar></wc-navbar>
 
-            <div class="wc__hero-image">
-                <img src="/assets/laptop.svg" alt="Featured Image">
-            </div>
+<section class="hero-section">
+  <div class="hero-section__inner">
+    <!-- Left: copy + CTA -->
+    <div class="hero-content">
+      <span class="hero-content__badge">
+        <i class="fas fa-heart" aria-hidden="true"></i>
+        Undangan digital · Lebih elegan, lebih praktis
+      </span>
 
+      <h1 class="hero-content__title">
+        Buat Undangan Digital <em>yang Elegan</em> untuk Hari Bahagiamu.
+      </h1>
+
+      <p class="hero-content__subtitle">
+        Pilih tema, isi detail acara, lalu bagikan undangan website dengan mudah
+        kepada keluarga dan sahabat — semua dalam satu link cantik.
+      </p>
+
+      <div class="hero-content__cta">
+        <button
+          type="button"
+          class="lp-btn lp-btn--primary"
+          (click)="clickGenerateUndangan()"
+        >
+          Buat Undangan Sekarang
+          <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="lp-btn lp-btn--outline"
+          (click)="scrollToTema()"
+        >
+          Lihat Contoh Tema
+        </button>
+      </div>
+
+      <div class="hero-content__proof">
+        <div class="hero-content__avatars" aria-hidden="true">
+          <img src="assets/landing_page1.png" alt="" />
+          <img src="assets/landing_page2.png" alt="" />
+          <img src="assets/landing_page3.png" alt="" />
+          <img src="assets/landing_page4.png" alt="" />
         </div>
+        <p class="hero-content__proof-text">
+          <strong>1.000+ pasangan</strong> telah membuat undangan bersama kami
+        </p>
+      </div>
     </div>
+
+    <!-- Right: phone mockup + floating cards -->
+    <div class="hero-visual">
+      <div class="hero-visual__phone">
+        <span class="hero-visual__notch" aria-hidden="true"></span>
+        <div class="hero-visual__screen">
+          <!-- Screenshot sudah berisi teks undangan, jadi tidak ada overlay teks/gradient tambahan. -->
+          <img
+            class="hero-visual__photo"
+            src="assets/landing/hero-phone-inside.png"
+            alt="Undangan digital pernikahan Sena & Arya"
+          />
+        </div>
+      </div>
+
+      <div class="hero-cards">
+        <div class="hero-card hero-card--rsvp">
+          <span class="hero-card__label">
+            <i class="far fa-check-circle" aria-hidden="true"></i> RSVP
+          </span>
+          <strong class="hero-card__value">284 Hadir</strong>
+          <span class="hero-card__desc">42 tamu baru hari ini</span>
+        </div>
+
+        <div class="hero-card hero-card--amplop">
+          <span class="hero-card__label">
+            <i class="far fa-envelope" aria-hidden="true"></i> Amplop Digital
+          </span>
+          <strong class="hero-card__value">Rp 12,4 jt</strong>
+          <span class="hero-card__desc">Terkumpul dengan aman</span>
+        </div>
+
+        <div class="hero-card hero-card--galeri">
+          <span class="hero-card__label">
+            <i class="far fa-images" aria-hidden="true"></i> Galeri Foto
+          </span>
+          <strong class="hero-card__value">48 Momen</strong>
+          <span class="hero-card__desc">Bagikan keseruan moment indahmu</span>
+        </div>
+
+        <div class="hero-card hero-card--wa">
+          <span class="hero-card__label">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i> Share WhatsApp
+          </span>
+          <strong class="hero-card__value">Sekali tap</strong>
+          <span class="hero-card__desc">Langsung ke daftar tamu</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
+<!-- Old "1778 PASANGAN BERBAHAGIA" block removed from the new landing flow.
+     Component class (FooterHeroComponent) is kept registered in AppModule.
 <ng-container>
-    <wc-footer-hero></wc-footer-hero>
+  <wc-footer-hero></wc-footer-hero>
 </ng-container>
+-->
+

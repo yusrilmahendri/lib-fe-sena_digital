@@ -1,44 +1,22 @@
-@media (max-width: 900px) {
-  .wc__hero {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2rem;
-  }
-  .wc__hero-content {
-    width: 100%;
-    margin-right: 0;
-    h1 {
-      font-size: 48px;
-      line-height: 60px;
-    }
-  }
-}
-
-@media (max-width: 600px) {
-  .wc__hero {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1.2rem;
-    margin-top: 1rem;
-  }
-  .wc__hero-content {
-    width: 100%;
-    margin-right: 0;
-    h1 {
-      font-size: 32px;
-      line-height: 40px;
-    }
-    p {
-      font-size: 15px;
-    }
-  }
-}
 @import "../../../styles/variable";
 
-@keyframes fadeInUp {
+/* Local landing-page palette (component-scoped, no global override) */
+$lp-plum: #6b2d57;
+$lp-plum-dark: #4d1f3e;
+$lp-plum-soft: #9a5c84;
+$lp-cream: #fbf6f2;
+$lp-cream-2: #f6ece6;
+$lp-ink: #3a2230;
+$lp-serif: Georgia, "Times New Roman", serif;
+
+:host {
+  display: block;
+}
+
+@keyframes lpFadeUp {
   from {
     opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(24px);
   }
   to {
     opacity: 1;
@@ -46,227 +24,390 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+@keyframes lpFloat {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  to {
-    opacity: 1;
+  50% {
+    transform: translateY(-8px);
   }
 }
 
-button{
-  background: linear-gradient(69.44deg, #599FE6 0%, #52ECF0 70%);
+.hero-section {
+  position: relative;
+  width: 100%;
+  background: radial-gradient(
+      120% 120% at 85% 10%,
+      $lp-cream-2 0%,
+      $lp-cream 55%
+    ),
+    $lp-cream;
+  overflow: hidden;
+
+  &__inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 4rem 2rem 5rem;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+    gap: 3rem;
+  }
 }
 
-.wc__hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
-  opacity: 0; /* Initial state for animation */
-  animation: fadeIn 1s forwards ease-in-out; /* Applying fadeIn animation */
-  animation-delay: 0.5s;
+/* ---------------- Left content ---------------- */
+.hero-content {
+  animation: lpFadeUp 0.8s ease both;
 
-  &-content {
-    width: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-right: 2rem;
-    opacity: 0;
-    animation: fadeInUp 1s forwards ease-in-out;
-    animation-delay: 0.8s;
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: rgba(107, 45, 87, 0.08);
+    border: 1px solid rgba(107, 45, 87, 0.15);
+    color: $lp-plum;
+    font-size: 0.82rem;
+    font-weight: 600;
 
-    h1 {
-      font-family: Poppins;
-      font-size: 90px;
-      font-weight: 700;
-      line-height: 115px;
-      letter-spacing: 0.8px;
-      text-align: left;
-    }
-
-    p {
-      font-size: 18px;
-      font-weight: 400;
-      color: black;
-      font-family: Poppins;
-      line-height: 25px;
-      margin: 1.8125rem 0 1.9375rem;
-    }
-
-    &_cta {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-
-      button {
-        padding: 0.7rem 1.5rem;
-        background-color: $main-color;
-        border: 0;
-        outline: none;
-        border-radius: 3.75rem;
-        color: white;
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 21px;
-        margin-right: 12px;
-      }
-
-      p {
-        margin: 0;
-        padding: 0;
-
-        span {
-          font-family: $main-font;
-          font-weight: 500;
-          font-size: 18px;
-          line-height: 25px;
-          color: $main-color;
-          letter-spacing: 1px;
-        }
-      }
+    i {
+      font-size: 0.78rem;
     }
   }
 
-  &-image {
-    width: 50%;
+  &__title {
+    font-family: $lp-serif;
+    color: $lp-ink;
+    font-weight: 700;
+    font-size: 3.4rem;
+    line-height: 1.15;
+    letter-spacing: 0.3px;
+    margin: 1.4rem 0 1.2rem;
+
+    em {
+      font-style: italic;
+      color: $lp-plum;
+    }
+  }
+
+  &__subtitle {
+    font-family: $main-font;
+    color: #6c5763;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    max-width: 33rem;
+    margin: 0 0 2rem;
+  }
+
+  &__cta {
     display: flex;
-    background-position: left center;
-    background-size: contain;
-    background-repeat: no-repeat;
-    position: relative;
-    min-height: 650px;
-    z-index: 0;
-    opacity: 0; /* Initial state for animation */
-    animation: fadeInUp 1s forwards ease-in-out;
-    animation-delay: 1s; /* Staggering the delay */
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 2.2rem;
+  }
+
+  &__proof {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  &__avatars {
+    display: inline-flex;
 
     img {
-      width: 100%;
-      height: auto;
-      opacity: 1;
-      top: 0%;
-      right: -6%;
-    }
-  }
-}
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid $lp-cream;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 
-/*
-******************
-Responsive
-******************
-*/
-
-@media screen and (max-width: 1200px) {
-  .wc__hero {
-    &-image {
-      min-height: 500px;
-    }
-  }
-}
-
-@media screen and (max-width: 800px) {
-  .wc__hero {
-    &-content {
-      h1 {
-        font-size: 35px;
-        line-height: 40px;
-      }
-
-      &_cta {
-        align-items: center;
-
-        button {
-          padding: 0.5rem 0.9rem;
-        }
-
-        p {
-          span {
-            font-size: 16px;
-          }
-        }
-      }
-    }
-
-    &-image {
-      min-height: 300px;
-    }
-  }
-}
-
-@media screen and (max-width: 780px) {
-  .wc__hero {
-    &-content {
-      &_cta {
-        flex-direction: column;
-        align-items: flex-start;
+      &:not(:first-child) {
+        margin-left: -12px;
       }
     }
   }
+
+  &__proof-text {
+    font-family: $main-font;
+    font-size: 0.88rem;
+    color: #6c5763;
+    line-height: 1.4;
+    margin: 0;
+
+    strong {
+      color: $lp-ink;
+    }
+  }
 }
 
-@media screen and (max-width: 650px) {
-  .wc__hero {
+/* ---------------- Buttons ---------------- */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-family: $main-font;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.95rem 1.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease,
+    color 0.2s ease;
+  white-space: nowrap;
+
+  &--primary {
+    background: linear-gradient(135deg, $lp-plum 0%, $lp-plum-dark 100%);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(107, 45, 87, 0.28);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(107, 45, 87, 0.36);
+    }
+  }
+
+  &--outline {
+    background: #fff;
+    color: $lp-plum;
+    border-color: rgba(107, 45, 87, 0.25);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
+/* ---------------- Right visual ---------------- */
+.hero-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 520px;
+  animation: lpFadeUp 0.9s ease 0.15s both;
+}
+
+.hero-visual__phone {
+  position: relative;
+  /* Compact, proportional frame. The inner screen ratio (≈0.453) stays close
+     to the artwork ratio (510x1120 ≈ 0.455) so the full image still shows with
+     no top/bottom crop — only a hairline side crop. */
+  width: 285px;
+  height: 600px;
+  border-radius: 42px;
+  background: #1c1118;
+  padding: 12px;
+  box-shadow: 0 30px 60px rgba(77, 31, 62, 0.35),
+    0 6px 18px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+
+.hero-visual__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  /* Fallback backdrop if the photo is missing. No padding so the artwork
+     fills the full screen height (no forced top/bottom crop). */
+  background: #120b14;
+}
+
+.hero-visual__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Centered, no transform/scale. With the matched ratio the whole artwork is
+     visible: THE WEDDING OF / names / date at top and the SAVE THE DATE card
+     at the bottom are all kept. */
+  object-position: center center;
+}
+
+/* Small earpiece-style notch (older iPhone "poni"): sits flush at the screen's
+   top edge with rounded bottom corners so it doesn't cover the heading text. */
+.hero-visual__notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 16px;
+  background: #120b14;
+  border-radius: 0 0 14px 14px;
+  z-index: 6;
+}
+
+/* Floating cards */
+.hero-cards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.hero-card {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 156px;
+  max-width: 200px;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(107, 45, 87, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 14px 30px rgba(77, 31, 62, 0.16);
+  animation: lpFloat 5s ease-in-out infinite;
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: $lp-plum-soft;
+  }
+
+  &__value {
+    font-family: $heading-font;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $lp-ink;
+  }
+
+  &__desc {
+    font-size: 0.72rem;
+    color: #8a7681;
+    line-height: 1.3;
+  }
+
+  &--rsvp {
+    top: 6%;
+    left: -4%;
+  }
+  &--amplop {
+    top: 20%;
+    right: -6%;
+    animation-delay: 0.6s;
+  }
+  &--galeri {
+    bottom: 16%;
+    left: -6%;
+    animation-delay: 1.2s;
+  }
+  &--wa {
+    bottom: 4%;
+    right: -4%;
+    animation-delay: 1.8s;
+  }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+
+/* Tablet */
+@media screen and (max-width: 992px) {
+  .hero-section__inner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 3rem 1.5rem 3.5rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    &__title {
+      font-size: 2.8rem;
+    }
+    &__subtitle {
+      margin-left: auto;
+      margin-right: auto;
+    }
+    &__cta {
+      justify-content: center;
+    }
+    &__proof {
+      justify-content: center;
+    }
+  }
+
+  .hero-visual {
+    min-height: auto;
     flex-direction: column;
+    gap: 1.5rem;
+  }
 
-    &-content {
-      width: 100%;
+  /* Cards flow below the phone on tablet/mobile (no overlap, no overflow) */
+  .hero-cards {
+    position: static;
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    width: 100%;
+    max-width: 460px;
+  }
 
-      h1 {
-        font-size: 45px;
-        line-height: 50px;
-      }
-
-      &_cta {
-        flex-direction: row;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-    }
-
-    &-image {
-      width: 100%;
-      margin-top: 2rem;
-      min-height: 500px;
-    }
+  .hero-card {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    animation: none;
   }
 }
 
-@media screen and (max-width: 450px) {
-  .wc__hero {
-    &-image {
-      min-height: 350px;
+/* Mobile */
+@media screen and (max-width: 600px) {
+  .hero-section__inner {
+    padding: 2.25rem 1.1rem 2.75rem;
+  }
+
+  .hero-content {
+    &__title {
+      font-size: 2.1rem;
     }
+    &__subtitle {
+      font-size: 0.98rem;
+    }
+    &__cta {
+      flex-direction: column;
+      align-items: stretch;
+
+      .lp-btn {
+        width: 100%;
+      }
+    }
+    &__proof {
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+  }
+
+  .hero-visual__phone {
+    width: 240px;
+    height: 505px;
   }
 }
 
-@media screen and (max-width: 350px) {
-  .wc__hero {
-    &-content {
-      h1 {
-        font-size: 32px;
-        line-height: 40px;
-      }
-
-      p {
-        font-size: 16px;
-        margin-bottom: 1rem;
-      }
-
-      &_cta {
-        justify-content: flex-start;
-
-        p {
-          margin-top: 0.5rem;
-        }
-      }
-    }
-
-    &-image {
-      min-height: 250px;
-    }
+@media screen and (max-width: 360px) {
+  .hero-content__title {
+    font-size: 1.85rem;
+  }
+  .hero-cards {
+    grid-template-columns: 1fr;
   }
 }

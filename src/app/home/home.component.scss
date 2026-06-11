@@ -1,26 +1,42 @@
 /* home.component.scss */
 
-/* Responsive improvement for home sections */
+/* Responsive spacing for home sections.
+   #beranda (navbar + hero) is full-bleed; it manages its own spacing. */
 section {
   width: 100%;
-  margin: 0 auto 2rem auto;
-  padding: 1.5rem 1rem;
   box-sizing: border-box;
 }
 
+section:not(#beranda) {
+  margin: 0 auto 2rem auto;
+  padding: 1.5rem 1rem;
+}
+
+#beranda {
+  margin: 0;
+  padding: 0;
+}
+
+/* Zero-height scroll marker for the Testimoni anchor */
+.lp-anchor {
+  display: block;
+  height: 0;
+  margin: 0;
+  padding: 0;
+}
+
 @media (max-width: 900px) {
-  section {
+  section:not(#beranda) {
     padding: 1.2rem 0.5rem;
     margin-bottom: 1.5rem;
   }
 }
 
 @media (max-width: 600px) {
-  section {
+  section:not(#beranda) {
     padding: 1rem 0.2rem;
     margin-bottom: 1rem;
   }
-
 }
 
 /* Utility: hide scrollbars on mobile for horizontal overflow */

@@ -1,218 +1,258 @@
 @import "../../../styles/variable";
 
-button{
-  background: linear-gradient(69.44deg, #599FE6 0%, #52ECF0 70%);
+/* Local landing-page palette (kept component-scoped to avoid touching globals) */
+$lp-plum: #6b2d57;
+$lp-plum-dark: #3f1730;
+$lp-plum-light: #7d3a68;
+$lp-navbar-height: 70px;
+
+:host {
+  display: block;
 }
-.wc__nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+.lp-navbar {
   position: relative;
-  z-index: 2;
-  &-brand {
-    width: 12.5625rem;
-    height: 3rem;
+  z-index: 20;
+  width: 100%;
+  background: linear-gradient(90deg, $lp-plum-dark 0%, $lp-plum 55%, $lp-plum-light 100%);
+  color: #fff;
+
+  &__inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    min-height: $lp-navbar-height;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
   }
-  &-links {
+
+  /* Brand */
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  &__logo {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  &__brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  &__brand-name {
+    font-family: $heading-font;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    color: #fff;
+  }
+
+  &__brand-sub {
+    font-size: 0.62rem;
+    letter-spacing: 3px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+  }
+
+  /* Center menu */
+  &__menu {
+    flex: 1;
+
     ul {
       display: flex;
-      justify-content: space-between;
-      align-self: center;
-      li {
-        &:not(:last-child) {
-          margin-right: 2.375rem;
-        }
-        a {
-          font-size: 1.125rem;
-          font-weight: 500;
-          line-height: 21px;
-          color: $heading-color;
-        }
+      align-items: center;
+      justify-content: center;
+      gap: 2.4rem;
+      margin: 0;
+    }
+
+    a {
+      cursor: pointer;
+      font-size: 0.98rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.82);
+      transition: color 0.2s ease;
+
+      &:hover,
+      &:focus {
+        color: #fff;
       }
     }
   }
-  &-cta {
+
+  /* Right actions */
+  &__actions {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    p {
-      font-size: 1.125rem;
-      font-weight: 500;
-      line-height: 21px;
-      color: $heading-color;
-      cursor: pointer;
-    }
-    button {
-      padding: 0.7rem 1rem;
-      background-color: $main-color;
-      border: none;
-      outline: none;
-      color: $white;
-      font-size: 1rem;
-      font-weight: 400;
-      border-radius: 5px;
-      margin: 0 1rem;
-    }
-    img {
-      width: 1.25rem;
-      height: auto;
-      cursor: pointer;
-    }
+    gap: 0.8rem;
+    flex-shrink: 0;
   }
-  &-menu {
+
+  /* Mobile hamburger */
+  &__toggle {
     display: none;
     flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.12);
     cursor: pointer;
+
     span {
       display: block;
-      width: 1.625rem;
       height: 2px;
-      background-color: $heading-color;
-      transition: all 300ms ease-in-out;
-      transform-origin: 3px 1px;
-      &:not(:last-child) {
-        margin-bottom: 5px;
-      }
-    }
-  }
-  .header__toggle {
-    > span:first-child {
-      transform: rotate(45deg);
-      background-color: white;
+      width: 100%;
+      background: #fff;
+      border-radius: 2px;
+      transition: transform 0.3s ease, opacity 0.2s ease;
     }
 
-    > span:nth-child(2) {
+    &.is-open span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+    &.is-open span:nth-child(2) {
       opacity: 0;
     }
-
-    > span:last-child {
-      transform: rotate(-45deg);
-      background-color: white;
+    &.is-open span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
     }
   }
-}
 
-/*
-Mobile
-*/
-.overlay {
-  visibility: hidden;
-  width: 100%;
-  height: 100vh;
-  position: absolute;
-  background: linear-gradient(
-    180deg,
-    rgba(39, 45, 78, 1) 0%,
-    rgba(39, 45, 78, 0.45420166357558645) 81%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  left: 0%;
-  top: 0%;
-  z-index: 1;
-}
+  /* Mobile menu panel */
+  &__mobile {
+    display: none;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1.25rem 1.25rem;
+    background: $lp-plum-dark;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 
-.wc__nav-mobile {
-  visibility: hidden;
-  position: absolute;
-  padding: 2rem 1rem;
-  border-radius: 0.5rem;
-  background-color: $white;
-  width: 100%;
-  top: 15%;
-  left: 50%;
-  width: calc(100% - 5rem);
-  transform: translateX(-50%);
-  z-index: 2;
-  ul {
-    li {
-      width: 100%;
-      padding: 1rem 0.5rem;
-      border-radius: 8px;
-      a {
-        color: $heading-color;
-        font-size: 16px;
-        font-weight: 500;
-      }
-      transition: all 0.1s ease-in-out;
-      &:hover {
-        background-color: $main-color;
-        a {
-          color: $white;
-        }
-      }
+    &.is-open {
+      display: flex;
     }
-  }
-  &_cta {
-    width: 100%;
-    padding: 0rem;
 
-    p {
-      font-size: 1.125rem;
-      font-weight: 500;
-      line-height: 21px;
-      color: $heading-color;
-      padding: 1rem 0.5rem;
-      border-radius: 8px;
-      transition: all 0.1s ease-in-out;
-      &:hover {
-        background-color: $main-color;
-        color: $white;
-      }
-      margin-bottom: 1rem;
+    ul {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
     }
-    button {
-      padding: 0.7rem 1rem;
-      background-color: $main-color;
-      border: none;
-      outline: none;
-      color: $white;
+
+    a {
+      display: block;
+      padding: 0.85rem 0.5rem;
+      color: rgba(255, 255, 255, 0.9);
       font-size: 1rem;
-      font-weight: 400;
-      border-radius: 5px;
-      width: 100%;
-      transition: all 0.5s ease-in-out;
+      font-weight: 500;
+      border-radius: 8px;
       cursor: pointer;
-      &:hover {
-        background-color: $heading-color;
+
+      &:hover,
+      &:focus {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
       }
     }
   }
+
+  &__mobile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+
+    .lp-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  &__backdrop {
+    display: none;
+  }
 }
-/*
-***********
-Resposnive 
-***********
-*/
-@media screen and (max-width: 1200px) {
-  .wc__nav {
-    &-links {
+
+/* Buttons */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-family: $main-font;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.65rem 1.35rem;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease,
+    box-shadow 0.2s ease;
+  white-space: nowrap;
+
+  &--ghost {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.85);
+    color: #fff;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  &--pill {
+    background: #fff;
+    color: $lp-plum;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+  }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media screen and (max-width: 992px) {
+  .lp-navbar {
+    &__inner {
+      padding: 0 1.25rem;
+    }
+    &__menu,
+    &__actions {
       display: none;
     }
-    &-menu {
-      display: inline-block;
-      margin-left: 1rem;
+    &__toggle {
+      display: flex;
     }
   }
 }
 
-@media screen and (max-width: 650px) {
-  .wc__nav {
-    &-cta {
-      p {
-        display: none;
-      }
-      button {
-        display: none;
-      }
-      img {
-        display: none;
-      }
+@media screen and (max-width: 480px) {
+  .lp-navbar {
+    &__inner {
+      padding: 0 1rem;
     }
-  }
-}
-@media screen and (max-width: 425px) {
-  .wc__nav {
-    width: 119%;
-    right: 50px;
+    &__brand-name {
+      font-size: 1.05rem;
+    }
   }
 }

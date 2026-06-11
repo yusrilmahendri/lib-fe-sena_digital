@@ -1,36 +1,24 @@
-@media (max-width: 900px) {
-  .wc__features-heading {
-    padding-top: 3rem;
-    h2 {
-      font-size: 22px;
-    }
-  }
-  .wc__features-content {
-    flex-direction: column;
-    align-items: center;
-    margin-top: 2rem;
-  }
+/* ===========================
+   Section: Why Us (FE-LP1B)
+   Component-scoped styles only.
+   =========================== */
+
+$lp-primary: #5c2d4e;
+$lp-primary-soft: #8a5577;
+$lp-ink: #3a2230;
+$lp-muted: #8a7681;
+$lp-cream: #fcf9f7;
+$lp-border: #e8e2e799;
+$lp-serif: Georgia, "Times New Roman", serif;
+
+:host {
+  display: block;
 }
 
-@media (max-width: 600px) {
-  .wc__features-heading {
-    padding-top: 1.5rem;
-    h2 {
-      font-size: 18px;
-    }
-  }
-  .wc__features-content {
-    flex-direction: column;
-    align-items: center;
-    margin-top: 1rem;
-  }
-}
-@import "../../../styles/variable";
-
-@keyframes fadeInUp {
+@keyframes lpFadeUp {
   from {
     opacity: 0;
-    transform: translateY(50px);
+    transform: translateY(22px);
   }
   to {
     opacity: 1;
@@ -38,137 +26,176 @@
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+.lp-why {
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, $lp-cream 100%);
+
+  &__inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 5rem 2rem 4rem;
   }
-  to {
-    opacity: 1;
+
+  &__head {
+    max-width: 640px;
+    margin: 0 auto 3rem;
+    text-align: center;
+  }
+
+  &__ornament {
+    display: block;
+    width: 130px;
+    height: 1px;
+    margin: 0 auto 1.1rem;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(92, 45, 78, 0.45) 50%,
+      transparent 100%
+    );
+    position: relative;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: $lp-cream;
+      padding: 0 0.4rem;
+    }
+  }
+
+  &__label {
+    margin: 0 0 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+  }
+
+  &__title {
+    margin: 0 0 1.1rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 2.6rem;
+    line-height: 1.18;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
+    }
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: $lp-muted;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
   }
 }
 
-.section {
-  background-image: url('/assets/bg_feature.svg');
-  max-height: 100%;
-  background-size: cover;
-  background-repeat: no-repeat;
-}
+.why-card {
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 24px;
+  padding: 2rem 1.6rem;
+  box-shadow: 0 14px 34px rgba(77, 31, 62, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: lpFadeUp 0.7s ease both;
 
-.wc__features {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  padding-bottom: 5rem;
-  opacity: 0; /* Initial state for animation */
-  animation: fadeIn 1s forwards ease-in-out;
-  animation-delay: 0.5s; /* Animation delay for entrance */
+  &:nth-child(2) {
+    animation-delay: 0.08s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.16s;
+  }
+  &:nth-child(4) {
+    animation-delay: 0.24s;
+  }
 
-  &-heading {
-    padding-top: 7.0625rem;
-    display: flex;
-    justify-content: center;
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 44px rgba(77, 31, 62, 0.12);
+  }
+
+  &__icon {
+    display: inline-flex;
     align-items: center;
-    h2 {
-      font-weight: 700;
-      font-size: 30px;
-      line-height: 2.5rem;
-      max-width: 30rem;
-      text-align: center;
-    }
-  }
-
-  &-content {
-    display: flex;
     justify-content: center;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    margin-top: 3.5rem;
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    margin-bottom: 1.25rem;
+    background: linear-gradient(145deg, #fdeaf2 0%, #f9dce8 100%);
+    color: $lp-primary;
 
-    &_feature {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 30%;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-      opacity: 0; /* Initial state for animation */
-      animation: fadeInUp 1s forwards ease-in-out;
-      animation-delay: 0.8s; /* Animation delay for entrance */
-
-      &:nth-child(2) {
-        animation-delay: 1s;
-      }
-      &:nth-child(3) {
-        animation-delay: 1.2s;
-      }
-
-      &-text {
-        margin-top: 11px;
-        h3 {
-          font-weight: 600;
-          font-size: 18px;
-          line-height: 27px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #666666;
-        }
-
-        p {
-          font-size: 16px;
-          font-weight: 400;
-          line-height: 25px;
-          color: $gray;
-          margin: 0.3125rem 0 1.5625rem;
-          text-align: center;
-        }
-
-        h4 {
-          font-size: 18px;
-          line-height: 25px;
-          font-weight: 700;
-          color: $main-color;
-        }
-      }
+    svg {
+      width: 26px;
+      height: 26px;
     }
+  }
+
+  &__title {
+    margin: 0 0 0.55rem;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: $lp-ink;
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: $lp-muted;
   }
 }
 
-/*
-************
-Responsive
-************
-*/
+/* ===========================
+   Responsive
+   =========================== */
+
+/* Tablet: 2 columns */
 @media screen and (max-width: 900px) {
-  .wc__features {
-    &-content {
-      &_feature {
-        width: 50%;
-        padding-left: 0rem;
-        padding-right: 0rem;
-        &-text {
-          width: 100%;
-          h3 {
-            font-size: 20px;
-          }
-        }
-      }
+  .lp-why {
+    &__inner {
+      padding: 4rem 1.5rem 3rem;
+    }
+    &__title {
+      font-size: 2.1rem;
+    }
+    &__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.2rem;
     }
   }
 }
 
-@media screen and (max-width: 650px) {
-  .wc__features {
-    &-content {
-      &_feature {
-        width: 100%;
-        &-text {
-          h3 {
-            font-size: 24px;
-          }
-        }
-      }
+/* Mobile: 1 column */
+@media screen and (max-width: 560px) {
+  .lp-why {
+    &__inner {
+      padding: 3rem 1.2rem 2.5rem;
     }
+    &__title {
+      font-size: 1.8rem;
+    }
+    &__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .why-card {
+    padding: 1.6rem 1.4rem;
   }
 }
