@@ -18,6 +18,14 @@ section {
 #kontak {
   margin: 0;
   padding: 0;
+  /* Keep anchored sections clear of the fixed navbar when scrolled to. */
+  scroll-margin-top: 84px;
+}
+
+/* The navbar is fixed (out of flow), so reserve its height at the top of the
+   first section to prevent it from covering the hero. */
+#beranda {
+  padding-top: 70px;
 }
 
 /* Zero-height scroll marker for the Testimoni anchor */

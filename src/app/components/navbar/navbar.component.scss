@@ -11,10 +11,18 @@ $lp-navbar-height: 70px;
 }
 
 .lp-navbar {
-  position: relative;
-  z-index: 20;
+  /* Stick to the top across the whole page. Fixed (not sticky) is required
+     because the navbar is nested inside the #beranda section, so sticky would
+     only hold within the hero. The hero offset is handled in home.component.scss. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1020;
   width: 100%;
   background: linear-gradient(90deg, $lp-plum-dark 0%, $lp-plum 55%, $lp-plum-light 100%);
+  border-bottom: 1px solid rgba(92, 45, 78, 0.08);
+  box-shadow: 0 8px 24px rgba(92, 45, 78, 0.12);
   color: #fff;
 
   &__inner {
