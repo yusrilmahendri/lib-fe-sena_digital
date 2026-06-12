@@ -33,7 +33,7 @@
 
     <!-- Desktop actions (right) -->
     <div class="lp-navbar__actions">
-      <button type="button" class="lp-btn lp-btn--ghost" (click)="goToLogin()">
+      <button type="button" class="lp-btn lp-btn--ghost" (click)="openLoginModal()">
         Masuk
       </button>
       <button type="button" class="lp-btn lp-btn--pill" (click)="goToBuatUndangan()">
@@ -70,7 +70,7 @@
       </li>
     </ul>
     <div class="lp-navbar__mobile-actions">
-      <button type="button" class="lp-btn lp-btn--ghost" (click)="goToLogin()">
+      <button type="button" class="lp-btn lp-btn--ghost" (click)="openLoginModal()">
         Masuk
       </button>
       <button type="button" class="lp-btn lp-btn--pill" (click)="goToBuatUndangan()">
@@ -86,3 +86,6 @@
     (click)="closeMobileMenu()"
   ></div>
 </header>
+
+<!-- Authentication modal (login / forgot password / email confirmation) -->
+<wc-auth-modal [isOpen]="isAuthModalOpen" (closed)="closeAuthModal()"></wc-auth-modal>

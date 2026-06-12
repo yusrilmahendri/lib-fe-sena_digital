@@ -89,6 +89,8 @@ import { PresenceViewComponent } from './dashboard/wedding-view/presence-view/pr
 import { GiftViewComponent } from './dashboard/wedding-view/gift-view/gift-view.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
+import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -166,6 +168,8 @@ import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admi
     GiftViewComponent,
     BillUserComponent,
     ProfileAdminComponent,
+    AuthModalComponent,
+    ResetPasswordComponent,
   ],
   imports: [
     BrowserModule,

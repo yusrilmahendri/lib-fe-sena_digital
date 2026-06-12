@@ -1,0 +1,271 @@
+<div class="auth-modal" *ngIf="isOpen" (click)="onBackdropClick()">
+  <div class="auth-modal__card" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      class="auth-modal__close"
+      aria-label="Tutup"
+      (click)="closeAuthModal()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <!-- Brand header -->
+    <div class="auth-modal__brand">
+      <img class="auth-modal__logo" src="assets/landing/logo.svg" alt="Sena Digital" />
+      <span class="auth-modal__ornament" aria-hidden="true"></span>
+    </div>
+
+    <!-- =========================== LOGIN =========================== -->
+    <ng-container *ngIf="currentMode === 'login'">
+      <h2 class="auth-modal__title">Selamat datang kembali</h2>
+      <p class="auth-modal__subtitle">Masuk untuk melanjutkan undanganmu.</p>
+
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+        <div class="auth-field">
+          <input
+            type="email"
+            class="auth-input"
+            placeholder="Email"
+            formControlName="email"
+            autocomplete="email"
+          />
+          <p
+            class="auth-field__error"
+            *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+          >
+            Masukkan email yang valid.
+          </p>
+        </div>
+
+        <div class="auth-field">
+          <div class="auth-input auth-input--password">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="auth-input__control"
+              placeholder="Kata sandi"
+              formControlName="password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="auth-input__eye"
+              [attr.aria-label]="showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+              (click)="togglePasswordVisibility()"
+            >
+              <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.6 3.3M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9 9 0 0 0 4.4-1.1M3 3l18 18"/></svg>
+            </button>
+          </div>
+          <p
+            class="auth-field__error"
+            *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+          >
+            Kata sandi wajib diisi.
+          </p>
+        </div>
+
+        <div class="auth-form__row">
+          <label class="auth-check">
+            <input type="checkbox" formControlName="remember" />
+            <span>Ingat saya</span>
+          </label>
+          <a class="auth-link" role="button" tabindex="0" (click)="showForgotPassword()" (keydown.enter)="showForgotPassword()">
+            Lupa kata sandi?
+          </a>
+        </div>
+
+        <p class="auth-form__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button
+          type="submit"
+          class="auth-btn auth-btn--primary"
+          [disabled]="loginForm.invalid || isSubmitting"
+        >
+          {{ isSubmitting ? 'Memproses…' : 'Masuk' }}
+        </button>
+      </form>
+
+      <p class="auth-modal__foot">
+        Belum punya akun?
+        <a class="auth-link" role="button" tabindex="0" (click)="goToBuatUndangan()" (keydown.enter)="goToBuatUndangan()">Daftar di sini</a>
+      </p>
+    </ng-container>
+
+    <!-- ======================= FORGOT PASSWORD ======================= -->
+    <ng-container *ngIf="currentMode === 'forgot-password'">
+      <a class="auth-back" role="button" tabindex="0" (click)="showLogin()" (keydown.enter)="showLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        Kembali ke masuk
+      </a>
+
+      <h2 class="auth-modal__title">Lupa kata sandi</h2>
+      <p class="auth-modal__subtitle">
+        Masukkan email akunmu — kami akan mengirim tautan untuk reset kata sandi.
+      </p>
+
+      <form class="auth-form" [formGroup]="forgotForm" (ngSubmit)="submitForgotPassword()" novalidate>
+        <div class="auth-field">
+          <input
+            type="email"
+            class="auth-input"
+            placeholder="Email terdaftar"
+            formControlName="email"
+            autocomplete="email"
+          />
+          <p
+            class="auth-field__error"
+            *ngIf="forgotForm.get('email')?.touched && forgotForm.get('email')?.invalid"
+          >
+            Masukkan email yang valid.
+          </p>
+        </div>
+
+        <p class="auth-form__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button
+          type="submit"
+          class="auth-btn auth-btn--primary"
+          [disabled]="forgotForm.invalid || isSubmitting"
+        >
+          {{ isSubmitting ? 'Mengirim…' : 'Kirim Tautan Reset' }}
+        </button>
+      </form>
+
+      <p class="auth-modal__foot">
+        <a class="auth-link auth-link--muted" role="button" tabindex="0" (click)="openResetPasswordDemoModal()" (keydown.enter)="openResetPasswordDemoModal()">
+          (Demo) Lihat halaman buat kata sandi baru
+        </a>
+      </p>
+    </ng-container>
+
+    <!-- ====================== EMAIL CONFIRMATION ====================== -->
+    <ng-container *ngIf="currentMode === 'email-confirmation'">
+      <div class="auth-confirm__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      </div>
+
+      <h2 class="auth-modal__title">Cek inbox emailmu</h2>
+      <p class="auth-modal__subtitle">
+        Kami sudah mengirim tautan reset kata sandi. Tautan berlaku selama 60 menit.
+        Jika tidak menerima, periksa folder spam.
+      </p>
+
+      <p class="auth-form__info" *ngIf="infoMessage">{{ infoMessage }}</p>
+
+      <div class="auth-confirm__actions">
+        <button
+          type="button"
+          class="auth-btn auth-btn--outline"
+          [disabled]="isSubmitting"
+          (click)="resendForgotPasswordEmail()"
+        >
+          {{ isSubmitting ? 'Mengirim…' : 'Kirim ulang' }}
+        </button>
+        <button type="button" class="auth-btn auth-btn--primary" (click)="backToLogin()">
+          Kembali masuk
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ====================== RESET PASSWORD ====================== -->
+    <ng-container *ngIf="currentMode === 'reset-password'">
+      <h2 class="auth-modal__title">Buat kata sandi baru</h2>
+      <p class="auth-modal__subtitle">Masukkan kata sandi baru untuk akun mu.</p>
+
+      <p class="auth-form__error" *ngIf="resetLinkInvalid">
+        Tautan reset kata sandi tidak valid.
+      </p>
+      <p class="auth-form__info" *ngIf="infoMessage && !resetLinkInvalid">{{ infoMessage }}</p>
+
+      <form class="auth-form" [formGroup]="resetForm" (ngSubmit)="submitResetPassword()" novalidate>
+        <div class="auth-field">
+          <div class="auth-input auth-input--password">
+            <input
+              [type]="showNewPassword ? 'text' : 'password'"
+              class="auth-input__control"
+              placeholder="Kata sandi baru"
+              formControlName="password"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="auth-input__eye"
+              [attr.aria-label]="showNewPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+              (click)="toggleNewPassword()"
+            >
+              <svg *ngIf="!showNewPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showNewPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.6 3.3M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9 9 0 0 0 4.4-1.1M3 3l18 18"/></svg>
+            </button>
+          </div>
+          <p
+            class="auth-field__error"
+            *ngIf="resetForm.get('password')?.touched && resetForm.get('password')?.invalid"
+          >
+            Kata sandi minimal 8 karakter.
+          </p>
+        </div>
+
+        <div class="auth-field">
+          <div class="auth-input auth-input--password">
+            <input
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              class="auth-input__control"
+              placeholder="Ulangi kata sandi"
+              formControlName="password_confirmation"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="auth-input__eye"
+              [attr.aria-label]="showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+              (click)="toggleConfirmPassword()"
+            >
+              <svg *ngIf="!showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.6 3.3M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9 9 0 0 0 4.4-1.1M3 3l18 18"/></svg>
+            </button>
+          </div>
+          <p
+            class="auth-field__error"
+            *ngIf="resetForm.get('password_confirmation')?.touched && resetForm.hasError('mismatch')"
+          >
+            Konfirmasi kata sandi tidak cocok.
+          </p>
+        </div>
+
+        <p class="auth-form__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button
+          type="submit"
+          class="auth-btn auth-btn--primary"
+          [disabled]="resetForm.invalid || isSubmitting || resetLinkInvalid"
+        >
+          {{ isSubmitting ? 'Menyimpan…' : 'Simpan Kata Sandi' }}
+        </button>
+      </form>
+
+      <p class="auth-modal__foot" *ngIf="resetLinkInvalid">
+        <a class="auth-link" role="button" tabindex="0" (click)="backToLogin()" (keydown.enter)="backToLogin()">
+          Kembali masuk
+        </a>
+      </p>
+    </ng-container>
+
+    <!-- ====================== RESET SUCCESS ====================== -->
+    <ng-container *ngIf="currentMode === 'reset-success'">
+      <div class="auth-confirm__icon auth-confirm__icon--success" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+
+      <h2 class="auth-modal__title">Kata sandi berhasil diperbarui</h2>
+      <p class="auth-modal__subtitle">
+        Sekarang kamu bisa masuk menggunakan kata sandi baru.
+      </p>
+
+      <div class="auth-confirm__actions">
+        <button type="button" class="auth-btn auth-btn--primary" (click)="backToLogin()">
+          Kembali masuk
+        </button>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface NavMenuItem {
   label: string;
@@ -14,6 +14,9 @@ interface NavMenuItem {
 export class NavbarComponent implements OnInit {
   isMobileMenuOpen = false;
 
+  /* Auth modal state (login / forgot-password / email-confirmation). */
+  isAuthModalOpen = false;
+
   menuItems: NavMenuItem[] = [
     { label: 'Beranda', target: 'beranda' },
     { label: 'Fitur', target: 'fitur' },
@@ -22,10 +25,18 @@ export class NavbarComponent implements OnInit {
     { label: 'Testimoni', target: 'testimoni' },
   ];
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
     this.isMobileMenuOpen = false;
+
+    // Open the login modal when returning from the reset-password flow
+    // (e.g. router.navigate(['/'], { queryParams: { auth: 'login' } })).
+    this.route.queryParams.subscribe((params) => {
+      if (params['auth'] === 'login') {
+        this.isAuthModalOpen = true;
+      }
+    });
   }
 
   toggleMobileMenu(): void {
@@ -45,6 +56,17 @@ export class NavbarComponent implements OnInit {
     this.closeMobileMenu();
   }
 
+  /** Open the auth modal (login mode) instead of routing to the old /login page. */
+  openLoginModal(): void {
+    this.closeMobileMenu();
+    this.isAuthModalOpen = true;
+  }
+
+  closeAuthModal(): void {
+    this.isAuthModalOpen = false;
+  }
+
+  /** Kept as a backup; the old /login page is no longer the main flow. */
   goToLogin(): void {
     this.closeMobileMenu();
     this.router.navigate(['/login']);

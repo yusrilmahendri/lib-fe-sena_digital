@@ -37,6 +37,7 @@ import { WeddingViewComponent } from './dashboard/wedding-view/wedding-view.comp
 import { ProfileComponent } from './dashboard/profile/profile.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
+import { ResetPasswordComponent } from './reset-password/reset-password.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -44,6 +45,7 @@ const routes: Routes = [
   { path: 'wedding', component: WeddingViewComponent }, // Fallback route without parameter
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: 'buat-undangan', component: GenerateUndanganComponent },
   {
     path: 'dashboard',
