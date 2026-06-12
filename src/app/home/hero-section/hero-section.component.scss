@@ -37,15 +37,53 @@ $lp-serif: Georgia, "Times New Roman", serif;
 .hero-section {
   position: relative;
   width: 100%;
+  /* Soft cream/pink gradient (Figma): warm pink glow near the phone on the
+     right, a cream wash on the left, over a light cream-to-pink base. */
   background: radial-gradient(
-      120% 120% at 85% 10%,
-      $lp-cream-2 0%,
-      $lp-cream 55%
+      circle at 72% 42%,
+      rgba(122, 61, 104, 0.12) 0%,
+      rgba(122, 61, 104, 0.04) 28%,
+      transparent 55%
     ),
-    $lp-cream;
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(255, 236, 242, 0.9) 0%,
+      transparent 40%
+    ),
+    linear-gradient(180deg, #fffdfb 0%, #fff7f9 100%);
   overflow: hidden;
 
+  /* Subtle thin circle, top-left */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -120px;
+    left: -110px;
+    width: 320px;
+    height: 320px;
+    border: 1px solid rgba(92, 45, 78, 0.1);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle thin circle, bottom-right */
+  &::after {
+    content: "";
+    position: absolute;
+    right: -140px;
+    bottom: -150px;
+    width: 380px;
+    height: 380px;
+    border: 1px solid rgba(92, 45, 78, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   &__inner {
+    position: relative;
+    z-index: 1;
     max-width: 1280px;
     margin: 0 auto;
     padding: 4rem 2rem 5rem;
@@ -53,6 +91,56 @@ $lp-serif: Georgia, "Times New Roman", serif;
     grid-template-columns: 1.05fr 0.95fr;
     align-items: center;
     gap: 3rem;
+  }
+}
+
+/* Decorative sparkles + a faint inner ring — all very subtle, behind content. */
+.hero-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+
+  &__ring {
+    position: absolute;
+    top: 14%;
+    right: 18%;
+    width: 160px;
+    height: 160px;
+    border: 1px solid rgba(154, 92, 132, 0.12);
+    border-radius: 50%;
+  }
+
+  &__spark {
+    position: absolute;
+    color: rgba(201, 145, 92, 0.55);
+    font-size: 0.9rem;
+    line-height: 1;
+    user-select: none;
+
+    &--1 {
+      top: 16%;
+      left: 18%;
+      font-size: 1.05rem;
+      color: rgba(176, 96, 132, 0.45);
+    }
+    &--2 {
+      top: 62%;
+      left: 8%;
+      color: rgba(201, 145, 92, 0.5);
+    }
+    &--3 {
+      top: 30%;
+      right: 9%;
+      font-size: 1.15rem;
+      color: rgba(201, 145, 92, 0.45);
+    }
+    &--4 {
+      bottom: 14%;
+      right: 22%;
+      color: rgba(176, 96, 132, 0.4);
+    }
   }
 }
 

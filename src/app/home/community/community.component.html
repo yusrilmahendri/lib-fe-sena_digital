@@ -1,69 +1,66 @@
-<body>
-  <div class="container py-5">
-    <div class="title-container">
-      <h2>
-        <strong>
-          Undangan
-        </strong>
-        <span>
-          Website
-        </span>
-      </h2>
-      <div class="underline-container">
-        <hr />
-        <div class="heart">
-          <i class="fas fa-heart">
-          </i>
-        </div>
+<section class="lp-themes">
+  <div class="lp-themes__inner">
+    <header class="lp-themes__head">
+      <div class="lp-themes__head-text">
+        <span class="lp-themes__ornament" aria-hidden="true"></span>
+        <p class="lp-themes__label">Undangan Website</p>
+        <h2 class="lp-themes__title">
+          Pilih tema favoritmu, <em>sentuh hatinya.</em>
+        </h2>
+        <p class="lp-themes__desc">
+          Setiap tema dirancang dengan detail tipografi, palet warna, dan
+          komposisi yang elegan — siap menyambut tamumu.
+        </p>
       </div>
+      <a class="lp-themes__link" (click)="goToBuatUndangan()">
+        Jelajahi semua tema
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </header>
+
+    <div class="lp-themes__filters" role="tablist">
+      <button
+        *ngFor="let filter of filters"
+        type="button"
+        class="lp-chip"
+        [class.lp-chip--active]="filter === activeFilter"
+        (click)="setFilter(filter)"
+      >
+        {{ filter }}
+      </button>
     </div>
-    <!-- <a class="see-more">Lihat Lebih Banyak Lagi</a> -->
 
-    <div class="row">
-      <!-- Invitation Card 1 -->
-      <div class="col-lg-3 col-md-6 col-sm-6">
-        <div class="invitation-card">
-          <img src="assets/videotmp1.svg" alt="Undangan Pernikahan" class="invitation-img">
-          <div class="elegant-badge">Elegant</div>
+    <div class="lp-themes__grid">
+      <article class="theme-card" *ngFor="let theme of filteredThemes">
+        <div class="theme-card__media">
+          <span class="theme-card__badge">{{ theme.badge }}</span>
+          <img
+            class="theme-card__img"
+            [src]="theme.image"
+            [alt]="'Tema undangan ' + theme.name"
+            loading="lazy"
+            (error)="onThemeImgError(theme)"
+          />
         </div>
-        <a class="demo-button">
-          <i class="far fa-eye"></i> Demo Video Undangan
-        </a>
-      </div>
-
-      <!-- Invitation Card 2 -->
-      <div class="col-lg-3 col-md-6 col-sm-6">
-        <div class="invitation-card">
-          <img src="assets/videotmp2.svg" alt="Undangan Pernikahan" class="invitation-img">
-          <div class="elegant-badge">Elegant</div>
+        <div class="theme-card__body">
+          <div class="theme-card__meta">
+            <h3 class="theme-card__name">{{ theme.name }}</h3>
+            <p class="theme-card__tier">{{ theme.tier }}</p>
+          </div>
+          <div class="theme-card__actions">
+            <button class="theme-btn theme-btn--ghost" type="button" (click)="goToPreview(theme)">
+              Preview
+            </button>
+            <button
+              class="theme-btn theme-btn--primary"
+              type="button"
+              (click)="goToBuatUndangan()"
+            >
+              Gunakan
+            </button>
+          </div>
         </div>
-        <a class="demo-button">
-          <i class="far fa-eye"></i> Demo Video Undangan
-        </a>
-      </div>
-
-      <!-- Invitation Card 3 -->
-      <div class="col-lg-3 col-md-6 col-sm-6">
-        <div class="invitation-card">
-          <img src="assets/videotmp3.svg" alt="Undangan Pernikahan" class="invitation-img">
-          <div class="elegant-badge">Elegant</div>
-        </div>
-        <a class="demo-button">
-          <i class="far fa-eye"></i> Demo Video Undangan
-        </a>
-      </div>
-
-      <!-- Invitation Card 4 -->
-      <div class="col-lg-3 col-md-6 col-sm-6">
-        <div class="invitation-card">
-          <img src="assets/videotmp4.svg" alt="Undangan Pernikahan" class="invitation-img">
-          <div class="elegant-badge">Elegant</div>
-        </div>
-        <a class="demo-button">
-          <i class="far fa-eye"></i> Demo Video Undangan
-        </a>
-      </div>
+      </article>
     </div>
   </div>
-
-</body>
+</section>

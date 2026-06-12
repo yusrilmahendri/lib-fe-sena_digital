@@ -1,63 +1,98 @@
-<div class="section">
-    <div class="rows">
-        <div class="wc__footer-hero">
-            <h2 style="font-family: Poppins; padding-bottom: 10px;">
-                Harga <b style="color: #FF84AD;">Undangan</b> Online?
-            </h2>
-            <img src="../../../assets/love-border.svg" alt="">
+<section class="lp-pricing">
+  <div class="lp-pricing__inner">
+    <header class="lp-pricing__head">
+      <span class="lp-pricing__ornament" aria-hidden="true"></span>
+      <p class="lp-pricing__label">Harga Undangan</p>
+      <h2 class="lp-pricing__title">
+        Paket sederhana, <em>untuk hasil yang elegan.</em>
+      </h2>
+      <p class="lp-pricing__desc">
+        Mulai dari paket Ruby untuk undangan ringkas, hingga Diamond untuk
+        perayaan yang benar-benar personal.
+      </p>
+    </header>
+
+    <!-- Loading state -->
+    <p *ngIf="isLoading" class="lp-pricing__loading">Memuat paket…</p>
+
+    <div *ngIf="!isLoading" class="lp-pricing__grid">
+      <article
+        class="price-card"
+        [class.price-card--featured]="card.featured"
+        *ngFor="let card of pricingCards"
+      >
+        <span class="price-card__badge" *ngIf="card.badge">{{ card.badge }}</span>
+
+        <h3 class="price-card__name">{{ card.name }}</h3>
+        <p class="price-card__subtitle">{{ card.subtitle }}</p>
+
+        <div class="price-card__price" *ngIf="splitPrice(card.priceLabel) as p">
+          <span class="price-card__prefix">{{ p.prefix }}</span>
+          <span class="price-card__amount">{{ p.amount }}</span>
+          <span class="price-card__suffix">{{ p.suffix }}</span>
         </div>
-    </div>
-    <div style="padding-bottom: 2rem;padding-top: 30px;" class="container">
-      <div class="card" *ngFor="let paket of paketList">
-    <div class="card__info" [ngStyle]="{
-         'background-color': paket.id === 1 ? 'silver' :
-                 paket.id === 2 ? '#C47D13' :
-                 paket.id === 3 ? '#57B9EE' : '#ccc',
-         'background': paket.id === 1 ? 'silver' :
-              paket.id === 2 ? 'linear-gradient(90deg, #C47D13 0%, rgba(220, 140, 21, 0.7) 100%)' :
-              paket.id === 3 ? 'linear-gradient(90deg, #57B9EE 0%, #73D6FC 50%, #3D86D8 100%)' : ''
-       }">
-      <h2 class="card__name">{{ paket.name_paket.toUpperCase() }}</h2>
+
+        <ul class="price-card__features">
+          <li *ngFor="let feature of card.features">
+            <span class="price-check" aria-hidden="true"></span>
+            {{ feature }}
+          </li>
+        </ul>
+
+        <button
+          class="price-card__btn"
+          type="button"
+          (click)="onSelectPaket(card.tier)"
+        >
+          Pilih Paket
+        </button>
+      </article>
     </div>
 
-    <div class="card__content" style="border-color: var(--color06)">
-      <div class="card__rows">
-        <p class="card__price" style="color: var(--color06)">
-          <b style="font-size: smaller; padding: 1.55px 3px 9.95px 0px;">Rp</b>{{ paket.price |number:'1.0-0':'en-US' }}
-        </p>
-        <p class="card__row" *ngIf="isFeatureEnabled(paket.bebas_pilih_tema)">Bebas Pilih Tema</p>
-        <p class="card__row">Edit Tanpa Batas</p>
-        <p class="card__row" *ngIf="isFeatureEnabled(paket.kirim_wa)">Kirim Undangan via WhatsApp</p>
-        <p class="card__row" *ngIf="isFeatureEnabled(paket.import_data)">Import Data Tamu</p>
-        <p class="card__row" *ngIf="isFeatureEnabled(paket.halaman_buku)">Halaman Buku</p>
-        <p class="card__row" *ngIf="isFeatureEnabled(paket.kirim_hadiah)">Kirim Hadiah</p>
-        <p class="card__row">Buku Tamu</p>
-        <p class="card__row">Amplop Digital</p>
-        <p class="card__row">Galeri Foto</p>
-        <p class="card__row">Background Music</p>
+    <p class="lp-pricing__note">
+      Semua paket sudah termasuk hosting, SSL, dan dukungan teknis dasar.
+    </p>
+  </div>
+</section>
+
+<!-- ============ Section: FAQ ============ -->
+<section class="lp-faq">
+  <div class="lp-faq__inner">
+    <header class="lp-faq__head">
+      <span class="lp-faq__ornament" aria-hidden="true"></span>
+      <p class="lp-faq__label">FAQ</p>
+      <h2 class="lp-faq__title">
+        Pertanyaan yang sering <em>ditanyakan.</em>
+      </h2>
+      <p class="lp-faq__subtitle">
+        Belum menemukan jawabanmu? Hubungi tim kami via WhatsApp — kami senang
+        membantu.
+      </p>
+    </header>
+
+    <div class="lp-faq__list">
+      <div
+        class="faq-item"
+        *ngFor="let faq of faqs; let i = index"
+        [class.faq-item--open]="openFaqIndex === i"
+      >
+        <button
+          type="button"
+          class="faq-item__question"
+          [attr.aria-expanded]="openFaqIndex === i"
+          (click)="toggleFaq(i)"
+        >
+          <span class="faq-item__text">{{ faq.question }}</span>
+          <span class="faq-item__icon" aria-hidden="true"></span>
+        </button>
+        <div class="faq-item__answer" *ngIf="openFaqIndex === i">
+          <p>{{ faq.answer }}</p>
+        </div>
       </div>
     </div>
   </div>
-      </div>
-
-      <div class="container text-center" style="margin-top: 20px; padding-bottom: 20px;">
-        <button class="btn btn-primary" (click)="onRedirectToRegister()"
-            style="
-                background: var(--P-Secondary, #54D9ED);
-                font-family: Poppins;
-                padding: 12px 24px;
-                font-size: 1.2rem;
-                border-radius: 50px;
-                color: aliceblue;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-                border: none;
-                transition: transform 0.3s, box-shadow 0.3s;">
-            Daftar Sekarang
-        </button>
-    </div>
-</div>
+</section>
 
 <ng-container>
     <wc-testemoni-footer></wc-testemoni-footer>
 </ng-container>
-

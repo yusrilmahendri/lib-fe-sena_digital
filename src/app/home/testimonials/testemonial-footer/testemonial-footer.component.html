@@ -1,85 +1,49 @@
-<section class="testimonials">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300..900&display=swap');
-  </style>
+<section class="lp-testi">
+  <div class="lp-testi__inner">
+    <header class="lp-testi__head">
+      <span class="lp-testi__ornament" aria-hidden="true"></span>
+      <p class="lp-testi__label">Testimoni</p>
+      <h2 class="lp-testi__title">
+        Cerita pasangan yang <em>mempercayakan momennya.</em>
+      </h2>
+    </header>
 
-  <div class="testimonials-header">
-    <h2 class="testimonials-title">Testimoni</h2>
-    <p class="testimonials-subtitle">kata mereka setelah menggunakan horuzt.com</p>
-  </div>
-
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
-    <div class="loading-spinner"></div>
-    <p class="loading-text">Memuat testimoni...</p>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="hasError && !isLoading" class="error-container">
-    <div class="error-message">
-      <i class="fas fa-exclamation-triangle"></i>
-      <p>Maaf, testimoni tidak dapat dimuat saat ini.</p>
-      <button class="retry-btn" (click)="loadTestimonials()">Coba Lagi</button>
-    </div>
-  </div>
-
-  <!-- Testimonials Content -->
-  <div *ngIf="!isLoading && !hasError" class="testimonials-content">
-    <div class="testimonial-cards">
-      <div
-        *ngFor="let testimonial of testimonials; trackBy: trackByTestimonialId"
-        class="testimonial-card"
-      >
-        <div class="card-header">
-          <div class="user-avatar">
-            <span class="avatar-initials">{{ getUserInitials(testimonial.user.name || 'User') }}</span>
-          </div>
-          <div class="user-info">
-            <h3 class="user-name">{{ testimonial.user.name }}</h3>
-            <p class="user-location">{{ getLocationDisplay(testimonial.kota, testimonial.provinsi) }}</p>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <p class="testimonial-text">{{ truncateReview(testimonial.ulasan) }}</p>
-        </div>
-
-        <div class="card-footer">
-          <div class="rating">
-            <span class="star filled">&#9733;</span>
-            <span class="star filled">&#9733;</span>
-            <span class="star filled">&#9733;</span>
-            <span class="star filled">&#9733;</span>
-            <span class="star filled">&#9733;</span>
-          </div>
-          <small class="testimonial-date">
-            {{ formatDate(testimonial.created_at) }}
-          </small>
-        </div>
+    <div class="lp-testi__stats">
+      <div class="testi-stat" *ngFor="let stat of stats">
+        <span class="testi-stat__value">{{ stat.value }}</span>
+        <span class="testi-stat__label">{{ stat.label }}</span>
       </div>
     </div>
 
-    <!-- Load More Button -->
-    <div *ngIf="testimonials.length < totalItems" class="load-more-container">
-      <button
-        class="load-more-btn"
-        (click)="loadMore()"
-        [disabled]="isLoading"
+    <div class="lp-testi__grid">
+      <article
+        class="testi-card"
+        *ngFor="let review of reviews; trackBy: trackByCouple"
       >
-        <span *ngIf="!isLoading">Lihat Lebih Banyak</span>
-        <span *ngIf="isLoading">
-          <i class="fas fa-spinner fa-spin"></i> Memuat...
-        </span>
-      </button>
-    </div>
+        <span class="testi-card__quote" aria-hidden="true">&#8221;</span>
 
-    <!-- No Testimonials Message -->
-    <div *ngIf="testimonials.length === 0" class="no-testimonials">
-      <div class="empty-state">
-        <i class="fas fa-comments"></i>
-        <h3>Belum Ada Testimoni</h3>
-        <p>Jadilah yang pertama memberikan testimoni untuk layanan kami!</p>
-      </div>
+        <div class="testi-card__rating" aria-label="Rating 5 dari 5">
+          <span class="testi-card__star">&#9733;</span>
+          <span class="testi-card__star">&#9733;</span>
+          <span class="testi-card__star">&#9733;</span>
+          <span class="testi-card__star">&#9733;</span>
+          <span class="testi-card__star">&#9733;</span>
+        </div>
+
+        <p class="testi-card__text">{{ review.text }}</p>
+
+        <hr class="testi-card__divider" />
+
+        <div class="testi-card__author">
+          <span class="testi-card__avatar" aria-hidden="true">
+            {{ getInitials(review.couple) }}
+          </span>
+          <div class="testi-card__meta">
+            <span class="testi-card__name">{{ review.couple }}</span>
+            <span class="testi-card__date">{{ review.date }}</span>
+          </div>
+        </div>
+      </article>
     </div>
   </div>
 </section>

@@ -1,156 +1,306 @@
-@media (max-width: 900px) {
-  .title-container h2 {
-    font-size: 1.2rem;
+/* ===========================
+   Section: Templates / Tema (FE-LP1C-1)
+   Component-scoped styles only.
+   =========================== */
+
+$lp-primary: #5c2d4e;
+$lp-primary-soft: #8a5577;
+$lp-ink: #3a2230;
+$lp-muted: #8a7681;
+$lp-border: #e8e2e799;
+$lp-serif: Georgia, "Times New Roman", serif;
+
+:host {
+  display: block;
+}
+
+@keyframes lpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
   }
-  .invitation-card {
-    margin-bottom: 18px;
-    padding: 0.5rem;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (max-width: 600px) {
-  .title-container h2 {
-    font-size: 1rem;
-  }
-  .invitation-card {
-    margin-bottom: 10px;
-    padding: 0.2rem;
-  }
-}
-body {
-  font-family: "Poppins", sans-serif;
-  background-color: #f8f9fa;
-}
-
-.title-container {
-  text-align: center;
-  margin-top: 2rem;
-  margin-bottom: 3rem;
-}
-.title-container h2 {
-  font-weight: 700;
-  font-size: 1.75rem;
-  color: #222222;
-}
-.title-container h2 span {
-  font-weight: 400;
-  color: #f9a9c0;
-  font-size: 1.5rem;
-}
-.underline-container {
-  position: relative;
-  width: 100px;
-  margin: 0.5rem auto 0 auto;
-}
-.underline-container hr {
-  border: none;
-  border-top: 1.5px solid #f9a9c0;
-  margin: 0;
-}
-.underline-container .heart {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #f9a9c0;
-  font-size: 1rem;
-}
-
-.see-more {
-  color: #333;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.see-more:hover {
-  color: #ff7b9c;
-}
-
-.invitation-card {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 25px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.invitation-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-}
-
-.invitation-img {
+.lp-themes {
   width: 100%;
-  height: 330px;
-  object-fit: cover;
-  border-radius: 12px;
+  background: linear-gradient(180deg, #fdf8f4 0%, #ffffff 45%);
+
+  &__inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 2rem 6.25rem; /* ~32px top (seam with Benefit), ~100px bottom */
+  }
+
+  &__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  &__head-text {
+    max-width: 640px;
+  }
+
+  &__ornament {
+    display: block;
+    width: 120px;
+    height: 1px;
+    margin-bottom: 1.1rem;
+    background: linear-gradient(
+      90deg,
+      rgba(92, 45, 78, 0.45) 0%,
+      transparent 100%
+    );
+  }
+
+  &__label {
+    margin: 0 0 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+  }
+
+  &__title {
+    margin: 0 0 1rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 2.5rem;
+    line-height: 1.25;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
+    }
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: $lp-muted;
+  }
+
+  &__link {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-bottom: 0.35rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $lp-primary;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: gap 0.2s ease;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    &:hover {
+      gap: 0.75rem;
+    }
+  }
+
+  &__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2.5rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 30px;
+    row-gap: 32px;
+  }
 }
 
-.elegant-badge {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #333;
-  padding: 5px 20px;
-  border-radius: 25px;
+/* ---- Filter chips ---- */
+.lp-chip {
+  padding: 0.55rem 1.25rem;
+  border-radius: 999px;
+  border: 1px solid $lp-border;
+  background: #ffffff;
+  color: $lp-muted;
+  font-size: 0.88rem;
   font-weight: 600;
-  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: $lp-primary;
+    border-color: rgba(92, 45, 78, 0.35);
+  }
+
+  &--active,
+  &--active:hover {
+    background: $lp-primary;
+    border-color: $lp-primary;
+    color: #ffffff;
+  }
 }
 
-.demo-button {
+/* ---- Theme card ---- */
+.theme-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 15px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  color: #333;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 24px;
+  padding: 12px;
+  box-shadow: 0 14px 34px rgba(77, 31, 62, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: lpFadeUp 0.6s ease both;
+
+  &:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 46px rgba(77, 31, 62, 0.13);
+  }
+
+  &__media {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  &__img {
+    display: block;
+    width: 100%;
+    height: 285px;
+    object-fit: cover;
+    border-radius: 18px;
+  }
+
+  &__badge {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 2;
+    padding: 0.32rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: $lp-primary;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(77, 31, 62, 0.14);
+  }
+
+  &__body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 0.5rem 0.5rem;
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__name {
+    margin: 0 0 0.15rem;
+    font-family: $lp-serif;
+    font-size: 1.18rem;
+    font-weight: 700;
+    color: $lp-ink;
+  }
+
+  &__tier {
+    margin: 0;
+    font-size: 0.78rem;
+    color: $lp-muted;
+  }
+
+  &__actions {
+    flex: none;
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+/* ---- Buttons ---- */
+.theme-btn {
+  padding: 0.5rem 0.9rem;
+  border-radius: 11px;
+  font-size: 0.84rem;
   font-weight: 600;
-  text-decoration: none;
-  margin-top: 15px;
-  transition: all 0.3s ease;
-}
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 
-.demo-button:hover {
-  background-color: #f8f9fa;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
+  &--ghost {
+    background: #ffffff;
+    border: 1px solid $lp-border;
+    color: $lp-primary;
 
-.demo-button i {
-  margin-right: 10px;
-}
-
-@media (max-width: 767px) {
-  .section-title h2 {
-    font-size: 1.8rem;
+    &:hover {
+      border-color: rgba(92, 45, 78, 0.4);
+      background: #fdf6fa;
+    }
   }
 
-  .invitation-img {
-    height: 280px;
-  }
+  &--primary {
+    border: 1px solid $lp-primary;
+    background: $lp-primary;
+    color: #ffffff;
 
-  .elegant-badge {
-    font-size: 14px;
-    padding: 4px 15px;
+    &:hover {
+      background: #4d2542;
+    }
   }
 }
 
-@media (max-width: 480px) {
-  .section-title {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
+/* ===========================
+   Responsive
+   =========================== */
 
-  .section-title h2 {
-    font-size: 1.5rem;
+/* Tablet: 2 columns */
+@media screen and (max-width: 900px) {
+  .lp-themes {
+    &__inner {
+      padding: 2rem 1.5rem 4.5rem; /* tight top seam with Benefit */
+    }
+    &__head {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    &__title {
+      font-size: 2.1rem;
+    }
+    &__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
   }
+}
 
-  .invitation-img {
-    height: 250px;
+/* Mobile: 1 column */
+@media screen and (max-width: 560px) {
+  .lp-themes {
+    &__inner {
+      padding: 1.75rem 1.2rem 3.5rem; /* tight top seam with Benefit */
+    }
+    &__title {
+      font-size: 1.8rem;
+    }
+    &__grid {
+      grid-template-columns: 1fr;
+    }
   }
 }

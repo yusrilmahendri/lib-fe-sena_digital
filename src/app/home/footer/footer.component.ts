@@ -12,6 +12,28 @@ export class FooterComponent implements OnInit {
 
   Cssclass: boolean = false;
 
+  footerNavigation: { label: string; target: string }[] = [
+    { label: 'Beranda', target: 'beranda' },
+    { label: 'Tema', target: 'tema' },
+    { label: 'Harga', target: 'harga' },
+    { label: 'Testimoni', target: 'testimoni' },
+    { label: 'FAQ', target: 'harga' },
+  ];
+
+  footerContacts: { label: string; icon: string; link: string }[] = [
+    {
+      label: 'WhatsApp',
+      icon: 'whatsapp',
+      link: 'https://wa.me/628817587308?text=Halo%20Kak%2C%20saya%20tertarik%20untuk%20membuat%20undangan%20digital.%20Boleh%20konsultasi%20terlebih%20dahulu%3F',
+    },
+    { label: 'Email', icon: 'email', link: 'mailto:Zayyin.alfar1@gmail.com' },
+    { label: 'Instagram', icon: 'instagram', link: '#' },
+  ];
+
+  footerLegal: string[] = ['Syarat & Ketentuan', 'Kebijakan Privasi', 'FAQ'];
+
+  year = new Date().getFullYear();
+
   constructor() {
     library.add(fas,fab,far)
   }

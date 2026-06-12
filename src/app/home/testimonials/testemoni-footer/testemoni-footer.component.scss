@@ -1,70 +1,545 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+/* ===========================
+   Sections: Media Partner & Contact (FE-LP1D-2)
+   Component-scoped styles only.
+   =========================== */
 
-* {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    font-family: "Poppins", sans-serif;
+$lp-primary: #5c2d4e;
+$lp-primary-dark: #4d2542;
+$lp-primary-soft: #8a5577;
+$lp-ink: #3a2230;
+$lp-muted: #8a7681;
+$lp-border: #e8e2e799;
+$lp-serif: Georgia, "Times New Roman", serif;
+
+:host {
+  display: block;
 }
 
-section {
-    display: grid;
-    place-items: center;
-    padding-bottom: 6rem;
-    padding-top: 6rem;
+%lp-ornament {
+  display: block;
+  width: 130px;
+  height: 1px;
+  margin: 0 auto 1.1rem;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(92, 45, 78, 0.45) 50%,
+    transparent 100%
+  );
+  position: relative;
 }
 
-h2 {
-    font-family: Rubik;
-    font-size: 40px;
-    font-weight: 500;
-    line-height: 27px;
+%lp-label {
+  margin: 0 0 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: $lp-primary-soft;
+}
+
+/* ---------- Media Partner ---------- */
+.lp-partner {
+  width: 100%;
+  background: linear-gradient(180deg, #fdf0f4 0%, #fdf8f4 100%);
+
+  &__inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+  }
+
+  &__head {
+    max-width: 640px;
+    margin: 0 auto 2.5rem;
     text-align: center;
-}
+  }
 
-.slider {
-    margin-top: 2rem;
+  &__ornament {
+    @extend %lp-ornament;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: #fdf4f6;
+      padding: 0 0.4rem;
+    }
+  }
+
+  &__label {
+    @extend %lp-label;
+  }
+
+  &__title {
+    margin: 0 0 0.85rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 1.9rem;
+    line-height: 1.25;
+    color: $lp-ink;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: $lp-muted;
+  }
+
+  &__card {
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100%;
-    width: 80%;
-    overflow: hidden;
-    background: rgb(255, 255, 255);
-}
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 1.75rem 2rem;
+    background: #ffffff;
+    border: 1px solid $lp-border;
+    border-radius: 26px;
+    box-shadow: 0 16px 40px rgba(77, 31, 62, 0.07);
+  }
 
-.slider-items {
+  &__logo {
+    flex: 1 1 0;
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 20px;
-    animation: scrolling 20s linear infinite, fadeIn 1s ease forwards; /* Combined animations */
+    justify-content: center;
+    padding: 0.5rem 1rem;
+
+    img {
+      max-width: 100%;
+      max-height: 46px;
+      width: auto;
+      object-fit: contain;
+    }
+  }
+
+  &__divider {
+    flex: none;
+    width: 1px;
+    align-self: stretch;
+    background: $lp-border;
+  }
 }
 
+/* ---------- Contact ---------- */
+.lp-contact {
+  width: 100%;
+  background: linear-gradient(180deg, #fdf8f4 0%, #ffffff 100%);
 
-/* Define the entrance fade-in animation */
-@keyframes fadeIn {
-    0% {
-        opacity: 0; /* Start completely transparent */
+  &__inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 3.5rem 2rem 5.5rem;
+  }
+
+  &__head {
+    max-width: 660px;
+    margin: 0 auto 2.5rem;
+    text-align: center;
+  }
+
+  &__ornament {
+    @extend %lp-ornament;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: #fdfaf8;
+      padding: 0 0.4rem;
     }
-    100% {
-        opacity: 1; /* End fully visible */
+  }
+
+  &__label {
+    @extend %lp-label;
+  }
+
+  &__title {
+    margin: 0 0 0.85rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 2.3rem;
+    line-height: 1.22;
+    color: $lp-ink;
+
+    em {
+      font-style: italic;
+      color: $lp-primary;
     }
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: $lp-muted;
+  }
+
+  &__card {
+    background: #ffffff;
+    border: 1px solid $lp-border;
+    border-radius: 28px;
+    padding: 2.5rem;
+    box-shadow: 0 26px 60px rgba(92, 45, 78, 0.1);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+  }
+
+  &__subtitle {
+    margin: 0 0 0.9rem;
+    font-family: $lp-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: $lp-ink;
+  }
+
+  &__col-desc {
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: $lp-muted;
+  }
+
+  &__rule {
+    border: none;
+    border-top: 1px solid $lp-border;
+    margin: 2rem 0;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
 }
 
-.slider-items img {
-    width: 30%;
-    margin: 20px;
+/* Contact line (whatsapp/email/location) */
+.contact-line {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #fdeaf2 0%, #f6d3e4 100%);
+    color: $lp-primary;
+
+    svg {
+      width: 19px;
+      height: 19px;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: $lp-primary-soft;
+  }
+
+  &__value {
+    font-size: 0.92rem;
+    color: $lp-ink;
+    word-break: break-word;
+  }
 }
 
-@media screen and (max-width: 550px) {
-    h2 {
-        font-size: 30px;
-        font-weight: 500;
-        line-height: 20px;
+/* Operational hours */
+.hours {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(232, 226, 231, 0.5);
+    font-size: 0.92rem;
+    color: $lp-ink;
+
+    &:last-child {
+      border-bottom: none;
     }
-    .slider-items img {
-        max-width: 25%;
-        margin: 10px;
+  }
+
+  &__time {
+    color: $lp-muted;
+  }
+
+  &__closed {
+    color: $lp-primary;
+    font-weight: 600;
+  }
+}
+
+.contact-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: #fdeef4;
+  color: $lp-primary;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Action buttons */
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 48px;
+  padding: 0 1.4rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  &--primary {
+    background: $lp-primary;
+    border: 1px solid $lp-primary;
+    color: #ffffff;
+
+    &:hover {
+      background: $lp-primary-dark;
     }
+  }
+
+  &--ghost {
+    background: #ffffff;
+    border: 1px solid $lp-border;
+    color: $lp-primary;
+
+    &:hover {
+      border-color: rgba(92, 45, 78, 0.4);
+      background: #fdf6fa;
+    }
+  }
+}
+
+.contact-promo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1.75rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #fdf1ea;
+  color: $lp-primary-soft;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+/* ---------- Payment Support ---------- */
+.lp-pay {
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff 0%, #fdf4f0 100%);
+
+  &__inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 4.5rem 2rem 5.5rem;
+  }
+
+  &__head {
+    max-width: 640px;
+    margin: 0 auto 2.5rem;
+    text-align: center;
+  }
+
+  &__ornament {
+    @extend %lp-ornament;
+
+    &::after {
+      content: "\2727";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -55%);
+      font-size: 0.7rem;
+      color: $lp-primary-soft;
+      background: #fefaf8;
+      padding: 0 0.4rem;
+    }
+  }
+
+  &__label {
+    @extend %lp-label;
+  }
+
+  &__title {
+    margin: 0 0 0.85rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 1.9rem;
+    line-height: 1.25;
+    color: $lp-ink;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: $lp-muted;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+}
+
+.pay-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  padding: 0 1rem;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 16px;
+  box-shadow: 0 12px 28px rgba(92, 45, 78, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgba(92, 45, 78, 0.14);
+  }
+
+  &__logo {
+    display: block;
+    max-width: 78%;
+    max-height: 34px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* DANA / GoPay / ShopeePay: cropped viewBox logos, render larger to match VISA/OVO. */
+  &__logo--lg {
+    max-width: 90%;
+    max-height: 46px;
+  }
+
+  &__name {
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    font-style: italic;
+    white-space: nowrap;
+  }
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+@media screen and (max-width: 900px) {
+  .lp-pay__grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 460px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .lp-contact__grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .lp-partner__inner {
+    padding: 4rem 1.2rem 2.5rem;
+  }
+  .lp-contact__inner {
+    padding: 3rem 1.2rem 4rem;
+  }
+  .lp-contact__card {
+    padding: 1.75rem 1.4rem;
+  }
+  .lp-contact__title {
+    font-size: 1.8rem;
+  }
+  .lp-partner__title {
+    font-size: 1.6rem;
+  }
+
+  /* Stack the partner logos vertically on small screens */
+  .lp-partner__card {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .lp-partner__divider {
+    width: 60%;
+    height: 1px;
+    align-self: center;
+  }
+  .lp-partner__logo img {
+    max-height: 40px;
+  }
+
+  .contact-btn {
+    flex: 1 1 auto;
+  }
+
+  .lp-pay__inner {
+    padding: 3rem 1.2rem 4rem;
+  }
+  .lp-pay__grid {
+    gap: 0.85rem;
+    max-width: 100%;
+  }
 }

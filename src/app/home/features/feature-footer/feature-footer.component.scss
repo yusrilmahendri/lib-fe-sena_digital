@@ -259,7 +259,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
   &__inner {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 6.25rem 2rem; /* ~100px top & bottom */
+    padding: 6.25rem 2rem 2rem; /* ~100px top, ~32px bottom (seam with Templates) */
   }
 
   &__head {
@@ -626,7 +626,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
 @media screen and (max-width: 900px) {
   .lp-manage {
     &__inner {
-      padding: 4.5rem 1.5rem;
+      padding: 4.5rem 1.5rem 2rem; /* tight bottom seam with Templates */
     }
     &__head {
       margin-bottom: 3rem;
@@ -661,7 +661,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
 @media screen and (max-width: 560px) {
   .lp-manage {
     &__inner {
-      padding: 3.25rem 1.1rem;
+      padding: 3.25rem 1.1rem 1.75rem; /* tight bottom seam with Templates */
     }
     &__title {
       font-size: 1.72rem;

@@ -7,12 +7,15 @@ section {
   box-sizing: border-box;
 }
 
-section:not(#beranda) {
-  margin: 0 auto 2rem auto;
-  padding: 1.5rem 1rem;
-}
-
-#beranda {
+/* Landing-page wrappers are full-bleed: spacing is owned by each component's
+   own SCSS, not by the HomeComponent <section> wrappers. This avoids the
+   double margin/padding that produced large white gaps between sections. */
+#beranda,
+#fitur,
+#tema,
+#harga,
+#testimoni,
+#kontak {
   margin: 0;
   padding: 0;
 }
@@ -23,20 +26,6 @@ section:not(#beranda) {
   height: 0;
   margin: 0;
   padding: 0;
-}
-
-@media (max-width: 900px) {
-  section:not(#beranda) {
-    padding: 1.2rem 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-@media (max-width: 600px) {
-  section:not(#beranda) {
-    padding: 1rem 0.2rem;
-    margin-bottom: 1rem;
-  }
 }
 
 /* Utility: hide scrollbars on mobile for horizontal overflow */
