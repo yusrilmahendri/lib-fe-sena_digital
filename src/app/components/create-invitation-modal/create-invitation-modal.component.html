@@ -1,7 +1,7 @@
 <div class="ci-modal" *ngIf="isOpen" (click)="onBackdropClick()">
   <div
     class="ci-modal__card"
-    [class.ci-modal__card--wide]="step === 'theme-selection'"
+    [class.ci-modal__card--wide]="step === 'theme-selection' || step === 'account'"
     (click)="$event.stopPropagation()"
   >
     <button
@@ -23,10 +23,10 @@
     </div>
 
     <!-- Progress bar (3 segments) -->
-    <div class="ci-progress" *ngIf="step !== 'account'" aria-hidden="true">
+    <div class="ci-progress" aria-hidden="true">
       <span class="ci-progress__seg is-active"></span>
-      <span class="ci-progress__seg" [class.is-active]="step === 'theme-selection' || step === 'success'"></span>
-      <span class="ci-progress__seg" [class.is-active]="step === 'success'"></span>
+      <span class="ci-progress__seg" [class.is-active]="step !== 'couple-detail'"></span>
+      <span class="ci-progress__seg" [class.is-active]="step === 'account' || step === 'success'"></span>
     </div>
 
     <!-- ===================== STEP 1 — DETAIL PASANGAN ===================== -->
@@ -72,22 +72,35 @@
       </form>
     </ng-container>
 
-    <!-- ===================== STEP 2 — PILIH TEMA ===================== -->
+    <!-- ===================== STEP 2 — PAKET & TEMA ===================== -->
     <ng-container *ngIf="step === 'theme-selection'">
-      <h2 class="ci-modal__title">Pilih tema awal</h2>
-      <p class="ci-modal__subtitle">Bisa diganti kapan saja dari dashboard.</p>
+      <h2 class="ci-modal__title">Pilih paket dan tema</h2>
+      <p class="ci-modal__subtitle">
+        Paket menentukan harga, fitur, dan tema yang tersedia — sesuai sistem lama.
+      </p>
 
-      <div class="ci-tabs" role="tablist">
+      <p class="ci-label">Paket undangan</p>
+      <div class="ci-tabs ci-tabs--paket" role="tablist">
         <button
           *ngFor="let cat of categories"
           type="button"
           class="ci-tab"
           [class.is-active]="activeCategory === cat.key"
-          (click)="setCategory(cat.key)"
+          (click)="selectPaket(cat.key)"
         >
           {{ cat.label }}
         </button>
       </div>
+
+      <p class="ci-paket-meta" *ngIf="selectedPaketPriceLabel">
+        Harga paket <strong>{{ activeCategoryLabel }}</strong>: {{ selectedPaketPriceLabel }}
+      </p>
+      <p class="ci-paket-meta ci-paket-meta--muted" *ngIf="!selectedPaket?.id">
+        Memuat data paket…
+      </p>
+
+      <p class="ci-label">Pilih tema awal</p>
+      <p class="ci-label__hint">Bisa diganti kapan saja dari dashboard.</p>
 
       <div class="ci-themes">
         <button
@@ -104,6 +117,8 @@
         </button>
       </div>
 
+      <p class="ci-form__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
       <div class="ci-actions">
         <button type="button" class="ci-btn ci-btn--outline" (click)="goToCoupleDetailStep()">
           Kembali
@@ -115,35 +130,77 @@
       </div>
     </ng-container>
 
-    <!-- ===================== STEP 3 — BUAT AKUN ===================== -->
+    <!-- ===================== STEP 3 — BUAT AKUN & DETAIL UNDANGAN ===================== -->
     <ng-container *ngIf="step === 'account'">
       <h2 class="ci-modal__title">Mulai cerita undanganmu</h2>
-      <p class="ci-modal__subtitle">Buat akun gratis — pilih tema kapan saja.</p>
+      <p class="ci-modal__subtitle">Lengkapi akun dan detail undangan sesuai kebutuhan sistem.</p>
+
+      <div class="ci-summary" *ngIf="selectedPaket || selectedTheme">
+        <span class="ci-summary__chip" *ngIf="selectedPaket">
+          Paket {{ activeCategoryLabel }}
+          <ng-container *ngIf="selectedPaketPriceLabel"> · {{ selectedPaketPriceLabel }}</ng-container>
+        </span>
+        <span class="ci-summary__chip" *ngIf="selectedTheme">Tema {{ selectedTheme.name }}</span>
+      </div>
 
       <form class="ci-form" [formGroup]="accountForm" (ngSubmit)="submitCreateInvitation()" novalidate>
+        <label class="ci-label" for="ci-couple-name">Nama pasangan</label>
         <div class="ci-field">
-          <input class="ci-input" type="text" placeholder="Nama pasangan (cth. Sena & Arya)" formControlName="coupleName" />
+          <input
+            id="ci-couple-name"
+            class="ci-input"
+            type="text"
+            placeholder="Nama pasangan (cth. Sena & Arya)"
+            formControlName="coupleName"
+          />
         </div>
         <p class="ci-field__error" *ngIf="accountForm.get('coupleName')?.touched && accountForm.get('coupleName')?.invalid">
           Nama pasangan wajib diisi.
         </p>
 
+        <label class="ci-label" for="ci-domain">Nama domain undangan</label>
+        <div class="ci-domain">
+          <span class="ci-domain__prefix">sena-digital.com/</span>
+          <input
+            id="ci-domain"
+            class="ci-input ci-domain__input"
+            type="text"
+            placeholder="sena-arya"
+            formControlName="domain"
+            autocomplete="off"
+          />
+        </div>
+        <p class="ci-field__error" *ngIf="accountForm.get('domain')?.touched && accountForm.get('domain')?.invalid">
+          Nama domain wajib diisi (minimal 3 karakter).
+        </p>
+
+        <label class="ci-label" for="ci-email">Email</label>
         <div class="ci-field">
-          <input class="ci-input" type="email" placeholder="Email" formControlName="email" autocomplete="email" />
+          <input id="ci-email" class="ci-input" type="email" placeholder="Email" formControlName="email" autocomplete="email" />
         </div>
         <p class="ci-field__error" *ngIf="accountForm.get('email')?.touched && accountForm.get('email')?.invalid">
           Masukkan email yang valid.
         </p>
 
+        <label class="ci-label" for="ci-phone">Nomor HP / WhatsApp</label>
         <div class="ci-field">
-          <input class="ci-input" type="tel" placeholder="Nomor WhatsApp" formControlName="phone" inputmode="numeric" />
+          <input
+            id="ci-phone"
+            class="ci-input"
+            type="tel"
+            placeholder="08xxxxxxxxxx"
+            formControlName="phone"
+            inputmode="numeric"
+          />
         </div>
         <p class="ci-field__error" *ngIf="accountForm.get('phone')?.touched && accountForm.get('phone')?.invalid">
           Masukkan nomor telepon yang valid (angka saja).
         </p>
 
+        <label class="ci-label" for="ci-password">Buat kata sandi</label>
         <div class="ci-field ci-field--password">
           <input
+            id="ci-password"
             class="ci-input ci-input--password"
             [type]="showPassword ? 'text' : 'password'"
             placeholder="Buat kata sandi"

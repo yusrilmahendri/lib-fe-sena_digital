@@ -166,13 +166,107 @@ $lp-input-bg: #fbf2f7;
 .ci-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
 
   &__error {
     margin: 0.2rem 0 0;
     font-size: 0.84rem;
     color: #c0392b;
     text-align: center;
+  }
+}
+
+.ci-label {
+  display: block;
+  margin: 0.75rem 0 0.35rem;
+  font-family: $main-font;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $lp-ink;
+
+  + .ci-field,
+  + .ci-domain {
+    margin-top: 0;
+  }
+
+  &__hint {
+    margin: -0.15rem 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: $lp-muted;
+  }
+}
+
+.ci-paket-meta {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.86rem;
+  color: $lp-muted;
+
+  strong {
+    color: $lp-plum;
+    text-transform: capitalize;
+  }
+
+  &--muted {
+    font-style: italic;
+  }
+}
+
+.ci-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $lp-plum;
+    background: $lp-input-bg;
+    border: 1px solid $lp-border;
+    border-radius: 999px;
+  }
+}
+
+.ci-domain {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  background: $lp-input-bg;
+  border: 1px solid $lp-border;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: rgba(107, 45, 87, 0.4);
+    box-shadow: 0 0 0 3px rgba(107, 45, 87, 0.1);
+  }
+
+  &__prefix {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0 0.65rem 0 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: $lp-muted;
+    background: rgba(255, 255, 255, 0.55);
+    border-right: 1px solid $lp-border;
+    white-space: nowrap;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 }
 
@@ -290,14 +384,19 @@ $lp-input-bg: #fbf2f7;
 /* ---------------- Theme selection ---------------- */
 .ci-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+
+  &--paket {
+    margin-bottom: 0.35rem;
+  }
 }
 
 .ci-tab {
-  padding: 0.5rem 1.1rem;
+  padding: 0.45rem 0.85rem;
   font-family: $main-font;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: $lp-plum;
   background: #fff;

@@ -15,7 +15,7 @@ export type CreateInvitationStep =
   | 'account'
   | 'success';
 
-type ThemeTier = 'ruby' | 'sapphire' | 'diamond';
+type ThemeTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
 
 interface ThemeCategoryTab {
   key: ThemeTier;
@@ -39,6 +39,7 @@ interface ThemeOption {
 interface PaketByTier {
   id: number;
   price: string | number;
+  name?: string;
 }
 
 /**
@@ -73,8 +74,14 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   /** Whether the user manually edited couple name (stop auto-generating it). */
   private coupleNameTouched = false;
+  /** Whether the user manually edited domain (stop auto-generating it). */
+  private domainTouched = false;
 
+  /* Packages follow the legacy system (Trial kept). The selected package drives
+     paket_undangan_id, price, available themes, payment and dashboard access —
+     exactly like the old flow. Tabs are package selectors. */
   categories: ThemeCategoryTab[] = [
+    { key: 'trial', label: 'Trial' },
     { key: 'ruby', label: 'Ruby' },
     { key: 'sapphire', label: 'Sapphire' },
     { key: 'diamond', label: 'Diamond' },
@@ -96,6 +103,14 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   /* Static themes per Figma — structured so they can be swapped by the API.
      Each tier shows a 3x2 grid (6 items) and reuses the landing thumbnails. */
   themesByCategory: Record<ThemeTier, ThemeOption[]> = {
+    trial: [
+      { slug: 'trial-lavender', name: 'Lavender', tier: 'trial', fallbackImage: 'assets/landing/template-1.png' },
+      { slug: 'trial-ivory', name: 'Ivory', tier: 'trial', fallbackImage: 'assets/landing/template-2.png' },
+      { slug: 'trial-mauve', name: 'Mauve', tier: 'trial', fallbackImage: 'assets/landing/template-3.png' },
+      { slug: 'trial-modern', name: 'Modern', tier: 'trial', fallbackImage: 'assets/landing/template-4.png' },
+      { slug: 'trial-rose', name: 'Rose', tier: 'trial', fallbackImage: 'assets/landing/template-5.png' },
+      { slug: 'trial-garden', name: 'Garden', tier: 'trial', fallbackImage: 'assets/landing/template-6.png' },
+    ],
     ruby: [
       { slug: 'lavender', name: 'Lavender', tier: 'ruby', fallbackImage: 'assets/landing/template-1.png' },
       { slug: 'ivory', name: 'Ivory', tier: 'ruby', fallbackImage: 'assets/landing/template-2.png' },
@@ -140,19 +155,26 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       weddingDate: ['', [Validators.required]],
     });
 
-    // Password minLength(6) mirrors the legacy DataRegistrasiComponent.
+    // Mirrors legacy DataRegistrasiComponent validators & field names.
     this.accountForm = this.fb.group({
       coupleName: ['', [Validators.required]],
+      domain: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
       phone: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       terms: [false, [Validators.requiredTrue]],
     });
 
     this.accountForm.get('coupleName')?.valueChanges.subscribe(() => {
-      // Once the user types their own couple name, stop auto-overwriting it.
       if (this.accountForm.get('coupleName')?.dirty) {
         this.coupleNameTouched = true;
+      }
+      this.syncAutoFieldsFromCoupleName();
+    });
+
+    this.accountForm.get('domain')?.valueChanges.subscribe(() => {
+      if (this.accountForm.get('domain')?.dirty) {
+        this.domainTouched = true;
       }
     });
   }
@@ -194,11 +216,46 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.showPassword = false;
     this.coupleNameTouched = false;
+    this.domainTouched = false;
+    this.activeCategory = 'ruby';
+    this.coupleDetailForm.reset();
+    this.accountForm.reset({ terms: false });
     this.selectedTheme = this.themesByCategory[this.activeCategory][0] || null;
   }
 
+  /** Currently selected package (drives price, themes, payment rules). */
+  get selectedPaket(): PaketByTier | null {
+    return this.paketByTier[this.activeCategory] ?? null;
+  }
+
+  get activeCategoryLabel(): string {
+    return (
+      this.categories.find((c) => c.key === this.activeCategory)?.label ||
+      this.activeCategory
+    );
+  }
+
+  /** Human-readable price for the selected package (legacy field `price`). */
+  get selectedPaketPriceLabel(): string {
+    const price = this.selectedPaket?.price;
+    if (price === undefined || price === null || price === '') {
+      return '';
+    }
+    const num = typeof price === 'number' ? price : Number(price);
+    if (isNaN(num)) {
+      return String(price);
+    }
+    if (num >= 1_000_000) {
+      return `Rp ${num / 1_000_000} jt`;
+    }
+    if (num >= 1000) {
+      return `Rp ${num / 1000} rb`;
+    }
+    return num === 0 ? 'Gratis' : `Rp ${num}`;
+  }
+
   /* ------------------------------- data loading ------------------------------ */
-  /** Map Ruby/Sapphire/Diamond tabs to the existing paket_undangan ids. */
+  /** Map Trial/Ruby/Sapphire/Diamond tabs to existing paket_undangan ids. */
   private loadPaketTiers(): void {
     this.dashboardSvc.list(DashboardServiceType.MNL_MD_PACK_INVITATION).subscribe({
       next: (res: any) => {
@@ -207,21 +264,28 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         list.forEach((paket) => {
           const tier = this.resolveTier(paket);
           if (tier && !byTier[tier]) {
-            byTier[tier] = { id: paket.id, price: paket.price ?? '' };
+            byTier[tier] = {
+              id: paket.id,
+              price: paket.price ?? '',
+              name:
+                paket.name_paket_display ||
+                paket.name_paket ||
+                paket.jenis_paket ||
+                tier,
+            };
           }
         });
         this.paketByTier = byTier;
       },
       error: () => {
-        // Non-fatal: submit validates that a paket id resolved before sending.
         console.warn('[BuatUndangan] paket-undangan API unavailable.');
       },
     });
   }
 
   private resolveTier(paket: any): ThemeTier | null {
-    const raw = `${paket?.package_tier || paket?.name_paket || ''}`.toLowerCase();
-    if (raw.includes('trial')) return null;
+    const raw = `${paket?.package_tier || paket?.name_paket || paket?.jenis_paket || ''}`.toLowerCase();
+    if (raw.includes('trial')) return 'trial';
     if (/ruby|silver|standar/.test(raw)) return 'ruby';
     if (/sapphire|gold/.test(raw)) return 'sapphire';
     if (/diamond|platinum/.test(raw)) return 'diamond';
@@ -237,6 +301,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
         // Assign real ids to existing grid slots (keeps Figma names/order).
         const flat: ThemeOption[] = [
+          ...this.themesByCategory.trial,
           ...this.themesByCategory.ruby,
           ...this.themesByCategory.sapphire,
           ...this.themesByCategory.diamond,
@@ -290,12 +355,16 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return this.themesByCategory[this.activeCategory] || [];
   }
 
+  /** Select package tab — determines price, themes, payment & dashboard access. */
   setCategory(tier: ThemeTier): void {
     this.activeCategory = tier;
-    // Default-select the first theme of the newly active category.
     if (!this.selectedTheme || this.selectedTheme.tier !== tier) {
       this.selectedTheme = this.currentThemes[0] || null;
     }
+  }
+
+  selectPaket(tier: ThemeTier): void {
+    this.setCategory(tier);
   }
 
   selectTheme(theme: ThemeOption): void {
@@ -347,18 +416,30 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   goToAccountStep(): void {
     this.errorMessage = '';
-    if (!this.selectedTheme) {
+    if (!this.selectedTheme || this.selectedTheme.tier !== this.activeCategory) {
+      this.errorMessage = 'Pilih salah satu tema untuk paket ini.';
       return;
     }
-    // Auto-generate couple name from step 1 unless the user edited it.
-    if (!this.coupleNameTouched) {
-      const bride = (this.coupleDetailForm.value.brideName || '').trim();
-      const groom = (this.coupleDetailForm.value.groomName || '').trim();
-      const generated = bride && groom ? `${bride} & ${groom}` : bride || groom;
-      if (generated) {
-        this.accountForm.patchValue({ coupleName: generated });
+    if (!this.selectedPaket?.id) {
+      this.errorMessage = 'Paket undangan belum tersedia. Coba lagi sebentar lagi.';
+      return;
+    }
+
+    const bride = (this.coupleDetailForm.value.brideName || '').trim();
+    const groom = (this.coupleDetailForm.value.groomName || '').trim();
+    const generatedCouple = bride && groom ? `${bride} & ${groom}` : bride || groom;
+
+    if (!this.coupleNameTouched && generatedCouple) {
+      this.accountForm.patchValue({ coupleName: generatedCouple }, { emitEvent: false });
+    }
+
+    if (!this.domainTouched) {
+      const baseName = this.accountForm.get('coupleName')?.value || generatedCouple;
+      if (baseName) {
+        this.accountForm.patchValue({ domain: this.buildDomain(baseName) }, { emitEvent: false });
       }
     }
+
     this.step = 'account';
   }
 
@@ -374,7 +455,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const paket = this.paketByTier[this.selectedTheme?.tier || this.activeCategory];
+    const paket = this.paketByTier[this.activeCategory];
     if (!paket?.id) {
       this.errorMessage =
         'Paket undangan belum tersedia. Coba lagi sebentar lagi.';
@@ -384,11 +465,12 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.isSubmitting = true;
 
     const account = this.accountForm.value;
+    const domain = String(account.domain || '').trim();
     const payload = new FormData();
     // --- Legacy one-step payload (unchanged field names) ---
     payload.append('paket_undangan_id', String(paket.id));
     payload.append('price', String(paket.price ?? ''));
-    payload.append('domain', this.buildDomain(account.coupleName));
+    payload.append('domain', domain);
     payload.append('email', account.email);
     payload.append('password', account.password);
     payload.append('phone', account.phone);
@@ -440,16 +522,31 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return slug.length >= 3 ? slug : `${slug}-undangan`;
   }
 
+  /** Auto-suggest domain from couple name until the user edits domain manually. */
+  private syncAutoFieldsFromCoupleName(): void {
+    if (this.domainTouched) {
+      return;
+    }
+    const coupleName = this.accountForm.get('coupleName')?.value;
+    if (coupleName) {
+      this.accountForm.patchValue(
+        { domain: this.buildDomain(coupleName) },
+        { emitEvent: false }
+      );
+    }
+  }
+
   /**
    * Mirror the legacy GenerateUndanganComponent localStorage shape so a user
    * who later opens /buat-undangan can resume the remaining steps. This only
    * writes the same keys the old flow already uses.
    */
   private persistLegacyFormState(res: any, account: any, paket: PaketByTier): void {
+    const domain = String(account.domain || '').trim();
     const registrasi = {
       paket_undangan_id: paket.id,
       price: paket.price,
-      domain: this.buildDomain(account.coupleName),
+      domain,
       email: account.email,
       phone: account.phone,
       kode_pemesanan: res?.user?.kode_pemesanan ?? null,
