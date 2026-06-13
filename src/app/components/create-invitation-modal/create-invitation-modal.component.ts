@@ -13,6 +13,7 @@ export type CreateInvitationStep =
   | 'couple-detail'
   | 'theme-selection'
   | 'account'
+  | 'payment'
   | 'success';
 
 type ThemeTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
@@ -68,6 +69,17 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   errorMessage = '';
   showPassword = false;
+
+  /* ---- Payment step state (reuses legacy endpoints/payloads) ---- */
+  paymentMethods: any[] = [];
+  selectedPaymentMethod: number | null = null;
+  paymentDetails: any[] = [];
+  isLoadingPaymentDetails = false;
+  isConfirmingPayment = false;
+  paymentError = '';
+  /** Captured from the one-step response for the confirm-payment payload. */
+  private oneStepUserId: number | null = null;
+  private oneStepKodePemesanan = '';
 
   coupleDetailForm: FormGroup;
   accountForm: FormGroup;
@@ -221,6 +233,16 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.coupleDetailForm.reset();
     this.accountForm.reset({ terms: false });
     this.selectedTheme = this.themesByCategory[this.activeCategory][0] || null;
+
+    // Payment step state
+    this.paymentMethods = [];
+    this.selectedPaymentMethod = null;
+    this.paymentDetails = [];
+    this.isLoadingPaymentDetails = false;
+    this.isConfirmingPayment = false;
+    this.paymentError = '';
+    this.oneStepUserId = null;
+    this.oneStepKodePemesanan = '';
   }
 
   /** Currently selected package (drives price, themes, payment rules). */
@@ -486,12 +508,26 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.dashboardSvc.create(DashboardServiceType.MNL_STEP_ONE, payload).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
-        // Persist token exactly like the legacy flow.
-        if (res?.token) {
-          localStorage.setItem('access_token', res.token);
+        // Persist token exactly like the legacy flow (res.token), with a
+        // defensive fallback in case the response nests it differently.
+        const token = res?.token || res?.access_token || res?.data?.token;
+        if (token) {
+          localStorage.setItem('access_token', token);
         }
+        if (res?.token_type) {
+          localStorage.setItem('token_type', res.token_type);
+        }
+
+        // Capture identifiers needed by the legacy confirm-payment payload.
+        this.oneStepUserId = res?.user?.id ?? res?.data?.user?.id ?? null;
+        this.oneStepKodePemesanan =
+          res?.user?.kode_pemesanan ?? res?.data?.user?.kode_pemesanan ?? '';
+
         this.persistLegacyFormState(res, account, paket);
-        this.step = 'success';
+
+        // Legacy flow requires a payment step before the account is usable.
+        this.step = 'payment';
+        this.loadPaymentMethods();
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -501,6 +537,88 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           err?.message ||
           'Pendaftaran gagal. Silakan periksa data dan coba lagi.';
       },
+    });
+  }
+
+  /* -------------------------------- payment --------------------------------- */
+  /** Load payment methods (legacy MD_RGS_PAYMENT / master-tagihan). */
+  private loadPaymentMethods(): void {
+    this.paymentError = '';
+    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
+      next: (res: any) => {
+        this.paymentMethods = Array.isArray(res?.data) ? res.data : [];
+      },
+      error: () => {
+        this.paymentError =
+          'Gagal memuat metode pembayaran. Coba lagi atau buka pembayaran dari dashboard.';
+      },
+    });
+  }
+
+  /** Load details for the chosen method (legacy MNL_MD_METHOD_DETAIL). */
+  onPaymentMethodSelect(methodId: number): void {
+    this.selectedPaymentMethod = methodId;
+    this.paymentDetails = [];
+    if (methodId == null) {
+      return;
+    }
+    // Trial method (id 4) shows static instruction, no detail call needed.
+    if (Number(methodId) === 4) {
+      return;
+    }
+    this.isLoadingPaymentDetails = true;
+    const query = `?id_methode_pembayaran=${methodId}`;
+    this.dashboardSvc.getParam(DashboardServiceType.MNL_MD_METHOD_DETAIL, query).subscribe({
+      next: (res: any) => {
+        this.paymentDetails = Array.isArray(res?.data) ? res.data : [];
+        this.isLoadingPaymentDetails = false;
+      },
+      error: () => {
+        this.isLoadingPaymentDetails = false;
+        this.paymentError = 'Gagal memuat detail pembayaran.';
+      },
+    });
+  }
+
+  /** Confirm payment (legacy RDM_CONFIRM_PAYMENT, same payload). */
+  confirmPayment(): void {
+    this.paymentError = '';
+    if (this.selectedPaymentMethod == null || this.isConfirmingPayment) {
+      return;
+    }
+
+    this.isConfirmingPayment = true;
+    const payload = {
+      user_id: this.oneStepUserId,
+      kode_pemesanan: this.oneStepKodePemesanan || '',
+    };
+
+    this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
+      next: () => {
+        this.isConfirmingPayment = false;
+        this.step = 'success';
+      },
+      error: (err: any) => {
+        this.isConfirmingPayment = false;
+        this.paymentError =
+          err?.error?.message ||
+          err?.message ||
+          'Konfirmasi pembayaran gagal. Silakan coba lagi.';
+      },
+    });
+  }
+
+  /** "Nanti saja": account already created; finish onboarding, pay later. */
+  payLater(): void {
+    this.step = 'success';
+  }
+
+  copyToClipboard(text: string): void {
+    if (!text) {
+      return;
+    }
+    navigator.clipboard?.writeText(text).catch(() => {
+      /* clipboard failures are non-critical */
     });
   }
 
@@ -543,13 +661,23 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
    */
   private persistLegacyFormState(res: any, account: any, paket: PaketByTier): void {
     const domain = String(account.domain || '').trim();
-    const registrasi = {
+    const registrasiValues = {
       paket_undangan_id: paket.id,
       price: paket.price,
       domain,
       email: account.email,
       phone: account.phone,
       kode_pemesanan: res?.user?.kode_pemesanan ?? null,
+    };
+
+    // Shape mirrors the legacy DataRegistrasiComponent emit so the legacy
+    // payment step (regis-pembayaran/payment-confirm) can read it if the user
+    // later resumes via /buat-undangan: registrasi.formData.price and
+    // registrasi.response.user.{id,kode_pemesanan}.
+    const registrasi = {
+      ...registrasiValues,
+      formData: registrasiValues,
+      response: res,
     };
 
     const formData = {

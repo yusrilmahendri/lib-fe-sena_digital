@@ -1,7 +1,7 @@
 <div class="ci-modal" *ngIf="isOpen" (click)="onBackdropClick()">
   <div
     class="ci-modal__card"
-    [class.ci-modal__card--wide]="step === 'theme-selection' || step === 'account'"
+    [class.ci-modal__card--wide]="step === 'theme-selection' || step === 'account' || step === 'payment'"
     (click)="$event.stopPropagation()"
   >
     <button
@@ -26,7 +26,10 @@
     <div class="ci-progress" aria-hidden="true">
       <span class="ci-progress__seg is-active"></span>
       <span class="ci-progress__seg" [class.is-active]="step !== 'couple-detail'"></span>
-      <span class="ci-progress__seg" [class.is-active]="step === 'account' || step === 'success'"></span>
+      <span
+        class="ci-progress__seg"
+        [class.is-active]="step === 'account' || step === 'payment' || step === 'success'"
+      ></span>
     </div>
 
     <!-- ===================== STEP 1 — DETAIL PASANGAN ===================== -->
@@ -238,6 +241,113 @@
         Sudah punya akun?
         <a class="ci-link" role="button" tabindex="0" (click)="openLoginModal()" (keydown.enter)="openLoginModal()">Masuk</a>
       </p>
+    </ng-container>
+
+    <!-- ===================== STEP 4 — PEMBAYARAN ===================== -->
+    <ng-container *ngIf="step === 'payment'">
+      <h2 class="ci-modal__title">Selesaikan pembayaran</h2>
+      <p class="ci-modal__subtitle">
+        Paket undanganmu hampir siap. Lanjutkan pembayaran untuk mengaktifkan
+        fitur sesuai paket.
+      </p>
+
+      <!-- Ringkasan pesanan -->
+      <div class="ci-pay-summary">
+        <div class="ci-pay-summary__row">
+          <span>Paket</span>
+          <strong>{{ activeCategoryLabel }}</strong>
+        </div>
+        <div class="ci-pay-summary__row" *ngIf="selectedTheme">
+          <span>Tema</span>
+          <strong>{{ selectedTheme.name }}</strong>
+        </div>
+        <div class="ci-pay-summary__row">
+          <span>Domain</span>
+          <strong>sena-digital.com/{{ accountForm.get('domain')?.value }}</strong>
+        </div>
+        <div class="ci-pay-summary__row ci-pay-summary__row--total">
+          <span>Total</span>
+          <strong>{{ selectedPaketPriceLabel || '-' }}</strong>
+        </div>
+      </div>
+
+      <!-- Metode pembayaran -->
+      <label class="ci-label" for="ci-payment-method">Metode pembayaran</label>
+      <div class="ci-field">
+        <select
+          id="ci-payment-method"
+          class="ci-input ci-select"
+          [ngModel]="selectedPaymentMethod"
+          (ngModelChange)="onPaymentMethodSelect($event)"
+        >
+          <option [ngValue]="null" disabled>Pilih metode pembayaran</option>
+          <option *ngFor="let method of paymentMethods" [ngValue]="method.id">
+            {{ method.name }}
+          </option>
+        </select>
+      </div>
+
+      <p class="ci-pay-loading" *ngIf="isLoadingPaymentDetails">Memuat detail pembayaran…</p>
+
+      <!-- Manual / bank transfer (method 1) -->
+      <div class="ci-pay-detail" *ngIf="selectedPaymentMethod === 1">
+        <div class="ci-pay-detail__item" *ngFor="let rekening of paymentDetails">
+          <div class="ci-pay-row"><span>Bank</span><strong>{{ rekening.nama_bank }}</strong></div>
+          <div class="ci-pay-row ci-pay-row--copy" (click)="copyToClipboard(rekening.nomor_rekening)">
+            <span>No. Rekening</span><strong>{{ rekening.nomor_rekening }}</strong>
+          </div>
+          <div class="ci-pay-row"><span>Atas Nama</span><strong>{{ rekening.nama_pemilik }}</strong></div>
+        </div>
+        <p class="ci-pay-note">
+          Setelah transfer, klik "Konfirmasi Pembayaran" dan simpan bukti transfermu.
+        </p>
+      </div>
+
+      <!-- Tripay (method 2) -->
+      <div class="ci-pay-detail" *ngIf="selectedPaymentMethod === 2">
+        <div class="ci-pay-detail__item" *ngFor="let tripay of paymentDetails">
+          <div class="ci-pay-row"><span>Metode</span><strong>{{ tripay.methode_pembayaran }}</strong></div>
+          <div class="ci-pay-row" *ngIf="tripay.url_tripay">
+            <span>Link</span>
+            <a class="ci-link" [href]="tripay.url_tripay" target="_blank" rel="noopener">Buka Tripay</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Midtrans (method 3) -->
+      <div class="ci-pay-detail" *ngIf="selectedPaymentMethod === 3">
+        <div class="ci-pay-detail__item" *ngFor="let midtrans of paymentDetails">
+          <div class="ci-pay-row"><span>Metode</span><strong>{{ midtrans.methode_pembayaran }}</strong></div>
+          <div class="ci-pay-row" *ngIf="midtrans.url">
+            <span>Link</span>
+            <a class="ci-link" [href]="midtrans.url" target="_blank" rel="noopener">Buka Midtrans</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trial (method 4) -->
+      <div class="ci-pay-detail" *ngIf="selectedPaymentMethod === 4">
+        <p class="ci-pay-note">
+          Mode Trial aktif selama 3 hari. Beberapa fitur dibatasi dan undangan
+          tidak dapat diakses setelah masa uji coba berakhir.
+        </p>
+      </div>
+
+      <p class="ci-form__error" *ngIf="paymentError">{{ paymentError }}</p>
+
+      <div class="ci-actions">
+        <button type="button" class="ci-btn ci-btn--outline" (click)="payLater()">
+          Nanti saja
+        </button>
+        <button
+          type="button"
+          class="ci-btn ci-btn--primary"
+          [disabled]="selectedPaymentMethod == null || isConfirmingPayment"
+          (click)="confirmPayment()"
+        >
+          {{ isConfirmingPayment ? 'Memproses…' : 'Bayar Sekarang' }}
+        </button>
+      </div>
     </ng-container>
 
     <!-- ===================== SUCCESS ===================== -->
