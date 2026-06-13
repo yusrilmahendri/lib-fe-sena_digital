@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth.service';
+import { LandingModalService } from '../../landing-modal.service';
 
 export type AuthModalMode =
   | 'login'
@@ -41,7 +42,12 @@ export class AuthModalComponent implements OnChanges {
   forgotForm: FormGroup;
   resetForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {
+  constructor(
+    private fb: FormBuilder,
+    private auth: AuthService,
+    private router: Router,
+    private modal: LandingModalService
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]],
@@ -150,10 +156,17 @@ export class AuthModalComponent implements OnChanges {
     this.showConfirmPassword = !this.showConfirmPassword;
   }
 
-  /** "Daftar di sini" mirrors the landing "Buat Undangan Sekarang" CTA. */
+  /** "Daftar di sini" opens the redesigned "Buat Undangan" modal wizard. */
   goToBuatUndangan(): void {
     this.closeAuthModal();
-    this.router.navigate(['/buat-undangan']);
+    if (this.standalone) {
+      // From the /reset-password route the modal isn't rendered here; go to the
+      // landing page where the create-invitation modal lives, then open it.
+      this.modal.openCreateInvitation();
+      this.router.navigate(['/']);
+    } else {
+      this.modal.openCreateInvitation();
+    }
   }
 
   /** "Kembali masuk": on the reset route, go home + open login; else show login. */

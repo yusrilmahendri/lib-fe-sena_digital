@@ -1,0 +1,204 @@
+<div class="ci-modal" *ngIf="isOpen" (click)="onBackdropClick()">
+  <div
+    class="ci-modal__card"
+    [class.ci-modal__card--wide]="step === 'theme-selection'"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="ci-modal__close"
+      aria-label="Tutup"
+      (click)="closeModal()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <!-- Brand header -->
+    <div class="ci-modal__brand">
+      <img class="ci-modal__logo" src="assets/landing/logo.svg" alt="Sena Digital" />
+      <span class="ci-modal__brand-text">
+        <span class="ci-modal__brand-name">Sena</span>
+        <span class="ci-modal__brand-sub">Digital</span>
+      </span>
+    </div>
+
+    <!-- Progress bar (3 segments) -->
+    <div class="ci-progress" *ngIf="step !== 'account'" aria-hidden="true">
+      <span class="ci-progress__seg is-active"></span>
+      <span class="ci-progress__seg" [class.is-active]="step === 'theme-selection' || step === 'success'"></span>
+      <span class="ci-progress__seg" [class.is-active]="step === 'success'"></span>
+    </div>
+
+    <!-- ===================== STEP 1 — DETAIL PASANGAN ===================== -->
+    <ng-container *ngIf="step === 'couple-detail'">
+      <h2 class="ci-modal__title">Isi detail pasangan</h2>
+      <p class="ci-modal__subtitle">Tenang, kamu masih bisa mengubahnya kapan saja.</p>
+
+      <form class="ci-form" [formGroup]="coupleDetailForm" (ngSubmit)="goToThemeSelectionStep()" novalidate>
+        <div class="ci-field">
+          <span class="ci-field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <input class="ci-input" type="text" placeholder="Nama mempelai wanita" formControlName="brideName" />
+        </div>
+        <p class="ci-field__error" *ngIf="coupleDetailForm.get('brideName')?.touched && coupleDetailForm.get('brideName')?.invalid">
+          Nama mempelai wanita wajib diisi.
+        </p>
+
+        <div class="ci-field">
+          <span class="ci-field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <input class="ci-input" type="text" placeholder="Nama mempelai pria" formControlName="groomName" />
+        </div>
+        <p class="ci-field__error" *ngIf="coupleDetailForm.get('groomName')?.touched && coupleDetailForm.get('groomName')?.invalid">
+          Nama mempelai pria wajib diisi.
+        </p>
+
+        <div class="ci-field">
+          <span class="ci-field__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </span>
+          <input class="ci-input" type="date" placeholder="DD/MM/YYYY" formControlName="weddingDate" />
+        </div>
+        <p class="ci-field__error" *ngIf="coupleDetailForm.get('weddingDate')?.touched && coupleDetailForm.get('weddingDate')?.invalid">
+          Tanggal pernikahan wajib diisi.
+        </p>
+
+        <button type="submit" class="ci-btn ci-btn--primary" [disabled]="coupleDetailForm.invalid">
+          Lanjut
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+    </ng-container>
+
+    <!-- ===================== STEP 2 — PILIH TEMA ===================== -->
+    <ng-container *ngIf="step === 'theme-selection'">
+      <h2 class="ci-modal__title">Pilih tema awal</h2>
+      <p class="ci-modal__subtitle">Bisa diganti kapan saja dari dashboard.</p>
+
+      <div class="ci-tabs" role="tablist">
+        <button
+          *ngFor="let cat of categories"
+          type="button"
+          class="ci-tab"
+          [class.is-active]="activeCategory === cat.key"
+          (click)="setCategory(cat.key)"
+        >
+          {{ cat.label }}
+        </button>
+      </div>
+
+      <div class="ci-themes">
+        <button
+          *ngFor="let theme of currentThemes"
+          type="button"
+          class="ci-theme"
+          [class.is-selected]="isThemeSelected(theme)"
+          (click)="selectTheme(theme)"
+        >
+          <span class="ci-theme__thumb">
+            <img [src]="getThemeImage(theme)" [alt]="theme.name" (error)="onThemeImgError(theme)" />
+          </span>
+          <span class="ci-theme__name">{{ theme.name }}</span>
+        </button>
+      </div>
+
+      <div class="ci-actions">
+        <button type="button" class="ci-btn ci-btn--outline" (click)="goToCoupleDetailStep()">
+          Kembali
+        </button>
+        <button type="button" class="ci-btn ci-btn--primary" [disabled]="!selectedTheme" (click)="goToAccountStep()">
+          Lanjut
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- ===================== STEP 3 — BUAT AKUN ===================== -->
+    <ng-container *ngIf="step === 'account'">
+      <h2 class="ci-modal__title">Mulai cerita undanganmu</h2>
+      <p class="ci-modal__subtitle">Buat akun gratis — pilih tema kapan saja.</p>
+
+      <form class="ci-form" [formGroup]="accountForm" (ngSubmit)="submitCreateInvitation()" novalidate>
+        <div class="ci-field">
+          <input class="ci-input" type="text" placeholder="Nama pasangan (cth. Sena & Arya)" formControlName="coupleName" />
+        </div>
+        <p class="ci-field__error" *ngIf="accountForm.get('coupleName')?.touched && accountForm.get('coupleName')?.invalid">
+          Nama pasangan wajib diisi.
+        </p>
+
+        <div class="ci-field">
+          <input class="ci-input" type="email" placeholder="Email" formControlName="email" autocomplete="email" />
+        </div>
+        <p class="ci-field__error" *ngIf="accountForm.get('email')?.touched && accountForm.get('email')?.invalid">
+          Masukkan email yang valid.
+        </p>
+
+        <div class="ci-field">
+          <input class="ci-input" type="tel" placeholder="Nomor WhatsApp" formControlName="phone" inputmode="numeric" />
+        </div>
+        <p class="ci-field__error" *ngIf="accountForm.get('phone')?.touched && accountForm.get('phone')?.invalid">
+          Masukkan nomor telepon yang valid (angka saja).
+        </p>
+
+        <div class="ci-field ci-field--password">
+          <input
+            class="ci-input ci-input--password"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Buat kata sandi"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            class="ci-eye"
+            [attr.aria-label]="showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+            (click)="togglePassword()"
+          >
+            <svg *ngIf="!showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg *ngIf="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.6 3.3M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9 9 0 0 0 4.4-1.1M3 3l18 18"/></svg>
+          </button>
+        </div>
+        <p class="ci-field__error" *ngIf="accountForm.get('password')?.touched && accountForm.get('password')?.invalid">
+          Kata sandi minimal 6 karakter.
+        </p>
+
+        <label class="ci-check">
+          <input type="checkbox" formControlName="terms" />
+          <span>Saya menyetujui Syarat &amp; Ketentuan dan Kebijakan Privasi Sena Digital.</span>
+        </label>
+
+        <p class="ci-form__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <button type="submit" class="ci-btn ci-btn--primary" [disabled]="accountForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Memproses…' : 'Daftar Sekarang' }}
+          <svg *ngIf="!isSubmitting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
+
+      <p class="ci-modal__foot">
+        Sudah punya akun?
+        <a class="ci-link" role="button" tabindex="0" (click)="openLoginModal()" (keydown.enter)="openLoginModal()">Masuk</a>
+      </p>
+    </ng-container>
+
+    <!-- ===================== SUCCESS ===================== -->
+    <ng-container *ngIf="step === 'success'">
+      <div class="ci-success__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+      </div>
+
+      <h2 class="ci-modal__title">Akunmu siap!</h2>
+      <p class="ci-modal__subtitle">
+        Lanjutkan ke dashboard untuk melengkapi detail acara, galeri, dan
+        membagikan link undanganmu.
+      </p>
+
+      <button type="button" class="ci-btn ci-btn--primary" (click)="goToDashboard()">
+        Buka Dashboard
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+    </ng-container>
+  </div>
+</div>

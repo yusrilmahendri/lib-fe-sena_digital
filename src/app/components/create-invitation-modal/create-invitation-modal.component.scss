@@ -1,0 +1,489 @@
+@import "../../../styles/variable";
+
+/* Local landing palette (component-scoped, matches auth modal) */
+$lp-plum: #6b2d57;
+$lp-plum-dark: #4d1f3e;
+$lp-plum-soft: #9a5c84;
+$lp-ink: #3a2230;
+$lp-muted: #6c5763;
+$lp-serif: Georgia, "Times New Roman", serif;
+$lp-border: rgba(92, 45, 78, 0.12);
+$lp-input-bg: #fbf2f7;
+
+:host {
+  display: block;
+}
+
+@keyframes ciFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ciPop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ci-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(60, 22, 50, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: ciFadeIn 0.2s ease both;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  &__card {
+    position: relative;
+    width: min(430px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    margin: auto;
+    padding: 2.2rem 2rem 2rem;
+    background: #ffffff;
+    border-radius: 26px;
+    box-shadow: 0 30px 70px rgba(77, 31, 62, 0.28);
+    animation: ciPop 0.28s ease both;
+    overflow-y: auto;
+    box-sizing: border-box;
+
+    &--wide {
+      width: min(520px, calc(100vw - 32px));
+    }
+  }
+
+  &__close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(92, 45, 78, 0.06);
+    color: $lp-plum;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(92, 45, 78, 0.12);
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+  }
+
+  &__logo {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+  }
+
+  &__brand-text {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-family: $lp-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  &__brand-name {
+    color: $lp-ink;
+  }
+
+  &__brand-sub {
+    color: $lp-plum;
+  }
+
+  &__title {
+    margin: 0 0 0.4rem;
+    font-family: $lp-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: $lp-ink;
+  }
+
+  &__subtitle {
+    margin: 0 0 1.3rem;
+    font-family: $main-font;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: $lp-muted;
+  }
+
+  &__foot {
+    margin: 1.1rem 0 0;
+    text-align: center;
+    font-size: 0.88rem;
+    color: $lp-muted;
+  }
+}
+
+/* ---------------- Progress bar ---------------- */
+.ci-progress {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0 0 1.4rem;
+
+  &__seg {
+    flex: 1;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(154, 92, 132, 0.18);
+    transition: background 0.25s ease;
+
+    &.is-active {
+      background: linear-gradient(90deg, $lp-plum, $lp-plum-soft);
+    }
+  }
+}
+
+/* ---------------- Forms ---------------- */
+.ci-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__error {
+    margin: 0.2rem 0 0;
+    font-size: 0.84rem;
+    color: #c0392b;
+    text-align: center;
+  }
+}
+
+.ci-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 0.55rem;
+
+  &__icon {
+    position: absolute;
+    left: 0.95rem;
+    display: inline-flex;
+    color: $lp-plum-soft;
+    pointer-events: none;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__error {
+    margin: 0.2rem 0 0;
+    font-size: 0.76rem;
+    color: #c0392b;
+  }
+
+  &--password {
+    /* keep eye button inside */
+  }
+}
+
+.ci-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  font-family: $main-font;
+  font-size: 0.95rem;
+  color: $lp-ink;
+  background: $lp-input-bg;
+  border: 1px solid $lp-border;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: #b29aa6;
+  }
+
+  &:focus {
+    border-color: rgba(107, 45, 87, 0.4);
+    box-shadow: 0 0 0 3px rgba(107, 45, 87, 0.1);
+  }
+
+  /* When a leading icon is present */
+  .ci-field__icon + & {
+    padding-left: 2.7rem;
+  }
+
+  &--password {
+    padding-right: 3rem;
+  }
+}
+
+.ci-eye {
+  position: absolute;
+  right: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: $lp-plum-soft;
+  cursor: pointer;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.ci-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: $lp-muted;
+  cursor: pointer;
+
+  input {
+    margin-top: 0.15rem;
+    width: 16px;
+    height: 16px;
+    accent-color: $lp-plum;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+.ci-link {
+  color: $lp-plum;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ---------------- Theme selection ---------------- */
+.ci-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ci-tab {
+  padding: 0.5rem 1.1rem;
+  font-family: $main-font;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: $lp-plum;
+  background: #fff;
+  border: 1.5px solid rgba(107, 45, 87, 0.22);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.is-active {
+    color: #fff;
+    background: linear-gradient(135deg, $lp-plum 0%, $lp-plum-dark 100%);
+    border-color: transparent;
+  }
+}
+
+.ci-themes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.4rem;
+}
+
+.ci-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  background: #fff;
+  border: 1.5px solid $lp-border;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(77, 31, 62, 0.1);
+  }
+
+  &.is-selected {
+    border-color: $lp-plum;
+    box-shadow: 0 0 0 3px rgba(107, 45, 87, 0.12);
+  }
+
+  &__thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 12px;
+    overflow: hidden;
+    background: $lp-input-bg;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  &__name {
+    font-family: $main-font;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $lp-ink;
+  }
+}
+
+/* ---------------- Buttons ---------------- */
+.ci-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+
+  .ci-btn {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+  }
+}
+
+.ci-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.95rem 1.4rem;
+  margin-top: 0.9rem;
+  font-family: $main-font;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease,
+    color 0.2s ease, opacity 0.2s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, $lp-plum 0%, $lp-plum-dark 100%);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(107, 45, 87, 0.28);
+
+    &:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(107, 45, 87, 0.36);
+    }
+  }
+
+  &--outline {
+    background: #fff;
+    color: $lp-plum;
+    border-color: rgba(107, 45, 87, 0.25);
+
+    &:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
+/* ---------------- Success ---------------- */
+.ci-success__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0.5rem 0 1.2rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $lp-plum 0%, $lp-plum-dark 100%);
+  color: #fff;
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* ---------------- Responsive ---------------- */
+@media screen and (max-width: 520px) {
+  .ci-themes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .ci-modal {
+    padding: 0.85rem;
+
+    &__card {
+      padding: 2rem 1.25rem 1.5rem;
+      border-radius: 22px;
+    }
+
+    &__title {
+      font-size: 1.32rem;
+    }
+  }
+
+  .ci-actions {
+    flex-direction: column-reverse;
+
+    .ci-btn {
+      width: 100%;
+    }
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .ci-themes {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { LandingModalService } from '../../landing-modal.service';
 
 @Component({
   selector: 'wc-hero-section',
@@ -7,11 +8,11 @@ import { Router } from '@angular/router';
   styleUrls: ['./hero-section.component.scss'],
 })
 export class HeroSectionComponent {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private modal: LandingModalService) {}
 
-  // Primary CTA -> invitation builder
+  // Primary CTA -> open the redesigned "Buat Undangan" modal wizard.
   clickGenerateUndangan(): void {
-    this.router.navigate(['/buat-undangan']);
+    this.modal.openCreateInvitation();
   }
 
   // Secondary CTA -> scroll to themes/showcase section

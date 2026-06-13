@@ -90,6 +90,7 @@ import { GiftViewComponent } from './dashboard/wedding-view/gift-view/gift-view.
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
+import { CreateInvitationModalComponent } from './components/create-invitation-modal/create-invitation-modal.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 @NgModule({
   declarations: [
@@ -169,6 +170,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
     BillUserComponent,
     ProfileAdminComponent,
     AuthModalComponent,
+    CreateInvitationModalComponent,
     ResetPasswordComponent,
   ],
   imports: [

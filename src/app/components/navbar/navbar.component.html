@@ -88,4 +88,7 @@
 </header>
 
 <!-- Authentication modal (login / forgot password / email confirmation) -->
-<wc-auth-modal [isOpen]="isAuthModalOpen" (closed)="closeAuthModal()"></wc-auth-modal>
+<wc-auth-modal [isOpen]="(modal.loginOpen$ | async) || false" (closed)="closeAuthModal()"></wc-auth-modal>
+
+<!-- Create-invitation modal wizard (detail pasangan / tema / akun / sukses) -->
+<wc-create-invitation-modal></wc-create-invitation-modal>
