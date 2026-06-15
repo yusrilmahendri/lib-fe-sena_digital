@@ -17,11 +17,21 @@ export class GenerateUndanganComponent implements OnInit {
     step: 1,
   };
 
+  /** Shown when the user is redirected from the landing modal after one-step. */
+  onboardingNotice = '';
+
   ngOnInit(): void {
     const saved = localStorage.getItem('formData');
     if (saved) {
       this.formData = JSON.parse(saved);
     }
+
+    const notice = sessionStorage.getItem('landingOnboardingNotice');
+    if (notice) {
+      this.onboardingNotice = notice;
+      sessionStorage.removeItem('landingOnboardingNotice');
+    }
+
     console.log('all formdata:', this.formData);
   }
 

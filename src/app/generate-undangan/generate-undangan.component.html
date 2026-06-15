@@ -3,6 +3,10 @@
   <h3 class="gu-title">{{ title }}</h3>
   <p class="gu-subtitle">Hai kak, isi dulu datanya</p>
 
+  <p *ngIf="onboardingNotice" class="gu-notice" role="status">
+    {{ onboardingNotice }}
+  </p>
+
   <div class="gu-progress mb-4">
     <div
       class="gu-progress-bar"

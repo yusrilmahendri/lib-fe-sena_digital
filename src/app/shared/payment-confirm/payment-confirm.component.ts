@@ -18,6 +18,10 @@ export class PaymentConfirmComponent implements OnInit {
   @Input() userId!: number;
   form!: FormGroup;
 
+  /** Payment submit state, shown in the template near the confirm button. */
+  isPaymentSubmitting = false;
+  paymentErrorMessage = '';
+
   constructor(
     private fb: FormBuilder,
     private dashboardSvc: DashboardService,
@@ -69,18 +73,86 @@ export class PaymentConfirmComponent implements OnInit {
   }
 
   onConfirm() {
+    if (this.isPaymentSubmitting) {
+      return;
+    }
+    this.isPaymentSubmitting = true;
+    this.paymentErrorMessage = '';
+
+    // Legacy payload kept unchanged: { user_id, kode_pemesanan }.
     const payload = this.form.value;
-    this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe(res => {
-      this.notyf.success('Berhasil konfirmasi pembayaran');
-      this.modalService.hide();
-      setTimeout(() => {
-        this.modalService.show(SuccessConfirmPaymentComponent, {
-          initialState: {
-            message: 'Konfirmasi berhasil!'
-          }
-        });
-      }, 300);
+    this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
+      next: () => {
+        this.isPaymentSubmitting = false;
+        this.notyf.success('Berhasil konfirmasi pembayaran');
+        this.modalService.hide();
+        setTimeout(() => {
+          this.modalService.show(SuccessConfirmPaymentComponent, {
+            initialState: {
+              message: 'Konfirmasi berhasil!'
+            }
+          });
+        }, 300);
+      },
+      error: (err) => {
+        // Never redirect, logout, clear the token, or close the modal on error.
+        // Keep the user in the flow with a clear, user-friendly message.
+        this.isPaymentSubmitting = false;
+        this.paymentErrorMessage = this.mapPaymentError(err);
+      }
     });
+  }
+
+  /** Map a payment error to a clear, user-friendly Indonesian message. */
+  private mapPaymentError(err: any): string {
+    const status = err?.status;
+    const backendMessage = err?.error?.message;
+
+    if (status === 401) {
+      return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
+    }
+    if (status === 403) {
+      return 'Akun Anda belum memiliki akses untuk melanjutkan pembayaran. ' +
+        'Silakan lengkapi data undangan terlebih dahulu atau hubungi admin.';
+    }
+    if (status === 422) {
+      const validationMsg = this.firstValidationError(err);
+      return (
+        validationMsg ||
+        backendMessage ||
+        'Data pembayaran belum lengkap. Silakan periksa kembali.'
+      );
+    }
+    if (status === 500) {
+      return 'Terjadi gangguan pada server pembayaran. Silakan coba beberapa saat lagi.';
+    }
+    if (status === 0 || status == null) {
+      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+    }
+
+    // The raw "User does not have the right roles." must never be shown.
+    if (
+      typeof backendMessage === 'string' &&
+      !/right roles/i.test(backendMessage)
+    ) {
+      return backendMessage;
+    }
+    return 'Pembayaran belum dapat diproses. Silakan coba kembali.';
+  }
+
+  private firstValidationError(err: any): string | null {
+    const errors = err?.error?.errors;
+    if (errors && typeof errors === 'object') {
+      const firstKey = Object.keys(errors)[0];
+      const firstVal = firstKey ? errors[firstKey] : null;
+      if (Array.isArray(firstVal) && firstVal.length) {
+        return firstVal[0];
+      }
+      if (typeof firstVal === 'string') {
+        return firstVal;
+      }
+    }
+    return null;
   }
 
 }

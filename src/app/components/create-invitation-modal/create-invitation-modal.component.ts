@@ -13,8 +13,7 @@ export type CreateInvitationStep =
   | 'couple-detail'
   | 'theme-selection'
   | 'account'
-  | 'payment'
-  | 'success';
+  | 'continue-wizard';
 
 type ThemeTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
 
@@ -523,11 +522,16 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         this.oneStepKodePemesanan =
           res?.user?.kode_pemesanan ?? res?.data?.user?.kode_pemesanan ?? '';
 
+        if (!token || this.oneStepUserId == null || !this.oneStepKodePemesanan) {
+          this.errorMessage =
+            'Pendaftaran berhasil tetapi data sesi tidak lengkap. Silakan masuk ke form undangan untuk melanjutkan.';
+          return;
+        }
+
         this.persistLegacyFormState(res, account, paket);
 
-        // Legacy flow requires a payment step before the account is usable.
-        this.step = 'payment';
-        this.loadPaymentMethods();
+        // Backend requires steps 2–4 before payment; resume via legacy wizard.
+        this.step = 'continue-wizard';
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -596,21 +600,28 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
       next: () => {
         this.isConfirmingPayment = false;
-        this.step = 'success';
+        this.continueToBuatUndangan();
       },
       error: (err: any) => {
+        // Never redirect/logout/close on failure; show a clear message instead.
         this.isConfirmingPayment = false;
-        this.paymentError =
-          err?.error?.message ||
-          err?.message ||
-          'Konfirmasi pembayaran gagal. Silakan coba lagi.';
+        this.paymentError = this.mapPaymentError(err);
       },
     });
   }
 
-  /** "Nanti saja": account already created; finish onboarding, pay later. */
-  payLater(): void {
-    this.step = 'success';
+  /** Resume legacy wizard at step 2 (informasi mempelai). */
+  continueToBuatUndangan(): void {
+    try {
+      sessionStorage.setItem(
+        'landingOnboardingNotice',
+        'Data dasar berhasil dibuat. Silakan lengkapi data undangan sebelum melakukan pembayaran.'
+      );
+    } catch {
+      /* non-critical */
+    }
+    this.closeModal();
+    this.router.navigate(['/buat-undangan']);
   }
 
   copyToClipboard(text: string): void {
@@ -620,11 +631,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     navigator.clipboard?.writeText(text).catch(() => {
       /* clipboard failures are non-critical */
     });
-  }
-
-  goToDashboard(): void {
-    this.closeModal();
-    this.router.navigate(['/dashboard']);
   }
 
   /* ------------------------------- helpers ---------------------------------- */
@@ -661,13 +667,19 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
    */
   private persistLegacyFormState(res: any, account: any, paket: PaketByTier): void {
     const domain = String(account.domain || '').trim();
+    const userId = res?.user?.id ?? res?.data?.user?.id ?? null;
+    const kodePemesanan =
+      res?.user?.kode_pemesanan ?? res?.data?.user?.kode_pemesanan ?? '';
+    const brideName = String(this.coupleDetailForm.value.brideName || '').trim();
+    const groomName = String(this.coupleDetailForm.value.groomName || '').trim();
+
     const registrasiValues = {
       paket_undangan_id: paket.id,
       price: paket.price,
       domain,
       email: account.email,
       phone: account.phone,
-      kode_pemesanan: res?.user?.kode_pemesanan ?? null,
+      kode_pemesanan: kodePemesanan,
     };
 
     // Shape mirrors the legacy DataRegistrasiComponent emit so the legacy
@@ -683,10 +695,16 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     const formData = {
       registrasi,
       informasiMempelai: {
-        nama_wanita: this.coupleDetailForm.value.brideName,
-        nama_pria: this.coupleDetailForm.value.groomName,
-        tanggal: this.coupleDetailForm.value.weddingDate,
+        updatedData: {
+          name_lengkap_wanita: brideName,
+          name_panggilan_wanita: brideName,
+          name_lengkap_pria: groomName,
+          name_panggilan_pria: groomName,
+          user_id: userId,
+          status: 1,
+        },
         couple_name: account.coupleName,
+        tanggal: this.coupleDetailForm.value.weddingDate,
       },
       cerita: {},
       pembayaran: {},
@@ -698,6 +716,12 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     try {
       localStorage.setItem('formData', JSON.stringify(formData));
       localStorage.setItem('formRegis', JSON.stringify(registrasi));
+      if (userId != null) {
+        localStorage.setItem('oneStepUserId', String(userId));
+      }
+      if (kodePemesanan) {
+        localStorage.setItem('oneStepKodePemesanan', kodePemesanan);
+      }
     } catch {
       // Storage failures must never block the success flow.
     }
@@ -716,5 +740,37 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       }
     }
     return null;
+  }
+
+  /** Map a payment error to a clear, user-friendly Indonesian message. */
+  private mapPaymentError(err: any): string {
+    const status = err?.status;
+    const backendMessage = err?.error?.message;
+
+    if (status === 401) {
+      return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
+    }
+    if (status === 403) {
+      return 'Akun Anda belum memiliki akses untuk melanjutkan pembayaran. ' +
+        'Silakan lengkapi data undangan terlebih dahulu atau hubungi admin.';
+    }
+    if (status === 422) {
+      return (
+        this.firstValidationError(err) ||
+        backendMessage ||
+        'Data pembayaran belum lengkap. Silakan periksa kembali.'
+      );
+    }
+    if (status === 500) {
+      return 'Terjadi gangguan pada server pembayaran. Silakan coba beberapa saat lagi.';
+    }
+    if (status === 0 || status == null) {
+      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+    }
+    // Never surface the raw "User does not have the right roles." text.
+    if (typeof backendMessage === 'string' && !/right roles/i.test(backendMessage)) {
+      return backendMessage;
+    }
+    return 'Pembayaran belum dapat diproses. Silakan coba kembali.';
   }
 }

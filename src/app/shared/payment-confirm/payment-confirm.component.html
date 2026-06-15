@@ -45,10 +45,20 @@
     </div>
   </div>
 
+  <!-- Payment error message -->
+  <p class="pc-error" *ngIf="paymentErrorMessage" role="alert">
+    {{ paymentErrorMessage }}
+  </p>
+
   <!-- Confirm Button -->
   <div class="pc-button-section">
-    <button type="button" class="pc-confirm-btn" (click)="onConfirm()">
-      Konfirmasi
+    <button
+      type="button"
+      class="pc-confirm-btn"
+      [disabled]="isPaymentSubmitting"
+      (click)="onConfirm()"
+    >
+      {{ isPaymentSubmitting ? 'Memproses…' : 'Konfirmasi' }}
     </button>
   </div>
 </form>

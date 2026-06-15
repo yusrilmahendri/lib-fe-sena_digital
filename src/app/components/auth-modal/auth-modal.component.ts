@@ -72,6 +72,10 @@ export class AuthModalComponent implements OnChanges {
     if ((changes['isOpen'] || changes['mode']) && this.isOpen) {
       this.currentMode = this.mode || 'login';
       this.resetTransientState();
+      const prompt = this.modal.consumeAuthMessage();
+      if (prompt) {
+        this.infoMessage = prompt;
+      }
     }
   }
 

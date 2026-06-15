@@ -7,8 +7,8 @@ import { BehaviorSubject } from 'rxjs';
  * hero CTA, or the login modal's "Daftar di sini" link — can open/close them
  * without tight coupling. Opening one closes the other.
  *
- * This is UI-coordination only; it does NOT touch any auth/register business
- * logic, endpoints, payloads, or token handling.
+ * Also exposes `requestLogin()` for global 401 handling (AuthInterceptor) so
+ * the app can prompt login via modal instead of redirecting to /login.
  */
 @Injectable({
   providedIn: 'root',
@@ -20,9 +20,25 @@ export class LandingModalService {
   readonly loginOpen$ = this.loginOpen.asObservable();
   readonly createOpen$ = this.createOpen.asObservable();
 
+  /** One-shot message shown inside the login modal when opened via requestLogin(). */
+  pendingAuthMessage = '';
+
   openLogin(): void {
     this.createOpen.next(false);
     this.loginOpen.next(true);
+  }
+
+  /** Open login modal with an optional prompt (used by AuthInterceptor on 401). */
+  requestLogin(message?: string): void {
+    this.pendingAuthMessage =
+      message || 'Silakan masuk atau daftar terlebih dahulu untuk melanjutkan.';
+    this.openLogin();
+  }
+
+  consumeAuthMessage(): string {
+    const msg = this.pendingAuthMessage;
+    this.pendingAuthMessage = '';
+    return msg;
   }
 
   closeLogin(): void {
