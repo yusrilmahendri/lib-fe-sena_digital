@@ -54,14 +54,17 @@ export class DataRegistrasiComponent implements OnInit {
 
     if (this.formData && Object.keys(this.formData).length > 0) {
       this.formRegis.patchValue(this.formData.formData);
-      localStorage.setItem('formData', JSON.stringify(this.formData));
+      this.persistWithoutPassword('formData', this.formData);
     }
     const savedFormData = localStorage.getItem('formRegis');
     if (savedFormData) {
-      this.formRegis.patchValue(JSON.parse(savedFormData));
+      const parsedFormData = JSON.parse(savedFormData);
+      this.formRegis.patchValue(parsedFormData);
+      // Migrate drafts written by older versions without retaining password.
+      this.persistWithoutPassword('formRegis', parsedFormData);
     }
     this.formRegis.valueChanges.subscribe((value) => {
-      localStorage.setItem('formRegis', JSON.stringify(value));
+      this.persistWithoutPassword('formRegis', value);
     });
     const savedData = localStorage.getItem('formData');
 
@@ -125,7 +128,7 @@ export class DataRegistrasiComponent implements OnInit {
     Object.keys(this.formRegis.value).forEach((key) => {
       payload.append(key, this.formRegis.get(key)?.value);
     });
-    localStorage.setItem('formData', JSON.stringify(this.formData));
+    this.persistWithoutPassword('formData', this.formData);
 
     this.dashboardSvc.create(DashboardServiceType.MNL_STEP_ONE, payload).subscribe({
       next: (res) => {
@@ -148,6 +151,15 @@ export class DataRegistrasiComponent implements OnInit {
 
   onCancel(){
     this.router.navigate(['/']);
+  }
+
+  private persistWithoutPassword(key: string, value: any): void {
+    const persisted = JSON.parse(JSON.stringify(value || {}));
+    delete persisted.password;
+    if (persisted?.formData?.password) {
+      delete persisted.formData.password;
+    }
+    localStorage.setItem(key, JSON.stringify(persisted));
   }
 
 }

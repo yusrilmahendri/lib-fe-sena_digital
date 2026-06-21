@@ -108,48 +108,9 @@
 
   <!-- Midtrans Payment Method -->
   <ng-container *ngIf="selectedMethod === 3">
-    <div *ngFor="let midtransData of bill" class="rp-payment-section">
-      <h3 class="rp-section-title">{{ midtransData.methode_pembayaran }}</h3>
-
-      <div class="rp-form-group">
-        <label class="rp-label">Server Key</label>
-        <div class="rp-readonly-field rp-copyable" (click)="copyMidtrans(midtransData.server_key)">
-          <span>{{ midtransData.server_key }}</span>
-          <svg class="rp-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </div>
-      </div>
-
-      <div class="rp-form-group">
-        <label class="rp-label">Client Key</label>
-        <div class="rp-readonly-field rp-copyable" (click)="copyMidtrans(midtransData.client_key)">
-          <span>{{ midtransData.client_key }}</span>
-          <svg class="rp-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </div>
-      </div>
-
-      <div class="rp-form-group">
-        <label class="rp-label">Metode Production</label>
-        <div class="rp-readonly-field rp-copyable" (click)="copyMidtrans(midtransData.metode_production)">
-          <span>{{ midtransData.metode_production }}</span>
-          <svg class="rp-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        </div>
-      </div>
-
-      <div class="rp-form-group">
-        <label class="rp-label">URL Setting</label>
-        <div class="rp-readonly-field">
-          <a [href]="midtransData.url" target="_blank" class="rp-link">{{ midtransData.url }}</a>
-        </div>
-      </div>
+    <div class="rp-payment-section">
+      <h3 class="rp-section-title">Midtrans</h3>
+      <p>Anda akan diarahkan ke halaman pembayaran Midtrans setelah menekan Lanjut.</p>
     </div>
   </ng-container>
 
@@ -169,8 +130,9 @@
     <button type="button" class="rp-btn rp-btn-secondary" (click)="onBack()">
       Kembali
     </button>
-    <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="!selectedMethod">
-      Lanjut
+    <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="!selectedMethod || isStartingPayment">
+      {{ isStartingPayment ? 'Memproses…' : 'Lanjut' }}
     </button>
   </div>
+  <p *ngIf="paymentError" role="alert">{{ paymentError }}</p>
 </div>

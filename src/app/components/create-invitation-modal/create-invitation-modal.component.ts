@@ -8,6 +8,7 @@ import {
   ThemeService,
 } from '../../dashboard.service';
 import { LandingModalService } from '../../landing-modal.service';
+import { environment } from '../../../environments/environment';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -69,16 +70,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   errorMessage = '';
   showPassword = false;
 
-  /* ---- Payment step state (reuses legacy endpoints/payloads) ---- */
-  paymentMethods: any[] = [];
-  selectedPaymentMethod: number | null = null;
-  paymentDetails: any[] = [];
-  isLoadingPaymentDetails = false;
-  isConfirmingPayment = false;
-  paymentError = '';
-  /** Captured from the one-step response for the confirm-payment payload. */
-  private oneStepUserId: number | null = null;
-  private oneStepKodePemesanan = '';
+  /** Password draft lives only for this open wizard instance. */
+  private accountPasswordDraft = '';
+  private activePaymentMethodId: number | null = null;
 
   coupleDetailForm: FormGroup;
   accountForm: FormGroup;
@@ -188,6 +182,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         this.domainTouched = true;
       }
     });
+
+    this.accountForm.get('password')?.valueChanges.subscribe((password) => {
+      this.accountPasswordDraft = password || '';
+    });
   }
 
   ngOnInit(): void {
@@ -198,6 +196,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           this.resetWizard();
           this.loadPaketTiers();
           this.loadThemes();
+          this.loadActivePaymentMethod();
         }
       })
     );
@@ -233,15 +232,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.accountForm.reset({ terms: false });
     this.selectedTheme = this.themesByCategory[this.activeCategory][0] || null;
 
-    // Payment step state
-    this.paymentMethods = [];
-    this.selectedPaymentMethod = null;
-    this.paymentDetails = [];
-    this.isLoadingPaymentDetails = false;
-    this.isConfirmingPayment = false;
-    this.paymentError = '';
-    this.oneStepUserId = null;
-    this.oneStepKodePemesanan = '';
+    this.accountPasswordDraft = '';
+    this.activePaymentMethodId = null;
   }
 
   /** Currently selected package (drives price, themes, payment rules). */
@@ -371,6 +363,20 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return [];
   }
 
+  private loadActivePaymentMethod(): void {
+    this.dashboardSvc.list(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD).subscribe({
+      next: (res: any) => {
+        const activeMethod = Array.isArray(res?.data) ? res.data[0] : null;
+        this.activePaymentMethodId = activeMethod?.id != null
+          ? Number(activeMethod.id)
+          : null;
+      },
+      error: () => {
+        this.activePaymentMethodId = null;
+      },
+    });
+  }
+
   /* ------------------------------ step navigation ---------------------------- */
   get currentThemes(): ThemeOption[] {
     return this.themesByCategory[this.activeCategory] || [];
@@ -461,6 +467,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       }
     }
 
+    if (!this.accountForm.get('password')?.value && this.accountPasswordDraft) {
+      this.accountForm.patchValue({ password: this.accountPasswordDraft });
+    }
+
     this.step = 'account';
   }
 
@@ -483,9 +493,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isSubmitting = true;
-
     const account = this.accountForm.value;
+    this.accountPasswordDraft = account.password || '';
+    this.isSubmitting = true;
     const domain = String(account.domain || '').trim();
     const payload = new FormData();
     // --- Legacy one-step payload (unchanged field names) ---
@@ -506,7 +516,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
     this.dashboardSvc.create(DashboardServiceType.MNL_STEP_ONE, payload).subscribe({
       next: (res: any) => {
-        this.isSubmitting = false;
         // Persist token exactly like the legacy flow (res.token), with a
         // defensive fallback in case the response nests it differently.
         const token = res?.token || res?.access_token || res?.data?.token;
@@ -517,12 +526,15 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           localStorage.setItem('token_type', res.token_type);
         }
 
-        // Capture identifiers needed by the legacy confirm-payment payload.
-        this.oneStepUserId = res?.user?.id ?? res?.data?.user?.id ?? null;
-        this.oneStepKodePemesanan =
-          res?.user?.kode_pemesanan ?? res?.data?.user?.kode_pemesanan ?? '';
+        const invitationId =
+          res?.invitation?.id ?? res?.data?.invitation?.id ?? null;
+        const amount =
+          res?.invitation?.package_price_snapshot ??
+          res?.data?.invitation?.package_price_snapshot ??
+          paket.price;
 
-        if (!token || this.oneStepUserId == null || !this.oneStepKodePemesanan) {
+        if (!token || invitationId == null) {
+          this.isSubmitting = false;
           this.errorMessage =
             'Pendaftaran berhasil tetapi data sesi tidak lengkap. Silakan masuk ke form undangan untuk melanjutkan.';
           return;
@@ -530,8 +542,13 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
         this.persistLegacyFormState(res, account, paket);
 
-        // Backend requires steps 2–4 before payment; resume via legacy wizard.
-        this.step = 'continue-wizard';
+        if (this.activeCategory === 'trial' || this.activePaymentMethodId !== 3) {
+          this.isSubmitting = false;
+          this.step = 'continue-wizard';
+          return;
+        }
+
+        this.startMidtransPayment(invitationId, amount);
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -544,70 +561,37 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  /* -------------------------------- payment --------------------------------- */
-  /** Load payment methods (legacy MD_RGS_PAYMENT / master-tagihan). */
-  private loadPaymentMethods(): void {
-    this.paymentError = '';
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
+  /** Create the transaction through the authenticated backend, then open Snap. */
+  private startMidtransPayment(invitationId: number, amount: string | number): void {
+    this.dashboardSvc.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, {
+      invitation_id: invitationId,
+      amount,
+    }).subscribe({
       next: (res: any) => {
-        this.paymentMethods = Array.isArray(res?.data) ? res.data : [];
-      },
-      error: () => {
-        this.paymentError =
-          'Gagal memuat metode pembayaran. Coba lagi atau buka pembayaran dari dashboard.';
-      },
-    });
-  }
+        const snapToken = res?.data?.snap_token;
+        if (!snapToken) {
+          this.isSubmitting = false;
+          this.errorMessage = 'Token pembayaran Midtrans tidak ditemukan. Silakan coba kembali.';
+          return;
+        }
 
-  /** Load details for the chosen method (legacy MNL_MD_METHOD_DETAIL). */
-  onPaymentMethodSelect(methodId: number): void {
-    this.selectedPaymentMethod = methodId;
-    this.paymentDetails = [];
-    if (methodId == null) {
-      return;
-    }
-    // Trial method (id 4) shows static instruction, no detail call needed.
-    if (Number(methodId) === 4) {
-      return;
-    }
-    this.isLoadingPaymentDetails = true;
-    const query = `?id_methode_pembayaran=${methodId}`;
-    this.dashboardSvc.getParam(DashboardServiceType.MNL_MD_METHOD_DETAIL, query).subscribe({
-      next: (res: any) => {
-        this.paymentDetails = Array.isArray(res?.data) ? res.data : [];
-        this.isLoadingPaymentDetails = false;
-      },
-      error: () => {
-        this.isLoadingPaymentDetails = false;
-        this.paymentError = 'Gagal memuat detail pembayaran.';
-      },
-    });
-  }
-
-  /** Confirm payment (legacy RDM_CONFIRM_PAYMENT, same payload). */
-  confirmPayment(): void {
-    this.paymentError = '';
-    if (this.selectedPaymentMethod == null || this.isConfirmingPayment) {
-      return;
-    }
-
-    this.isConfirmingPayment = true;
-    const payload = {
-      user_id: this.oneStepUserId,
-      kode_pemesanan: this.oneStepKodePemesanan || '',
-    };
-
-    this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
-      next: () => {
-        this.isConfirmingPayment = false;
-        this.continueToBuatUndangan();
+        window.location.assign(this.getSnapRedirectUrl(snapToken));
       },
       error: (err: any) => {
-        // Never redirect/logout/close on failure; show a clear message instead.
-        this.isConfirmingPayment = false;
-        this.paymentError = this.mapPaymentError(err);
+        this.isSubmitting = false;
+        this.errorMessage =
+          this.firstValidationError(err) ||
+          err?.error?.message ||
+          'Pembayaran Midtrans belum dapat dimulai. Silakan coba kembali.';
       },
     });
+  }
+
+  private getSnapRedirectUrl(snapToken: string): string {
+    const host = environment.production
+      ? 'https://app.midtrans.com'
+      : 'https://app.sandbox.midtrans.com';
+    return `${host}/snap/v2/vtweb/${encodeURIComponent(snapToken)}`;
   }
 
   /** Resume legacy wizard at step 2 (informasi mempelai). */
@@ -621,15 +605,12 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       /* non-critical */
     }
     this.closeModal();
-    this.router.navigate(['/buat-undangan']);
-  }
-
-  copyToClipboard(text: string): void {
-    if (!text) {
-      return;
-    }
-    navigator.clipboard?.writeText(text).catch(() => {
-      /* clipboard failures are non-critical */
+    this.router.navigate(['/buat-undangan'], {
+      state: {
+        registrationDraft: {
+          password: this.accountPasswordDraft,
+        },
+      },
     });
   }
 
@@ -742,35 +723,4 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  /** Map a payment error to a clear, user-friendly Indonesian message. */
-  private mapPaymentError(err: any): string {
-    const status = err?.status;
-    const backendMessage = err?.error?.message;
-
-    if (status === 401) {
-      return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
-    }
-    if (status === 403) {
-      return 'Akun Anda belum memiliki akses untuk melanjutkan pembayaran. ' +
-        'Silakan lengkapi data undangan terlebih dahulu atau hubungi admin.';
-    }
-    if (status === 422) {
-      return (
-        this.firstValidationError(err) ||
-        backendMessage ||
-        'Data pembayaran belum lengkap. Silakan periksa kembali.'
-      );
-    }
-    if (status === 500) {
-      return 'Terjadi gangguan pada server pembayaran. Silakan coba beberapa saat lagi.';
-    }
-    if (status === 0 || status == null) {
-      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-    }
-    // Never surface the raw "User does not have the right roles." text.
-    if (typeof backendMessage === 'string' && !/right roles/i.test(backendMessage)) {
-      return backendMessage;
-    }
-    return 'Pembayaran belum dapat diproses. Silakan coba kembali.';
-  }
 }

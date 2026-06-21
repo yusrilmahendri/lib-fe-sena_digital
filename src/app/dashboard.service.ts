@@ -26,6 +26,8 @@ export enum DashboardServiceType {
   MNL_MD_METHOD,
   MNL_MD_METHOD_DETAIL,
   MNL_MD_PACK_INVITATION,
+  MNL_ACTIVE_PAYMENT_METHOD,
+  MIDTRANS_CREATE_SNAP_TOKEN,
 
   // === Testimonial (Testimoni) Endpoints ===
   // Manages user testimonials, public display, and admin moderation.
@@ -282,6 +284,12 @@ export class DashboardService {
 
       case DashboardServiceType.MNL_MD_PACK_INVITATION:
         return `${this.BASE_URL_API}/v1/paket-undangan`;
+
+      case DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD:
+        return `${this.BASE_URL_API}/v1/active-payment-method`;
+
+      case DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN:
+        return `${this.BASE_URL_API}/v1/midtrans/create-snap-token`;
 
       //testimoni (Fixed spelling and added admin endpoints)
       case DashboardServiceType.USER_TESTIMONI:

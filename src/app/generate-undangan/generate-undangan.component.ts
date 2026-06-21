@@ -26,6 +26,24 @@ export class GenerateUndanganComponent implements OnInit {
       this.formData = JSON.parse(saved);
     }
 
+    const temporaryPassword = history.state?.registrationDraft?.password;
+    if (temporaryPassword && this.formData?.registrasi) {
+      this.formData.registrasi = {
+        ...this.formData.registrasi,
+        formData: {
+          ...(this.formData.registrasi.formData || this.formData.registrasi),
+          password: temporaryPassword,
+        },
+      };
+    }
+    if (history.state?.registrationDraft) {
+      const { registrationDraft, ...navigationState } = history.state;
+      history.replaceState(navigationState, document.title);
+    }
+
+    // Also removes password left by older versions of this flow.
+    this.persistFormData();
+
     const notice = sessionStorage.getItem('landingOnboardingNotice');
     if (notice) {
       this.onboardingNotice = notice;
@@ -61,16 +79,28 @@ export class GenerateUndanganComponent implements OnInit {
 
     // Naikkan step
     this.formData.step = step + 1;
-    localStorage.setItem('formData', JSON.stringify(this.formData));
+    this.persistFormData();
   }
 
 
   prevStep(): void {
     if (this.formData.step > 1) {
       this.formData.step--;
-      localStorage.setItem('formData', JSON.stringify(this.formData));
+      this.persistFormData();
 
     }
+  }
+
+  /** Persist resumable fields while keeping password only in component state. */
+  private persistFormData(): void {
+    const persisted = JSON.parse(JSON.stringify(this.formData));
+    if (persisted?.registrasi?.password) {
+      delete persisted.registrasi.password;
+    }
+    if (persisted?.registrasi?.formData?.password) {
+      delete persisted.registrasi.formData.password;
+    }
+    localStorage.setItem('formData', JSON.stringify(persisted));
   }
 
 

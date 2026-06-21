@@ -4,6 +4,7 @@ import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { PaymentConfirmComponent } from 'src/app/shared/payment-confirm/payment-confirm.component';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'wc-regis-pembayaran',
@@ -32,6 +33,9 @@ export class RegisPembayaranComponent implements OnInit {
     }
   };
   userId: any;
+  invitationId: number | null = null;
+  paymentError = '';
+  isStartingPayment = false;
 
   constructor(
     private dashboardSvc: DashboardService,
@@ -56,11 +60,18 @@ export class RegisPembayaranComponent implements OnInit {
       }
       const userId = allDataFromSteps?.registrasi?.response?.user?.id;
       this.userId = userId;
+      this.invitationId =
+        allDataFromSteps?.registrasi?.response?.invitation?.id ??
+        allDataFromSteps?.response?.invitation?.id ??
+        null;
+      this.manualBill =
+        allDataFromSteps?.registrasi?.response?.invitation?.package_price_snapshot ??
+        this.manualBill;
     }
   }
 
   getMasterPayment() {
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe((response) => {
+    this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe((response) => {
       this.selectOptions.payment.items = response["data"];
     });
   }
@@ -72,6 +83,10 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   getDetailMethod() {
+    if (Number(this.selectedMethod) === 3) {
+      this.bill = [];
+      return;
+    }
     const query = `?id_methode_pembayaran=${this.selectedMethod}`
     this.dashboardSvc.getParam(DashboardServiceType.MNL_MD_METHOD_DETAIL, query).subscribe(res => {
       this.bill = res?.data;
@@ -89,10 +104,53 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   onNextClicked() {
+    if (Number(this.selectedMethod) === 3) {
+      this.startMidtransPayment();
+      return;
+    }
+
     this.modalService.show(PaymentConfirmComponent, {
       initialState: {
         userId: this.userId
       }
+    });
+  }
+
+  private startMidtransPayment(): void {
+    if (this.isStartingPayment || this.invitationId == null) {
+      this.paymentError = 'Data undangan untuk pembayaran tidak ditemukan.';
+      return;
+    }
+
+    this.paymentError = '';
+    this.isStartingPayment = true;
+    this.dashboardSvc.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, {
+      invitation_id: this.invitationId,
+      amount: this.manualBill,
+    }).subscribe({
+      next: (res: any) => {
+        const snapToken = res?.data?.snap_token;
+        if (!snapToken) {
+          this.isStartingPayment = false;
+          this.paymentError = 'Token pembayaran Midtrans tidak ditemukan.';
+          return;
+        }
+
+        const host = environment.production
+          ? 'https://app.midtrans.com'
+          : 'https://app.sandbox.midtrans.com';
+        window.location.assign(
+          `${host}/snap/v2/vtweb/${encodeURIComponent(snapToken)}`
+        );
+      },
+      error: (err: any) => {
+        this.isStartingPayment = false;
+        this.paymentError =
+          err?.error?.errors?.amount?.[0] ||
+          err?.error?.errors?.invitation_id?.[0] ||
+          err?.error?.message ||
+          'Pembayaran Midtrans belum dapat dimulai.';
+      },
     });
   }
 
@@ -112,11 +170,4 @@ export class RegisPembayaranComponent implements OnInit {
     });
   }
 
-  copyMidtrans(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      this.notyf.success('Kode Midtrans disalin!');
-    }).catch(() => {
-      this.notyf.error('Gagal menyalin.');
-    });
-  }
 }
