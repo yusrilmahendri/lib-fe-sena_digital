@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { BsModalService } from 'ngx-bootstrap/modal';
@@ -199,6 +200,11 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   onNextClicked() {
+    // Guard: prevent double execution
+    if (this.isStartingPayment) {
+      return;
+    }
+
     if (Number(this.selectedMethod) === 3) {
       this.startMidtransPayment();
       return;
@@ -238,6 +244,13 @@ export class RegisPembayaranComponent implements OnInit {
     // Check if we have a saved redirect URL for this invitation
     const savedRedirectUrl = this.getSavedRedirectUrl(this.invitationId);
     if (savedRedirectUrl) {
+      // Use timeout to auto-reset isStartingPayment if redirect fails
+      setTimeout(() => {
+        if (this.isStartingPayment) {
+          this.isStartingPayment = false;
+          this.paymentError = 'Pembayaran Midtrans tidak dapat dibuka. Periksa pengaturan popup blocker Anda.';
+        }
+      }, 3000);
       window.location.assign(savedRedirectUrl);
       return;
     }
@@ -246,7 +259,7 @@ export class RegisPembayaranComponent implements OnInit {
     this.dashboardSvc.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, {
       invitation_id: this.invitationId,
       amount: this.manualBill,
-    }).subscribe({
+    }).pipe(take(1)).subscribe({
       next: (res: any) => {
         const snapToken = res?.data?.snap_token;
         const redirectUrl = res?.data?.redirect_url;
@@ -263,10 +276,23 @@ export class RegisPembayaranComponent implements OnInit {
         }
 
         const finalUrl = redirectUrl || this.buildSnapUrl(snapToken);
+        // Use timeout to auto-reset isStartingPayment if redirect fails
+        setTimeout(() => {
+          if (this.isStartingPayment) {
+            this.isStartingPayment = false;
+            this.paymentError = 'Pembayaran Midtrans tidak dapat dibuka. Periksa pengaturan popup blocker Anda.';
+          }
+        }, 3000);
         window.location.assign(finalUrl);
       },
       error: (err: any) => {
         this.isStartingPayment = false;
+
+        // Handle connection error (status 0) or CORS error
+        if (err?.status === 0) {
+          this.paymentError = 'Koneksi ke server gagal. Periksa koneksi internet Anda dan coba lagi.';
+          return;
+        }
 
         // Handle 422 "Payment already initiated" error
         if (err?.status === 422) {
@@ -289,11 +315,18 @@ export class RegisPembayaranComponent implements OnInit {
     this.dashboardSvc.getParam(
       DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
       `?invitation_id=${this.invitationId}`
-    ).subscribe({
+    ).pipe(take(1)).subscribe({
       next: (res: any) => {
         const redirectUrl = res?.data?.redirect_url;
         if (redirectUrl) {
           this.saveRedirectUrl(this.invitationId, redirectUrl);
+          // Use timeout to auto-reset isStartingPayment if redirect fails
+          setTimeout(() => {
+            if (this.isStartingPayment) {
+              this.isStartingPayment = false;
+              this.paymentError = 'Pembayaran Midtrans tidak dapat dibuka. Periksa pengaturan popup blocker Anda.';
+            }
+          }, 3000);
           window.location.assign(redirectUrl);
           return;
         }
@@ -302,6 +335,13 @@ export class RegisPembayaranComponent implements OnInit {
         if (snapToken) {
           const finalUrl = this.buildSnapUrl(snapToken);
           this.saveRedirectUrl(this.invitationId, finalUrl);
+          // Use timeout to auto-reset isStartingPayment if redirect fails
+          setTimeout(() => {
+            if (this.isStartingPayment) {
+              this.isStartingPayment = false;
+              this.paymentError = 'Pembayaran Midtrans tidak dapat dibuka. Periksa pengaturan popup blocker Anda.';
+            }
+          }, 3000);
           window.location.assign(finalUrl);
           return;
         }
@@ -311,7 +351,7 @@ export class RegisPembayaranComponent implements OnInit {
       },
       error: () => {
         this.isStartingPayment = false;
-        this.paymentError = 'Transaksi Anda masih dalam proses. Silakan coba lagi beberapa saat.';
+        this.paymentError = 'Koneksi ke server gagal. Periksa koneksi internet Anda dan coba lagi.';
       },
     });
   }
