@@ -106,7 +106,11 @@ export class PaymentConfirmComponent implements OnInit {
   /** Map a payment error to a clear, user-friendly Indonesian message. */
   private mapPaymentError(err: any): string {
     const status = err?.status;
-    const backendMessage = err?.error?.message;
+    const backendMessage = err?.error?.message || err?.message;
+
+    if (backendMessage) {
+      return backendMessage;
+    }
 
     if (status === 401) {
       return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
@@ -130,13 +134,6 @@ export class PaymentConfirmComponent implements OnInit {
       return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
     }
 
-    // The raw "User does not have the right roles." must never be shown.
-    if (
-      typeof backendMessage === 'string' &&
-      !/right roles/i.test(backendMessage)
-    ) {
-      return backendMessage;
-    }
     return 'Pembayaran belum dapat diproses. Silakan coba kembali.';
   }
 

@@ -34,6 +34,7 @@ export class RegisPembayaranComponent implements OnInit {
   };
   userId: any;
   invitationId: number | null = null;
+  isTrialPackage = false;
   paymentError = '';
   isStartingPayment = false;
 
@@ -51,29 +52,95 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.getMasterPayment()
     const allDataFromStepsStr = localStorage.getItem('formData');
     if (allDataFromStepsStr) {
       const allDataFromSteps = JSON.parse(allDataFromStepsStr);
+      const invitation =
+        allDataFromSteps?.registrasi?.response?.invitation ??
+        allDataFromSteps?.response?.invitation;
       if (allDataFromSteps?.registrasi?.formData) {
         this.manualBill = allDataFromSteps.registrasi.formData.price;
       }
       const userId = allDataFromSteps?.registrasi?.response?.user?.id;
       this.userId = userId;
-      this.invitationId =
-        allDataFromSteps?.registrasi?.response?.invitation?.id ??
-        allDataFromSteps?.response?.invitation?.id ??
-        null;
+      this.invitationId = invitation?.id ?? null;
       this.manualBill =
-        allDataFromSteps?.registrasi?.response?.invitation?.package_price_snapshot ??
+        invitation?.package_price_snapshot ??
         this.manualBill;
+      this.isTrialPackage = this.resolveIsTrialPackage(invitation);
     }
+    this.getMasterPayment();
   }
 
   getMasterPayment() {
-    this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe((response) => {
-      this.selectOptions.payment.items = response["data"];
+    this.paymentError = '';
+    this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe({
+      next: (response: any) => {
+        const expectedMethodId = this.isTrialPackage ? 4 : 3;
+        const activeMethods = this.mapActivePaymentMethods(response);
+        const expectedMethod = activeMethods.find(
+          (method: any) => Number(method.id) === expectedMethodId
+        );
+
+        if (expectedMethod) {
+          this.selectOptions.payment.items = [expectedMethod];
+          return;
+        }
+
+        // The public active endpoint returns only one active method. Resolve
+        // the correct package method from the safe master list instead of
+        // falling a paid package back to Trial.
+        this.loadPackagePaymentMethod(expectedMethodId);
+      },
+      error: (err: any) => {
+        this.paymentError = this.getApiErrorMessage(err);
+        this.loadPackagePaymentMethod(this.isTrialPackage ? 4 : 3);
+      },
     });
+  }
+
+  private mapActivePaymentMethods(response: any): any[] {
+    const rawData = Array.isArray(response?.data)
+      ? response.data
+      : response?.data
+        ? [response.data]
+        : [];
+
+    return rawData
+      .filter((item: any) => item?.is_active !== false)
+      .map((item: any) =>
+        item?.metode_transaction || item?.metodeTransaction || item
+      )
+      .filter((item: any) => item?.id != null && item?.name);
+  }
+
+  private loadPackagePaymentMethod(expectedMethodId: number): void {
+    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
+      next: (response: any) => {
+        const methods = Array.isArray(response?.data) ? response.data : [];
+        const expectedMethod = methods.find(
+          (method: any) => Number(method.id) === expectedMethodId
+        );
+        this.selectOptions.payment.items = expectedMethod ? [expectedMethod] : [];
+      },
+      error: (err: any) => {
+        this.selectOptions.payment.items = [];
+        this.paymentError = this.getApiErrorMessage(err);
+      },
+    });
+  }
+
+  private resolveIsTrialPackage(invitation: any): boolean {
+    if (typeof invitation?.is_trial === 'boolean') {
+      return invitation.is_trial;
+    }
+    if (invitation?.is_trial === 1 || invitation?.is_trial === '1') {
+      return true;
+    }
+
+    const snapshot = invitation?.package_features_snapshot || {};
+    const packageName = `${snapshot?.jenis_paket || ''} ${snapshot?.name_paket || ''}`;
+    return /trial/i.test(packageName);
   }
 
   getMasterMethod() {
@@ -83,7 +150,7 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   getDetailMethod() {
-    if (Number(this.selectedMethod) === 3) {
+    if ([3, 4].includes(Number(this.selectedMethod))) {
       this.bill = [];
       return;
     }
@@ -94,8 +161,8 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   onMetodeSelect(event: any) {
-    console.log(event);
-    this.selectedMethod = event;
+    this.paymentError = '';
+    this.selectedMethod = Number(event);
     this.getDetailMethod();
   }
 
@@ -109,11 +176,13 @@ export class RegisPembayaranComponent implements OnInit {
       return;
     }
 
-    this.modalService.show(PaymentConfirmComponent, {
-      initialState: {
-        userId: this.userId
-      }
-    });
+    if (Number(this.selectedMethod) === 4 && this.isTrialPackage) {
+      this.modalService.show(PaymentConfirmComponent, {
+        initialState: {
+          userId: this.userId
+        }
+      });
+    }
   }
 
   private startMidtransPayment(): void {
@@ -132,7 +201,7 @@ export class RegisPembayaranComponent implements OnInit {
         const snapToken = res?.data?.snap_token;
         if (!snapToken) {
           this.isStartingPayment = false;
-          this.paymentError = 'Token pembayaran Midtrans tidak ditemukan.';
+          this.paymentError = res?.message || 'Token pembayaran Midtrans tidak ditemukan.';
           return;
         }
 
@@ -145,13 +214,13 @@ export class RegisPembayaranComponent implements OnInit {
       },
       error: (err: any) => {
         this.isStartingPayment = false;
-        this.paymentError =
-          err?.error?.errors?.amount?.[0] ||
-          err?.error?.errors?.invitation_id?.[0] ||
-          err?.error?.message ||
-          'Pembayaran Midtrans belum dapat dimulai.';
+        this.paymentError = this.getApiErrorMessage(err);
       },
     });
+  }
+
+  private getApiErrorMessage(err: any): string {
+    return err?.error?.message || err?.message || String(err);
   }
 
   copyToClipboard(text: string) {

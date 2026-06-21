@@ -72,7 +72,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   /** Password draft lives only for this open wizard instance. */
   private accountPasswordDraft = '';
-  private activePaymentMethodId: number | null = null;
 
   coupleDetailForm: FormGroup;
   accountForm: FormGroup;
@@ -196,7 +195,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           this.resetWizard();
           this.loadPaketTiers();
           this.loadThemes();
-          this.loadActivePaymentMethod();
         }
       })
     );
@@ -233,7 +231,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.selectedTheme = this.themesByCategory[this.activeCategory][0] || null;
 
     this.accountPasswordDraft = '';
-    this.activePaymentMethodId = null;
   }
 
   /** Currently selected package (drives price, themes, payment rules). */
@@ -361,20 +358,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     if (Array.isArray(res?.data?.data)) return res.data.data;
     if (Array.isArray(res?.data?.themes)) return res.data.themes;
     return [];
-  }
-
-  private loadActivePaymentMethod(): void {
-    this.dashboardSvc.list(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD).subscribe({
-      next: (res: any) => {
-        const activeMethod = Array.isArray(res?.data) ? res.data[0] : null;
-        this.activePaymentMethodId = activeMethod?.id != null
-          ? Number(activeMethod.id)
-          : null;
-      },
-      error: () => {
-        this.activePaymentMethodId = null;
-      },
-    });
   }
 
   /* ------------------------------ step navigation ---------------------------- */
@@ -542,7 +525,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
         this.persistLegacyFormState(res, account, paket);
 
-        if (this.activeCategory === 'trial' || this.activePaymentMethodId !== 3) {
+        if (this.activeCategory === 'trial') {
           this.isSubmitting = false;
           this.step = 'continue-wizard';
           return;
@@ -580,8 +563,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       error: (err: any) => {
         this.isSubmitting = false;
         this.errorMessage =
-          this.firstValidationError(err) ||
           err?.error?.message ||
+          err?.message ||
+          this.firstValidationError(err) ||
           'Pembayaran Midtrans belum dapat dimulai. Silakan coba kembali.';
       },
     });
