@@ -77,42 +77,47 @@ export class RegisPembayaranComponent implements OnInit {
 
     // Trial packages only show Trial method
     if (this.isTrialPackage) {
-      this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
+      this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe({
         next: (response: any) => {
-          const methods = Array.isArray(response?.data) ? response.data : [];
-          const trialMethod = methods.find((method: any) => Number(method.id) === 4);
-          this.selectOptions.payment.items = trialMethod ? [trialMethod] : [];
-          if (trialMethod) {
-            this.selectedMethod = trialMethod.id;
+          const expectedMethodId = 4;
+          const activeMethods = this.mapActivePaymentMethods(response);
+          const expectedMethod = activeMethods.find(
+            (method: any) => Number(method.id) === expectedMethodId
+          );
+
+          if (expectedMethod) {
+            this.selectOptions.payment.items = [expectedMethod];
+            this.selectedMethod = expectedMethod.id;
+            return;
           }
+
+          this.loadPackagePaymentMethod(4);
         },
         error: (err: any) => {
-          this.selectOptions.payment.items = [];
           this.paymentError = this.getApiErrorMessage(err);
+          this.loadPackagePaymentMethod(4);
         },
       });
       return;
     }
 
-    // Paid packages show Manual (1) and Midtrans (3)
-    this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe({
+    // Paid packages: Load all methods from master list, show Manual (1) + Midtrans (3)
+    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
       next: (response: any) => {
-        const activeMethods = this.mapActivePaymentMethods(response);
+        const methods = Array.isArray(response?.data) ? response.data : [];
         // Filter to show only Manual (1) and Midtrans (3), exclude Tripay (2)
-        const allowedMethods = activeMethods.filter(
+        const allowedMethods = methods.filter(
           (method: any) => [1, 3].includes(Number(method.id))
         );
-        this.selectOptions.payment.items = allowedMethods.length > 0
-          ? allowedMethods
-          : [];
-        // Auto-select Manual if available
+        this.selectOptions.payment.items = allowedMethods.length > 0 ? allowedMethods : [];
+        // Auto-select first available method
         if (allowedMethods.length > 0) {
           this.selectedMethod = allowedMethods[0].id;
         }
       },
       error: (err: any) => {
         this.paymentError = this.getApiErrorMessage(err);
-        this.loadPackagePaymentMethodForPaid();
+        this.selectOptions.payment.items = [];
       },
     });
   }
@@ -142,27 +147,6 @@ export class RegisPembayaranComponent implements OnInit {
         this.selectOptions.payment.items = expectedMethod ? [expectedMethod] : [];
         if (expectedMethod) {
           this.selectedMethod = expectedMethod.id;
-        }
-      },
-      error: (err: any) => {
-        this.selectOptions.payment.items = [];
-        this.paymentError = this.getApiErrorMessage(err);
-      },
-    });
-  }
-
-  private loadPackagePaymentMethodForPaid(): void {
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
-      next: (response: any) => {
-        const methods = Array.isArray(response?.data) ? response.data : [];
-        // Filter to show only Manual (1) and Midtrans (3), exclude Tripay (2)
-        const allowedMethods = methods.filter(
-          (method: any) => [1, 3].includes(Number(method.id))
-        );
-        this.selectOptions.payment.items = allowedMethods.length > 0 ? allowedMethods : [];
-        // Auto-select Manual if available
-        if (allowedMethods.length > 0) {
-          this.selectedMethod = allowedMethods[0].id;
         }
       },
       error: (err: any) => {
