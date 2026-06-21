@@ -141,11 +141,11 @@
 
     <!-- Button Group -->
     <div class="im-button-group">
-      <button type="button" class="im-btn im-btn-secondary" (click)="onBack()">
+      <button type="button" class="im-btn im-btn-secondary" (click)="onBack()" [disabled]="isSubmitting">
         Kembali
       </button>
-      <button type="button" class="im-btn im-btn-primary" [disabled]="formGroup.invalid" (click)="onNextClicked()">
-        Lanjut
+      <button type="button" class="im-btn im-btn-primary" [disabled]="formGroup.invalid || isSubmitting" (click)="onNextClicked()">
+        {{ isSubmitting ? 'Memproses…' : 'Lanjut' }}
       </button>
     </div>
   </form>

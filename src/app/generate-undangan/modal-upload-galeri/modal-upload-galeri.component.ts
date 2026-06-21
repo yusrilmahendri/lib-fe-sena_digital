@@ -19,6 +19,8 @@ export class ModalUploadGaleriComponent implements OnInit {
   uploadForm!: FormGroup;
   imagePreviews: { [key: string]: string } = {};
   private notyf: Notyf;
+  isSubmitting = false;
+  formErrors: { [key: string]: string } = {};
 
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef;
 
@@ -91,39 +93,63 @@ export class ModalUploadGaleriComponent implements OnInit {
   }
 
   onSubmitModal() {
-    if (this.uploadForm.valid) {
-      const payload = new FormData();
-
-      Object.keys(this.uploadForm.value).forEach((key) => {
-        const value = this.uploadForm.get(key)?.value;
-        if (key.includes('photo') && typeof value === 'string') {
-          const byteCharacters = atob(value);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'image/png' });
-          payload.append(key, blob, `${key}.png`);
-        } else if (key === 'status') {
-          payload.append(key, value ? '1' : '0');
-        } else {
-          payload.append(key, value);
-        }
-      });
-
-      this.dashboardSvc.create(DashboardServiceType.MNL_STEP_THREE, payload).subscribe({
-        next: (res) => {
-          this.notyf.success(res?.message || 'Data berhasil disimpan.');
-          setTimeout(() => this.nextStep(), 1000);
-        },
-        error: (err) => {
-          this.notyf.error(err?.message || 'Ada kesalahan dalam sistem.');
-        }
-      });
-    } else {
-      this.notyf.error('Harap isi foto terlebih dahulu');
+    if (this.isSubmitting) {
+      return;
     }
+
+    if (!this.uploadForm.valid) {
+      this.notyf.error('Harap isi foto terlebih dahulu');
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.formErrors = {};
+
+    const payload = new FormData();
+
+    Object.keys(this.uploadForm.value).forEach((key) => {
+      const value = this.uploadForm.get(key)?.value;
+      if (key.includes('photo') && typeof value === 'string') {
+        const byteCharacters = atob(value);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+        payload.append(key, blob, `${key}.png`);
+      } else if (key === 'status') {
+        payload.append(key, value ? '1' : '0');
+      } else {
+        payload.append(key, value);
+      }
+    });
+
+    this.dashboardSvc.create(DashboardServiceType.MNL_STEP_THREE, payload).subscribe({
+      next: (res) => {
+        this.isSubmitting = false;
+        this.notyf.success(res?.message || 'Data berhasil disimpan.');
+        this.nextStep();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+
+        // Handle 422 validation errors
+        if (err?.status === 422) {
+          const errors = err?.error?.errors || {};
+          this.formErrors = errors;
+
+          if (Object.keys(errors).length > 0) {
+            this.notyf.error('Data belum lengkap atau belum sesuai. Silakan periksa kembali form Anda.');
+            this.scrollToFirstError();
+            return;
+          }
+        }
+
+        // Generic user-friendly error message
+        this.notyf.error('Data belum lengkap atau belum sesuai. Silakan periksa kembali form Anda.');
+      }
+    });
   }
 
   removePhoto(controlName: string): void {
@@ -147,5 +173,16 @@ export class ModalUploadGaleriComponent implements OnInit {
     const existingFormData = JSON.parse(localStorage.getItem('formData') || '{}');
     existingFormData.informasiMempelai.updateData = { updatedData };
     localStorage.setItem('formData', JSON.stringify(existingFormData));
+  }
+
+  private scrollToFirstError(): void {
+    const firstErrorKey = Object.keys(this.formErrors)[0];
+    if (firstErrorKey) {
+      const errorElement = document.querySelector(`[formControlName="${firstErrorKey}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (errorElement as HTMLInputElement).focus();
+      }
+    }
   }
 }

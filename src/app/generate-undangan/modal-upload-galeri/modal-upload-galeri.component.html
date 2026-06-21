@@ -77,11 +77,11 @@
 
     <!-- Button Group -->
     <div class="mg-button-group">
-      <button type="button" class="mg-btn mg-btn-secondary" (click)="closeModal()">
+      <button type="button" class="mg-btn mg-btn-secondary" (click)="closeModal()" [disabled]="isSubmitting">
         Kembali
       </button>
-      <button type="button" class="mg-btn mg-btn-primary" (click)="onSubmitModal()">
-        Lanjut
+      <button type="button" class="mg-btn mg-btn-primary" (click)="onSubmitModal()" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Memproses…' : 'Lanjut' }}
       </button>
     </div>
   </form>

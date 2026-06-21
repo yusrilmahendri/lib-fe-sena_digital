@@ -18,6 +18,8 @@ export class InformasiMempelaiComponent implements OnInit {
   formGroup!: FormGroup;
   modalRef?: BsModalRef;
   private notyf: Notyf;
+  isSubmitting = false;
+  formErrors: { [key: string]: string } = {};
 
 
   imagePreviews: { [key: string]: string | null } = {
@@ -122,30 +124,24 @@ export class InformasiMempelaiComponent implements OnInit {
   }
 
 
-  onNext() {
-    this.modalRef = this.modalSvc.show(ModalUploadGaleriComponent, {
-      initialState: { formData: { ...this.formGroup.value } },
-      class: 'modal-lg'
-    });
-
-    this.modalRef.content?.formDataChange.subscribe((updatedData: any) => {
-      this.formGroup.patchValue(updatedData);
-      const data = {
-        updatedData: updatedData,
-      };
-      const existingFormData = JSON.parse(localStorage.getItem('formData') || '{}');
-      existingFormData.informasiMempelai = this.formGroup.value;
-      existingFormData.step = 3;
-      localStorage.setItem('formData', JSON.stringify(existingFormData));
-      this.next.emit(data);
-    });
-  }
 
   onBack() {
     this.prev.emit();
   }
 
   onNextClicked() {
+    if (this.isSubmitting) {
+      return;
+    }
+
+    if (!this.formGroup.valid) {
+      this.notyf.error('Harap isi semua field yang wajib diisi.');
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.formErrors = {};
+
     const payload = new FormData();
 
     Object.keys(this.formGroup.value).forEach((key) => {
@@ -167,12 +163,58 @@ export class InformasiMempelaiComponent implements OnInit {
 
     this.dashboardSvc.create(DashboardServiceType.MNL_STEP_TWO, payload,).subscribe({
       next: (res) => {
+        this.isSubmitting = false;
         this.notyf.success(res?.message || 'Data berhasil disimpan.');
-        setTimeout(() => this.onNext(), 1000);
+        this.openUploadGaleryModal();
       },
       error: (err) => {
-        this.notyf.error(err?.message || 'Ada kesalahan dalam sistem.');
+        this.isSubmitting = false;
+
+        // Handle 422 validation errors
+        if (err?.status === 422) {
+          const errors = err?.error?.errors || {};
+          this.formErrors = errors;
+
+          if (Object.keys(errors).length > 0) {
+            this.notyf.error('Data belum lengkap atau belum sesuai. Silakan periksa kembali form Anda.');
+            this.scrollToFirstError();
+            return;
+          }
+        }
+
+        // Generic user-friendly error message
+        this.notyf.error('Data belum lengkap atau belum sesuai. Silakan periksa kembali form Anda.');
       }
     });
+  }
+
+  private openUploadGaleryModal(): void {
+    this.modalRef = this.modalSvc.show(ModalUploadGaleriComponent, {
+      initialState: { formData: { ...this.formGroup.value } },
+      class: 'modal-lg'
+    });
+
+    this.modalRef.content?.formDataChange.subscribe((updatedData: any) => {
+      this.formGroup.patchValue(updatedData);
+      const data = {
+        updatedData: updatedData,
+      };
+      const existingFormData = JSON.parse(localStorage.getItem('formData') || '{}');
+      existingFormData.informasiMempelai = this.formGroup.value;
+      existingFormData.step = 3;
+      localStorage.setItem('formData', JSON.stringify(existingFormData));
+      this.next.emit(data);
+    });
+  }
+
+  private scrollToFirstError(): void {
+    const firstErrorKey = Object.keys(this.formErrors)[0];
+    if (firstErrorKey) {
+      const errorElement = document.querySelector(`[formControlName="${firstErrorKey}"]`);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (errorElement as HTMLInputElement).focus();
+      }
+    }
   }
 }
