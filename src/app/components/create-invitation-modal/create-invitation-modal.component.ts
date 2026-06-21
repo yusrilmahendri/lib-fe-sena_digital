@@ -8,7 +8,6 @@ import {
   ThemeService,
 } from '../../dashboard.service';
 import { LandingModalService } from '../../landing-modal.service';
-import { environment } from '../../../environments/environment';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -525,13 +524,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
         this.persistLegacyFormState(res, account, paket);
 
-        if (this.activeCategory === 'trial') {
-          this.isSubmitting = false;
-          this.step = 'continue-wizard';
-          return;
-        }
-
-        this.startMidtransPayment(invitationId, amount);
+        this.isSubmitting = false;
+        this.step = 'continue-wizard';
       },
       error: (err: any) => {
         this.isSubmitting = false;
@@ -544,39 +538,6 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  /** Create the transaction through the authenticated backend, then open Snap. */
-  private startMidtransPayment(invitationId: number, amount: string | number): void {
-    this.dashboardSvc.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, {
-      invitation_id: invitationId,
-      amount,
-    }).subscribe({
-      next: (res: any) => {
-        const snapToken = res?.data?.snap_token;
-        if (!snapToken) {
-          this.isSubmitting = false;
-          this.errorMessage = 'Token pembayaran Midtrans tidak ditemukan. Silakan coba kembali.';
-          return;
-        }
-
-        window.location.assign(this.getSnapRedirectUrl(snapToken));
-      },
-      error: (err: any) => {
-        this.isSubmitting = false;
-        this.errorMessage =
-          err?.error?.message ||
-          err?.message ||
-          this.firstValidationError(err) ||
-          'Pembayaran Midtrans belum dapat dimulai. Silakan coba kembali.';
-      },
-    });
-  }
-
-  private getSnapRedirectUrl(snapToken: string): string {
-    const host = environment.production
-      ? 'https://app.midtrans.com'
-      : 'https://app.sandbox.midtrans.com';
-    return `${host}/snap/v2/vtweb/${encodeURIComponent(snapToken)}`;
-  }
 
   /** Resume legacy wizard at step 2 (informasi mempelai). */
   continueToBuatUndangan(): void {

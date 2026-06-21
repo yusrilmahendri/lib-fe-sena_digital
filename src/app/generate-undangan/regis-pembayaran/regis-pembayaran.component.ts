@@ -84,6 +84,7 @@ export class RegisPembayaranComponent implements OnInit {
 
         if (expectedMethod) {
           this.selectOptions.payment.items = [expectedMethod];
+          this.selectedMethod = expectedMethod.id;
           return;
         }
 
@@ -122,6 +123,9 @@ export class RegisPembayaranComponent implements OnInit {
           (method: any) => Number(method.id) === expectedMethodId
         );
         this.selectOptions.payment.items = expectedMethod ? [expectedMethod] : [];
+        if (expectedMethod) {
+          this.selectedMethod = expectedMethod.id;
+        }
       },
       error: (err: any) => {
         this.selectOptions.payment.items = [];
@@ -182,7 +186,20 @@ export class RegisPembayaranComponent implements OnInit {
           userId: this.userId
         }
       });
+      return;
     }
+
+    if ([1, 2].includes(Number(this.selectedMethod))) {
+      this.handleManualOrTripayPayment();
+    }
+  }
+
+  private handleManualOrTripayPayment(): void {
+    this.modalService.show(PaymentConfirmComponent, {
+      initialState: {
+        userId: this.userId
+      }
+    });
   }
 
   private startMidtransPayment(): void {
