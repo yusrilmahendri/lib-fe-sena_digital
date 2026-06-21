@@ -189,12 +189,12 @@ export class RegisPembayaranComponent implements OnInit {
       return;
     }
 
-    if ([1, 2].includes(Number(this.selectedMethod))) {
-      this.handleManualOrTripayPayment();
+    if (Number(this.selectedMethod) === 1) {
+      this.handleManualPayment();
     }
   }
 
-  private handleManualOrTripayPayment(): void {
+  private handleManualPayment(): void {
     this.modalService.show(PaymentConfirmComponent, {
       initialState: {
         userId: this.userId
@@ -243,14 +243,6 @@ export class RegisPembayaranComponent implements OnInit {
   copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       this.notyf.success('Nomor rekening disalin!');
-    }).catch(() => {
-      this.notyf.error('Gagal menyalin.');
-    });
-  }
-
-  copyTripayToClipboard(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      this.notyf.success('Kode Tripay disalin!');
     }).catch(() => {
       this.notyf.error('Gagal menyalin.');
     });
