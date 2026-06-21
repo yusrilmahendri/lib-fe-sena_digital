@@ -69,6 +69,8 @@ export class RegisPembayaranComponent implements OnInit {
         this.manualBill;
       this.isTrialPackage = this.resolveIsTrialPackage(invitation);
     }
+    // Validate and cleanup expired redirect URLs
+    this.cleanupExpiredRedirectUrls();
     this.getMasterPayment();
   }
 
@@ -232,30 +234,167 @@ export class RegisPembayaranComponent implements OnInit {
 
     this.paymentError = '';
     this.isStartingPayment = true;
+
+    // Check if we have a saved redirect URL for this invitation
+    const savedRedirectUrl = this.getSavedRedirectUrl(this.invitationId);
+    if (savedRedirectUrl) {
+      window.location.assign(savedRedirectUrl);
+      return;
+    }
+
+    // Create new snap token
     this.dashboardSvc.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, {
       invitation_id: this.invitationId,
       amount: this.manualBill,
     }).subscribe({
       next: (res: any) => {
         const snapToken = res?.data?.snap_token;
-        if (!snapToken) {
+        const redirectUrl = res?.data?.redirect_url;
+
+        if (!snapToken && !redirectUrl) {
           this.isStartingPayment = false;
           this.paymentError = res?.message || 'Token pembayaran Midtrans tidak ditemukan.';
           return;
         }
 
-        const host = environment.production
-          ? 'https://app.midtrans.com'
-          : 'https://app.sandbox.midtrans.com';
-        window.location.assign(
-          `${host}/snap/v2/vtweb/${encodeURIComponent(snapToken)}`
-        );
+        // Save redirect URL for future use
+        if (redirectUrl) {
+          this.saveRedirectUrl(this.invitationId, redirectUrl);
+        }
+
+        const finalUrl = redirectUrl || this.buildSnapUrl(snapToken);
+        window.location.assign(finalUrl);
       },
       error: (err: any) => {
         this.isStartingPayment = false;
+
+        // Handle 422 "Payment already initiated" error
+        if (err?.status === 422) {
+          const errorMessage = err?.error?.message || '';
+          if (errorMessage.includes('already initiated') || errorMessage.includes('Payment already')) {
+            // Try to fetch active transaction from API
+            this.fetchActiveTransaction();
+            return;
+          }
+        }
+
         this.paymentError = this.getApiErrorMessage(err);
       },
     });
+  }
+
+  private fetchActiveTransaction(): void {
+    if (!this.invitationId) return;
+
+    this.dashboardSvc.getParam(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      `?invitation_id=${this.invitationId}`
+    ).subscribe({
+      next: (res: any) => {
+        const redirectUrl = res?.data?.redirect_url;
+        if (redirectUrl) {
+          this.saveRedirectUrl(this.invitationId, redirectUrl);
+          window.location.assign(redirectUrl);
+          return;
+        }
+
+        const snapToken = res?.data?.snap_token;
+        if (snapToken) {
+          const finalUrl = this.buildSnapUrl(snapToken);
+          this.saveRedirectUrl(this.invitationId, finalUrl);
+          window.location.assign(finalUrl);
+          return;
+        }
+
+        this.isStartingPayment = false;
+        this.paymentError = 'Tidak dapat menemukan transaksi yang aktif. Silakan coba membuat pembayaran baru.';
+      },
+      error: () => {
+        this.isStartingPayment = false;
+        this.paymentError = 'Transaksi Anda masih dalam proses. Silakan coba lagi beberapa saat.';
+      },
+    });
+  }
+
+  private getSavedRedirectUrl(invitationId: number | null): string | null {
+    if (!invitationId) return null;
+    try {
+      const saved = localStorage.getItem(`midtrans_redirect_${invitationId}`);
+      if (saved) {
+        const { url, timestamp } = JSON.parse(saved);
+        // Check if saved URL is still valid (within 24 hours)
+        const oneDay = 24 * 60 * 60 * 1000;
+        if (Date.now() - timestamp < oneDay) {
+          return url;
+        }
+        // Remove expired URL
+        this.clearSavedRedirectUrl(invitationId);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return null;
+  }
+
+  private cleanupExpiredRedirectUrls(): void {
+    try {
+      const keys = Object.keys(localStorage);
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      keys.forEach((key) => {
+        if (key.startsWith('midtrans_redirect_')) {
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            try {
+              const { timestamp } = JSON.parse(saved);
+              // Remove if older than 24 hours
+              if (Date.now() - timestamp >= oneDay) {
+                localStorage.removeItem(key);
+              }
+            } catch {
+              // Remove invalid entries
+              localStorage.removeItem(key);
+            }
+          }
+        }
+      });
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  private saveRedirectUrl(invitationId: number | null, redirectUrl: string): void {
+    if (!invitationId) return;
+    try {
+      localStorage.setItem(
+        `midtrans_redirect_${invitationId}`,
+        JSON.stringify({ url: redirectUrl, timestamp: Date.now() })
+      );
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  private clearSavedRedirectUrl(invitationId: number | null): void {
+    if (!invitationId) return;
+    try {
+      localStorage.removeItem(`midtrans_redirect_${invitationId}`);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }
+
+  // Public method to clear redirect URL after successful payment
+  clearMidtransRedirectUrl(invitationId?: number | null): void {
+    const id = invitationId || this.invitationId;
+    this.clearSavedRedirectUrl(id);
+  }
+
+  private buildSnapUrl(snapToken: string): string {
+    const host = environment.production
+      ? 'https://app.midtrans.com'
+      : 'https://app.sandbox.midtrans.com';
+    return `${host}/snap/v2/vtweb/${encodeURIComponent(snapToken)}`;
   }
 
   private getApiErrorMessage(err: any): string {
