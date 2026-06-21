@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from '../../dashboard.service';
@@ -16,6 +17,7 @@ export class PaymentConfirmComponent implements OnInit {
   kodePayment: any;
   inputKodePayment: string = '';
   @Input() userId!: number;
+  @Input() isTrialPackage = false;
   form!: FormGroup;
 
   /** Payment submit state, shown in the template near the confirm button. */
@@ -26,6 +28,7 @@ export class PaymentConfirmComponent implements OnInit {
     private fb: FormBuilder,
     private dashboardSvc: DashboardService,
     private modalService: BsModalService,
+    private router: Router,
   ) {
     this.notyf = new Notyf({
       duration: 1000,
@@ -79,13 +82,22 @@ export class PaymentConfirmComponent implements OnInit {
     this.isPaymentSubmitting = true;
     this.paymentErrorMessage = '';
 
-    // Legacy payload kept unchanged: { user_id, kode_pemesanan }.
+    // For Trial packages: skip API call and go directly to dashboard
+    if (this.isTrialPackage) {
+      this.modalService.hide();
+      this.clearWizardState();
+      this.router.navigate(['/dashboard']);
+      return;
+    }
+
+    // For Manual payment: call RDM_CONFIRM_PAYMENT API
     const payload = this.form.value;
     this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
       next: () => {
         this.isPaymentSubmitting = false;
         this.notyf.success('Berhasil konfirmasi pembayaran');
         this.modalService.hide();
+        this.clearWizardState();
         setTimeout(() => {
           this.modalService.show(SuccessConfirmPaymentComponent, {
             initialState: {
@@ -150,6 +162,20 @@ export class PaymentConfirmComponent implements OnInit {
       }
     }
     return null;
+  }
+
+  private clearWizardState(): void {
+    try {
+      localStorage.removeItem('formData');
+      const keys = Object.keys(localStorage);
+      keys.forEach((key) => {
+        if (key.startsWith('midtrans_redirect_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {
+      // Ignore localStorage errors
+    }
   }
 
 }

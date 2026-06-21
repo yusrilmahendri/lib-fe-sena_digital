@@ -15,6 +15,7 @@ import { environment } from 'src/environments/environment';
 export class RegisPembayaranComponent implements OnInit {
 
   @Input() formData: any;
+  @Input() paymentStatusMessage: string = '';
 
   @Output() prev = new EventEmitter<void>();
 
@@ -69,6 +70,10 @@ export class RegisPembayaranComponent implements OnInit {
         invitation?.package_price_snapshot ??
         this.manualBill;
       this.isTrialPackage = this.resolveIsTrialPackage(invitation);
+    }
+    // Show payment status message if it comes from Midtrans callback
+    if (this.paymentStatusMessage) {
+      this.paymentError = this.paymentStatusMessage;
     }
     // Validate and cleanup expired redirect URLs
     this.cleanupExpiredRedirectUrls();
@@ -213,7 +218,8 @@ export class RegisPembayaranComponent implements OnInit {
     if (Number(this.selectedMethod) === 4 && this.isTrialPackage) {
       this.modalService.show(PaymentConfirmComponent, {
         initialState: {
-          userId: this.userId
+          userId: this.userId,
+          isTrialPackage: true
         }
       });
       return;
@@ -227,7 +233,8 @@ export class RegisPembayaranComponent implements OnInit {
   private handleManualPayment(): void {
     this.modalService.show(PaymentConfirmComponent, {
       initialState: {
-        userId: this.userId
+        userId: this.userId,
+        isTrialPackage: false
       }
     });
   }

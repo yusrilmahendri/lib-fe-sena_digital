@@ -23,6 +23,6 @@
     <wc-data-registrasi *ngIf="formData.step === 1" [formData]="formData.registrasi" (prev)="prevStep()" (next)="nextStep($event)"></wc-data-registrasi>
     <wc-informasi-mempelai *ngIf="formData.step === 2" [formData]="formData.informasiMempelai" (prev)="prevStep()" (next)="nextStep($event)"></wc-informasi-mempelai>
     <wc-regis-cerita *ngIf="formData.step === 3" [formData]="formData.cerita" (prev)="prevStep()" (next)="nextStep($event)"></wc-regis-cerita>
-    <wc-regis-pembayaran *ngIf="formData.step === 4" [formData]="formData.pembayaran" (next)="nextStep($event)" (prev)="prevStep()"></wc-regis-pembayaran>
+    <wc-regis-pembayaran *ngIf="formData.step === 4" [formData]="formData.pembayaran" [paymentStatusMessage]="paymentStatusMessage" (next)="nextStep($event)" (prev)="prevStep()"></wc-regis-pembayaran>
   </div>
 </div>

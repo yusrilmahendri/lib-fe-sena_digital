@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { DashboardService, DashboardServiceType } from '../dashboard.service';
 
 @Component({
   selector: 'wc-generate-undangan',
@@ -19,6 +21,14 @@ export class GenerateUndanganComponent implements OnInit {
 
   /** Shown when the user is redirected from the landing modal after one-step. */
   onboardingNotice = '';
+
+  /** Payment status message from Midtrans callback */
+  paymentStatusMessage = '';
+
+  constructor(
+    private route: ActivatedRoute,
+    private dashboardSvc: DashboardService
+  ) {}
 
   ngOnInit(): void {
     const saved = localStorage.getItem('formData');
@@ -49,6 +59,9 @@ export class GenerateUndanganComponent implements OnInit {
       this.onboardingNotice = notice;
       sessionStorage.removeItem('landingOnboardingNotice');
     }
+
+    // Handle Midtrans callback
+    this.handleMidtransCallback();
 
     console.log('all formdata:', this.formData);
   }
@@ -103,5 +116,79 @@ export class GenerateUndanganComponent implements OnInit {
     localStorage.setItem('formData', JSON.stringify(persisted));
   }
 
+  private handleMidtransCallback(): void {
+    this.route.queryParams.subscribe((params) => {
+      const paymentStatus = params['payment'];
+      const orderId = params['order_id'];
+      const statusCode = params['status_code'];
+
+      // Only handle if payment query param exists
+      if (!paymentStatus) {
+        return;
+      }
+
+      // Don't navigate based on URL - require API verification
+      if (paymentStatus === 'finish' && statusCode && orderId) {
+        this.verifyMidtransPayment(orderId, statusCode);
+      } else if (paymentStatus === 'unfinish' && orderId) {
+        this.handleMidtransUnfinish(orderId);
+      } else if (paymentStatus === 'error' && orderId) {
+        this.handleMidtransError(orderId);
+      }
+
+      // Clean up query params from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    });
+  }
+
+  private verifyMidtransPayment(orderId: string, statusCode: string): void {
+    this.dashboardSvc.getParam(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      `?order_id=${orderId}`
+    ).subscribe({
+      next: (res: any) => {
+        const transactionStatus = res?.data?.transaction_status;
+
+        if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
+          // Payment successful
+          this.paymentStatusMessage = 'Pembayaran berhasil! Terima kasih.';
+          this.formData.step = 4;
+          this.persistFormData();
+          // Clear saved redirect URL after successful payment
+          const invitationId = this.formData?.registrasi?.response?.invitation?.id;
+          if (invitationId) {
+            localStorage.removeItem(`midtrans_redirect_${invitationId}`);
+          }
+        } else if (transactionStatus === 'pending') {
+          // Payment pending
+          this.paymentStatusMessage = 'Pembayaran masih diproses. Silakan tunggu atau coba lagi nanti.';
+          this.formData.step = 4;
+          this.persistFormData();
+        } else if (['cancel', 'deny', 'expire'].includes(transactionStatus)) {
+          // Payment failed/cancelled
+          this.paymentStatusMessage = `Pembayaran ${transactionStatus}. Silakan coba lagi.`;
+          this.formData.step = 4;
+          this.persistFormData();
+        }
+      },
+      error: () => {
+        this.paymentStatusMessage = 'Tidak dapat memverifikasi status pembayaran. Silakan hubungi support.';
+        this.formData.step = 4;
+        this.persistFormData();
+      },
+    });
+  }
+
+  private handleMidtransUnfinish(orderId: string): void {
+    this.paymentStatusMessage = 'Pembayaran dibatalkan atau belum diselesaikan. Silakan coba lagi.';
+    this.formData.step = 4;
+    this.persistFormData();
+  }
+
+  private handleMidtransError(orderId: string): void {
+    this.paymentStatusMessage = 'Terjadi kesalahan pada pembayaran. Silakan coba lagi.';
+    this.formData.step = 4;
+    this.persistFormData();
+  }
 
 }
