@@ -56,7 +56,7 @@
             type="button"
             class="btn-demo"
             (click)="onDemoClick(theme)"
-            [disabled]="!theme.demo_url">
+            [disabled]="!theme.demo_url || theme.isLegacy">
             <i class="far fa-eye"></i>
             <span class="btn-text">Demo</span>
           </button>
@@ -68,7 +68,7 @@
             [class.btn-success]="theme.isSelected"
             [class.btn-secondary]="!theme.isSelected"
             (click)="onToggleActivation(theme)"
-            [disabled]="isThemeLoading(theme)">
+            [disabled]="isThemeLoading(theme) || theme.isLegacy">
             <i [class]="getActivationButtonIcon(theme)"></i>
             <span class="btn-text">{{ getActivationButtonText(theme) }}</span>
           </button>

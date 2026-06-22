@@ -3,11 +3,20 @@ import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
   DashboardService,
+  DashboardServiceType,
   PublicCategoryWithThemes,
   PublicTheme,
   ThemeService,
 } from 'src/app/dashboard.service';
 import { LandingModalService } from '../../landing-modal.service';
+import {
+  buildThemeAccessMap,
+  FALLBACK_THEME_ACCESS_MAP,
+  getLowestPackageTierForCategory,
+  resolveThemeCategory,
+  ThemeCategoryName,
+  ThemePackageTier,
+} from '../../theme-package-access.util';
 
 type ThemeFilter =
   | 'Semua'
@@ -37,8 +46,8 @@ interface ThemeCard {
 
 interface FallbackThemeSeed {
   name: string;
-  tier: string;
-  badge: ThemeFilter;
+  tier: ThemePackageTier;
+  badge: ThemeCategoryName;
   slug: string;
   image: string;
   description: string;
@@ -94,7 +103,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
     },
     {
       name: 'Garden Whisper',
-      tier: 'sapphire',
+      tier: 'ruby',
       badge: 'Floral',
       slug: 'garden-whisper',
       image: 'assets/landing/template-6.png',
@@ -104,7 +113,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
     },
     {
       name: 'Modern Vows',
-      tier: 'diamond',
+      tier: 'sapphire',
       badge: 'Modern',
       slug: 'modern-vows',
       image: 'assets/landing/template-4.png',
@@ -114,7 +123,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
     },
     {
       name: 'Champagne Rose',
-      tier: 'diamond',
+      tier: 'sapphire',
       badge: 'Elegant',
       slug: 'champagne-rose',
       image: 'assets/landing/template-5.png',
@@ -124,7 +133,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
     },
     {
       name: 'Velvet Mauve',
-      tier: 'sapphire',
+      tier: 'diamond',
       badge: 'Luxury',
       slug: 'velvet-mauve',
       image: 'assets/landing/template-3.png',
@@ -145,6 +154,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
   private readonly themeService: ThemeService;
   private readonly subscriptions = new Subscription();
   private shareMessageTimer: ReturnType<typeof setTimeout> | null = null;
+  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
 
   constructor(
     private router: Router,
@@ -155,7 +165,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadThemes();
+    this.loadPackageAccessMap();
   }
 
   ngOnDestroy(): void {
@@ -204,6 +214,23 @@ export class CommunityComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.loadPopularThemesFallback(true);
+        },
+      })
+    );
+  }
+
+  private loadPackageAccessMap(): void {
+    this.subscriptions.add(
+      this.dashboardService.list(DashboardServiceType.MNL_MD_PACK_INVITATION).subscribe({
+        next: (res: any) => {
+          this.themeAccessMap = buildThemeAccessMap(
+            Array.isArray(res?.data) ? res.data : []
+          );
+          this.loadThemes();
+        },
+        error: () => {
+          this.themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+          this.loadThemes();
         },
       })
     );
@@ -387,13 +414,16 @@ export class CommunityComponent implements OnInit, OnDestroy {
       fallbackSeed.description;
     const features = this.normalizeFeatures(item?.features, fallbackSeed.features);
     const slug = item?.slug || this.slugify(name) || fallbackSeed.slug;
+    const normalizedBadge = this.normalizeBadge(badge, fallbackSeed.badge);
+    const resolvedCategory =
+      resolveThemeCategory(normalizedBadge) || fallbackSeed.badge;
 
     return {
       id: item?.id != null ? Number(item.id) : undefined,
       slug,
       name,
-      tier: this.resolveTier(item, fallbackSeed.tier),
-      badge: this.normalizeBadge(badge, fallbackSeed.badge),
+      tier: this.resolveTier(item, fallbackSeed.tier, resolvedCategory),
+      badge: normalizedBadge,
       description,
       features,
       image,
@@ -457,12 +487,19 @@ export class CommunityComponent implements OnInit, OnDestroy {
     return 'Modern';
   }
 
-  private resolveTier(item: any, fallbackTier = 'ruby'): string {
+  private resolveTier(
+    item: any,
+    fallbackTier: ThemePackageTier = 'ruby',
+    category?: ThemeCategoryName
+  ): ThemePackageTier {
     const raw = `${item?.package_tier || item?.tier || item?.name_paket_display || item?.jenis_paket || ''}`.toLowerCase();
     if (raw.includes('trial')) return 'trial';
     if (/ruby|silver|standar/.test(raw)) return 'ruby';
     if (/sapphire|gold/.test(raw)) return 'sapphire';
     if (/diamond|platinum/.test(raw)) return 'diamond';
+    if (category) {
+      return getLowestPackageTierForCategory(category, this.themeAccessMap);
+    }
     return fallbackTier;
   }
 

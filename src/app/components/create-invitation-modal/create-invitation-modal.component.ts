@@ -5,12 +5,20 @@ import { Subscription } from 'rxjs';
 import {
   DashboardService,
   DashboardServiceType,
+  PublicCategoryWithThemes,
   ThemeService,
 } from '../../dashboard.service';
 import {
   CreateInvitationThemePrefill,
   LandingModalService,
 } from '../../landing-modal.service';
+import {
+  buildThemeAccessMap,
+  FALLBACK_THEME_ACCESS_MAP,
+  isCategoryAccessibleForTier,
+  resolveThemeCategory,
+  ThemeCategoryName,
+} from '../../theme-package-access.util';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -36,6 +44,15 @@ interface ThemeOption {
   image?: string;
   /** Local landing-page asset used as the guaranteed fallback. */
   fallbackImage: string;
+}
+
+interface ThemeCatalogSeed {
+  category: ThemeCategoryName;
+  fallbackImage: string;
+  id?: number;
+  image?: string;
+  name: string;
+  slug: string;
 }
 
 /** Resolved package mapping for a tier (from /v1/paket-undangan). */
@@ -106,42 +123,27 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     default: 'assets/landing/template-1.png',
   };
 
-  /* Static themes per Figma — structured so they can be swapped by the API.
-     Each tier shows a 3x2 grid (6 items) and reuses the landing thumbnails. */
-  themesByCategory: Record<ThemeTier, ThemeOption[]> = {
-    trial: [
-      { slug: 'trial-lavender', name: 'Lavender', tier: 'trial', fallbackImage: 'assets/landing/template-1.png' },
-      { slug: 'trial-ivory', name: 'Ivory', tier: 'trial', fallbackImage: 'assets/landing/template-2.png' },
-      { slug: 'trial-mauve', name: 'Mauve', tier: 'trial', fallbackImage: 'assets/landing/template-3.png' },
-      { slug: 'trial-modern', name: 'Modern', tier: 'trial', fallbackImage: 'assets/landing/template-4.png' },
-      { slug: 'trial-rose', name: 'Rose', tier: 'trial', fallbackImage: 'assets/landing/template-5.png' },
-      { slug: 'trial-garden', name: 'Garden', tier: 'trial', fallbackImage: 'assets/landing/template-6.png' },
-    ],
-    ruby: [
-      { slug: 'lavender', name: 'Lavender', tier: 'ruby', fallbackImage: 'assets/landing/template-1.png' },
-      { slug: 'ivory', name: 'Ivory', tier: 'ruby', fallbackImage: 'assets/landing/template-2.png' },
-      { slug: 'mauve', name: 'Mauve', tier: 'ruby', fallbackImage: 'assets/landing/template-3.png' },
-      { slug: 'modern', name: 'Modern', tier: 'ruby', fallbackImage: 'assets/landing/template-4.png' },
-      { slug: 'rose', name: 'Rose', tier: 'ruby', fallbackImage: 'assets/landing/template-5.png' },
-      { slug: 'garden', name: 'Garden', tier: 'ruby', fallbackImage: 'assets/landing/template-6.png' },
-    ],
-    sapphire: [
-      { slug: 'sapphire-aurora', name: 'Aurora', tier: 'sapphire', fallbackImage: 'assets/landing/template-3.png' },
-      { slug: 'sapphire-pearl', name: 'Pearl', tier: 'sapphire', fallbackImage: 'assets/landing/template-2.png' },
-      { slug: 'sapphire-azure', name: 'Azure', tier: 'sapphire', fallbackImage: 'assets/landing/template-4.png' },
-      { slug: 'sapphire-noir', name: 'Noir', tier: 'sapphire', fallbackImage: 'assets/landing/template-6.png' },
-      { slug: 'sapphire-bloom', name: 'Bloom', tier: 'sapphire', fallbackImage: 'assets/landing/template-1.png' },
-      { slug: 'sapphire-velvet', name: 'Velvet', tier: 'sapphire', fallbackImage: 'assets/landing/template-5.png' },
-    ],
-    diamond: [
-      { slug: 'diamond-royal', name: 'Royal', tier: 'diamond', fallbackImage: 'assets/landing/template-4.png' },
-      { slug: 'diamond-luxe', name: 'Luxe', tier: 'diamond', fallbackImage: 'assets/landing/template-5.png' },
-      { slug: 'diamond-grace', name: 'Grace', tier: 'diamond', fallbackImage: 'assets/landing/template-3.png' },
-      { slug: 'diamond-eternal', name: 'Eternal', tier: 'diamond', fallbackImage: 'assets/landing/template-6.png' },
-      { slug: 'diamond-crystal', name: 'Crystal', tier: 'diamond', fallbackImage: 'assets/landing/template-2.png' },
-      { slug: 'diamond-opal', name: 'Opal', tier: 'diamond', fallbackImage: 'assets/landing/template-1.png' },
-    ],
-  };
+  private readonly legacyTrialThemes: ThemeOption[] = [
+    { slug: 'trial-lavender', name: 'Lavender', tier: 'trial', fallbackImage: 'assets/landing/template-1.png' },
+    { slug: 'trial-ivory', name: 'Ivory', tier: 'trial', fallbackImage: 'assets/landing/template-2.png' },
+    { slug: 'trial-mauve', name: 'Mauve', tier: 'trial', fallbackImage: 'assets/landing/template-3.png' },
+    { slug: 'trial-modern', name: 'Modern', tier: 'trial', fallbackImage: 'assets/landing/template-4.png' },
+    { slug: 'trial-rose', name: 'Rose', tier: 'trial', fallbackImage: 'assets/landing/template-5.png' },
+    { slug: 'trial-garden', name: 'Garden', tier: 'trial', fallbackImage: 'assets/landing/template-6.png' },
+  ];
+
+  private readonly defaultThemeCatalog: ThemeCatalogSeed[] = [
+    { slug: 'soft-ivory', name: 'Soft Ivory', category: 'Minimalis', fallbackImage: 'assets/landing/template-2.png' },
+    { slug: 'lavender-bloom', name: 'Lavender Bloom', category: 'Floral', fallbackImage: 'assets/landing/template-1.png' },
+    { slug: 'garden-whisper', name: 'Garden Whisper', category: 'Floral', fallbackImage: 'assets/landing/template-6.png' },
+    { slug: 'modern-vows', name: 'Modern Vows', category: 'Modern', fallbackImage: 'assets/landing/template-4.png' },
+    { slug: 'champagne-rose', name: 'Champagne Rose', category: 'Elegant', fallbackImage: 'assets/landing/template-5.png' },
+    { slug: 'velvet-mauve', name: 'Velvet Mauve', category: 'Luxury', fallbackImage: 'assets/landing/template-3.png' },
+  ];
+  private themeCatalog: ThemeCatalogSeed[] = [...this.defaultThemeCatalog];
+  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+
+  themesByCategory: Record<ThemeTier, ThemeOption[]> = this.buildThemesByCategory();
 
   private paketByTier: Partial<Record<ThemeTier, PaketByTier>> = {};
   private readonly themeService: ThemeService;
@@ -278,6 +280,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         const list: any[] = Array.isArray(res?.data) ? res.data : [];
         const byTier: Partial<Record<ThemeTier, PaketByTier>> = {};
+        this.themeAccessMap = buildThemeAccessMap(list);
         list.forEach((paket) => {
           const tier = this.resolveTier(paket);
           if (tier && !byTier[tier]) {
@@ -293,9 +296,14 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           }
         });
         this.paketByTier = byTier;
+        this.themesByCategory = this.buildThemesByCategory();
+        this.applyThemePrefill();
       },
       error: () => {
         console.warn('[BuatUndangan] paket-undangan API unavailable.');
+        this.themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+        this.themesByCategory = this.buildThemesByCategory();
+        this.applyThemePrefill();
       },
     });
   }
@@ -309,65 +317,108 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  /** Best-effort: enrich dummy themes with real ids from the popular API. */
+  /** Build available themes from public categories, filtered by accessible package categories. */
   private loadThemes(): void {
-    this.themeService.getPublicPopularThemes({ type: 'website', limit: 18 }).subscribe({
+    this.themeService.getPublicCategoriesWithThemes('website').subscribe({
       next: (res: any) => {
-        const list: any[] = this.extractThemeList(res);
-        if (!list.length) return;
-
-        // Assign real ids to existing grid slots (keeps Figma names/order).
-        const flat: ThemeOption[] = [
-          ...this.themesByCategory.trial,
-          ...this.themesByCategory.ruby,
-          ...this.themesByCategory.sapphire,
-          ...this.themesByCategory.diamond,
-        ];
-        list.forEach((item, i) => {
-          const slot = flat[i];
-          if (!slot) return;
-          if (item?.id != null) {
-            slot.id = Number(item.id);
-          }
-          if (item?.name || item?.title) {
-            slot.name = item.name || item.title;
-          }
-          const apiImage =
-            item?.thumbnail_image ||
-            item?.thumbnail ||
-            item?.preview_image ||
-            item?.image ||
-            item?.preview_url ||
-            item?.preview ||
-            '';
-          if (apiImage) {
-            slot.image = apiImage;
-          }
-        });
-
-        // Refresh selection reference if needed.
-        if (this.selectedTheme) {
-          const refreshed = this.themesByCategory[this.selectedTheme.tier].find(
-            (t) => t.slug === this.selectedTheme?.slug
-          );
-          this.selectedTheme = refreshed || this.selectedTheme;
+        const categories: PublicCategoryWithThemes[] = Array.isArray(res?.data?.categories)
+          ? res.data.categories
+          : [];
+        if (categories.length) {
+          this.themeCatalog = this.buildThemeCatalogFromApi(categories);
+        } else {
+          this.themeCatalog = [...this.defaultThemeCatalog];
         }
 
+        this.themesByCategory = this.buildThemesByCategory();
         this.applyThemePrefill();
       },
       error: () => {
-        console.warn('[BuatUndangan] popular themes API unavailable, using static themes.');
+        console.warn('[BuatUndangan] public categories API unavailable, using static themes.');
+        this.themeCatalog = [...this.defaultThemeCatalog];
+        this.themesByCategory = this.buildThemesByCategory();
         this.applyThemePrefill();
       },
     });
   }
 
-  private extractThemeList(res: any): any[] {
-    if (Array.isArray(res)) return res;
-    if (Array.isArray(res?.data)) return res.data;
-    if (Array.isArray(res?.data?.data)) return res.data.data;
-    if (Array.isArray(res?.data?.themes)) return res.data.themes;
-    return [];
+  private buildThemesByCategory(): Record<ThemeTier, ThemeOption[]> {
+    const buildTierThemes = (tier: Exclude<ThemeTier, 'trial'>): ThemeOption[] => {
+      const filtered = this.themeCatalog
+        .filter((theme) => isCategoryAccessibleForTier(tier, theme.category, this.themeAccessMap))
+        .map((theme) => ({
+          id: theme.id,
+          slug: theme.slug,
+          name: theme.name,
+          tier,
+          image: theme.image,
+          fallbackImage: theme.fallbackImage,
+        }));
+
+      if (filtered.length) {
+        return filtered;
+      }
+
+      return this.defaultThemeCatalog
+        .filter((theme) => isCategoryAccessibleForTier(tier, theme.category, this.themeAccessMap))
+        .map((theme) => ({
+          slug: theme.slug,
+          name: theme.name,
+          tier,
+          fallbackImage: theme.fallbackImage,
+        }));
+    };
+
+    return {
+      trial: [...this.legacyTrialThemes],
+      ruby: buildTierThemes('ruby'),
+      sapphire: buildTierThemes('sapphire'),
+      diamond: buildTierThemes('diamond'),
+    };
+  }
+
+  private buildThemeCatalogFromApi(categories: PublicCategoryWithThemes[]): ThemeCatalogSeed[] {
+    const catalog = categories.flatMap((category) => {
+      const resolvedCategory = resolveThemeCategory(category?.name);
+      if (!resolvedCategory) {
+        return [];
+      }
+
+      const themes = Array.isArray(category?.jenis_themas) ? category.jenis_themas : [];
+      return themes.map((theme) => ({
+        id: theme.id,
+        slug: (theme as any)?.slug || this.slugifyThemeName(theme.name),
+        name: theme.name,
+        category: resolvedCategory,
+        image:
+          theme.thumbnail_image ||
+          theme.preview_image ||
+          theme.image ||
+          undefined,
+        fallbackImage: this.findFallbackImage(theme.name, resolvedCategory),
+      }));
+    });
+
+    return catalog.length ? catalog : [...this.defaultThemeCatalog];
+  }
+
+  private findFallbackImage(name: string, category: ThemeCategoryName): string {
+    const normalizedName = this.slugifyThemeName(name);
+    return (
+      this.defaultThemeCatalog.find((theme) => theme.slug === normalizedName)?.fallbackImage ||
+      this.defaultThemeCatalog.find((theme) => theme.category === category)?.fallbackImage ||
+      this.defaultThemeImages['default']
+    );
+  }
+
+  private slugifyThemeName(value: string): string {
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   /* ------------------------------ step navigation ---------------------------- */

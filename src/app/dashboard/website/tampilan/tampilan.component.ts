@@ -1,6 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import {
+  DashboardService,
+  DashboardServiceType,
+  ProfileResponse,
   ThemeService,
   PublicCategoriesResponse,
   PublicCategoryWithThemes,
@@ -9,6 +12,15 @@ import {
   ThemeSelectionRequest
 } from '../../../dashboard.service';
 import { ToastService } from '../../../toast.service';
+import {
+  buildThemeAccessMap,
+  FALLBACK_THEME_ACCESS_MAP,
+  isCategoryAccessibleForTier,
+  resolvePackageTier,
+  resolveThemeCategory,
+  ThemeCategoryName,
+  ThemePackageTier,
+} from '../../../theme-package-access.util';
 
 interface ThemeCard {
   id: number;
@@ -21,6 +33,9 @@ interface ThemeCard {
   isSelected: boolean;
   isLoading?: boolean;
   category_id: number;
+  category: ThemeCategoryName | 'Legacy';
+  isLegacy?: boolean;
+  imageFallback?: string;
 }
 
 @Component({
@@ -33,16 +48,26 @@ export class TampilanComponent implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
   selectedThemeId: number | null = null;
+  userPackageTier: ThemePackageTier = 'trial';
 
   private subscriptions = new Subscription();
+  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+  private readonly legacyTrialCards: ThemeCard[] = [
+    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: true, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+  ];
 
   constructor(
+    private dashboardService: DashboardService,
     private themeService: ThemeService,
     private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
-    this.loadThemes();
+    this.loadAccessibleThemes();
     this.loadSelectedTheme();
   }
 
@@ -53,22 +78,39 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /**
    * Load themes from API
    */
-  private loadThemes(): void {
+  private loadAccessibleThemes(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const themesSubscription = this.themeService.getPublicCategoriesWithThemes('website').subscribe({
-      next: (response: PublicCategoriesResponse) => {
-        if (response.status && response.data?.categories) {
-          this.processThemeData(response.data.categories);
-          console.log('Themes loaded successfully:', response.data.total_themes);
+    const themesSubscription = forkJoin({
+      profile: this.dashboardService.getProfile(),
+      packages: this.dashboardService.list(DashboardServiceType.MNL_MD_PACK_INVITATION),
+      themes: this.themeService.getPublicCategoriesWithThemes('website'),
+    }).subscribe({
+      next: ({ profile, packages, themes }: {
+        profile: ProfileResponse;
+        packages: any;
+        themes: PublicCategoriesResponse;
+      }) => {
+        this.userPackageTier = resolvePackageTier(profile?.data?.package_info) || 'trial';
+        this.themeAccessMap = buildThemeAccessMap(Array.isArray(packages?.data) ? packages.data : []);
+
+        if (this.userPackageTier === 'trial') {
+          this.themeCards = this.legacyTrialCards.map((card) => ({ ...card }));
+          this.isLoading = false;
+          return;
+        }
+
+        if (themes.status && themes.data?.categories) {
+          this.processThemeData(themes.data.categories);
+          console.log('Themes loaded successfully:', themes.data.total_themes);
         } else {
           this.handleError('Invalid response format from server');
         }
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading themes:', error);
+        console.error('Error loading accessible themes:', error);
         this.handleError('Failed to load themes. Please try again later.');
         this.isLoading = false;
       }
@@ -105,19 +147,26 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.themeCards = [];
 
     categories.forEach(category => {
+      const resolvedCategory = resolveThemeCategory(category?.name);
+      if (!resolvedCategory || !isCategoryAccessibleForTier(this.userPackageTier, resolvedCategory, this.themeAccessMap)) {
+        return;
+      }
+
       if (category.jenis_themas && category.jenis_themas.length > 0) {
         category.jenis_themas.forEach(theme => {
           this.themeCards.push({
             id: theme.id,
-            label: this.getCategoryLabel(category.name),
+            label: resolvedCategory,
             title: theme.name,
             name: theme.name,
             image: this.getThemeImage(theme),
+            imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
             demo_url: theme.demo_url || '',
             price: theme.price || 0,
             isSelected: false,
             isLoading: false,
-            category_id: category.id
+            category_id: category.id,
+            category: resolvedCategory
           });
         });
       }
@@ -136,17 +185,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.themeCards.forEach(card => {
       card.isSelected = card.id === this.selectedThemeId;
     });
-  }
-
-  /**
-   * Get category label for display
-   */
-  private getCategoryLabel(categoryName: string): string {
-    const name = categoryName.toLowerCase();
-    if (name.includes('scroll')) return 'Scroll';
-    if (name.includes('slide')) return 'Slide';
-    if (name.includes('mobile')) return 'Mobile';
-    return 'Website'; // default
   }
 
   /**
@@ -172,14 +210,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return theme.preview;
     }
 
-    // Fallback to static assets based on theme name
-    const themeName = theme.name.toLowerCase();
-    if (themeName.includes('modern')) return 'assets/themas2.png';
-    if (themeName.includes('blue')) return 'assets/themas4.png';
-    if (themeName.includes('pinky')) return 'assets/themas1.png';
-    if (themeName.includes('minimalist')) return 'assets/themas3.png';
-
-    return 'assets/themas2.png'; // default
+    return this.getThemeFallbackImage(theme.name, resolveThemeCategory(theme.name) || 'Minimalis');
   }
 
   /**
@@ -187,6 +218,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   onToggleActivation(theme: ThemeCard): void {
     if (theme.isLoading) return;
+
+    if (theme.isLegacy) {
+      this.toastService.showToast('Paket Trial menggunakan tema default/legacy.', 'info');
+      return;
+    }
 
     theme.isLoading = true;
 
@@ -265,7 +301,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   retryLoadThemes(): void {
     this.errorMessage = '';
-    this.loadThemes();
+    this.loadAccessibleThemes();
   }
 
   /**
@@ -284,6 +320,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   getActivationButtonText(theme: ThemeCard): string {
     if (theme.isLoading) return 'Loading...';
+    if (theme.isLegacy) return 'Default Trial';
     return theme.isSelected ? 'Selected' : 'Select';
   }
 
@@ -292,6 +329,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   getActivationButtonIcon(theme: ThemeCard): string {
     if (theme.isLoading) return 'fas fa-spinner fa-spin';
+    if (theme.isLegacy) return 'fas fa-lock';
     return theme.isSelected ? 'fas fa-check' : 'fas fa-file-alt';
   }
 
@@ -307,8 +345,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   onImageError(event: any, theme: ThemeCard): void {
     console.warn(`Failed to load image for theme ${theme.name}:`, theme.image);
-    // Set fallback image
-    event.target.src = 'assets/themas2.png';
+    event.target.src = theme.imageFallback || 'assets/modern.svg';
   }
 
   /**
@@ -328,5 +365,32 @@ export class TampilanComponent implements OnInit, OnDestroy {
       currency: 'IDR',
       minimumFractionDigits: 0
     }).format(price);
+  }
+
+  private getThemeFallbackImage(name: string, category: ThemeCategoryName): string {
+    const themeName = String(name || '').toLowerCase();
+    if (themeName.includes('modern')) return 'assets/themas2.png';
+    if (themeName.includes('blue')) return 'assets/themas4.png';
+    if (themeName.includes('pinky')) return 'assets/themas1.png';
+    if (themeName.includes('minimalist') || themeName.includes('ivory')) return 'assets/themas3.png';
+    if (themeName.includes('lavender')) return 'assets/landing/template-1.png';
+    if (themeName.includes('garden')) return 'assets/landing/template-6.png';
+    if (themeName.includes('champagne')) return 'assets/landing/template-5.png';
+    if (themeName.includes('velvet')) return 'assets/landing/template-3.png';
+
+    switch (category) {
+      case 'Minimalis':
+        return 'assets/themas3.png';
+      case 'Floral':
+        return 'assets/landing/template-1.png';
+      case 'Modern':
+        return 'assets/themas2.png';
+      case 'Elegant':
+        return 'assets/landing/template-5.png';
+      case 'Luxury':
+        return 'assets/landing/template-3.png';
+      default:
+        return 'assets/themas2.png';
+    }
   }
 }
