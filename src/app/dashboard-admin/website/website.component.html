@@ -1,217 +1,165 @@
-<ul class="nav nav-tabs d-flex justify-content-between mb-3" id="myTab" role="tablist"
-  style="background-color: #fff; border-color: #dee2e6 #dee2e6 #fff; ">
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" id="kategori-tab" data-bs-toggle="tab" data-bs-target="#kategori" type="button"
-      role="tab" aria-controls="kategori" aria-selected="true">
-      <i class="fa-solid fa-folder-open" style="margin-right: 10px;"></i>Kategori
-    </button>
-  </li>
-  <li class="nav-item" role="presentation">
-    <button class="nav-link" id="tema-tab" data-bs-toggle="tab" data-bs-target="#tema" type="button" role="tab"
-      aria-controls="tema" aria-selected="false">
-      <i class="fa-solid fa-palette" style="margin-right: 10px;"></i>Tema
-    </button>
-  </li>
-</ul>
-
-
-<div class="tab-content" id="myTabContent">
-  <div class="tab-pane fade show active" id="kategori" role="tabpanel" aria-labelledby="kategori-tab">
-    <div class="container py-4">
-      <div class="bg-white rounded-3 p-4 shadow-sm" style="box-shadow: 0 0 20px rgb(255 182 215 / 0.3);">
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
-          <h2 class="border-left-pink mb-0">Data Kategori Undangan Website</h2>
-          <button type="button" class="btn btn-pink d-flex align-items-center gap-2" (click)="openModalAdd()">
-            <i class="fas fa-plus"></i> Tambah Kategori
-          </button>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3 gap-3">
-          <button type="button" class="btn btn-outline-pink d-flex align-items-center gap-2"
-            (click)="openModalDeleteAll()">
-            <i class="fas fa-trash-alt"></i> Hapus Semua
-          </button>
-          <form class="d-flex align-items-center gap-2 mb-0" role="search" onsubmit="return false;">
-            <label for="search" class="mb-0">Cari</label>
-            <input id="search" type="search" class="form-control" style="max-width: 220px;"
-              placeholder="Cari kategori..."
-              [(ngModel)]="searchTerm"
-              (input)="onSearch($any($event.target).value)"
-              aria-label="Search" />
-          </form>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table align-middle mb-0 table-borderless">
-            <thead class="thead-light">
-              <tr>
-                <th scope="col">No</th>
-                <th scope="col">Nama Kategori</th>
-                <th scope="col">Slug</th>
-                <th scope="col">Gambar</th>
-                <th scope="col">Status</th>
-                <th scope="col" class="text-end">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of displayedData; let i = index">
-                <td>{{ i + 1 + (currentPage - 1) * pageSize }}</td>
-                <td>{{ item.nama_kategori }}</td>
-                <td>{{ item.slug }}</td>
-                <td>
-                  <img *ngIf="item.image"
-                    [src]="getImageUrl(item.image)"
-                    alt="Category Image"
-                    class="img-thumbnail"
-                    style="width: 50px; height: 50px; object-fit: cover;">
-                  <span *ngIf="!item.image" class="text-muted">No Image</span>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    class="btn btn-sm"
-                    [class.btn-success]="item.is_active"
-                    [class.btn-secondary]="!item.is_active"
-                    (click)="toggleCategoryStatus(item)">
-                    {{ item.is_active ? 'Aktif' : 'Nonaktif' }}
-                  </button>
-                </td>
-                <td class="text-end">
-                  <button type="button" class="btn btn-cyan rounded-3 me-2" (click)="openEditModal(item)">
-                    <i class="fas fa-paint-brush"></i>
-                  </button>
-                  <button type="button" class="btn btn-pink-icon rounded-3" (click)="openDeleteModal(item)" title="Hapus dengan modal lengkap">
-                    <i class="fas fa-trash-alt"></i>
-                  </button>
-                  <!-- Alternative: Simple delete confirmation -->
-                  <!-- <button type="button" class="btn btn-pink-icon rounded-3" (click)="showDeleteConfirmation(item)" title="Hapus dengan modal sederhana">
-                    <i class="fas fa-trash-alt"></i>
-                  </button> -->
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span><strong>Menampilkan</strong></span>
-            <select class="form-select form-select-sm" [(ngModel)]="pageSize" (change)="onPageSizeChange()">
-              <option *ngFor="let size of pageSizes" [value]="size">{{ size }}</option>
-            </select>
-            <span><strong>Data</strong></span>
-          </div>
-
-          <div class="d-flex gap-3">
-            <button type="button" class="pagination-btn" (click)="onPageChange(currentPage - 1)"
-              [disabled]="currentPage === 1">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <button type="button" class="pagination-btn" (click)="onPageChange(currentPage + 1)"
-              [disabled]="currentPage === totalPages">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-
+<section class="theme-admin-page">
+  <div class="theme-admin-shell">
+    <header class="theme-admin-hero">
+      <div>
+        <p class="theme-admin-eyebrow">Admin Tema Website</p>
+        <h1>Kelola 6 tema utama dalam satu halaman</h1>
+        <p class="theme-admin-copy">
+          Admin hanya dapat mengatur status aktif, urutan tampil, gambar preview, dan melihat detail tema.
+        </p>
       </div>
+      <div class="theme-admin-summary">
+        <span>{{ themeCards.length }} Tema</span>
+        <strong>{{ filteredThemes.length }} Ditampilkan</strong>
+      </div>
+    </header>
+
+    <div class="theme-filter-bar" role="tablist" aria-label="Filter kategori tema">
+      <button
+        *ngFor="let filter of filters"
+        type="button"
+        class="theme-filter-pill"
+        [class.active]="activeFilter === filter"
+        (click)="setFilter(filter)">
+        {{ filter }}
+      </button>
     </div>
 
-  </div>
-  <div class="tab-pane fade" id="tema" role="tabpanel" aria-labelledby="tema-tab">
-    <div class="container-fluid py-4">
-        <div class="row g-4 justify-content-center" *ngIf="!themeLoading && displayedThemes.length > 0">
-          <div class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3" *ngFor="let theme of displayedThemes">
-            <div class="modern-theme-card">
+    <div class="theme-error" *ngIf="error">
+      {{ error }}
+    </div>
 
-              <!-- Delete Icon - Top Right -->
-              <button type="button" class="delete-btn" (click)="deleteTheme(theme)" title="Hapus tema">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3,6 5,6 21,6"></polyline>
-                  <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
-                  <line x1="10" y1="11" x2="10" y2="17"></line>
-                  <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
+    <div class="theme-loading" *ngIf="loading">
+      <div class="spinner-border text-secondary" role="status">
+        <span class="visually-hidden">Memuat tema...</span>
+      </div>
+      <p>Memuat data tema...</p>
+    </div>
+
+    <div class="row g-4" *ngIf="!loading">
+      <div class="col-12 col-md-6 col-xl-4" *ngFor="let theme of filteredThemes; trackBy: trackByTheme">
+        <article class="theme-admin-card">
+          <div class="theme-card-media">
+            <span class="theme-card-order">Urutan {{ theme.displayOrder }}</span>
+            <span class="theme-card-badge">{{ theme.category }}</span>
+            <img
+              [src]="getThemeImageUrl(theme)"
+              [alt]="theme.name"
+              class="theme-card-image" />
+          </div>
+
+          <div class="theme-card-body">
+            <div class="theme-card-head">
+              <div>
+                <h2>{{ theme.name }}</h2>
+                <p>{{ getThemeStatusLabel(theme) }}</p>
+              </div>
+              <button
+                type="button"
+                class="theme-detail-link"
+                (click)="openThemeDetail(theme)">
+                Detail
+              </button>
+            </div>
+
+            <div class="theme-card-controls">
+              <button
+                type="button"
+                class="status-btn"
+                [class.inactive]="!theme.categoryData?.is_active"
+                [disabled]="!theme.categoryData"
+                (click)="toggleThemeStatus(theme)">
+                {{ theme.categoryData?.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
               </button>
 
-              <!-- Theme Type Badge - Top Left -->
-              <div class="theme-badge">
-                {{ getThemeDisplayName(theme) }}
-              </div>
-
-              <!-- Theme Preview Image -->
-              <div class="theme-preview">
-                <div class="preview-container">
-                  <img *ngIf="theme.image"
-                    [src]="getThemeImageUrl(theme.image)"
-                    [alt]="theme.nama_kategori"
-                    class="preview-image" />
-                  <div *ngIf="!theme.image" class="no-preview">
-                    <div class="no-preview-icon">
-                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21,15 16,10 5,21"></polyline>
-                      </svg>
-                    </div>
-                    <span>No Preview</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="theme-actions">
-                <button type="button" class="btn-demo">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                  Demo
+              <div class="order-controls">
+                <button
+                  type="button"
+                  class="order-btn"
+                  [disabled]="theme.displayOrder === 1"
+                  (click)="moveTheme(theme, 'up')">
+                  Naik
                 </button>
-                <button type="button"
-                  class="btn-toggle"
-                  [class.active]="theme.is_active"
-                  [class.inactive]="!theme.is_active"
-                  (click)="toggleThemeStatus(theme)">
-                  {{ theme.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                <button
+                  type="button"
+                  class="order-btn"
+                  [disabled]="theme.displayOrder === themeCards.length"
+                  (click)="moveTheme(theme, 'down')">
+                  Turun
                 </button>
               </div>
             </div>
+
+            <div class="theme-card-actions">
+              <label class="upload-btn" [class.disabled]="!theme.categoryData">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif"
+                  [disabled]="!theme.categoryData || uploadingThemeId === theme.categoryData?.id"
+                  (change)="onPreviewSelected($event, theme)" />
+                {{ uploadingThemeId === theme.categoryData?.id ? 'Mengunggah...' : 'Ubah Preview' }}
+              </label>
+
+              <span class="theme-slug">
+                {{ theme.categoryData?.slug || 'Belum ada slug existing' }}
+              </span>
+            </div>
           </div>
-        </div>
+        </article>
+      </div>
+    </div>
 
-        <!-- Loading State -->
-        <div class="text-center py-5" *ngIf="themeLoading">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading themes...</span>
-          </div>
-          <p class="mt-2">Memuat tema...</p>
-        </div>
+    <div class="theme-empty" *ngIf="!loading && filteredThemes.length === 0">
+      Tidak ada tema pada kategori ini.
+    </div>
+  </div>
+</section>
 
-        <!-- Empty State -->
-        <div class="text-center py-5" *ngIf="!themeLoading && displayedThemes.length === 0">
-          <i class="fas fa-palette fa-3x text-muted mb-3"></i>
-          <h5 class="text-muted">Belum ada tema</h5>
-          <p class="text-muted">Tema akan otomatis dibuat saat Anda menambah kategori website</p>
-        </div>
+<div class="theme-detail-backdrop" *ngIf="selectedThemeDetail" (click)="closeThemeDetail()"></div>
 
-        <!-- Pagination for Themes -->
-        <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3"
-          *ngIf="!themeLoading && displayedThemes.length > 0">
-          <div class="d-flex gap-3" *ngIf="themeTotalPages > 1">
-            <button type="button" class="pagination-btn" (click)="onThemePageChange(themeCurrentPage - 1)"
-              [disabled]="themeCurrentPage === 1">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <span class="align-self-center">{{ themeCurrentPage }} / {{ themeTotalPages }}</span>
-            <button type="button" class="pagination-btn" (click)="onThemePageChange(themeCurrentPage + 1)"
-              [disabled]="themeCurrentPage === themeTotalPages">
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
+<section class="theme-detail-modal" *ngIf="selectedThemeDetail" role="dialog" aria-modal="true">
+  <button type="button" class="theme-detail-close" (click)="closeThemeDetail()" aria-label="Tutup detail tema">
+    ×
+  </button>
 
+  <div class="theme-detail-grid">
+    <div class="theme-detail-preview">
+      <img
+        [src]="getThemeImageUrl(selectedThemeDetail)"
+        [alt]="selectedThemeDetail.name"
+        class="theme-detail-image" />
+    </div>
+
+    <div class="theme-detail-content">
+      <span class="theme-detail-badge">{{ selectedThemeDetail.category }}</span>
+      <h3>{{ selectedThemeDetail.name }}</h3>
+
+      <div class="theme-detail-list">
+        <div>
+          <span>Status</span>
+          <strong>{{ getThemeStatusLabel(selectedThemeDetail) }}</strong>
+        </div>
+        <div>
+          <span>Urutan Tampil</span>
+          <strong>{{ selectedThemeDetail.displayOrder }}</strong>
+        </div>
+        <div>
+          <span>Slug Existing</span>
+          <strong>{{ selectedThemeDetail.categoryData?.slug || '-' }}</strong>
+        </div>
+        <div>
+          <span>ID Existing</span>
+          <strong>{{ selectedThemeDetail.categoryData?.id || '-' }}</strong>
+        </div>
+        <div>
+          <span>Dibuat</span>
+          <strong>{{ formatDate(selectedThemeDetail.categoryData?.created_at) }}</strong>
+        </div>
+        <div>
+          <span>Diperbarui</span>
+          <strong>{{ formatDate(selectedThemeDetail.categoryData?.updated_at) }}</strong>
+        </div>
       </div>
     </div>
   </div>
-
+</section>

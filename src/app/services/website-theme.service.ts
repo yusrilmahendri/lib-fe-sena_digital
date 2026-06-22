@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface WebsiteTheme {
   id: number;
@@ -43,7 +44,7 @@ export interface ThemeListParams {
   providedIn: 'root'
 })
 export class WebsiteThemeService {
-  private readonly baseUrl = '/api/admin/website-categories'; // Use same endpoint as categories
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/website-categories`;
 
   // State management
   private themesSubject = new BehaviorSubject<WebsiteTheme[]>([]);
@@ -216,12 +217,14 @@ export class WebsiteThemeService {
   private handleError(error: any): Observable<never> {
     this.loadingSubject.next(false);
 
-    let errorMessage = 'An unexpected error occurred';
+    let errorMessage = 'Terjadi kendala saat memuat data tema. Silakan coba lagi.';
 
-    if (error.error?.message) {
-      errorMessage = error.error.message;
-    } else if (error.message) {
-      errorMessage = error.message;
+    if (error.status === 0) {
+      errorMessage = 'Koneksi ke server sedang bermasalah. Silakan coba lagi sebentar lagi.';
+    } else if (error.status === 404) {
+      errorMessage = 'Data tema yang diminta belum tersedia.';
+    } else if (error.status >= 500) {
+      errorMessage = 'Server sedang mengalami kendala. Silakan coba lagi beberapa saat lagi.';
     }
 
     this.errorSubject.next(errorMessage);

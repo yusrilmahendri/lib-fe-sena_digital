@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import {
   WebsiteCategory,
   CategoryListResponse,
@@ -29,7 +30,7 @@ import {
   providedIn: 'root'
 })
 export class WebsiteCategoryService {
-  private readonly baseUrl = '/api/admin/website-categories';
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/website-categories`;
   private readonly maxImageSize = 2 * 1024 * 1024; // 2MB
   private readonly allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
 
@@ -295,32 +296,28 @@ export class WebsiteCategoryService {
   private handleError(error: any): Observable<never> {
     this.loadingSubject.next(false);
 
-    let errorMessage = 'An unexpected error occurred';
+    let errorMessage = 'Terjadi kendala saat memuat data tema. Silakan coba lagi.';
     let validationErrors: { [key: string]: string[] } | undefined;
 
     console.error('Website Category Service Error:', error);
 
-    if (error.status === 500) {
-      errorMessage = 'Server error. Please check your data and try again.';
+    if (error.status === 0) {
+      errorMessage = 'Koneksi ke server sedang bermasalah. Silakan coba lagi sebentar lagi.';
+    } else if (error.status === 500) {
+      errorMessage = 'Server sedang mengalami kendala. Silakan coba lagi beberapa saat lagi.';
     } else if (error.status === 422) {
-      errorMessage = 'Validation failed. Please check your input.';
+      errorMessage = 'Beberapa data belum sesuai. Mohon periksa kembali input Anda.';
     } else if (error.status === 404) {
-      errorMessage = 'Endpoint not found. Please contact administrator.';
+      errorMessage = 'Data tema yang diminta belum tersedia.';
     }
 
     if (error.error) {
       const errorResponse = error.error as CategoryErrorResponse;
 
-      if (errorResponse.message) {
-        errorMessage = errorResponse.message;
-      }
-
       if (errorResponse.errors) {
         validationErrors = errorResponse.errors;
-        errorMessage = 'Validation errors: ' + Object.keys(errorResponse.errors).join(', ');
+        errorMessage = 'Beberapa data belum sesuai. Mohon periksa kembali input Anda.';
       }
-    } else if (error.message) {
-      errorMessage = error.message;
     }
 
     this.errorSubject.next(errorMessage);

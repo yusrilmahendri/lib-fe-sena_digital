@@ -1,15 +1,24 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
-import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { WebsiteCategoryService } from '../../services/website-category.service';
-import { WebsiteThemeService, WebsiteTheme } from '../../services/website-theme.service';
-import { WebsiteCategory, CategoryListParams } from '../../interfaces/admin-category.interfaces';
-import { ModalAddWebsiteCategoryComponent } from '../../shared/modal/modal-add-website-category/modal-add-website-category.component';
-import { ModalDeleteCategoryAdminComponent } from '../../shared/modal/modal-delete-category-admin/modal-delete-category-admin.component';
-import { ModalEditCategoryAdminComponent } from '../../shared/modal/modal-edit-category-admin/modal-edit-category-admin.component';
-import { ModalDeleteAllCategoryComponent } from 'src/app/shared/modal/modal-delete-all-category/modal-delete-all-category.component';
-import { ModalComponent } from 'src/app/shared/modal/modal.component';
 import { Notyf } from 'notyf';
+import { WebsiteCategory } from '../../interfaces/admin-category.interfaces';
+import { WebsiteCategoryService } from '../../services/website-category.service';
+
+interface ThemePreset {
+  key: string;
+  name: string;
+  category: 'Minimalis' | 'Floral' | 'Modern' | 'Elegant' | 'Luxury';
+  fallbackImage: string;
+}
+
+interface AdminThemeCard {
+  key: string;
+  name: string;
+  category: ThemePreset['category'];
+  fallbackImage: string;
+  displayOrder: number;
+  categoryData: WebsiteCategory | null;
+}
 
 @Component({
   selector: 'wc-website',
@@ -17,38 +26,68 @@ import { Notyf } from 'notyf';
   styleUrls: ['./website.component.scss']
 })
 export class WebsiteComponent implements OnInit, OnDestroy {
+  private readonly storageKey = 'admin-website-theme-order';
+  private readonly themePresets: ThemePreset[] = [
+    {
+      key: 'soft-ivory',
+      name: 'Soft Ivory',
+      category: 'Minimalis',
+      fallbackImage: 'assets/landing/template-2.png'
+    },
+    {
+      key: 'lavender-bloom',
+      name: 'Lavender Bloom',
+      category: 'Floral',
+      fallbackImage: 'assets/landing/template-1.png'
+    },
+    {
+      key: 'garden-whisper',
+      name: 'Garden Whisper',
+      category: 'Floral',
+      fallbackImage: 'assets/landing/template-6.png'
+    },
+    {
+      key: 'modern-vows',
+      name: 'Modern Vows',
+      category: 'Modern',
+      fallbackImage: 'assets/landing/template-4.png'
+    },
+    {
+      key: 'champagne-rose',
+      name: 'Champagne Rose',
+      category: 'Elegant',
+      fallbackImage: 'assets/landing/template-5.png'
+    },
+    {
+      key: 'velvet-mauve',
+      name: 'Velvet Mauve',
+      category: 'Luxury',
+      fallbackImage: 'assets/landing/template-3.png'
+    }
+  ];
 
-  // Category data
+  readonly filters: Array<'Semua' | ThemePreset['category']> = [
+    'Semua',
+    'Minimalis',
+    'Floral',
+    'Modern',
+    'Elegant',
+    'Luxury'
+  ];
+
+  activeFilter: 'Semua' | ThemePreset['category'] = 'Semua';
   allData: WebsiteCategory[] = [];
-  displayedData: WebsiteCategory[] = [];
-  pageSize: number = 5;
-  currentPage: number = 1;
-  totalPages: number = 1;
-  pageSizes: number[] = [5, 10, 20, 30, 50, 100];
-  selectedItem: WebsiteCategory | null = null;
-  searchTerm: string = '';
-  statusFilter: string = '';
-  loading: boolean = false;
+  themeCards: AdminThemeCard[] = [];
+  loading = false;
   error: string | null = null;
-
-  // Theme data
-  allThemes: WebsiteTheme[] = [];
-  displayedThemes: WebsiteTheme[] = [];
-  themePageSize: number = 6;
-  themeCurrentPage: number = 1;
-  themeTotalPages: number = 1;
-  themeSearchTerm: string = '';
-  themeStatusFilter: string = '';
-  themeLoading: boolean = false;
-  themeError: string | null = null;
+  uploadingThemeId: number | null = null;
+  selectedThemeDetail: AdminThemeCard | null = null;
 
   private subscriptions: Subscription[] = [];
   private notyf: Notyf;
 
   constructor(
     private websiteCategoryService: WebsiteCategoryService,
-    private websiteThemeService: WebsiteThemeService,
-    private modalSvc: BsModalService,
     private cdr: ChangeDetectorRef
   ) {
     this.notyf = new Notyf({
@@ -60,428 +99,235 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeSubscriptions();
     this.getData();
-    this.getThemes();
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
-  private initializeSubscriptions(): void {
-    // Subscribe to loading state
-    const loadingSub = this.websiteCategoryService.loading$.subscribe(loading => {
-      this.loading = loading;
-    });
-    this.subscriptions.push(loadingSub);
+  get filteredThemes(): AdminThemeCard[] {
+    if (this.activeFilter === 'Semua') {
+      return this.themeCards;
+    }
 
-    // Subscribe to error state
-    const errorSub = this.websiteCategoryService.error$.subscribe(error => {
-      this.error = error;
-    });
-    this.subscriptions.push(errorSub);
-
-    // Subscribe to categories
-    const categoriesSub = this.websiteCategoryService.categories$.subscribe(categories => {
-      this.allData = categories;
-      this.updatePagination();
-    });
-    this.subscriptions.push(categoriesSub);
-
-    // Subscribe to theme loading state
-    const themeLoadingSub = this.websiteThemeService.loading$.subscribe(loading => {
-      this.themeLoading = loading;
-    });
-    this.subscriptions.push(themeLoadingSub);
-
-    // Subscribe to theme error state
-    const themeErrorSub = this.websiteThemeService.error$.subscribe(error => {
-      this.themeError = error;
-    });
-    this.subscriptions.push(themeErrorSub);
-
-    // Subscribe to themes
-    const themesSub = this.websiteThemeService.themes$.subscribe(themes => {
-      console.log('Themes subscription triggered:', themes.length);
-      this.allThemes = themes;
-      this.updateThemePagination();
-      this.cdr.detectChanges(); // Force change detection
-    });
-    this.subscriptions.push(themesSub);
+    return this.themeCards.filter((theme) => theme.category === this.activeFilter);
   }
 
-  getData() {
-    // Build params object without undefined values
-    const params: any = {
-      per_page: 100 // Get all data for client-side pagination
-    };
+  setFilter(filter: 'Semua' | ThemePreset['category']): void {
+    this.activeFilter = filter;
+  }
 
-    // Only add search if it has a valid value
-    if (this.searchTerm && this.searchTerm.trim() !== '') {
-      params.search = this.searchTerm.trim();
-    }
-
-    // Only add status if it's valid
-    if (this.statusFilter === 'active' || this.statusFilter === 'inactive') {
-      params.status = this.statusFilter;
-    }
-
-    this.websiteCategoryService.getCategories(params).subscribe({
-      next: (response) => {
-        // Data is automatically updated via subscription
-    this.updatePagination();
-      },
+  getData(): void {
+    this.websiteCategoryService.getCategories({ per_page: 100 }).subscribe({
       error: (error) => {
         console.error('Error loading website categories:', error);
       }
     });
   }
 
-  onSearch(searchTerm: string) {
-    this.searchTerm = searchTerm;
-    this.currentPage = 1;
-    this.getData();
-  }
-
-  onStatusFilter(status: string) {
-    this.statusFilter = status;
-    this.currentPage = 1;
-    this.getData();
-  }
-
-  private updatePagination() {
-    this.totalPages = Math.ceil(this.allData.length / this.pageSize);
-    this.onPageChange(this.currentPage);
-    if (this.allData.length === 0) {
-      this.displayedData = [];
-    }
-  }
-
-  private updateThemePagination() {
-    console.log('Updating theme pagination. All themes:', this.allThemes.length);
-
-    // Reset to first page if current page would be invalid
-    if (this.allThemes.length === 0) {
-      this.displayedThemes = [];
-      this.themeTotalPages = 0;
-      this.themeCurrentPage = 1;
+  toggleThemeStatus(theme: AdminThemeCard): void {
+    if (!theme.categoryData?.id) {
+      this.notyf.error('Tema ini belum terhubung ke data existing');
       return;
     }
 
-    this.themeTotalPages = Math.ceil(this.allThemes.length / this.themePageSize);
-
-    // Ensure current page is valid
-    if (this.themeCurrentPage > this.themeTotalPages) {
-      this.themeCurrentPage = Math.max(1, this.themeTotalPages);
-    }
-
-    this.onThemePageChange(this.themeCurrentPage);
-    console.log('Theme pagination updated. Displayed themes:', this.displayedThemes.length);
-  }
-
-  getThemes() {
-    // Build params object without undefined values
-    const params: any = {
-      per_page: 100 // Get all data for client-side pagination
-    };
-
-    // Only add search if it has a valid value
-    if (this.themeSearchTerm && this.themeSearchTerm.trim() !== '') {
-      params.search = this.themeSearchTerm.trim();
-    }
-
-    // Only add status if it's valid
-    if (this.themeStatusFilter === 'active' || this.themeStatusFilter === 'inactive') {
-      params.status = this.themeStatusFilter;
-    }
-
-    this.websiteThemeService.getThemes(params).subscribe({
-      next: (response) => {
-        // Data is automatically updated via subscription
-      },
-      error: (error) => {
-        console.error('Error loading website themes:', error);
-      }
-    });
-  }
-
-  onThemeSearch(searchTerm: string) {
-    this.themeSearchTerm = searchTerm;
-    this.themeCurrentPage = 1;
-    this.getThemes();
-  }
-
-  onThemeStatusFilter(status: string) {
-    this.themeStatusFilter = status;
-    this.themeCurrentPage = 1;
-    this.getThemes();
-  }
-
-  onThemePageChange(page: number) {
-    if (page < 1 || page > this.themeTotalPages || this.themeTotalPages === 0) return;
-    this.themeCurrentPage = page;
-    const start = (page - 1) * this.themePageSize;
-    const end = start + this.themePageSize;
-    this.displayedThemes = this.allThemes.slice(start, end);
-  }
-
-  toggleThemeStatus(theme: WebsiteTheme) {
-    if (!theme.id) return;
-
-    const newStatus = !theme.is_active;
-    this.websiteThemeService.toggleActivation(theme.id, newStatus).subscribe({
+    this.websiteCategoryService.toggleActivation(
+      theme.categoryData.id,
+      !theme.categoryData.is_active
+    ).subscribe({
       next: (result) => {
-        // Data will be refreshed automatically via subscription
-        // This will also refresh categories since they're synchronized
-        this.getData();
+        if (result.success) {
+          this.notyf.success(`Status ${theme.name} berhasil diperbarui`);
+        }
       },
       error: (error) => {
         console.error('Error toggling theme status:', error);
+        this.notyf.error('Gagal mengubah status tema');
       }
     });
   }
 
-  getThemeImageUrl(imagePath: string): string {
-    return this.websiteThemeService.getImageUrl(imagePath);
-  }
-
-  onPageChange(page: number) {
-    if (page < 1 || page > this.totalPages || this.totalPages === 0) return;
-    this.currentPage = page;
-    const start = (page - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.displayedData = this.allData.slice(start, end);
-  }
-
-  onPageSizeChange() {
-    this.currentPage = 1;
-    this.updatePagination();
-  }
-
-  toggleCategoryStatus(category: WebsiteCategory) {
-    if (!category.id) return;
-
-    const newStatus = !category.is_active;
-    this.websiteCategoryService.toggleActivation(category.id, newStatus).subscribe({
-      next: (result) => {
-        if (result.success) {
-          // Data will be refreshed automatically via subscription
-          // This will also refresh themes since they're synchronized
-          this.getThemes();
-        }
-      },
-      error: (error) => {
-        console.error('Error toggling category status:', error);
-      }
-    });
-  }
-
-  getImageUrl(imagePath: string): string {
-    return this.websiteCategoryService.getImageUrl(imagePath);
-  }
-
-  openEditModal(item: WebsiteCategory) {
-    this.selectedItem = { ...item };
-    const modalRef = this.modalSvc.show(ModalEditCategoryAdminComponent, {
-      class: 'modal-medium',
-      initialState: {
-        item: this.selectedItem
-      },
-      ignoreBackdropClick: false
-    });
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe(() => {
-        this.getData();
-      });
-    }
-  }
-
-  openDeleteModal(item: WebsiteCategory) {
-    this.selectedItem = { ...item };
-    const modalRef = this.modalSvc.show(ModalDeleteCategoryAdminComponent, {
-      class: 'modal-medium',
-      initialState: {
-        item: this.selectedItem,
-        categoryType: 'website'
-      },
-      ignoreBackdropClick: false
-    });
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe((result: boolean) => {
-        if (result) {
-          this.getData();
-          this.getThemes(); // Refresh themes too since they're synchronized
-        }
-      });
-    }
-  }
-
-  openModalAdd() {
-    const modalRef = this.modalSvc.show(ModalAddWebsiteCategoryComponent, {
-      class: 'modal-medium',
-      ignoreBackdropClick: false
-    });
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe(() => {
-        this.getData();
-        this.getThemes(); // Refresh themes too since they're synchronized
-      });
-    }
-  }
-
-  openModalDeleteAll() {
-    const modalRef = this.modalSvc.show(ModalDeleteAllCategoryComponent, {
-      class: 'modal-medium',
-      initialState: {
-        categoryType: 'website'
-      },
-      ignoreBackdropClick: false
-    });
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe((result: boolean) => {
-        if (result) {
-          this.getData();
-          this.getThemes(); // Refresh themes too since they're synchronized
-        }
-      });
-    }
-  }
-
-  getActiveThemesCount(): number {
-    return this.allThemes.filter(theme => theme.is_active).length;
-  }
-
-  formatSlugTitle(slug: string): string {
-    return slug.split('-').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    ).join(' ');
-  }
-
-  /**
-   * Alternative method to show delete confirmation using the simple modal component
-   */
-  showDeleteConfirmation(item: WebsiteCategory): void {
-    const modalRef = this.modalSvc.show(ModalComponent, {
-      class: 'modal-medium',
-      initialState: {
-        message: `Apakah Anda yakin ingin menghapus kategori "${item.nama_kategori}"?`,
-        submitMessage: 'Hapus',
-        cancelClicked: () => {
-          console.log('Delete cancelled');
-        },
-        submitClicked: (data: any) => {
-          this.deleteCategory(item);
-        }
-      },
-      ignoreBackdropClick: false
-    });
-
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe((result: any) => {
-        console.log('Modal closed with result:', result);
-      });
-    }
-  }
-
-  /**
-   * Delete category using service
-   */
-  private deleteCategory(item: WebsiteCategory): void {
-    if (!item.id) {
-      this.notyf.error('ID kategori tidak valid');
+  moveTheme(theme: AdminThemeCard, direction: 'up' | 'down'): void {
+    const currentIndex = this.themeCards.findIndex((item) => item.key === theme.key);
+    if (currentIndex === -1) {
       return;
     }
 
-    this.websiteCategoryService.deleteCategory(item.id).subscribe({
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= this.themeCards.length) {
+      return;
+    }
+
+    const reordered = [...this.themeCards];
+    const [moved] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    this.themeCards = this.applyDisplayOrder(reordered);
+    this.saveThemeOrder();
+  }
+
+  onPreviewSelected(event: Event, theme: AdminThemeCard): void {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!theme.categoryData?.id) {
+      this.notyf.error('Tema ini belum terhubung ke data existing');
+      target.value = '';
+      return;
+    }
+
+    this.uploadingThemeId = theme.categoryData.id;
+
+    this.websiteCategoryService.updateCategory(theme.categoryData.id, { image: file }).subscribe({
       next: (result) => {
         if (result.success) {
-          this.notyf.success('Kategori berhasil dihapus');
+          this.notyf.success(`Preview ${theme.name} berhasil diperbarui`);
           this.getData();
-          this.getThemes(); // Refresh themes too since they're synchronized
-          this.updatePagination();
         } else {
-          this.notyf.error(result.error || 'Gagal menghapus kategori');
+          this.notyf.error(result.error || 'Gagal memperbarui gambar preview');
         }
+
+        target.value = '';
+        this.uploadingThemeId = null;
       },
       error: (error) => {
-        console.error('Error deleting category:', error);
-        this.notyf.error(error.error || 'Terjadi kesalahan saat menghapus kategori');
+        console.error('Error updating theme preview:', error);
+        this.notyf.error(error.error || 'Gagal memperbarui gambar preview');
+        target.value = '';
+        this.uploadingThemeId = null;
       }
     });
   }
 
-  /**
-   * Delete theme using service
-   */
-  deleteTheme(theme: WebsiteTheme): void {
-    if (!theme.id) {
-      this.notyf.error('ID tema tidak valid');
+  openThemeDetail(theme: AdminThemeCard): void {
+    this.selectedThemeDetail = theme;
+  }
+
+  closeThemeDetail(): void {
+    this.selectedThemeDetail = null;
+  }
+
+  getThemeImageUrl(theme: AdminThemeCard): string {
+    if (theme.categoryData?.image) {
+      return this.websiteCategoryService.getImageUrl(theme.categoryData.image);
+    }
+
+    return theme.fallbackImage;
+  }
+
+  getThemeStatusLabel(theme: AdminThemeCard): string {
+    if (!theme.categoryData) {
+      return 'Belum Terhubung';
+    }
+
+    return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
+  }
+
+  formatDate(date: string | undefined): string {
+    if (!date) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(new Date(date));
+  }
+
+  trackByTheme(_: number, theme: AdminThemeCard): string {
+    return theme.key;
+  }
+
+  private initializeSubscriptions(): void {
+    this.subscriptions.push(
+      this.websiteCategoryService.loading$.subscribe((loading) => {
+        this.loading = loading;
+      })
+    );
+
+    this.subscriptions.push(
+      this.websiteCategoryService.error$.subscribe((error) => {
+        this.error = error;
+      })
+    );
+
+    this.subscriptions.push(
+      this.websiteCategoryService.categories$.subscribe((categories) => {
+        this.allData = categories;
+        this.themeCards = this.buildThemeCards(categories);
+        this.syncSelectedThemeDetail();
+        this.cdr.detectChanges();
+      })
+    );
+  }
+
+  private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
+    const linkedThemes = this.themePresets.map((preset, index) => ({
+      key: preset.key,
+      name: preset.name,
+      category: preset.category,
+      fallbackImage: preset.fallbackImage,
+      displayOrder: index + 1,
+      categoryData: categories[index] ?? null
+    }));
+
+    const savedOrder = this.getSavedThemeOrder();
+    const orderedThemes = [...linkedThemes].sort((left, right) => {
+      const leftIndex = savedOrder.indexOf(left.key);
+      const rightIndex = savedOrder.indexOf(right.key);
+      const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+      const normalizedRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+
+      if (normalizedLeft === normalizedRight) {
+        return this.themePresets.findIndex((preset) => preset.key === left.key)
+          - this.themePresets.findIndex((preset) => preset.key === right.key);
+      }
+
+      return normalizedLeft - normalizedRight;
+    });
+
+    return this.applyDisplayOrder(orderedThemes);
+  }
+
+  private applyDisplayOrder(themes: AdminThemeCard[]): AdminThemeCard[] {
+    return themes.map((theme, index) => ({
+      ...theme,
+      displayOrder: index + 1
+    }));
+  }
+
+  private saveThemeOrder(): void {
+    localStorage.setItem(
+      this.storageKey,
+      JSON.stringify(this.themeCards.map((theme) => theme.key))
+    );
+  }
+
+  private getSavedThemeOrder(): string[] {
+    const rawValue = localStorage.getItem(this.storageKey);
+    if (!rawValue) {
+      return this.themePresets.map((preset) => preset.key);
+    }
+
+    try {
+      const parsedValue = JSON.parse(rawValue);
+      return Array.isArray(parsedValue) ? parsedValue : this.themePresets.map((preset) => preset.key);
+    } catch {
+      return this.themePresets.map((preset) => preset.key);
+    }
+  }
+
+  private syncSelectedThemeDetail(): void {
+    if (!this.selectedThemeDetail) {
       return;
     }
 
-    // Use the same modal as category delete
-    const modalRef = this.modalSvc.show(ModalDeleteCategoryAdminComponent, {
-      class: 'modal-medium',
-      initialState: {
-        item: {
-          id: theme.id,
-          nama_kategori: theme.nama_kategori,
-          slug: theme.slug
-        },
-        categoryType: 'website-theme' // Special type for theme deletion
-      },
-      ignoreBackdropClick: false
-    });
-
-    if (modalRef.content) {
-      modalRef.content.onClose.subscribe((result: boolean) => {
-        if (result) {
-          console.log('Theme delete confirmed, refreshing data...');
-          // Force immediate refresh of themes and categories after deletion
-          this.refreshDataAfterDelete();
-        }
-      });
-    }
+    this.selectedThemeDetail = this.themeCards.find(
+      (theme) => theme.key === this.selectedThemeDetail?.key
+    ) ?? null;
   }
-
-  /**
-   * Get theme display name from API data
-   */
-  getThemeDisplayName(theme: WebsiteTheme): string {
-    // Use the actual name from API, fallback to formatted slug
-    if (theme.nama_kategori) {
-      return theme.nama_kategori;
-    }
-    if (theme.slug) {
-      return this.formatSlugTitle(theme.slug);
-    }
-    return 'Unknown Theme';
-  }
-
-  /**
-   * Force refresh data after delete operation
-   */
-  private refreshDataAfterDelete(): void {
-    console.log('Starting force refresh after delete...');
-
-    // Clear current displayed themes immediately to show loading state
-    this.displayedThemes = [];
-    this.themeLoading = true;
-
-    // Use force refresh on theme service
-    this.websiteThemeService.forceRefreshThemes();
-
-    // Also refresh categories
-    this.getData();
-
-    // Wait for subscription to update, then force pagination update
-    setTimeout(() => {
-      console.log('Force updating pagination after delete');
-      this.updateThemePagination();
-      this.updatePagination();
-      this.themeLoading = false;
-      this.cdr.detectChanges(); // Force change detection after refresh
-      console.log('Data refresh completed. Current themes:', this.allThemes.length);
-    }, 1000); // Increased delay to ensure API response is processed
-  }
-
 }
