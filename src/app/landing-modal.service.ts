@@ -1,6 +1,15 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
+export interface CreateInvitationThemePrefill {
+  id?: number;
+  slug: string;
+  name?: string;
+  tier?: string;
+  image?: string;
+  fallbackImage?: string;
+}
+
 /**
  * LandingModalService coordinates the two landing-page popups (login auth modal
  * and the multi-step "Buat Undangan" modal) so that any component — navbar,
@@ -22,6 +31,7 @@ export class LandingModalService {
 
   /** One-shot message shown inside the login modal when opened via requestLogin(). */
   pendingAuthMessage = '';
+  pendingCreateInvitationPrefill: CreateInvitationThemePrefill | null = null;
 
   openLogin(): void {
     this.createOpen.next(false);
@@ -45,9 +55,16 @@ export class LandingModalService {
     this.loginOpen.next(false);
   }
 
-  openCreateInvitation(): void {
+  openCreateInvitation(prefill?: CreateInvitationThemePrefill | null): void {
+    this.pendingCreateInvitationPrefill = prefill || null;
     this.loginOpen.next(false);
     this.createOpen.next(true);
+  }
+
+  consumeCreateInvitationPrefill(): CreateInvitationThemePrefill | null {
+    const prefill = this.pendingCreateInvitationPrefill;
+    this.pendingCreateInvitationPrefill = null;
+    return prefill;
   }
 
   closeCreateInvitation(): void {

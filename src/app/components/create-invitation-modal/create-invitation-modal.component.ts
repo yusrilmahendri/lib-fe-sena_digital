@@ -7,7 +7,10 @@ import {
   DashboardServiceType,
   ThemeService,
 } from '../../dashboard.service';
-import { LandingModalService } from '../../landing-modal.service';
+import {
+  CreateInvitationThemePrefill,
+  LandingModalService,
+} from '../../landing-modal.service';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -143,6 +146,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   private paketByTier: Partial<Record<ThemeTier, PaketByTier>> = {};
   private readonly themeService: ThemeService;
   private sub = new Subscription();
+  private themePrefill: CreateInvitationThemePrefill | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -191,7 +195,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       this.modal.createOpen$.subscribe((open) => {
         this.isOpen = open;
         if (open) {
-          this.resetWizard();
+          this.themePrefill = this.modal.consumeCreateInvitationPrefill();
+          this.resetWizard(this.themePrefill);
           this.loadPaketTiers();
           this.loadThemes();
         }
@@ -217,17 +222,20 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.modal.openLogin();
   }
 
-  private resetWizard(): void {
+  private resetWizard(prefill?: CreateInvitationThemePrefill | null): void {
     this.step = 'couple-detail';
     this.isSubmitting = false;
     this.errorMessage = '';
     this.showPassword = false;
     this.coupleNameTouched = false;
     this.domainTouched = false;
-    this.activeCategory = 'ruby';
+    this.activeCategory = this.resolvePrefillTier(prefill?.tier);
     this.coupleDetailForm.reset();
     this.accountForm.reset({ terms: false });
-    this.selectedTheme = this.themesByCategory[this.activeCategory][0] || null;
+    this.selectedTheme =
+      this.buildPrefilledTheme(prefill) ||
+      this.themesByCategory[this.activeCategory][0] ||
+      null;
 
     this.accountPasswordDraft = '';
   }
@@ -344,9 +352,12 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           );
           this.selectedTheme = refreshed || this.selectedTheme;
         }
+
+        this.applyThemePrefill();
       },
       error: () => {
         console.warn('[BuatUndangan] popular themes API unavailable, using static themes.');
+        this.applyThemePrefill();
       },
     });
   }
@@ -666,6 +677,59 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       }
     }
     return null;
+  }
+
+  private resolvePrefillTier(tier?: string | null): ThemeTier {
+    const raw = `${tier || ''}`.toLowerCase();
+    if (raw.includes('trial')) return 'trial';
+    if (raw.includes('sapphire')) return 'sapphire';
+    if (raw.includes('diamond')) return 'diamond';
+    return 'ruby';
+  }
+
+  private buildPrefilledTheme(
+    prefill?: CreateInvitationThemePrefill | null
+  ): ThemeOption | null {
+    if (!prefill?.slug) {
+      return null;
+    }
+
+    return {
+      id: prefill.id,
+      slug: prefill.slug,
+      name: prefill.name || prefill.slug,
+      tier: this.resolvePrefillTier(prefill.tier),
+      image: prefill.image,
+      fallbackImage:
+        prefill.fallbackImage || this.defaultThemeImages['default'],
+    };
+  }
+
+  private applyThemePrefill(): void {
+    if (!this.themePrefill?.slug) {
+      return;
+    }
+
+    const tier = this.resolvePrefillTier(this.themePrefill.tier);
+    const prefills = this.themesByCategory[tier];
+    const matchedTheme =
+      prefills.find((theme) => theme.slug === this.themePrefill?.slug) ||
+      prefills.find((theme) => theme.id === this.themePrefill?.id);
+
+    this.activeCategory = tier;
+
+    if (matchedTheme) {
+      this.selectedTheme = matchedTheme;
+      return;
+    }
+
+    const prefilledTheme = this.buildPrefilledTheme(this.themePrefill);
+    if (!prefilledTheme) {
+      return;
+    }
+
+    this.themesByCategory[tier] = [prefilledTheme, ...prefills];
+    this.selectedTheme = prefilledTheme;
   }
 
 }

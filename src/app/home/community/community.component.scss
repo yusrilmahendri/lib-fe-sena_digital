@@ -1,6 +1,5 @@
 /* ===========================
-   Section: Templates / Tema (FE-LP1C-1)
-   Component-scoped styles only.
+   Section: Templates / Tema
    =========================== */
 
 $lp-primary: #5c2d4e;
@@ -25,6 +24,12 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 }
 
+@keyframes lpSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .lp-themes {
   width: 100%;
   background: linear-gradient(180deg, #fdf8f4 0%, #ffffff 45%);
@@ -32,7 +37,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
   &__inner {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 2rem 2rem 6.25rem; /* ~32px top (seam with Benefit), ~100px bottom */
+    padding: 2rem 2rem 6.25rem;
   }
 
   &__head {
@@ -52,11 +57,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
     width: 120px;
     height: 1px;
     margin-bottom: 1.1rem;
-    background: linear-gradient(
-      90deg,
-      rgba(92, 45, 78, 0.45) 0%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg, rgba(92, 45, 78, 0.45) 0%, transparent 100%);
   }
 
   &__label {
@@ -127,7 +128,6 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 }
 
-/* ---- Filter chips ---- */
 .lp-chip {
   padding: 0.55rem 1.25rem;
   border-radius: 999px;
@@ -152,7 +152,44 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 }
 
-/* ---- Theme card ---- */
+.lp-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 240px;
+  padding: 2rem;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid $lp-border;
+  border-radius: 28px;
+  box-shadow: 0 14px 34px rgba(77, 31, 62, 0.06);
+
+  h3 {
+    margin: 0;
+    font-family: $lp-serif;
+    font-size: 1.5rem;
+    color: $lp-ink;
+  }
+
+  p {
+    max-width: 520px;
+    margin: 0;
+    color: $lp-muted;
+    line-height: 1.7;
+  }
+
+  &__spinner {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 3px solid rgba(92, 45, 78, 0.16);
+    border-top-color: $lp-primary;
+    animation: lpSpin 0.8s linear infinite;
+  }
+}
+
 .theme-card {
   display: flex;
   flex-direction: column;
@@ -163,10 +200,17 @@ $lp-serif: Georgia, "Times New Roman", serif;
   box-shadow: 0 14px 34px rgba(77, 31, 62, 0.06);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   animation: lpFadeUp 0.6s ease both;
+  cursor: pointer;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     transform: translateY(-6px);
     box-shadow: 0 22px 46px rgba(77, 31, 62, 0.13);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(92, 45, 78, 0.25);
+    outline-offset: 3px;
   }
 
   &__media {
@@ -183,11 +227,13 @@ $lp-serif: Georgia, "Times New Roman", serif;
     border-radius: 18px;
   }
 
-  &__badge {
+  &__badge,
+  &__preview {
     position: absolute;
-    top: 0.85rem;
-    left: 0.85rem;
     z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     padding: 0.32rem 0.75rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.92);
@@ -197,6 +243,21 @@ $lp-serif: Georgia, "Times New Roman", serif;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     box-shadow: 0 4px 12px rgba(77, 31, 62, 0.14);
+  }
+
+  &__badge {
+    top: 0.85rem;
+    left: 0.85rem;
+  }
+
+  &__preview {
+    right: 0.85rem;
+    bottom: 0.85rem;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 
   &__body {
@@ -224,6 +285,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
     margin: 0;
     font-size: 0.78rem;
     color: $lp-muted;
+    text-transform: capitalize;
   }
 
   &__actions {
@@ -233,8 +295,11 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 }
 
-/* ---- Buttons ---- */
 .theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   padding: 0.5rem 0.9rem;
   border-radius: 11px;
   font-size: 0.84rem;
@@ -242,6 +307,11 @@ $lp-serif: Georgia, "Times New Roman", serif;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &--ghost {
     background: #ffffff;
@@ -263,44 +333,325 @@ $lp-serif: Georgia, "Times New Roman", serif;
       background: #4d2542;
     }
   }
+
+  &--large {
+    min-height: 52px;
+    padding: 0.9rem 1.35rem;
+    border-radius: 999px;
+    font-size: 1rem;
+  }
 }
 
-/* ===========================
-   Responsive
-   =========================== */
+.theme-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(84, 49, 75, 0.48);
+  backdrop-filter: blur(8px);
 
-/* Tablet: 2 columns */
+  &__dialog {
+    position: relative;
+    width: min(1120px, calc(100vw - 32px));
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    background:
+      radial-gradient(circle at 15% 18%, rgba(241, 224, 232, 0.95), transparent 28%),
+      linear-gradient(90deg, #f8f0f4 0%, #fffafc 46%, #ffffff 46%, #ffffff 100%);
+    border-radius: 32px;
+    box-shadow: 0 30px 70px rgba(77, 31, 62, 0.28);
+  }
+
+  &__close {
+    position: absolute;
+    top: 1.1rem;
+    right: 1.1rem;
+    z-index: 2;
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 999px;
+    background: rgba(92, 45, 78, 0.06);
+    color: $lp-ink;
+    cursor: pointer;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+    min-height: min(700px, calc(100vh - 32px));
+  }
+
+  &__visual,
+  &__content,
+  &__state {
+    padding: 2rem 2.35rem;
+  }
+
+  &__visual {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.4rem;
+  }
+
+  &__eyebrow {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.48rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: $lp-primary;
+    font-size: 0.82rem;
+    font-weight: 600;
+    box-shadow: 0 10px 24px rgba(77, 31, 62, 0.08);
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  &__divider {
+    width: 112px;
+    height: 1px;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(90deg, rgba(138, 85, 119, 0.4), rgba(138, 85, 119, 0.08));
+  }
+
+  &__category {
+    margin: 0 0 0.9rem;
+    color: $lp-primary-soft;
+    font-size: 0.84rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    margin: 0 0 1rem;
+    font-family: $lp-serif;
+    font-size: 3rem;
+    line-height: 1.1;
+    color: $lp-ink;
+  }
+
+  &__description {
+    margin: 0 0 1.35rem;
+    color: #75636d;
+    font-size: 1.02rem;
+    line-height: 1.75;
+  }
+
+  &__error,
+  &__share-message,
+  &__empty {
+    margin: 0 0 1rem;
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  &__error {
+    color: #8c3a57;
+  }
+
+  &__empty {
+    color: $lp-muted;
+  }
+
+  &__share-message {
+    color: $lp-primary;
+  }
+
+  &__features {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem 2rem;
+    padding: 0;
+    margin: 0 0 2rem;
+    list-style: none;
+
+    li {
+      position: relative;
+      padding-left: 1rem;
+      color: $lp-ink;
+      font-size: 0.98rem;
+      line-height: 1.6;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0.62rem;
+        left: 0;
+        width: 0.38rem;
+        height: 0.38rem;
+        border-radius: 50%;
+        background: $lp-primary-soft;
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+
+  &__state {
+    grid-column: 1 / -1;
+    min-height: 360px;
+  }
+
+  &__state-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+}
+
+.theme-phone {
+  position: relative;
+  width: min(290px, 72vw);
+  margin: 0 auto;
+  padding: 16px 12px;
+  border-radius: 48px;
+  background: #261822;
+  box-shadow: 0 24px 60px rgba(48, 20, 39, 0.34);
+
+  &__notch {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    width: 108px;
+    height: 25px;
+    transform: translateX(-50%);
+    border-radius: 0 0 18px 18px;
+    background: #1c1219;
+    z-index: 2;
+  }
+
+  &__screen {
+    overflow: hidden;
+    border-radius: 36px;
+    background: #f6edf2;
+
+    img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 9 / 19.5;
+      object-fit: cover;
+    }
+  }
+}
+
 @media screen and (max-width: 900px) {
   .lp-themes {
     &__inner {
-      padding: 2rem 1.5rem 4.5rem; /* tight top seam with Benefit */
+      padding: 2rem 1.5rem 4.5rem;
     }
+
     &__head {
       flex-direction: column;
       align-items: flex-start;
       gap: 1rem;
     }
+
     &__title {
       font-size: 2.1rem;
     }
+
     &__grid {
       grid-template-columns: repeat(2, 1fr);
       gap: 1.25rem;
     }
   }
+
+  .theme-preview {
+    &__dialog {
+      background: linear-gradient(180deg, #f8f0f4 0%, #ffffff 42%);
+    }
+
+    &__grid {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+
+    &__title {
+      font-size: 2.35rem;
+    }
+  }
 }
 
-/* Mobile: 1 column */
 @media screen and (max-width: 560px) {
   .lp-themes {
     &__inner {
-      padding: 1.75rem 1.2rem 3.5rem; /* tight top seam with Benefit */
+      padding: 1.75rem 1.2rem 3.5rem;
     }
+
     &__title {
       font-size: 1.8rem;
     }
+
     &__grid {
       grid-template-columns: 1fr;
     }
+  }
+
+  .theme-card {
+    &__body {
+      align-items: flex-start;
+    }
+
+    &__actions {
+      width: 100%;
+
+      .theme-btn {
+        flex: 1;
+      }
+    }
+  }
+
+  .theme-preview {
+    padding: 0.85rem;
+
+    &__visual,
+    &__content,
+    &__state {
+      padding: 1.4rem;
+    }
+
+    &__title {
+      font-size: 2rem;
+    }
+
+    &__features {
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+    }
+
+    &__actions {
+      flex-direction: column;
+
+      .theme-btn {
+        width: 100%;
+      }
+    }
+
+    &__state-actions {
+      flex-direction: column;
+    }
+  }
+
+  .theme-phone {
+    width: min(270px, 78vw);
   }
 }

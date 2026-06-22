@@ -18,7 +18,7 @@
       </a>
     </header>
 
-    <div class="lp-themes__filters" role="tablist">
+    <div class="lp-themes__filters" role="tablist" *ngIf="!isLoading && themes.length">
       <button
         *ngFor="let filter of filters"
         type="button"
@@ -30,8 +30,35 @@
       </button>
     </div>
 
-    <div class="lp-themes__grid">
-      <article class="theme-card" *ngFor="let theme of filteredThemes">
+    <div class="lp-state lp-state--loading" *ngIf="isLoading">
+      <span class="lp-state__spinner" aria-hidden="true"></span>
+      <h3>Memuat tema aktif…</h3>
+      <p>Kami sedang menyiapkan preview tema terbaik untuk landing page ini.</p>
+    </div>
+
+    <div class="lp-state lp-state--error" *ngIf="!isLoading && errorMessage && !themes.length">
+      <h3>Tema belum bisa ditampilkan</h3>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="theme-btn theme-btn--primary" (click)="loadThemes()">
+        Muat Ulang
+      </button>
+    </div>
+
+    <div class="lp-state lp-state--empty" *ngIf="!isLoading && !errorMessage && !hasThemeList">
+      <h3>Belum ada tema untuk filter ini</h3>
+      <p>Coba pilih kategori lain atau cek lagi beberapa saat lagi.</p>
+    </div>
+
+    <div class="lp-themes__grid" *ngIf="!isLoading && themes.length">
+      <article
+        class="theme-card"
+        *ngFor="let theme of filteredThemes; trackBy: trackByTheme"
+        role="button"
+        tabindex="0"
+        (click)="openPreviewModal(theme)"
+        (keydown.enter)="openPreviewModal(theme)"
+        (keydown.space)="openPreviewModal(theme); $event.preventDefault()"
+      >
         <div class="theme-card__media">
           <span class="theme-card__badge">{{ theme.badge }}</span>
           <img
@@ -41,20 +68,28 @@
             loading="lazy"
             (error)="onThemeImgError(theme)"
           />
+          <span class="theme-card__preview">
+            Preview tema
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
         </div>
         <div class="theme-card__body">
           <div class="theme-card__meta">
             <h3 class="theme-card__name">{{ theme.name }}</h3>
-            <p class="theme-card__tier">{{ theme.tier }}</p>
+            <p class="theme-card__tier">{{ theme.tier | titlecase }} template</p>
           </div>
           <div class="theme-card__actions">
-            <button class="theme-btn theme-btn--ghost" type="button" (click)="goToPreview(theme)">
+            <button
+              class="theme-btn theme-btn--ghost"
+              type="button"
+              (click)="openPreviewModal(theme); $event.stopPropagation()"
+            >
               Preview
             </button>
             <button
               class="theme-btn theme-btn--primary"
               type="button"
-              (click)="goToBuatUndangan()"
+              (click)="useTheme(theme); $event.stopPropagation()"
             >
               Gunakan
             </button>
@@ -62,5 +97,117 @@
         </div>
       </article>
     </div>
+  </div>
+
+  <div
+    class="theme-preview"
+    *ngIf="previewState.isOpen"
+    (click)="closePreviewModal()"
+  >
+    <section
+      class="theme-preview__dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="previewState.theme?.name || 'Preview tema'"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        class="theme-preview__close"
+        aria-label="Tutup preview tema"
+        (click)="closePreviewModal()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="theme-preview__grid" *ngIf="previewState.isLoading">
+        <div class="theme-preview__state theme-preview__state--loading">
+          <span class="lp-state__spinner" aria-hidden="true"></span>
+          <h3>Menyiapkan preview tema…</h3>
+          <p>Detail tema sedang kami ambil dari data yang aktif.</p>
+        </div>
+      </div>
+
+      <div class="theme-preview__grid" *ngIf="!previewState.isLoading && previewState.theme as theme">
+        <div class="theme-preview__visual">
+          <span class="theme-preview__eyebrow">
+            <i class="fas fa-heart" aria-hidden="true"></i>
+            Preview tema
+          </span>
+
+          <div class="theme-phone">
+            <span class="theme-phone__notch" aria-hidden="true"></span>
+            <div class="theme-phone__screen">
+              <img
+                [src]="theme.image"
+                [alt]="'Preview tema ' + theme.name"
+                (error)="onThemeImgError(theme)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="theme-preview__content">
+          <div class="theme-preview__divider" aria-hidden="true"></div>
+          <p class="theme-preview__category">{{ theme.badge }}</p>
+          <h3 class="theme-preview__title">{{ theme.name }}</h3>
+          <p class="theme-preview__description">{{ theme.description }}</p>
+
+          <p class="theme-preview__error" *ngIf="previewState.errorMessage">
+            {{ previewState.errorMessage }}
+          </p>
+
+          <div class="theme-preview__empty" *ngIf="!theme.features.length && !theme.description">
+            Detail fitur untuk tema ini belum tersedia.
+          </div>
+
+          <ul class="theme-preview__features" *ngIf="theme.features.length">
+            <li *ngFor="let feature of theme.features">{{ feature.label }}</li>
+          </ul>
+
+          <div class="theme-preview__actions">
+            <button
+              type="button"
+              class="theme-btn theme-btn--primary theme-btn--large"
+              (click)="useTheme(theme)"
+            >
+              Gunakan Tema Ini
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button
+              type="button"
+              class="theme-btn theme-btn--ghost theme-btn--large"
+              (click)="shareTheme(theme)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51 8.59 10.49"/></svg>
+              Bagikan
+            </button>
+          </div>
+
+          <p class="theme-preview__share-message" *ngIf="previewState.shareMessage">
+            {{ previewState.shareMessage }}
+          </p>
+        </div>
+      </div>
+
+      <div class="theme-preview__grid" *ngIf="!previewState.isLoading && !previewState.theme">
+        <div class="theme-preview__state theme-preview__state--error">
+          <h3>Preview belum tersedia</h3>
+          <p>{{ previewState.errorMessage || 'Tema ini belum memiliki detail yang bisa ditampilkan.' }}</p>
+          <div class="theme-preview__state-actions">
+            <button type="button" class="theme-btn theme-btn--ghost" (click)="closePreviewModal()">
+              Tutup
+            </button>
+            <button
+              type="button"
+              class="theme-btn theme-btn--primary"
+              (click)="previewState.theme ? openPreviewModal(previewState.theme) : closePreviewModal()"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </section>
