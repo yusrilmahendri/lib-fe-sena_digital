@@ -21,7 +21,7 @@
         class="theme-filter-pill"
         [class.active]="activeFilter === filter"
         (click)="setFilter(filter)">
-        {{ filter }}
+        {{ getFilterLabel(filter) }}
       </button>
     </div>
 
@@ -53,6 +53,9 @@
               <div>
                 <h2>{{ theme.name }}</h2>
                 <p>{{ getThemeStatusLabel(theme) }}</p>
+                <div class="theme-package-badges">
+                  <span class="theme-package-badge">{{ getThemePackageBadge(theme) }}</span>
+                </div>
               </div>
               <button
                 type="button"

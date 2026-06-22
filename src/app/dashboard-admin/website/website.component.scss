@@ -80,7 +80,9 @@
   border-radius: 999px;
   color: #7c6352;
   font-weight: 600;
+  line-height: 1.35;
   padding: 10px 18px;
+  text-align: left;
   transition: all 0.2s ease;
 
   &.active {
@@ -175,6 +177,25 @@
     color: #9c7a62;
     margin: 0;
   }
+}
+
+.theme-package-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.theme-package-badge {
+  background: #f5ece4;
+  border: 1px solid #e2cdbf;
+  border-radius: 999px;
+  color: #7d5638;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 6px 10px;
 }
 
 .theme-detail-link,

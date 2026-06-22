@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Notyf } from 'notyf';
+import { DashboardService, DashboardServiceType } from '../../dashboard.service';
 import { WebsiteCategory } from '../../interfaces/admin-category.interfaces';
 import { WebsiteCategoryService } from '../../services/website-category.service';
 
@@ -20,6 +21,18 @@ interface AdminThemeCard {
   categoryData: WebsiteCategory | null;
 }
 
+type ThemeCategory = ThemePreset['category'];
+type PackageTier = 'Ruby' | 'Sapphire' | 'Diamond';
+
+interface PackageApiItem {
+  id: number;
+  package_tier?: string;
+  name_paket?: string;
+  name_paket_display?: string;
+  jenis_paket?: string;
+  accessible_categories?: any[];
+}
+
 @Component({
   selector: 'wc-website',
   templateUrl: './website.component.html',
@@ -27,6 +40,21 @@ interface AdminThemeCard {
 })
 export class WebsiteComponent implements OnInit, OnDestroy {
   private readonly storageKey = 'admin-website-theme-order';
+  private readonly fallbackCategoryPackages: Record<ThemeCategory, PackageTier[]> = {
+    Minimalis: ['Ruby'],
+    Floral: ['Ruby'],
+    Modern: ['Sapphire'],
+    Elegant: ['Sapphire', 'Diamond'],
+    Luxury: ['Diamond']
+  };
+  private readonly fallbackThemePackages: Record<string, PackageTier[]> = {
+    'soft-ivory': ['Ruby'],
+    'lavender-bloom': ['Ruby'],
+    'garden-whisper': ['Ruby'],
+    'modern-vows': ['Sapphire'],
+    'champagne-rose': ['Sapphire', 'Diamond'],
+    'velvet-mauve': ['Diamond']
+  };
   private readonly themePresets: ThemePreset[] = [
     {
       key: 'soft-ivory',
@@ -78,6 +106,8 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   activeFilter: 'Semua' | ThemePreset['category'] = 'Semua';
   allData: WebsiteCategory[] = [];
   themeCards: AdminThemeCard[] = [];
+  packageCategoryMap: Partial<Record<ThemeCategory, PackageTier[]>> = {};
+  packageThemeMap: Partial<Record<string, PackageTier[]>> = {};
   loading = false;
   error: string | null = null;
   uploadingThemeId: number | null = null;
@@ -88,6 +118,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   constructor(
     private websiteCategoryService: WebsiteCategoryService,
+    private dashboardService: DashboardService,
     private cdr: ChangeDetectorRef
   ) {
     this.notyf = new Notyf({
@@ -98,6 +129,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeSubscriptions();
+    this.loadPackageAccessMapping();
     this.getData();
   }
 
@@ -115,6 +147,14 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   setFilter(filter: 'Semua' | ThemePreset['category']): void {
     this.activeFilter = filter;
+  }
+
+  getFilterLabel(filter: 'Semua' | ThemeCategory): string {
+    if (filter === 'Semua') {
+      return filter;
+    }
+
+    return `${filter} · ${this.formatPackageLabels(this.getCategoryPackageTiers(filter))}`;
   }
 
   getData(): void {
@@ -227,6 +267,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
   }
 
+  getThemePackageBadge(theme: AdminThemeCard): string {
+    return this.formatPackageLabels(this.getThemePackageTiers(theme));
+  }
+
   formatDate(date: string | undefined): string {
     if (!date) {
       return '-';
@@ -265,14 +309,58 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     );
   }
 
+  private loadPackageAccessMapping(): void {
+    this.dashboardService.list(DashboardServiceType.MNL_MD_PACK_INVITATION).subscribe({
+      next: (res: any) => {
+        const packages = Array.isArray(res?.data) ? res.data : [];
+        const categoryMap: Partial<Record<ThemeCategory, Set<PackageTier>>> = {};
+        const themeMap: Partial<Record<string, Set<PackageTier>>> = {};
+
+        packages.forEach((paket: PackageApiItem) => {
+          const tier = this.resolvePackageTier(paket);
+          if (!tier) {
+            return;
+          }
+
+          const accessibleCategories = Array.isArray(paket?.accessible_categories)
+            ? paket.accessible_categories
+            : [];
+
+          accessibleCategories.forEach((entry) => {
+            const category = this.resolveThemeCategory(entry);
+            if (category) {
+              categoryMap[category] = categoryMap[category] || new Set<PackageTier>();
+              categoryMap[category]?.add(tier);
+            }
+
+            const themeKey = this.resolveThemeKey(entry);
+            if (themeKey) {
+              themeMap[themeKey] = themeMap[themeKey] || new Set<PackageTier>();
+              themeMap[themeKey]?.add(tier);
+            }
+          });
+        });
+
+        this.packageCategoryMap = this.convertSetMap(categoryMap);
+        this.packageThemeMap = this.convertSetMap(themeMap);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.packageCategoryMap = {};
+        this.packageThemeMap = {};
+      }
+    });
+  }
+
   private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
+    const categoryMap = this.buildCategoryLookup(categories);
     const linkedThemes = this.themePresets.map((preset, index) => ({
       key: preset.key,
       name: preset.name,
       category: preset.category,
       fallbackImage: preset.fallbackImage,
       displayOrder: index + 1,
-      categoryData: categories[index] ?? null
+      categoryData: categoryMap.get(preset.key) ?? null
     }));
 
     const savedOrder = this.getSavedThemeOrder();
@@ -319,6 +407,105 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     } catch {
       return this.themePresets.map((preset) => preset.key);
     }
+  }
+
+  private buildCategoryLookup(categories: WebsiteCategory[]): Map<string, WebsiteCategory> {
+    const lookup = new Map<string, WebsiteCategory>();
+
+    categories.forEach((category) => {
+      const slug = this.normalizeKey(category?.slug || category?.nama_kategori || '');
+      if (slug) {
+        lookup.set(slug, category);
+      }
+    });
+
+    return lookup;
+  }
+
+  private getThemePackageTiers(theme: AdminThemeCard): PackageTier[] {
+    const stableKey = this.normalizeKey(theme.categoryData?.slug || theme.key);
+    return this.packageThemeMap[stableKey]
+      || this.packageCategoryMap[theme.category]
+      || this.fallbackThemePackages[theme.key]
+      || this.fallbackCategoryPackages[theme.category]
+      || [];
+  }
+
+  private getCategoryPackageTiers(category: ThemeCategory): PackageTier[] {
+    return this.packageCategoryMap[category]
+      || this.fallbackCategoryPackages[category]
+      || [];
+  }
+
+  private formatPackageLabels(packages: PackageTier[]): string {
+    return packages.join(' & ');
+  }
+
+  private resolvePackageTier(paket: PackageApiItem): PackageTier | null {
+    const raw = `${paket?.package_tier || paket?.name_paket || paket?.name_paket_display || paket?.jenis_paket || ''}`.toLowerCase();
+    if (/ruby|silver|standar/.test(raw)) return 'Ruby';
+    if (/sapphire|gold/.test(raw)) return 'Sapphire';
+    if (/diamond|platinum/.test(raw)) return 'Diamond';
+    return null;
+  }
+
+  private resolveThemeCategory(value: any): ThemeCategory | null {
+    const raw = this.normalizeKey(
+      typeof value === 'string'
+        ? value
+        : value?.slug || value?.name || value?.nama_kategori || value?.category || ''
+    );
+
+    if (raw.includes('minimal')) return 'Minimalis';
+    if (raw.includes('floral')) return 'Floral';
+    if (raw.includes('modern')) return 'Modern';
+    if (raw.includes('elegant')) return 'Elegant';
+    if (raw.includes('luxury')) return 'Luxury';
+    return null;
+  }
+
+  private resolveThemeKey(value: any): string | null {
+    const raw = this.normalizeKey(
+      typeof value === 'string'
+        ? value
+        : value?.slug || value?.theme_slug || value?.key || value?.name || ''
+    );
+
+    if (!raw) {
+      return null;
+    }
+
+    return this.themePresets.find((preset) => raw === preset.key || raw.includes(preset.key))?.key || null;
+  }
+
+  private convertSetMap(
+    map: Partial<Record<string, Set<PackageTier>>>
+  ): Partial<Record<string, PackageTier[]>> {
+    const normalized: Partial<Record<string, PackageTier[]>> = {};
+
+    Object.entries(map).forEach(([key, value]) => {
+      if (!value?.size) {
+        return;
+      }
+
+      normalized[key] = this.sortPackageTiers(Array.from(value));
+    });
+
+    return normalized;
+  }
+
+  private sortPackageTiers(tiers: PackageTier[]): PackageTier[] {
+    const order: PackageTier[] = ['Ruby', 'Sapphire', 'Diamond'];
+    return [...tiers].sort((left, right) => order.indexOf(left) - order.indexOf(right));
+  }
+
+  private normalizeKey(value: string): string {
+    return String(value || '')
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   private syncSelectedThemeDetail(): void {
