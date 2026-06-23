@@ -63,6 +63,14 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     'champagne-rose': ['Sapphire', 'Diamond'],
     'velvet-mauve': ['Diamond']
   };
+  private readonly themeSlugAliases: Record<string, string> = {
+    'soft-ivory': 'champagne-rose',
+    'lavender-bloom': 'lavender-bloom',
+    'garden-whisper': 'garden-whisper',
+    'modern-vows': 'modern-vows',
+    'champagne-rose': 'champagne-rose',
+    'velvet-mauve': 'velvet-mauve'
+  };
   private readonly themePresets: ThemePreset[] = [
     {
       key: 'soft-ivory',
@@ -176,17 +184,45 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   loadAdminThemes(): void {
-    this.dashboardService.list(DashboardServiceType.THEME_ADMIN_THEMES_LIST).subscribe({
+    this.dashboardService.list(DashboardServiceType.THEME_ADMIN_THEMES_LIST, { per_page: 100, page: 1 }).subscribe({
       next: (response: any) => {
-        const themes = Array.isArray(response?.data) ? response.data : [];
+        // Parse response - handle nested data structure
+        let themes = response?.data?.data || response?.data || response || [];
+        if (!Array.isArray(themes)) {
+          themes = [];
+        }
+
         this.adminThemesMap.clear();
         themes.forEach((theme: AdminTheme) => {
-          if (theme.slug) {
-            this.adminThemesMap.set(theme.slug, theme);
+          const slug = this.normalizeSlug(theme.slug);
+          if (slug) {
+            this.adminThemesMap.set(slug, theme);
           }
         });
+
+        // Debug logging
+        console.log('Preset keys:', this.themePresets.map(p => p.key));
+        console.log('Backend theme slugs:', themes.map((t: AdminTheme) => t.slug));
+        console.log('Admin themes map keys:', Array.from(this.adminThemesMap.keys()));
+
         // Rebuild themeCards after adminThemesMap is updated
         this.themeCards = this.buildThemeCards(this.allData);
+
+        // Update selectedThemeDetail if modal is open
+        if (this.selectedThemeDetail) {
+          const latest = this.themeCards.find(card => card.key === this.selectedThemeDetail?.key);
+          this.selectedThemeDetail = latest || this.selectedThemeDetail;
+        }
+
+        // Debug built cards
+        console.log('Built theme cards:', this.themeCards.map(card => ({
+          key: card.key,
+          name: card.name,
+          adminSlug: card.adminThemeData?.slug,
+          adminId: card.adminThemeData?.id,
+          status: this.getThemeStatusLabel(card)
+        })));
+
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -274,7 +310,8 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   openThemeDetail(theme: AdminThemeCard): void {
-    this.selectedThemeDetail = theme;
+    const latest = this.themeCards.find(card => card.key === theme.key);
+    this.selectedThemeDetail = latest || theme;
   }
 
   closeThemeDetail(): void {
@@ -388,15 +425,21 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
     const categoryMap = this.buildCategoryLookup(categories);
-    const linkedThemes = this.themePresets.map((preset, index) => ({
-      key: preset.key,
-      name: preset.name,
-      category: preset.category,
-      fallbackImage: preset.fallbackImage,
-      displayOrder: index + 1,
-      categoryData: categoryMap.get(preset.key) ?? null,
-      adminThemeData: this.adminThemesMap.get(preset.key) ?? null
-    }));
+    const linkedThemes = this.themePresets.map((preset, index) => {
+      const presetSlug = this.normalizeSlug(preset.key);
+      const backendSlug = this.normalizeSlug(this.themeSlugAliases[presetSlug] || presetSlug);
+      const adminThemeData = this.adminThemesMap.get(backendSlug) ?? null;
+
+      return {
+        key: preset.key,
+        name: preset.name,
+        category: preset.category,
+        fallbackImage: preset.fallbackImage,
+        displayOrder: index + 1,
+        categoryData: categoryMap.get(preset.key) ?? null,
+        adminThemeData
+      };
+    });
 
     const savedOrder = this.getSavedThemeOrder();
     const orderedThemes = [...linkedThemes].sort((left, right) => {
@@ -551,5 +594,9 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.selectedThemeDetail = this.themeCards.find(
       (theme) => theme.key === this.selectedThemeDetail?.key
     ) ?? null;
+  }
+
+  private normalizeSlug(value: string | undefined | null): string {
+    return (value || '').trim().toLowerCase();
   }
 }
