@@ -34,7 +34,7 @@ interface ThemeCard {
   image: string;
   demo_url: string;
   price: number;
-  isSelected: boolean;
+  isCurrentTheme: boolean;
   isLoading?: boolean;
   category_id: number;
   category: ThemeCategoryName | 'Legacy';
@@ -61,14 +61,15 @@ const PACKAGE_TABS: PackageTab[] = [
 })
 export class TampilanComponent implements OnInit, OnDestroy {
   readonly packageTabs = PACKAGE_TABS;
+  readonly upgradeRoute = '/dashboard/bill';
 
   themeCards: ThemeCard[] = [];
   isLoading = false;
   errorMessage = '';
+  currentThemeId: number | null = null;
   selectedThemeId: number | null = null;
   userPackageTier: ThemePackageTier = 'trial';
   activeTab: PaidPackageTier = 'ruby';
-  focusedThemeId: number | null = null;
   showSelectConfirmationModal = false;
   showUpgradeModal = false;
   processingPrimaryAction = false;
@@ -77,11 +78,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private pendingThemeForConfirmation: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
-    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: true, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
   ];
 
   constructor(
@@ -124,12 +125,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
     );
   }
 
-  get focusedTheme(): ThemeCard | null {
-    if (this.focusedThemeId === null) {
-      return this.visibleThemeCards[0] ?? null;
+  get currentTheme(): ThemeCard | null {
+    return this.themeCards.find((theme) => theme.id === this.currentThemeId) ?? null;
+  }
+
+  get selectedTheme(): ThemeCard | null {
+    if (this.selectedThemeId === null) {
+      return null;
     }
 
-    return this.visibleThemeCards.find((theme) => theme.id === this.focusedThemeId) ?? this.visibleThemeCards[0] ?? null;
+    return this.visibleThemeCards.find((theme) => theme.id === this.selectedThemeId) ?? null;
   }
 
   get isPreviewOnlyTab(): boolean {
@@ -142,12 +147,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get canSubmitFocusedTheme(): boolean {
-    const theme = this.focusedTheme;
-    return !!theme && !theme.isSelected && this.canUseTheme(theme);
+    const theme = this.selectedTheme;
+    return !!theme && !this.isCurrentTheme(theme) && this.canUseTheme(theme);
   }
 
   get isPrimaryButtonDisabled(): boolean {
-    const theme = this.focusedTheme;
+    const theme = this.selectedTheme;
     if (!theme) {
       return true;
     }
@@ -156,7 +161,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    if (theme.isSelected) {
+    if (this.isCurrentTheme(theme)) {
       return true;
     }
 
@@ -168,7 +173,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get primaryButtonLabel(): string {
-    const theme = this.focusedTheme;
+    const theme = this.selectedTheme;
 
     if (this.processingPrimaryAction) {
       return 'Memproses...';
@@ -178,8 +183,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Pilih tema';
     }
 
-    if (theme.isSelected) {
-      return 'Paket digunakan';
+    if (this.isCurrentTheme(theme)) {
+      return 'Tema sudah digunakan';
     }
 
     if (theme.isLegacy) {
@@ -190,10 +195,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get focusedThemeSubtitle(): string {
-    const theme = this.focusedTheme;
+    const theme = this.selectedTheme;
 
     if (!theme) {
-      return '';
+      return 'Pilih salah satu tema untuk melanjutkan.';
     }
 
     if (theme.isLegacy) {
@@ -204,7 +209,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get upgradePackageLabel(): string {
-    const theme = this.focusedTheme;
+    const theme = this.selectedTheme;
     if (!theme || theme.isLegacy || theme.category === 'Legacy') {
       return 'Ruby';
     }
@@ -237,7 +242,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
         if (this.userPackageTier === 'trial') {
           this.themeCards = this.legacyTrialCards.map((card) => ({ ...card }));
-          this.syncFocusedTheme();
+          this.syncSelectedThemeForVisibleTab();
           this.isLoading = false;
           return;
         }
@@ -248,7 +253,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           this.handleError('Format data tema tidak valid.');
         }
 
-        this.syncFocusedTheme();
+        this.syncSelectedThemeForVisibleTab();
         this.isLoading = false;
       },
       error: (error) => {
@@ -268,9 +273,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
     const selectedSubscription = this.themeService.getSelectedTheme().subscribe({
       next: (response: UserSelectedThemeResponse) => {
         if (response.status && response.data?.theme) {
-          this.selectedThemeId = response.data.theme.id;
-          this.updateSelectedStatus();
-          this.syncFocusedTheme();
+          this.currentThemeId = response.data.theme.id;
+          this.updateCurrentThemeStatus();
+          this.syncSelectedThemeForVisibleTab();
         }
       },
       error: (error) => {
@@ -307,7 +312,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
           demo_url: theme.demo_url || '',
           price: theme.price || 0,
-          isSelected: false,
+          isCurrentTheme: false,
           isLoading: false,
           category_id: category.id,
           category: resolvedCategory,
@@ -317,15 +322,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
     });
 
     this.themeCards = nextCards;
-    this.updateSelectedStatus();
+    this.updateCurrentThemeStatus();
   }
 
   /**
-   * Update selected status for themes
+   * Update current theme status from backend
    */
-  private updateSelectedStatus(): void {
+  private updateCurrentThemeStatus(): void {
     this.themeCards.forEach((card) => {
-      card.isSelected = card.id === this.selectedThemeId;
+      card.isCurrentTheme = card.id === this.currentThemeId;
     });
   }
 
@@ -356,16 +361,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: PaidPackageTier): void {
     this.activeTab = tab;
-    this.syncFocusedTheme();
+    this.syncSelectedThemeForVisibleTab();
   }
 
   onThemeCardClick(theme: ThemeCard): void {
-    this.focusedThemeId = theme.id;
+    this.selectedThemeId = theme.id;
   }
 
   onPreviewClick(theme: ThemeCard, event: Event): void {
     event.stopPropagation();
-    this.focusedThemeId = theme.id;
+    this.selectedThemeId = theme.id;
 
     if (!theme.demo_url) {
       return;
@@ -380,7 +385,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onPrimaryAction(): void {
-    const theme = this.focusedTheme;
+    const theme = this.selectedTheme;
     if (!theme || theme.isLoading || this.processingPrimaryAction) {
       return;
     }
@@ -390,7 +395,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (theme.isSelected) {
+    if (this.isCurrentTheme(theme)) {
       return;
     }
 
@@ -423,7 +428,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   goToUpgradePackage(): void {
     this.closeUpgradeModal();
-    this.router.navigate(['/dashboard/bill']);
+    this.router.navigate([this.upgradeRoute]);
   }
 
   retryLoadThemes(): void {
@@ -439,8 +444,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return !this.canUseTheme(theme);
   }
 
-  isCurrentFocus(theme: ThemeCard): boolean {
-    return this.focusedTheme?.id === theme.id;
+  isSelectedTheme(theme: ThemeCard): boolean {
+    return this.selectedTheme?.id === theme.id;
+  }
+
+  isCurrentTheme(theme: ThemeCard): boolean {
+    return this.currentThemeId === theme.id || theme.isCurrentTheme;
   }
 
   isThemeLoading(theme: ThemeCard): boolean {
@@ -504,7 +513,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (theme.isSelected) {
+    if (this.isCurrentTheme(theme)) {
       this.toastService.showToast('Tema ini sudah sedang digunakan.', 'info');
       this.closeSelectConfirmationModal();
       return;
@@ -520,8 +529,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
     const selectionSubscription = this.themeService.selectTheme(request).subscribe({
       next: (response) => {
         if (response.status) {
+          this.currentThemeId = theme.id;
+          this.updateCurrentThemeStatus();
           this.selectedThemeId = theme.id;
-          this.updateSelectedStatus();
           this.toastService.showToast(`Theme "${theme.name}" selected successfully!`, 'success');
         } else {
           this.toastService.showToast('Failed to select theme', 'error');
@@ -556,26 +566,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.toastService.showToast(message, 'error');
   }
 
-  private syncFocusedTheme(): void {
+  private syncSelectedThemeForVisibleTab(): void {
     const visibleThemes = this.visibleThemeCards;
     if (!visibleThemes.length) {
-      this.focusedThemeId = null;
+      this.selectedThemeId = null;
       return;
     }
 
     const selectedVisibleTheme = visibleThemes.find((theme) => theme.id === this.selectedThemeId);
-    if (selectedVisibleTheme) {
-      this.focusedThemeId = selectedVisibleTheme.id;
-      return;
+    if (!selectedVisibleTheme) {
+      this.selectedThemeId = null;
     }
-
-    const currentVisibleTheme = visibleThemes.find((theme) => theme.id === this.focusedThemeId);
-    if (currentVisibleTheme) {
-      this.focusedThemeId = currentVisibleTheme.id;
-      return;
-    }
-
-    this.focusedThemeId = visibleThemes[0].id;
   }
 
   private getThemeFallbackImage(name: string, category: ThemeCategoryName): string {

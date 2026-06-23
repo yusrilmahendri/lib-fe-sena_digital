@@ -115,9 +115,13 @@
   transform: translateY(-2px);
 }
 
-.theme-card--active {
+.theme-card--selected {
   border-color: var(--theme-primary);
   box-shadow: 0 0 0 2px rgba(255, 77, 141, 0.14);
+}
+
+.theme-card--used {
+  box-shadow: 0 16px 30px rgba(84, 149, 49, 0.12);
 }
 
 .theme-card--locked .theme-card__media::after {
@@ -249,6 +253,7 @@
 .theme-picker__selection small {
   color: var(--theme-muted);
   font-size: 0.95rem;
+  min-height: 20px;
 }
 
 .theme-picker__submit {

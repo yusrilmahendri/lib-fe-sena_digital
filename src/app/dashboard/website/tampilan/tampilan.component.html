@@ -44,8 +44,8 @@
         <article
           *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
           class="theme-card"
-          [class.theme-card--active]="isCurrentFocus(theme)"
-          [class.theme-card--selected]="theme.isSelected"
+          [class.theme-card--selected]="isSelectedTheme(theme)"
+          [class.theme-card--used]="isCurrentTheme(theme)"
           [class.theme-card--locked]="isCardLocked(theme)"
           (click)="onThemeCardClick(theme)">
           <div class="theme-card__media">
@@ -57,7 +57,7 @@
 
             <span class="theme-card__badge">{{ getPackageLabel(theme.requiredPackageTier || activeTab) }}</span>
 
-            <span *ngIf="theme.isSelected" class="theme-card__ribbon">PAKET DIGUNAKAN</span>
+            <span *ngIf="isCurrentTheme(theme)" class="theme-card__ribbon">PAKET DIGUNAKAN</span>
 
             <button
               type="button"
@@ -87,16 +87,18 @@
       </ng-template>
 
       <footer class="theme-picker__footer">
-        <div class="theme-picker__selection" *ngIf="focusedTheme as selectedTheme">
-          <span class="theme-picker__selection-label">Tema dipilih</span>
-          <strong>{{ selectedTheme.name }}</strong>
+        <div class="theme-picker__selection">
+          <span class="theme-picker__selection-label">
+            {{ selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
+          </span>
+          <strong>{{ selectedTheme?.name || currentTheme?.name || 'Pilih salah satu tema' }}</strong>
           <small>{{ focusedThemeSubtitle }}</small>
         </div>
 
         <button
           type="button"
           class="theme-picker__submit"
-          [class.theme-picker__submit--upgrade]="focusedTheme && !canSubmitFocusedTheme && !focusedTheme.isLegacy && !focusedTheme.isSelected"
+          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitFocusedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme)"
           [disabled]="isPrimaryButtonDisabled"
           (click)="onPrimaryAction()">
           <i class="far fa-window-restore" aria-hidden="true"></i>
