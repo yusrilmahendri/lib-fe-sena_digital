@@ -1,3 +1,9 @@
+<p *ngIf="paymentStatusMessage; else defaultBillText" role="status">
+  {{ paymentStatusMessage }}
+</p>
+
+<ng-template #defaultBillText>
 <p>
   bill-user works!
 </p>
+</ng-template>

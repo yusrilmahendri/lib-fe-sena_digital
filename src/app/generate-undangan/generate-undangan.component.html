@@ -7,6 +7,10 @@
     {{ onboardingNotice }}
   </p>
 
+  <p *ngIf="isHandlingMidtransCallback" class="gu-notice" role="status">
+    {{ paymentStatusMessage }}
+  </p>
+
   <div class="gu-progress mb-4">
     <div
       class="gu-progress-bar"
@@ -19,7 +23,7 @@
     </div>
   </div>
 
-  <div class="gu-step-content">
+  <div class="gu-step-content" *ngIf="!isHandlingMidtransCallback">
     <wc-data-registrasi *ngIf="formData.step === 1" [formData]="formData.registrasi" (prev)="prevStep()" (next)="nextStep($event)"></wc-data-registrasi>
     <wc-informasi-mempelai *ngIf="formData.step === 2" [formData]="formData.informasiMempelai" (prev)="prevStep()" (next)="nextStep($event)"></wc-informasi-mempelai>
     <wc-regis-cerita *ngIf="formData.step === 3" [formData]="formData.cerita" (prev)="prevStep()" (next)="nextStep($event)"></wc-regis-cerita>

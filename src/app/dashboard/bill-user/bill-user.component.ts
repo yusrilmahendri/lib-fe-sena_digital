@@ -7,9 +7,12 @@ import { Component, OnInit } from '@angular/core';
 })
 export class BillUserComponent implements OnInit {
 
+  paymentStatusMessage = '';
+
   constructor() { }
 
   ngOnInit() {
+    this.paymentStatusMessage = history.state?.paymentStatusMessage || '';
   }
 
 }

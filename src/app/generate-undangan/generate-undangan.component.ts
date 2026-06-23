@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardService, DashboardServiceType } from '../dashboard.service';
 
 @Component({
@@ -24,9 +24,11 @@ export class GenerateUndanganComponent implements OnInit {
 
   /** Payment status message from Midtrans callback */
   paymentStatusMessage = '';
+  isHandlingMidtransCallback = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private dashboardSvc: DashboardService
   ) {}
 
@@ -117,79 +119,125 @@ export class GenerateUndanganComponent implements OnInit {
   }
 
   private handleMidtransCallback(): void {
-    this.route.queryParams.subscribe((params) => {
-      const paymentStatus = params['payment'];
-      const orderId = params['order_id'];
-      const statusCode = params['status_code'];
+    const params = this.route.snapshot.queryParams;
+    const paymentStatus = `${params['payment'] || ''}`.toLowerCase();
+    const orderId = params['order_id'];
+    const statusCode = params['status_code'];
+    const transactionStatus = params['transaction_status'];
+    const isMidtransCallback =
+      ['finish', 'unfinish', 'error'].includes(paymentStatus) ||
+      (!!orderId && (!!statusCode || !!transactionStatus));
 
-      // Only handle if payment query param exists
-      if (!paymentStatus) {
-        return;
-      }
+    if (!isMidtransCallback) {
+      return;
+    }
 
-      // Don't navigate based on URL - require API verification
-      if (paymentStatus === 'finish' && statusCode && orderId) {
-        this.verifyMidtransPayment(orderId, statusCode);
-      } else if (paymentStatus === 'unfinish' && orderId) {
-        this.handleMidtransUnfinish(orderId);
-      } else if (paymentStatus === 'error' && orderId) {
-        this.handleMidtransError(orderId);
-      }
+    this.isHandlingMidtransCallback = true;
+    this.paymentStatusMessage = 'Memverifikasi status pembayaran...';
 
-      // Clean up query params from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    });
+    if (!orderId) {
+      this.redirectToBill('Status pembayaran tidak dapat diverifikasi karena Order ID tidak ditemukan.');
+      return;
+    }
+
+    this.verifyMidtransPayment(orderId);
   }
 
-  private verifyMidtransPayment(orderId: string, statusCode: string): void {
-    this.dashboardSvc.getParam(
+  private verifyMidtransPayment(orderId: string): void {
+    this.dashboardSvc.create(
       DashboardServiceType.MIDTRANS_CHECK_STATUS,
-      '',
       { order_id: orderId }
     ).subscribe({
       next: (res: any) => {
-        const transactionStatus = res?.data?.transaction_status;
+        const status = this.resolveMidtransStatus(res);
 
-        if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
-          // Payment successful
-          this.paymentStatusMessage = 'Pembayaran berhasil! Terima kasih.';
-          this.formData.step = 4;
-          this.persistFormData();
-          // Clear saved redirect URL after successful payment
-          const invitationId = this.formData?.registrasi?.response?.invitation?.id;
-          if (invitationId) {
-            localStorage.removeItem(`midtrans_redirect_${invitationId}`);
-          }
-        } else if (transactionStatus === 'pending') {
-          // Payment pending
-          this.paymentStatusMessage = 'Pembayaran masih diproses. Silakan tunggu atau coba lagi nanti.';
-          this.formData.step = 4;
-          this.persistFormData();
-        } else if (['cancel', 'deny', 'expire'].includes(transactionStatus)) {
-          // Payment failed/cancelled
-          this.paymentStatusMessage = `Pembayaran ${transactionStatus}. Silakan coba lagi.`;
-          this.formData.step = 4;
-          this.persistFormData();
+        if (this.isPaidStatus(status)) {
+          this.clearSavedMidtransRedirect();
+          this.router.navigate(['/dashboard/overview'], {
+            replaceUrl: true,
+            state: {
+              paymentStatusMessage: 'Pembayaran berhasil. Selamat datang di dashboard.',
+            },
+          });
+          return;
         }
+
+        if (this.isPendingStatus(status)) {
+          this.redirectToBill('Pembayaran masih menunggu penyelesaian. Silakan cek status pembayaran Anda.');
+          return;
+        }
+
+        if (this.isFailedStatus(status)) {
+          this.redirectToBill('Pembayaran belum berhasil atau sudah kedaluwarsa. Silakan cek status pembayaran Anda.');
+          return;
+        }
+
+        this.redirectToBill(res?.message || 'Status pembayaran belum dapat dipastikan. Silakan cek kembali status pembayaran Anda.');
       },
-      error: () => {
-        this.paymentStatusMessage = 'Tidak dapat memverifikasi status pembayaran. Silakan hubungi support.';
-        this.formData.step = 4;
-        this.persistFormData();
+      error: (err: any) => {
+        const message =
+          err?.error?.message ||
+          err?.message ||
+          'Tidak dapat memverifikasi status pembayaran. Silakan cek kembali status pembayaran Anda.';
+        this.redirectToBill(message);
       },
     });
   }
 
-  private handleMidtransUnfinish(orderId: string): void {
-    this.paymentStatusMessage = 'Pembayaran dibatalkan atau belum diselesaikan. Silakan coba lagi.';
-    this.formData.step = 4;
-    this.persistFormData();
+  private resolveMidtransStatus(res: any): string {
+    const transactionStatus = (
+      res?.transaction_status ||
+      res?.data?.transaction_status ||
+      res?.data?.status ||
+      ''
+    ).toString().toLowerCase();
+    const paymentStatus = (
+      res?.payment_status ||
+      res?.data?.payment_status ||
+      ''
+    ).toString().toLowerCase();
+
+    if (['paid', 'success'].includes(paymentStatus)) {
+      return 'success';
+    }
+
+    if (['failed', 'expired', 'refunded'].includes(paymentStatus)) {
+      return transactionStatus || paymentStatus;
+    }
+
+    return transactionStatus || paymentStatus;
   }
 
-  private handleMidtransError(orderId: string): void {
-    this.paymentStatusMessage = 'Terjadi kesalahan pada pembayaran. Silakan coba lagi.';
-    this.formData.step = 4;
-    this.persistFormData();
+  private isPaidStatus(status: string): boolean {
+    return ['settlement', 'capture', 'success', 'paid'].includes(status);
+  }
+
+  private isPendingStatus(status: string): boolean {
+    return ['pending', 'challenge'].includes(status);
+  }
+
+  private isFailedStatus(status: string): boolean {
+    return ['deny', 'cancel', 'expire', 'expired', 'failure', 'failed', 'error', 'refund', 'refunded'].includes(status);
+  }
+
+  private redirectToBill(message: string): void {
+    this.paymentStatusMessage = message;
+    this.router.navigate(['/dashboard/bill'], {
+      replaceUrl: true,
+      state: {
+        paymentStatusMessage: message,
+      },
+    });
+  }
+
+  private clearSavedMidtransRedirect(): void {
+    const invitationId =
+      this.formData?.registrasi?.response?.invitation?.id ??
+      this.formData?.response?.invitation?.id;
+
+    if (invitationId) {
+      localStorage.removeItem(`midtrans_redirect_${invitationId}`);
+    }
   }
 
 }
