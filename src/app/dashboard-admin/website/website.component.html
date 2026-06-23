@@ -70,7 +70,7 @@
                 type="button"
                 class="status-btn"
                 [class.inactive]="!theme.categoryData?.is_active"
-                [disabled]="!theme.categoryData"
+                [disabled]="!canActivateTheme(theme)"
                 (click)="toggleThemeStatus(theme)">
                 {{ theme.categoryData?.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
               </button>
@@ -94,13 +94,13 @@
             </div>
 
             <div class="theme-card-actions">
-              <label class="upload-btn" [class.disabled]="!theme.categoryData">
+              <label class="upload-btn" [class.disabled]="!canActivateTheme(theme)">
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/gif"
-                  [disabled]="!theme.categoryData || uploadingThemeId === theme.categoryData?.id"
+                  [disabled]="!canActivateTheme(theme) || isThemeUploading(theme)"
                   (change)="onPreviewSelected($event, theme)" />
-                {{ uploadingThemeId === theme.categoryData?.id ? 'Mengunggah...' : 'Ubah Preview' }}
+                {{ isThemeUploading(theme) ? 'Mengunggah...' : 'Ubah Preview' }}
               </label>
 
               <span class="theme-slug">

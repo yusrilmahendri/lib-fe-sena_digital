@@ -127,7 +127,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   adminThemesMap: Map<string, AdminTheme> = new Map();
   loading = false;
   error: string | null = null;
-  uploadingThemeId: number | null = null;
+  uploadingThemeKey: string | null = null;
   selectedThemeDetail: AdminThemeCard | null = null;
 
   private subscriptions: Subscription[] = [];
@@ -232,14 +232,18 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   toggleThemeStatus(theme: AdminThemeCard): void {
-    if (!theme.categoryData?.id) {
+    // Prefer adminThemeData over categoryData
+    const themeId = theme.adminThemeData?.id || theme.categoryData?.id;
+    const isActive = theme.categoryData?.is_active || false;
+
+    if (!themeId) {
       this.notyf.error('Tema ini belum terhubung ke data existing');
       return;
     }
 
     this.websiteCategoryService.toggleActivation(
-      theme.categoryData.id,
-      !theme.categoryData.is_active
+      themeId,
+      !isActive
     ).subscribe({
       next: (result) => {
         if (result.success) {
@@ -280,15 +284,18 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!theme.categoryData?.id) {
+    // Prefer adminThemeData over categoryData
+    const themeId = theme.adminThemeData?.id || theme.categoryData?.id;
+
+    if (!themeId) {
       this.notyf.error('Tema ini belum terhubung ke data existing');
       target.value = '';
       return;
     }
 
-    this.uploadingThemeId = theme.categoryData.id;
+    this.uploadingThemeKey = theme.key;
 
-    this.websiteCategoryService.updateCategory(theme.categoryData.id, { image: file }).subscribe({
+    this.websiteCategoryService.updateCategory(themeId, { image: file }).subscribe({
       next: (result) => {
         if (result.success) {
           this.notyf.success(`Preview ${theme.name} berhasil diperbarui`);
@@ -298,13 +305,15 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         }
 
         target.value = '';
-        this.uploadingThemeId = null;
+        this.uploadingThemeKey = null;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error updating theme preview:', error);
         this.notyf.error(error.error || 'Gagal memperbarui gambar preview');
         target.value = '';
-        this.uploadingThemeId = null;
+        this.uploadingThemeKey = null;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -336,6 +345,14 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     }
 
     return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
+  }
+
+  canActivateTheme(theme: AdminThemeCard): boolean {
+    return !!(theme.adminThemeData?.id || theme.categoryData?.id);
+  }
+
+  isThemeUploading(theme: AdminThemeCard): boolean {
+    return this.uploadingThemeKey === theme.key;
   }
 
   getThemePackageBadge(theme: AdminThemeCard): string {
