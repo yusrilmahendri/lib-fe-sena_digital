@@ -3,6 +3,7 @@ import { DashboardService, DashboardServiceType } from '../../../dashboard.servi
 import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Notyf } from 'notyf';
 import { BankAccount } from '../../../services/wedding-data.service';
+import { environment } from '../../../../environments/environment';
 
 /**
  * SettingsPaymentComponent
@@ -93,6 +94,7 @@ interface ApiErrorResponse {
   styleUrls: ['./settings-payment.component.scss']
 })
 export class SettingsPaymentComponent implements OnInit {
+  private readonly adminRekeningBaseUrl = `${environment.apiBaseUrl}/v1/admin`;
 
   // Payment method selection
   paymentMethods: PaymentMethod[] = [];
@@ -310,7 +312,7 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   private loadManualPaymentDetails(): void {
-    this.dashboardSvc.httpSvc.get('/api/v1/admin/get-rekening').subscribe({
+    this.dashboardSvc.httpSvc.get(`${this.adminRekeningBaseUrl}/get-rekening`).subscribe({
       next: (response: any) => {
         console.log('Manual payment API response:', response);
         this.mapManualPaymentDetails(response.data || []);
@@ -503,7 +505,7 @@ export class SettingsPaymentComponent implements OnInit {
     }
 
     // Call admin endpoint as per API contract
-    this.dashboardSvc.httpSvc.post('/api/v1/admin/send-rekening', formData).subscribe({
+    this.dashboardSvc.httpSvc.post(`${this.adminRekeningBaseUrl}/send-rekening`, formData).subscribe({
       next: (response: any) => {
         console.log('Create rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil ditambahkan');
@@ -857,7 +859,7 @@ export class SettingsPaymentComponent implements OnInit {
     const itemId = this.currentEditItem!.id;
 
     // Use POST with method spoofing for FormData compatibility with Laravel
-    this.dashboardSvc.httpSvc.post(`/api/v1/admin/update-rekening/${itemId}`, formData).subscribe({
+    this.dashboardSvc.httpSvc.post(`${this.adminRekeningBaseUrl}/update-rekening/${itemId}`, formData).subscribe({
       next: (response: any) => {
         console.log('Update rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil diperbarui');
@@ -937,7 +939,7 @@ export class SettingsPaymentComponent implements OnInit {
     const itemId = this.currentEditItem!.id;
 
     // Call admin delete endpoint as per API contract
-    this.dashboardSvc.httpSvc.delete(`/api/v1/admin/delete-rekening/${itemId}`).subscribe({
+    this.dashboardSvc.httpSvc.delete(`${this.adminRekeningBaseUrl}/delete-rekening/${itemId}`).subscribe({
       next: (response: any) => {
         console.log('Delete rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil dihapus');

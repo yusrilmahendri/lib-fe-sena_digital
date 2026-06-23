@@ -1,0 +1,165 @@
+<section class="ruby-theme" *ngIf="weddingData as data">
+  <div class="cover-card" *ngIf="!invitationOpened">
+    <div class="cover-photo" [style.background-image]="'url(' + getCoverPhoto() + ')'">
+      <div class="cover-overlay"></div>
+      <div class="cover-flower cover-flower--top-left"></div>
+      <div class="cover-flower cover-flower--bottom-right"></div>
+      <div class="cover-content">
+        <p class="cover-kicker">The Wedding Of</p>
+        <h1 class="cover-title">{{ getGroomNickname() }}<span>&</span>{{ getBrideNickname() }}</h1>
+        <p class="cover-date">{{ getOpeningDate() }}</p>
+        <button class="open-button" type="button" (click)="openInvitation()">
+          <i class="fas fa-envelope-open-text"></i>
+          Buka Undangan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="theme-page" *ngIf="invitationOpened">
+    <section class="hero-panel">
+      <div class="hero-photo" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-copy">
+        <p class="hero-kicker">{{ getOpeningMessage() }}</p>
+        <h2 class="hero-title">{{ getGroomNickname() }}<span>&</span>{{ getBrideNickname() }}</h2>
+        <p class="hero-date">{{ getOpeningDate() }}</p>
+      </div>
+      <div class="hero-flower hero-flower--left"></div>
+      <div class="hero-flower hero-flower--right"></div>
+    </section>
+
+    <section class="paper-section intro-section">
+      <p class="section-script">{{ getOpeningMessage() }}</p>
+      <p class="section-copy">{{ getIntroductionText() }}</p>
+      <p class="section-copy">{{ getClosingText() }}</p>
+    </section>
+
+    <section class="paper-section couple-section">
+      <p class="section-label">Mempelai</p>
+      <h3 class="section-title">Kedua Mempelai</h3>
+
+      <article class="person-card">
+        <img class="person-photo" [src]="getBride()?.photo || getCoverPhoto()" [alt]="getBrideName()">
+        <h4 class="person-name">{{ getBrideName() }}</h4>
+        <p class="person-copy">{{ getBrideParents() }}</p>
+      </article>
+
+      <div class="person-separator">&amp;</div>
+
+      <article class="person-card">
+        <img class="person-photo" [src]="getGroom()?.photo || getCoverPhoto()" [alt]="getGroomName()">
+        <h4 class="person-name">{{ getGroomName() }}</h4>
+        <p class="person-copy">{{ getGroomParents() }}</p>
+      </article>
+    </section>
+
+    <section class="paper-section event-section" *ngIf="getAkadEvent() as akad">
+      <p class="section-label">Save The Date</p>
+      <h3 class="section-title">Akad Nikah</h3>
+      <div class="event-card">
+        <p class="event-date">{{ formatDate(akad.tanggal_acara, 'long') }}</p>
+        <p class="event-time">{{ formatTimeRange(akad) }}</p>
+        <p class="event-location">{{ akad.alamat }}</p>
+      </div>
+    </section>
+
+    <section class="paper-section event-section" *ngIf="getReceptionEvent() as resepsi">
+      <p class="section-label">Save The Date</p>
+      <h3 class="section-title">Resepsi</h3>
+      <div class="event-card">
+        <p class="event-date">{{ formatDate(resepsi.tanggal_acara, 'long') }}</p>
+        <p class="event-time">{{ formatTimeRange(resepsi) }}</p>
+        <p class="event-location">{{ resepsi.alamat }}</p>
+      </div>
+    </section>
+
+    <section class="paper-section location-section">
+      <p class="section-label">Tempat</p>
+      <h3 class="section-title">{{ getLocationTitle() }}</h3>
+      <div class="map-card">
+        <div class="map-placeholder">
+          <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <p class="event-location">{{ getLocationAddress() }}</p>
+        <a *ngIf="getMapsLink() as mapsLink" class="map-button" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+          Gunakan Google Maps
+        </a>
+      </div>
+    </section>
+
+    <section class="paper-section countdown-section">
+      <p class="section-label">Menuju Hari Bahagia Kami</p>
+      <h3 class="section-title">Hitung Mundur</h3>
+      <div class="countdown-grid">
+        <div class="countdown-card" *ngFor="let part of getCountdownParts()">
+          <span class="countdown-value">{{ part.value }}</span>
+          <span class="countdown-label">{{ part.label }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="paper-section story-section" *ngIf="hasStories()">
+      <p class="section-label">Cerita Kami</p>
+      <h3 class="section-title">Perjalanan Cinta</h3>
+      <article class="story-card" *ngFor="let story of getStories(); trackBy: trackByStory">
+        <p class="story-date">{{ getStoryDate(story) }}</p>
+        <h4 class="story-title">{{ story.title }}</h4>
+        <p class="story-copy">{{ getStoryLead(story) }}</p>
+      </article>
+    </section>
+
+    <section class="paper-section gallery-section">
+      <p class="section-label">Momen</p>
+      <h3 class="section-title">Galeri Foto</h3>
+
+      <ng-container *ngIf="hasGallery(); else emptyGallery">
+        <div class="gallery-featured" *ngIf="getFeaturedGalleryItem() as featured">
+          <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+          <div class="gallery-play" *ngIf="featured.url_video">
+            <i class="fas fa-play"></i>
+          </div>
+        </div>
+
+        <div class="gallery-grid">
+          <div class="gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
+            <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+            <div class="gallery-play gallery-play--small" *ngIf="item.url_video">
+              <i class="fas fa-play"></i>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #emptyGallery>
+        <p class="section-copy muted-copy">Galeri foto akan segera ditambahkan.</p>
+      </ng-template>
+    </section>
+
+    <section class="paper-section wishes-section">
+      <p class="section-label">Doa Harapan</p>
+      <h3 class="section-title">Ucapan &amp; Doa</h3>
+      <wc-presence-view [weddingData]="data"></wc-presence-view>
+    </section>
+
+    <section class="paper-section wish-list-section">
+      <p class="section-label">Ucapan Tamu</p>
+      <h3 class="section-title">List Ucapan</h3>
+      <wc-message-view [guestWishes]="data.guest_wishes"></wc-message-view>
+    </section>
+
+    <section class="paper-section gift-section">
+      <p class="section-label">Wedding Gift</p>
+      <h3 class="section-title">Amplop &amp; Rekening</h3>
+      <wc-gift-view [weddingData]="data"></wc-gift-view>
+    </section>
+
+    <section class="paper-section closing-section">
+      <p class="section-label">Penutup</p>
+      <h3 class="section-title">Tanda Kasih</h3>
+      <p class="section-copy">{{ getClosingText() }}</p>
+      <h4 class="closing-names">{{ getGroomNickname() }}<span>&amp;</span>{{ getBrideNickname() }}</h4>
+      <p class="cover-date">{{ getOpeningDate() }}</p>
+    </section>
+  </div>
+</section>

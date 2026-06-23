@@ -146,6 +146,13 @@ export interface WeddingMetadata {
   is_public_view: boolean;
 }
 
+export interface SelectedThemeSummary {
+  id: number;
+  slug: string;
+  name: string;
+  category_slug: string;
+}
+
 export interface WeddingData {
   user_info: UserInfo;
   mempelai: MempelaiData;
@@ -161,6 +168,7 @@ export interface WeddingData {
   guest_book: any[];
   testimonials: any[];
   themes: any[];
+  selected_theme?: SelectedThemeSummary | null;
   metadata: WeddingMetadata;
 }
 

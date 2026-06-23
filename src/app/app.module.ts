@@ -87,6 +87,7 @@ import { StoryViewComponent } from './dashboard/wedding-view/story-view/story-vi
 import { GalleryViewComponent } from './dashboard/wedding-view/gallery-view/gallery-view.component';
 import { PresenceViewComponent } from './dashboard/wedding-view/presence-view/presence-view.component';
 import { GiftViewComponent } from './dashboard/wedding-view/gift-view/gift-view.component';
+import { RubyThemeOneComponent } from './dashboard/wedding-view/templates/ruby-theme-one/ruby-theme-one.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
@@ -167,6 +168,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
     GalleryViewComponent,
     PresenceViewComponent,
     GiftViewComponent,
+    RubyThemeOneComponent,
     BillUserComponent,
     ProfileAdminComponent,
     AuthModalComponent,

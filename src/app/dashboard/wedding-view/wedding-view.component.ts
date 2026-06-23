@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
-import { WeddingDataService, WeddingData } from '../../services/wedding-data.service';
+import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 
 // Attendance interface for type safety
@@ -65,6 +65,7 @@ enum ContentView {
   styleUrls: ['./wedding-view.component.scss']
 })
 export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly RUBY_THEME_ONE_SLUG = 'lavender-bloom';
 
   ContentView = ContentView;
 
@@ -77,6 +78,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Wedding data properties
   weddingData: WeddingData | null = null;
+  selectedThemeSlug: string | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   isLoading: boolean = false;
   errorMessage: string | null = null;
@@ -520,6 +522,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         domain: this.domain
       });
 
+      this.selectedThemeSlug = this.resolveThemeSlug(data.selected_theme);
+
       // Initialize audio when wedding data is updated
       this.initializeAudio();
 
@@ -947,7 +951,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   openInvitation(): void {
     this.invitationOpened = true;
-    this.setCurrentView(ContentView.COUPLE);
+    this.setCurrentView(this.isRubyThemeOneSelected() ? ContentView.MAIN : ContentView.COUPLE);
 
     // Track invitation view via attendance API
     this.submitAttendanceView();
@@ -1009,6 +1013,14 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   setCurrentView(view: ContentView): void {
     this.currentView = view;
     this.saveStateToLocalStorage();
+  }
+
+  isRubyThemeOneSelected(): boolean {
+    return this.selectedThemeSlug === this.RUBY_THEME_ONE_SLUG;
+  }
+
+  shouldRenderLegacyTemplate(): boolean {
+    return !this.isRubyThemeOneSelected();
   }
 
   showMessages(): void {
@@ -1344,5 +1356,31 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.renderer.setProperty(style, 'textContent', styleContent);
     this.renderer.appendChild(document.head, style);
+  }
+
+  private resolveThemeSlug(selectedTheme?: SelectedThemeSummary | null): string | null {
+    const explicitSlug = this.normalizeThemeSlug(selectedTheme?.slug);
+    if (explicitSlug) {
+      return explicitSlug;
+    }
+
+    const normalizedName = this.normalizeThemeSlug(selectedTheme?.name);
+    const normalizedCategory = this.normalizeThemeSlug(selectedTheme?.category_slug);
+
+    if (
+      normalizedName &&
+      (normalizedName.includes('lavender') || normalizedName.includes('ruby') || normalizedName.includes('tema-1'))
+      && (!normalizedCategory || normalizedCategory.includes('floral') || normalizedCategory.includes('ruby'))
+    ) {
+      return this.RUBY_THEME_ONE_SLUG;
+    }
+
+    return null;
+  }
+
+  private normalizeThemeSlug(value?: string | null): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase();
   }
 }

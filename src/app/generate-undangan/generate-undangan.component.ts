@@ -143,8 +143,9 @@ export class GenerateUndanganComponent implements OnInit {
 
   private verifyMidtransPayment(orderId: string, statusCode: string): void {
     this.dashboardSvc.getParam(
-      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
-      `?order_id=${orderId}`
+      DashboardServiceType.MIDTRANS_CHECK_STATUS,
+      '',
+      { order_id: orderId }
     ).subscribe({
       next: (res: any) => {
         const transactionStatus = res?.data?.transaction_status;

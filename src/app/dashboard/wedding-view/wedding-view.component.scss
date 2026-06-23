@@ -194,6 +194,12 @@
   z-index: 1;
 }
 
+.themed-content-shell {
+  padding: 32px 16px 140px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
 .title {
   font-size: 3.5rem;
   color: #2c5530;

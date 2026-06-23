@@ -35,54 +35,104 @@
       [galleryItems]="weddingData?.gallery">
     </wc-gallery-view>
 
-    <!-- Main content - hidden when gallery is active -->
-    <div class="content" *ngIf="!isCurrentView(ContentView.GALLERY)">
-      <div class="wrap" *ngIf="isCurrentView(ContentView.MAIN)">
-        <p class="wedding-header">The Wedding Of</p>
-        <h1 class="couple-names">{{ getCoupleDisplayName() }}</h1>
-        <p class="greeting">Kepada Yth.</p>
-        <p class="formal-address">Bapak/Ibu/Saudara/i</p>
-        <p class="guest-name">Nama Tamu</p>
-        <button class="open-invitation-btn" (click)="openInvitation()">Buka Undangan</button>
+    <ng-container *ngIf="shouldRenderLegacyTemplate(); else rubyThemeTemplate">
+      <!-- Main content - hidden when gallery is active -->
+      <div class="content" *ngIf="!isCurrentView(ContentView.GALLERY)">
+        <div class="wrap" *ngIf="isCurrentView(ContentView.MAIN)">
+          <p class="wedding-header">The Wedding Of</p>
+          <h1 class="couple-names">{{ getCoupleDisplayName() }}</h1>
+          <p class="greeting">Kepada Yth.</p>
+          <p class="formal-address">Bapak/Ibu/Saudara/i</p>
+          <p class="guest-name">Nama Tamu</p>
+          <button class="open-invitation-btn" (click)="openInvitation()">Buka Undangan</button>
+        </div>
+
+        <wc-couple-view
+          *ngIf="isCurrentView(ContentView.COUPLE)"
+          [weddingData]="weddingData">
+        </wc-couple-view>
+
+        <wc-message-view
+          *ngIf="isCurrentView(ContentView.MESSAGE)"
+          [guestWishes]="weddingData?.guest_wishes">
+        </wc-message-view>
+
+        <wc-akad-view
+          *ngIf="isCurrentView(ContentView.CALENDAR)"
+          [events]="weddingData?.events"
+          [eventType]="'akad'">
+        </wc-akad-view>
+
+        <wc-resepsi-view
+          *ngIf="isCurrentView(ContentView.BIRTHDAY)"
+          [events]="weddingData?.events"
+          [eventType]="'resepsi'">
+        </wc-resepsi-view>
+
+        <wc-story-view
+          *ngIf="isCurrentView(ContentView.CHAT)"
+          [stories]="weddingData?.stories">
+        </wc-story-view>
+
+        <wc-presence-view
+          *ngIf="isCurrentView(ContentView.PROFILE)"
+          [weddingData]="weddingData || undefined">
+        </wc-presence-view>
+
+        <wc-gift-view
+          *ngIf="isCurrentView(ContentView.GIFT)"
+          [weddingData]="weddingData || undefined">
+        </wc-gift-view>
       </div>
+    </ng-container>
 
-      <wc-couple-view
-        *ngIf="isCurrentView(ContentView.COUPLE)"
-        [weddingData]="weddingData">
-      </wc-couple-view>
+    <ng-template #rubyThemeTemplate>
+      <wc-ruby-theme-one
+        *ngIf="!isCurrentView(ContentView.GALLERY) && (!invitationOpened || isCurrentView(ContentView.MAIN))"
+        [weddingData]="weddingData"
+        [invitationOpened]="invitationOpened"
+        (openInvitationRequested)="openInvitation()">
+      </wc-ruby-theme-one>
 
-      <wc-message-view
-        *ngIf="isCurrentView(ContentView.MESSAGE)"
-        [guestWishes]="weddingData?.guest_wishes">
-      </wc-message-view>
+      <div class="content themed-content-shell" *ngIf="invitationOpened && !isCurrentView(ContentView.GALLERY) && !isCurrentView(ContentView.MAIN)">
+        <wc-couple-view
+          *ngIf="isCurrentView(ContentView.COUPLE)"
+          [weddingData]="weddingData">
+        </wc-couple-view>
 
-      <wc-akad-view
-        *ngIf="isCurrentView(ContentView.CALENDAR)"
-        [events]="weddingData?.events"
-        [eventType]="'akad'">
-      </wc-akad-view>
+        <wc-message-view
+          *ngIf="isCurrentView(ContentView.MESSAGE)"
+          [guestWishes]="weddingData?.guest_wishes">
+        </wc-message-view>
 
-      <wc-resepsi-view
-        *ngIf="isCurrentView(ContentView.BIRTHDAY)"
-        [events]="weddingData?.events"
-        [eventType]="'resepsi'">
-      </wc-resepsi-view>
+        <wc-akad-view
+          *ngIf="isCurrentView(ContentView.CALENDAR)"
+          [events]="weddingData?.events"
+          [eventType]="'akad'">
+        </wc-akad-view>
 
-      <wc-story-view
-        *ngIf="isCurrentView(ContentView.CHAT)"
-        [stories]="weddingData?.stories">
-      </wc-story-view>
+        <wc-resepsi-view
+          *ngIf="isCurrentView(ContentView.BIRTHDAY)"
+          [events]="weddingData?.events"
+          [eventType]="'resepsi'">
+        </wc-resepsi-view>
 
-      <wc-presence-view
-        *ngIf="isCurrentView(ContentView.PROFILE)"
-        [weddingData]="weddingData || undefined">
-      </wc-presence-view>
+        <wc-story-view
+          *ngIf="isCurrentView(ContentView.CHAT)"
+          [stories]="weddingData?.stories">
+        </wc-story-view>
 
-      <wc-gift-view
-        *ngIf="isCurrentView(ContentView.GIFT)"
-        [weddingData]="weddingData || undefined">
-      </wc-gift-view>
-    </div>
+        <wc-presence-view
+          *ngIf="isCurrentView(ContentView.PROFILE)"
+          [weddingData]="weddingData || undefined">
+        </wc-presence-view>
+
+        <wc-gift-view
+          *ngIf="isCurrentView(ContentView.GIFT)"
+          [weddingData]="weddingData || undefined">
+        </wc-gift-view>
+      </div>
+    </ng-template>
 
     <!-- Side icons - collapsible group (hidden until invitation opened) -->
     <div
