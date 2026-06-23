@@ -12,6 +12,13 @@ interface ThemePreset {
   fallbackImage: string;
 }
 
+interface AdminTheme {
+  id: number;
+  slug: string;
+  nama_kategori?: string;
+  [key: string]: any;
+}
+
 interface AdminThemeCard {
   key: string;
   name: string;
@@ -19,6 +26,7 @@ interface AdminThemeCard {
   fallbackImage: string;
   displayOrder: number;
   categoryData: WebsiteCategory | null;
+  adminThemeData: AdminTheme | null;
 }
 
 type ThemeCategory = ThemePreset['category'];
@@ -108,6 +116,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   themeCards: AdminThemeCard[] = [];
   packageCategoryMap: Partial<Record<ThemeCategory, PackageTier[]>> = {};
   packageThemeMap: Partial<Record<string, PackageTier[]>> = {};
+  adminThemesMap: Map<string, AdminTheme> = new Map();
   loading = false;
   error: string | null = null;
   uploadingThemeId: number | null = null;
@@ -130,6 +139,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeSubscriptions();
     this.loadPackageAccessMapping();
+    this.loadAdminThemes();
     this.getData();
   }
 
@@ -161,6 +171,26 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.websiteCategoryService.getCategories({ per_page: 100 }).subscribe({
       error: (error) => {
         console.error('Error loading website categories:', error);
+      }
+    });
+  }
+
+  loadAdminThemes(): void {
+    this.dashboardService.list(DashboardServiceType.THEME_ADMIN_THEMES_LIST).subscribe({
+      next: (response: any) => {
+        const themes = Array.isArray(response?.data) ? response.data : [];
+        this.adminThemesMap.clear();
+        themes.forEach((theme: AdminTheme) => {
+          if (theme.slug) {
+            this.adminThemesMap.set(theme.slug, theme);
+          }
+        });
+        // Rebuild themeCards after adminThemesMap is updated
+        this.themeCards = this.buildThemeCards(this.allData);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading admin themes:', error);
       }
     });
   }
@@ -260,6 +290,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
+    if (theme.adminThemeData) {
+      return 'Terhubung';
+    }
+
     if (!theme.categoryData) {
       return 'Belum Terhubung';
     }
@@ -360,7 +394,8 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       category: preset.category,
       fallbackImage: preset.fallbackImage,
       displayOrder: index + 1,
-      categoryData: categoryMap.get(preset.key) ?? null
+      categoryData: categoryMap.get(preset.key) ?? null,
+      adminThemeData: this.adminThemesMap.get(preset.key) ?? null
     }));
 
     const savedOrder = this.getSavedThemeOrder();
