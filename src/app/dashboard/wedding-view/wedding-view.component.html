@@ -35,7 +35,7 @@
       [galleryItems]="weddingData?.gallery">
     </wc-gallery-view>
 
-    <ng-container *ngIf="shouldRenderLegacyTemplate(); else rubyThemeTemplate">
+    <ng-container *ngIf="shouldRenderLegacyTemplate(); else activeThemeTemplate">
       <!-- Main content - hidden when gallery is active -->
       <div class="content" *ngIf="!isCurrentView(ContentView.GALLERY)">
         <div class="wrap" *ngIf="isCurrentView(ContentView.MAIN)">
@@ -86,13 +86,13 @@
       </div>
     </ng-container>
 
-    <ng-template #rubyThemeTemplate>
-      <wc-ruby-theme-one
+    <ng-template #activeThemeTemplate>
+      <wc-lavender-bloom-theme
         *ngIf="!isCurrentView(ContentView.GALLERY) && (!invitationOpened || isCurrentView(ContentView.MAIN))"
         [weddingData]="weddingData"
         [invitationOpened]="invitationOpened"
         (openInvitationRequested)="openInvitation()">
-      </wc-ruby-theme-one>
+      </wc-lavender-bloom-theme>
 
       <div class="content themed-content-shell" *ngIf="invitationOpened && !isCurrentView(ContentView.GALLERY) && !isCurrentView(ContentView.MAIN)">
         <wc-couple-view

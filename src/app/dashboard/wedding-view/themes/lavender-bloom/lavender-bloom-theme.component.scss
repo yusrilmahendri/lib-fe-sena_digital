@@ -1,0 +1,44 @@
+:host {
+  display: block;
+}
+
+.lavender-theme {
+  position: relative;
+  z-index: 1;
+  color: #51323b;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+.cover-guest {
+  margin: 0 0 14px;
+  color: #6f555d;
+  font-size: 0.88rem;
+  letter-spacing: 0.08em;
+}
+
+.quote-card {
+  padding: 18px;
+  border: 1px solid rgba(199, 145, 156, 0.22);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.quote-card + .quote-card {
+  margin-top: 12px;
+}
+
+.quote-copy {
+  margin: 0;
+  color: #6f4652;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.quote-name {
+  margin: 10px 0 0;
+  color: #a45f73;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+@import "../../templates/ruby-theme-one/ruby-theme-one.component.scss";

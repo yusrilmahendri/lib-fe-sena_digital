@@ -1,10 +1,11 @@
-import { Component, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy, Type } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
+import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 
 // Attendance interface for type safety
 interface AttendanceRequest {
@@ -65,7 +66,9 @@ enum ContentView {
   styleUrls: ['./wedding-view.component.scss']
 })
 export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly RUBY_THEME_ONE_SLUG = 'lavender-bloom';
+  private readonly themeComponentRegistry: Record<string, Type<unknown>> = {
+    'lavender-bloom': LavenderBloomThemeComponent,
+  };
 
   ContentView = ContentView;
 
@@ -78,7 +81,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Wedding data properties
   weddingData: WeddingData | null = null;
-  selectedThemeSlug: string | null = null;
+  activeThemeSlug: string | null = null;
+  activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   isLoading: boolean = false;
   errorMessage: string | null = null;
@@ -522,7 +526,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         domain: this.domain
       });
 
-      this.selectedThemeSlug = this.resolveThemeSlug(data.selected_theme);
+      this.activeThemeSlug = this.resolveThemeSlug(data.selected_theme);
+      this.activeThemeComponent = this.resolveThemeComponent(this.activeThemeSlug);
 
       // Initialize audio when wedding data is updated
       this.initializeAudio();
@@ -951,7 +956,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   openInvitation(): void {
     this.invitationOpened = true;
-    this.setCurrentView(this.isRubyThemeOneSelected() ? ContentView.MAIN : ContentView.COUPLE);
+    this.setCurrentView(this.hasActiveThemeComponent() ? ContentView.MAIN : ContentView.COUPLE);
 
     // Track invitation view via attendance API
     this.submitAttendanceView();
@@ -1015,12 +1020,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saveStateToLocalStorage();
   }
 
-  isRubyThemeOneSelected(): boolean {
-    return this.selectedThemeSlug === this.RUBY_THEME_ONE_SLUG;
+  hasActiveThemeComponent(): boolean {
+    return !!this.activeThemeComponent;
   }
 
   shouldRenderLegacyTemplate(): boolean {
-    return !this.isRubyThemeOneSelected();
+    return !this.hasActiveThemeComponent();
   }
 
   showMessages(): void {
@@ -1359,23 +1364,15 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resolveThemeSlug(selectedTheme?: SelectedThemeSummary | null): string | null {
-    const explicitSlug = this.normalizeThemeSlug(selectedTheme?.slug);
-    if (explicitSlug) {
-      return explicitSlug;
+    return this.normalizeThemeSlug(selectedTheme?.slug) || null;
+  }
+
+  private resolveThemeComponent(slug: string | null): Type<unknown> | null {
+    if (!slug) {
+      return null;
     }
 
-    const normalizedName = this.normalizeThemeSlug(selectedTheme?.name);
-    const normalizedCategory = this.normalizeThemeSlug(selectedTheme?.category_slug);
-
-    if (
-      normalizedName &&
-      (normalizedName.includes('lavender') || normalizedName.includes('ruby') || normalizedName.includes('tema-1'))
-      && (!normalizedCategory || normalizedCategory.includes('floral') || normalizedCategory.includes('ruby'))
-    ) {
-      return this.RUBY_THEME_ONE_SLUG;
-    }
-
-    return null;
+    return this.themeComponentRegistry[slug] || null;
   }
 
   private normalizeThemeSlug(value?: string | null): string {
