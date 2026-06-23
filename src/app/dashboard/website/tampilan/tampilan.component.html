@@ -1,97 +1,167 @@
-<div class="container-fluid px-3 px-md-4">
-
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
-    </div>
-    <p class="mt-3">Loading themes...</p>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="errorMessage && !isLoading" class="alert alert-danger" role="alert">
-    <h5 class="alert-heading">Error Loading Themes</h5>
-    <p>{{ errorMessage }}</p>
-    <button class="btn btn-outline-danger" (click)="retryLoadThemes()">
-      <i class="fas fa-redo"></i> Retry
-    </button>
-  </div>
-
-  <!-- Theme Cards Grid -->
-  <div *ngIf="!isLoading && !errorMessage" class="row g-3 g-md-4 justify-content-center">
-    <div
-      *ngFor="let theme of themeCards; trackBy: trackByThemeId"
-      class="col-12 col-sm-6 col-md-6 col-lg-4 col-xl-3 d-flex">
-
-      <div class="card-custom w-100" [ngClass]="getBackgroundClass(theme.label)">
-        <div class="side-bar"></div>
-
-        <!-- Card Header -->
-        <div class="card-header">
-          <h3>{{ theme.label }}</h3>
-          <i class="fas fa-trash-alt" title="Delete"></i>
-        </div>
-
-        <!-- Theme Image -->
-        <div class="card-img-container">
-          <img
-            [src]="theme.image"
-            [alt]="'Preview for ' + theme.name + ' theme'"
-            (error)="onImageError($event, theme)"
-            loading="lazy" />
-        </div>
-
-        <!-- Theme Title -->
-        <h4 class="card-title">{{ theme.name }}</h4>
-
-        <!-- Theme Price (if not free) -->
-        <div *ngIf="theme.price > 0" class="text-muted mb-2 small">
-          {{ formatPrice(theme.price) }}
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="card-buttons">
-          <!-- Demo Button -->
-          <button
-            type="button"
-            class="btn-demo"
-            (click)="onDemoClick(theme)"
-            [disabled]="!theme.demo_url || theme.isLegacy">
-            <i class="far fa-eye"></i>
-            <span class="btn-text">Demo</span>
-          </button>
-
-          <!-- Select/Selected Button -->
-          <button
-            type="button"
-            class="btn-nonaktifkan"
-            [class.btn-success]="theme.isSelected"
-            [class.btn-secondary]="!theme.isSelected"
-            (click)="onToggleActivation(theme)"
-            [disabled]="isThemeLoading(theme) || theme.isLegacy">
-            <i [class]="getActivationButtonIcon(theme)"></i>
-            <span class="btn-text">{{ getActivationButtonText(theme) }}</span>
-          </button>
-        </div>
-
-        <!-- Selected Badge -->
-        <div *ngIf="theme.isSelected" class="position-absolute top-0 end-0 m-2">
-          <span class="badge bg-success">
-            <i class="fas fa-check"></i> Active
-          </span>
-        </div>
+<section class="theme-picker">
+  <div class="theme-picker__shell">
+    <header class="theme-picker__header">
+      <div>
+        <h1>Silakan pilih tema kesukaanmu</h1>
+        <p>Anda dapat mengubah tema sesuai dengan paket yang Anda pilih!</p>
       </div>
+
+      <div *ngIf="userPackageTier !== 'trial'" class="theme-picker__active-package">
+        Paket aktif: <strong>{{ getPackageLabel(userPackageTier) }}</strong>
+      </div>
+    </header>
+
+    <div *ngIf="userPackageTier !== 'trial'" class="theme-tabs" role="tablist" aria-label="Pilih paket tema">
+      <button
+        *ngFor="let tab of packageTabs"
+        type="button"
+        class="theme-tabs__button"
+        [class.theme-tabs__button--active]="activeTab === tab.tier"
+        [class.theme-tabs__button--locked]="tab.tier !== userPackageTier && isPreviewOnlyTab && activeTab === tab.tier"
+        (click)="setActiveTab(tab.tier)">
+        {{ tab.label }}
+      </button>
     </div>
-  </div>
 
-  <!-- Empty State -->
-  <div *ngIf="!isLoading && !errorMessage && themeCards.length === 0" class="text-center py-5">
-    <i class="fas fa-palette fa-3x text-muted mb-3"></i>
-    <h5>No Themes Available</h5>
-    <p class="text-muted">No themes are currently available for website invitations.</p>
-    <button class="btn btn-primary" (click)="retryLoadThemes()">
-      <i class="fas fa-refresh"></i> Refresh
-    </button>
-  </div>
+    <div *ngIf="userPackageTier === 'trial'" class="theme-picker__trial-note" role="note">
+      Paket Trial menggunakan tema default/legacy yang sudah tersedia.
+    </div>
 
+    <div *ngIf="isLoading" class="theme-state theme-state--loading">
+      <div class="theme-spinner" aria-hidden="true"></div>
+      <h2>Memuat tema...</h2>
+      <p>Kami sedang menyiapkan daftar tema untuk dashboard Anda.</p>
+    </div>
+
+    <div *ngIf="errorMessage && !isLoading" class="theme-state theme-state--error" role="alert">
+      <h2>Daftar tema belum bisa dimuat</h2>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="theme-state__button" (click)="retryLoadThemes()">Coba lagi</button>
+    </div>
+
+    <ng-container *ngIf="!isLoading && !errorMessage">
+      <div *ngIf="visibleThemeCards.length; else emptyState" class="theme-grid">
+        <article
+          *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
+          class="theme-card"
+          [class.theme-card--active]="isCurrentFocus(theme)"
+          [class.theme-card--selected]="theme.isSelected"
+          [class.theme-card--locked]="isCardLocked(theme)"
+          (click)="onThemeCardClick(theme)">
+          <div class="theme-card__media">
+            <img
+              [src]="theme.image"
+              [alt]="'Preview tema ' + theme.name"
+              loading="lazy"
+              (error)="onImageError($event, theme)" />
+
+            <span class="theme-card__badge">{{ getPackageLabel(theme.requiredPackageTier || activeTab) }}</span>
+
+            <span *ngIf="theme.isSelected" class="theme-card__ribbon">PAKET DIGUNAKAN</span>
+
+            <button
+              type="button"
+              class="theme-card__preview"
+              (click)="onPreviewClick(theme, $event)">
+              <i class="far fa-eye" aria-hidden="true"></i>
+              Preview
+            </button>
+
+            <div *ngIf="isCardLocked(theme)" class="theme-card__lock">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <div class="theme-card__body">
+            <h3>{{ theme.name }}</h3>
+            <p>{{ getCardSubtitle(theme) }}</p>
+          </div>
+        </article>
+      </div>
+
+      <ng-template #emptyState>
+        <div class="theme-state theme-state--empty">
+          <h2>Belum ada tema untuk ditampilkan</h2>
+          <p>{{ getEmptyStateMessage() }}</p>
+        </div>
+      </ng-template>
+
+      <footer class="theme-picker__footer">
+        <div class="theme-picker__selection" *ngIf="focusedTheme as selectedTheme">
+          <span class="theme-picker__selection-label">Tema dipilih</span>
+          <strong>{{ selectedTheme.name }}</strong>
+          <small>{{ focusedThemeSubtitle }}</small>
+        </div>
+
+        <button
+          type="button"
+          class="theme-picker__submit"
+          [class.theme-picker__submit--upgrade]="focusedTheme && !canSubmitFocusedTheme && !focusedTheme.isLegacy && !focusedTheme.isSelected"
+          [disabled]="isPrimaryButtonDisabled"
+          (click)="onPrimaryAction()">
+          <i class="far fa-window-restore" aria-hidden="true"></i>
+          {{ primaryButtonLabel }}
+        </button>
+      </footer>
+    </ng-container>
+  </div>
+</section>
+
+<div
+  *ngIf="showSelectConfirmationModal"
+  class="theme-modal-backdrop"
+  (click)="closeSelectConfirmationModal()">
+  <section
+    class="theme-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="select-theme-title"
+    (click)="$event.stopPropagation()">
+    <div class="theme-modal__icon">
+      <i class="far fa-save" aria-hidden="true"></i>
+    </div>
+
+    <h2 id="select-theme-title">Apakah Anda yakin ingin memilih tema ini?</h2>
+    <p>Silakan klik konfirmasi jika Anda ingin menggunakan tema tersebut.</p>
+
+    <div class="theme-modal__actions">
+      <button type="button" class="theme-modal__secondary" (click)="closeSelectConfirmationModal()">
+        Kembali
+      </button>
+      <button type="button" class="theme-modal__primary" (click)="confirmThemeSelection()">
+        Konfirmasi
+      </button>
+    </div>
+  </section>
+</div>
+
+<div
+  *ngIf="showUpgradeModal"
+  class="theme-modal-backdrop"
+  (click)="closeUpgradeModal()">
+  <section
+    class="theme-modal theme-modal--upgrade"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="upgrade-theme-title"
+    (click)="$event.stopPropagation()">
+    <div class="theme-modal__icon theme-modal__icon--upgrade">
+      <i class="fas fa-crown" aria-hidden="true"></i>
+    </div>
+
+    <h2 id="upgrade-theme-title">Upgrade paket diperlukan</h2>
+    <p>
+      Tema ini tersedia untuk paket {{ upgradePackageLabel }}.
+      Silakan upgrade paket Anda untuk menggunakan tema ini.
+    </p>
+
+    <div class="theme-modal__actions">
+      <button type="button" class="theme-modal__secondary" (click)="closeUpgradeModal()">
+        Kembali
+      </button>
+      <button type="button" class="theme-modal__primary" (click)="goToUpgradePackage()">
+        Upgrade Paket
+      </button>
+    </div>
+  </section>
 </div>

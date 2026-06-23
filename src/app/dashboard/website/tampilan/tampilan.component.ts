@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import {
   DashboardService,
@@ -15,12 +16,15 @@ import { ToastService } from '../../../toast.service';
 import {
   buildThemeAccessMap,
   FALLBACK_THEME_ACCESS_MAP,
+  getLowestPackageTierForCategory,
   isCategoryAccessibleForTier,
   resolvePackageTier,
   resolveThemeCategory,
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../../theme-package-access.util';
+
+type PaidPackageTier = Exclude<ThemePackageTier, 'trial'>;
 
 interface ThemeCard {
   id: number;
@@ -36,7 +40,19 @@ interface ThemeCard {
   category: ThemeCategoryName | 'Legacy';
   isLegacy?: boolean;
   imageFallback?: string;
+  requiredPackageTier: PaidPackageTier | null;
 }
+
+interface PackageTab {
+  tier: PaidPackageTier;
+  label: string;
+}
+
+const PACKAGE_TABS: PackageTab[] = [
+  { tier: 'ruby', label: 'Ruby' },
+  { tier: 'sapphire', label: 'Sapphire' },
+  { tier: 'diamond', label: 'Diamond' },
+];
 
 @Component({
   selector: 'wc-tampilan',
@@ -44,26 +60,35 @@ interface ThemeCard {
   styleUrls: ['./tampilan.component.scss']
 })
 export class TampilanComponent implements OnInit, OnDestroy {
+  readonly packageTabs = PACKAGE_TABS;
+
   themeCards: ThemeCard[] = [];
   isLoading = false;
   errorMessage = '';
   selectedThemeId: number | null = null;
   userPackageTier: ThemePackageTier = 'trial';
+  activeTab: PaidPackageTier = 'ruby';
+  focusedThemeId: number | null = null;
+  showSelectConfirmationModal = false;
+  showUpgradeModal = false;
+  processingPrimaryAction = false;
 
   private subscriptions = new Subscription();
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+  private pendingThemeForConfirmation: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
-    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: true, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
-    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
-    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
-    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
-    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true },
+    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: true, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isSelected: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
   ];
 
   constructor(
     private dashboardService: DashboardService,
     private themeService: ThemeService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -73,6 +98,120 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    if (this.showSelectConfirmationModal) {
+      this.closeSelectConfirmationModal();
+    }
+
+    if (this.showUpgradeModal) {
+      this.closeUpgradeModal();
+    }
+  }
+
+  get visibleThemeCards(): ThemeCard[] {
+    if (this.userPackageTier === 'trial') {
+      return this.themeCards;
+    }
+
+    return this.themeCards.filter(
+      (theme) =>
+        !theme.isLegacy &&
+        theme.category !== 'Legacy' &&
+        isCategoryAccessibleForTier(this.activeTab, theme.category, this.themeAccessMap)
+    );
+  }
+
+  get focusedTheme(): ThemeCard | null {
+    if (this.focusedThemeId === null) {
+      return this.visibleThemeCards[0] ?? null;
+    }
+
+    return this.visibleThemeCards.find((theme) => theme.id === this.focusedThemeId) ?? this.visibleThemeCards[0] ?? null;
+  }
+
+  get isPreviewOnlyTab(): boolean {
+    if (this.userPackageTier === 'trial') {
+      return true;
+    }
+
+    const order: ThemePackageTier[] = ['trial', 'ruby', 'sapphire', 'diamond'];
+    return order.indexOf(this.activeTab) > order.indexOf(this.userPackageTier);
+  }
+
+  get canSubmitFocusedTheme(): boolean {
+    const theme = this.focusedTheme;
+    return !!theme && !theme.isSelected && this.canUseTheme(theme);
+  }
+
+  get isPrimaryButtonDisabled(): boolean {
+    const theme = this.focusedTheme;
+    if (!theme) {
+      return true;
+    }
+
+    if (theme.isLoading || this.processingPrimaryAction) {
+      return true;
+    }
+
+    if (theme.isSelected) {
+      return true;
+    }
+
+    if (theme.isLegacy) {
+      return true;
+    }
+
+    return false;
+  }
+
+  get primaryButtonLabel(): string {
+    const theme = this.focusedTheme;
+
+    if (this.processingPrimaryAction) {
+      return 'Memproses...';
+    }
+
+    if (!theme) {
+      return 'Pilih tema';
+    }
+
+    if (theme.isSelected) {
+      return 'Paket digunakan';
+    }
+
+    if (theme.isLegacy) {
+      return 'Tema default trial';
+    }
+
+    return this.canUseTheme(theme) ? 'Pilih tema' : 'Upgrade Paket';
+  }
+
+  get focusedThemeSubtitle(): string {
+    const theme = this.focusedTheme;
+
+    if (!theme) {
+      return '';
+    }
+
+    if (theme.isLegacy) {
+      return 'Tema default trial';
+    }
+
+    return `${this.getPackageLabel(theme.requiredPackageTier || this.activeTab)} template`;
+  }
+
+  get upgradePackageLabel(): string {
+    const theme = this.focusedTheme;
+    if (!theme || theme.isLegacy || theme.category === 'Legacy') {
+      return 'Ruby';
+    }
+
+    return this.getPackageLabel(
+      theme.requiredPackageTier || getLowestPackageTierForCategory(theme.category, this.themeAccessMap)
+    );
   }
 
   /**
@@ -93,25 +232,28 @@ export class TampilanComponent implements OnInit, OnDestroy {
         themes: PublicCategoriesResponse;
       }) => {
         this.userPackageTier = resolvePackageTier(profile?.data?.package_info) || 'trial';
+        this.activeTab = this.userPackageTier === 'trial' ? 'ruby' : this.userPackageTier;
         this.themeAccessMap = buildThemeAccessMap(Array.isArray(packages?.data) ? packages.data : []);
 
         if (this.userPackageTier === 'trial') {
           this.themeCards = this.legacyTrialCards.map((card) => ({ ...card }));
+          this.syncFocusedTheme();
           this.isLoading = false;
           return;
         }
 
-        if (themes.status && themes.data?.categories) {
+        if (themes.status && Array.isArray(themes.data?.categories)) {
           this.processThemeData(themes.data.categories);
-          console.log('Themes loaded successfully:', themes.data.total_themes);
         } else {
-          this.handleError('Invalid response format from server');
+          this.handleError('Format data tema tidak valid.');
         }
+
+        this.syncFocusedTheme();
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading accessible themes:', error);
-        this.handleError('Failed to load themes. Please try again later.');
+        this.handleError('Gagal memuat tema. Silakan coba lagi.');
         this.isLoading = false;
       }
     });
@@ -128,11 +270,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
         if (response.status && response.data?.theme) {
           this.selectedThemeId = response.data.theme.id;
           this.updateSelectedStatus();
-          console.log('Selected theme loaded:', response.data.theme.name);
+          this.syncFocusedTheme();
         }
       },
       error: (error) => {
-        // No selected theme or authentication error - this is acceptable
         console.log('No selected theme or authentication required:', error);
       }
     });
@@ -144,45 +285,46 @@ export class TampilanComponent implements OnInit, OnDestroy {
    * Process theme data from API into display format
    */
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
-    this.themeCards = [];
+    const nextCards: ThemeCard[] = [];
 
-    categories.forEach(category => {
+    categories.forEach((category) => {
       const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!resolvedCategory || !isCategoryAccessibleForTier(this.userPackageTier, resolvedCategory, this.themeAccessMap)) {
+      if (!resolvedCategory) {
         return;
       }
 
-      if (category.jenis_themas && category.jenis_themas.length > 0) {
-        category.jenis_themas.forEach(theme => {
-          this.themeCards.push({
-            id: theme.id,
-            label: resolvedCategory,
-            title: theme.name,
-            name: theme.name,
-            image: this.getThemeImage(theme),
-            imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
-            demo_url: theme.demo_url || '',
-            price: theme.price || 0,
-            isSelected: false,
-            isLoading: false,
-            category_id: category.id,
-            category: resolvedCategory
-          });
-        });
+      if (!Array.isArray(category.jenis_themas) || category.jenis_themas.length === 0) {
+        return;
       }
+
+      category.jenis_themas.forEach((theme) => {
+        nextCards.push({
+          id: theme.id,
+          label: resolvedCategory,
+          title: theme.name,
+          name: theme.name,
+          image: this.getThemeImage(theme, resolvedCategory),
+          imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
+          demo_url: theme.demo_url || '',
+          price: theme.price || 0,
+          isSelected: false,
+          isLoading: false,
+          category_id: category.id,
+          category: resolvedCategory,
+          requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap)
+        });
+      });
     });
 
-    // Update selected status if we have a selected theme
-    if (this.selectedThemeId) {
-      this.updateSelectedStatus();
-    }
+    this.themeCards = nextCards;
+    this.updateSelectedStatus();
   }
 
   /**
    * Update selected status for themes
    */
   private updateSelectedStatus(): void {
-    this.themeCards.forEach(card => {
+    this.themeCards.forEach((card) => {
       card.isSelected = card.id === this.selectedThemeId;
     });
   }
@@ -190,10 +332,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /**
    * Get theme image from API response
    */
-  private getThemeImage(theme: PublicTheme): string {
+  private getThemeImage(theme: PublicTheme, category: ThemeCategoryName): string {
     const baseUrl = 'http://127.0.0.1:8000/storage/';
 
-    // Priority order: preview_image -> thumbnail_image -> image -> preview -> fallback
     if (theme.preview_image) {
       return theme.preview_image.startsWith('http') ? theme.preview_image : `${baseUrl}${theme.preview_image}`;
     }
@@ -210,28 +351,167 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return theme.preview;
     }
 
-    return this.getThemeFallbackImage(theme.name, resolveThemeCategory(theme.name) || 'Minimalis');
+    return this.getThemeFallbackImage(theme.name, category);
   }
 
-  /**
-   * Handle theme activation/deactivation
-   */
-  onToggleActivation(theme: ThemeCard): void {
-    if (theme.isLoading) return;
+  setActiveTab(tab: PaidPackageTier): void {
+    this.activeTab = tab;
+    this.syncFocusedTheme();
+  }
+
+  onThemeCardClick(theme: ThemeCard): void {
+    this.focusedThemeId = theme.id;
+  }
+
+  onPreviewClick(theme: ThemeCard, event: Event): void {
+    event.stopPropagation();
+    this.focusedThemeId = theme.id;
+
+    if (!theme.demo_url) {
+      return;
+    }
+
+    try {
+      window.open(theme.demo_url, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Error opening demo:', error);
+      this.toastService.showToast('Gagal membuka preview tema.', 'error');
+    }
+  }
+
+  onPrimaryAction(): void {
+    const theme = this.focusedTheme;
+    if (!theme || theme.isLoading || this.processingPrimaryAction) {
+      return;
+    }
 
     if (theme.isLegacy) {
       this.toastService.showToast('Paket Trial menggunakan tema default/legacy.', 'info');
       return;
     }
 
-    theme.isLoading = true;
-
     if (theme.isSelected) {
-      // Cannot deactivate selected theme - show message
-      this.toastService.showToast('This theme is already selected', 'info');
-      theme.isLoading = false;
       return;
     }
+
+    if (!this.canUseTheme(theme)) {
+      this.showUpgradeModal = true;
+      return;
+    }
+
+    this.pendingThemeForConfirmation = theme;
+    this.showSelectConfirmationModal = true;
+  }
+
+  confirmThemeSelection(): void {
+    if (!this.pendingThemeForConfirmation) {
+      this.closeSelectConfirmationModal();
+      return;
+    }
+
+    this.selectTheme(this.pendingThemeForConfirmation);
+  }
+
+  closeSelectConfirmationModal(): void {
+    this.showSelectConfirmationModal = false;
+    this.pendingThemeForConfirmation = null;
+  }
+
+  closeUpgradeModal(): void {
+    this.showUpgradeModal = false;
+  }
+
+  goToUpgradePackage(): void {
+    this.closeUpgradeModal();
+    this.router.navigate(['/dashboard/bill']);
+  }
+
+  retryLoadThemes(): void {
+    this.errorMessage = '';
+    this.loadAccessibleThemes();
+  }
+
+  isCardLocked(theme: ThemeCard): boolean {
+    if (theme.isLegacy) {
+      return true;
+    }
+
+    return !this.canUseTheme(theme);
+  }
+
+  isCurrentFocus(theme: ThemeCard): boolean {
+    return this.focusedTheme?.id === theme.id;
+  }
+
+  isThemeLoading(theme: ThemeCard): boolean {
+    return theme.isLoading || false;
+  }
+
+  getPackageLabel(tier: PaidPackageTier | null | undefined): string {
+    switch (tier) {
+      case 'ruby':
+        return 'Ruby';
+      case 'sapphire':
+        return 'Sapphire';
+      case 'diamond':
+        return 'Diamond';
+      default:
+        return 'Trial';
+    }
+  }
+
+  getCardSubtitle(theme: ThemeCard): string {
+    if (theme.isLegacy) {
+      return 'Tema default trial';
+    }
+
+    return `${this.getPackageLabel(theme.requiredPackageTier)} template`;
+  }
+
+  getEmptyStateMessage(): string {
+    if (this.userPackageTier === 'trial') {
+      return 'Tema default trial belum tersedia.';
+    }
+
+    return `Belum ada tema untuk paket ${this.getPackageLabel(this.activeTab)}.`;
+  }
+
+  onImageError(event: Event, theme: ThemeCard): void {
+    const target = event.target as HTMLImageElement | null;
+    if (target) {
+      target.src = theme.imageFallback || 'assets/modern.svg';
+    }
+  }
+
+  trackByThemeId(index: number, theme: ThemeCard): number {
+    return theme.id;
+  }
+
+  private canUseTheme(theme: ThemeCard): boolean {
+    if (theme.isLegacy || theme.category === 'Legacy') {
+      return false;
+    }
+
+    if (this.userPackageTier === 'trial' || this.isPreviewOnlyTab) {
+      return false;
+    }
+
+    return isCategoryAccessibleForTier(this.userPackageTier, theme.category, this.themeAccessMap);
+  }
+
+  private selectTheme(theme: ThemeCard): void {
+    if (theme.isLoading || this.processingPrimaryAction) {
+      return;
+    }
+
+    if (theme.isSelected) {
+      this.toastService.showToast('Tema ini sudah sedang digunakan.', 'info');
+      this.closeSelectConfirmationModal();
+      return;
+    }
+
+    this.processingPrimaryAction = true;
+    theme.isLoading = true;
 
     const request: ThemeSelectionRequest = {
       theme_id: theme.id
@@ -240,131 +520,62 @@ export class TampilanComponent implements OnInit, OnDestroy {
     const selectionSubscription = this.themeService.selectTheme(request).subscribe({
       next: (response) => {
         if (response.status) {
-          // Update selected theme
           this.selectedThemeId = theme.id;
           this.updateSelectedStatus();
-
           this.toastService.showToast(`Theme "${theme.name}" selected successfully!`, 'success');
-          console.log('Theme selected:', response.data.theme.name);
         } else {
           this.toastService.showToast('Failed to select theme', 'error');
         }
+
         theme.isLoading = false;
+        this.processingPrimaryAction = false;
+        this.closeSelectConfirmationModal();
       },
       error: (error) => {
         console.error('Error selecting theme:', error);
-        let errorMessage = 'Failed to select theme';
+        let message = 'Failed to select theme';
 
         if (error.status === 401) {
-          errorMessage = 'Please log in to select a theme';
+          message = 'Please log in to select a theme';
         } else if (error.status === 422) {
-          errorMessage = 'Invalid theme selection';
+          message = 'Invalid theme selection';
         }
 
-        this.toastService.showToast(errorMessage, 'error');
+        this.toastService.showToast(message, 'error');
         theme.isLoading = false;
+        this.processingPrimaryAction = false;
+        this.closeSelectConfirmationModal();
       }
     });
 
     this.subscriptions.add(selectionSubscription);
   }
 
-  /**
-   * Handle demo button click
-   */
-  onDemoClick(theme: ThemeCard): void {
-    if (!theme.demo_url) {
-      this.toastService.showToast('Demo not available for this theme', 'warning');
-      return;
-    }
-
-    try {
-      // Open demo in new window
-      window.open(theme.demo_url, '_blank', 'noopener,noreferrer');
-      console.log('Opening demo for theme:', theme.name);
-    } catch (error) {
-      console.error('Error opening demo:', error);
-      this.toastService.showToast('Failed to open demo', 'error');
-    }
-  }
-
-  /**
-   * Handle errors
-   */
   private handleError(message: string): void {
     this.errorMessage = message;
     this.toastService.showToast(message, 'error');
   }
 
-  /**
-   * Retry loading themes
-   */
-  retryLoadThemes(): void {
-    this.errorMessage = '';
-    this.loadAccessibleThemes();
-  }
+  private syncFocusedTheme(): void {
+    const visibleThemes = this.visibleThemeCards;
+    if (!visibleThemes.length) {
+      this.focusedThemeId = null;
+      return;
+    }
 
-  /**
-   * Get background class for theme card
-   */
-  getBackgroundClass(label: string): string {
-    const labelLower = label.toLowerCase();
-    if (labelLower.includes('scroll')) return 'bg-scroll';
-    if (labelLower.includes('slide')) return 'bg-slide';
-    if (labelLower.includes('mobile')) return 'bg-mobile';
-    return 'bg-scroll'; // default
-  }
+    const selectedVisibleTheme = visibleThemes.find((theme) => theme.id === this.selectedThemeId);
+    if (selectedVisibleTheme) {
+      this.focusedThemeId = selectedVisibleTheme.id;
+      return;
+    }
 
-  /**
-   * Get activation button text
-   */
-  getActivationButtonText(theme: ThemeCard): string {
-    if (theme.isLoading) return 'Loading...';
-    if (theme.isLegacy) return 'Default Trial';
-    return theme.isSelected ? 'Selected' : 'Select';
-  }
+    const currentVisibleTheme = visibleThemes.find((theme) => theme.id === this.focusedThemeId);
+    if (currentVisibleTheme) {
+      this.focusedThemeId = currentVisibleTheme.id;
+      return;
+    }
 
-  /**
-   * Get activation button icon
-   */
-  getActivationButtonIcon(theme: ThemeCard): string {
-    if (theme.isLoading) return 'fas fa-spinner fa-spin';
-    if (theme.isLegacy) return 'fas fa-lock';
-    return theme.isSelected ? 'fas fa-check' : 'fas fa-file-alt';
-  }
-
-  /**
-   * Check if theme is loading
-   */
-  isThemeLoading(theme: ThemeCard): boolean {
-    return theme.isLoading || false;
-  }
-
-  /**
-   * Handle image loading errors
-   */
-  onImageError(event: any, theme: ThemeCard): void {
-    console.warn(`Failed to load image for theme ${theme.name}:`, theme.image);
-    event.target.src = theme.imageFallback || 'assets/modern.svg';
-  }
-
-  /**
-   * Track function for ngFor performance
-   */
-  trackByThemeId(index: number, theme: ThemeCard): number {
-    return theme.id;
-  }
-
-  /**
-   * Format price for display
-   */
-  formatPrice(price: number): string {
-    if (price === 0) return 'Free';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(price);
+    this.focusedThemeId = visibleThemes[0].id;
   }
 
   private getThemeFallbackImage(name: string, category: ThemeCategoryName): string {
