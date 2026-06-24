@@ -168,10 +168,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /**
    * True when the pending theme (stored at modal-open time) is still
    * eligible for confirmation.  Used by the modal Konfirmasi button *ngIf.
+   *
+   * Uses explicit === false checks so that a missing/undefined is_active field
+   * from the public API never silently hides the button.
    */
   get canConfirmPendingTheme(): boolean {
     const theme = this.pendingThemeForConfirmation;
-    return !!theme && this.canUseTheme(theme);
+    if (!theme || !theme.id || theme.id <= 0) return false;
+    if (theme.is_active === false) return false;
+    if (theme.category_is_active === false) return false;
+    return this.canUseTheme(theme);
   }
 
   get isPrimaryButtonDisabled(): boolean {
@@ -214,11 +220,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Tema default trial';
     }
 
-    if (!theme.is_active) {
+    if (theme.is_active === false) {
       return 'Tema belum aktif';
     }
 
-    if (!theme.category_is_active) {
+    if (theme.category_is_active === false) {
       return 'Kategori belum aktif';
     }
 
@@ -487,21 +493,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
   onPrimaryAction(): void {
     const theme = this.selectedTheme;
 
-    // Diagnostic log — remove after confirming fix
-    console.log('[TampilanDebug] onPrimaryAction', {
-      selectedTheme: theme,
-      userPackageTier: this.userPackageTier,
-      activeTab: this.activeTab,
-      isPreviewOnlyTab: this.isPreviewOnlyTab,
-      category: theme?.category,
-      is_active: theme?.is_active,
-      category_is_active: theme?.category_is_active,
-      dynamicAccess: this.themeAccessMap,
-      fallbackAccess: FALLBACK_THEME_ACCESS_MAP,
-      canUse: theme ? this.canUseTheme(theme) : null,
-      debugReason: theme ? this.getThemeDebugReason(theme) : 'no theme selected',
-    });
-
     if (!theme || theme.isLoading || this.processingPrimaryAction) {
       return;
     }
@@ -515,23 +506,35 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Check theme/category active status before package check
-    if (!theme.is_active) {
+    // Use === false so that undefined/null/missing is_active never blocks a valid theme
+    if (theme.is_active === false) {
       this.toastService.showToast('Tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
     }
-    if (!theme.category_is_active) {
+    if (theme.category_is_active === false) {
       this.toastService.showToast('Kategori tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
     }
 
     if (!this.canUseTheme(theme)) {
       this.showUpgradeModal = true;
+      this.showSelectConfirmationModal = false;
       return;
     }
 
     this.pendingThemeForConfirmation = theme;
     this.showSelectConfirmationModal = true;
+    this.showUpgradeModal = false;
+
+    console.log('[ThemeConfirmDebug]', {
+      pendingThemeForConfirmation: this.pendingThemeForConfirmation,
+      userPackageTier: this.userPackageTier,
+      category: this.pendingThemeForConfirmation?.category,
+      isActive: this.pendingThemeForConfirmation?.is_active,
+      categoryIsActive: this.pendingThemeForConfirmation?.category_is_active,
+      canUse: this.pendingThemeForConfirmation ? this.canUseTheme(this.pendingThemeForConfirmation) : false,
+      canConfirm: this.canConfirmPendingTheme,
+    });
   }
 
   confirmThemeSelection(): void {
@@ -566,7 +569,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (theme.isLegacy) {
       return true;
     }
-
+    // Explicitly inactive themes are locked regardless of package tier
+    if (theme.is_active === false || theme.category_is_active === false) {
+      return true;
+    }
     return !this.canUseTheme(theme);
   }
 
@@ -614,15 +620,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /** Debug: returns human-readable reason why a theme cannot be confirmed. Empty string = no issue. */
   getThemeDebugReason(theme: ThemeCard): string {
     if (!theme.id || theme.id <= 0) return 'theme id missing';
-    if (!theme.is_active) return 'theme inactive';
-    if (!theme.category_is_active) return 'category inactive';
-    const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim() as ThemePackageTier;
-    if (userTier === 'trial' || this.isPreviewOnlyTab) return 'package not allowed (trial/preview-tab)';
-    const tier = userTier as PaidPackageTier;
-    const accessible =
-      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
-      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP);
-    if (!accessible) return `package not allowed (tier=${tier}, category=${theme.category})`;
+    if (theme.is_active === false) return 'theme inactive';
+    if (theme.category_is_active === false) return 'category inactive';
+    if (!this.canUseTheme(theme)) {
+      const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim();
+      return `package not allowed (tier=${userTier}, category=${theme.category})`;
+    }
     return '';
   }
 
@@ -637,13 +640,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return theme.id;
   }
 
+  /**
+   * Returns true when the user's current package tier allows access to this theme's category.
+   * Deliberately does NOT check is_active — that is handled separately in onPrimaryAction
+   * and canConfirmPendingTheme so that a falsy/0/undefined value from the public API never
+   * silently blocks a legitimate theme selection.
+   */
   canUseTheme(theme: ThemeCard): boolean {
     if (theme.isLegacy || theme.category === 'Legacy') {
-      return false;
-    }
-
-    // Theme or its category must be active (admin-side activation)
-    if (!theme.is_active || !theme.category_is_active) {
       return false;
     }
 
@@ -652,7 +656,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // Normalize tier to lowercase to avoid 'Ruby' vs 'ruby' mismatch
     const tier = userTier as PaidPackageTier;
     return (
       isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
