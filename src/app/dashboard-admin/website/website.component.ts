@@ -12,10 +12,19 @@ interface ThemePreset {
   fallbackImage: string;
 }
 
+interface AdminThemeCategory {
+  id: number;
+  name: string;
+  type?: string;
+  is_active?: boolean;
+}
+
 interface AdminTheme {
   id: number;
   slug: string;
   nama_kategori?: string;
+  category_id?: number;
+  category?: AdminThemeCategory;
   [key: string]: any;
 }
 
@@ -447,11 +456,19 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
-    const categoryMap = this.buildCategoryLookup(categories);
+    const categoryById = this.buildCategoryById(categories);
     const linkedThemes = this.themePresets.map((preset, index) => {
       const presetSlug = this.normalizeSlug(preset.key);
       const backendSlug = this.normalizeSlug(this.themeSlugAliases[presetSlug] || presetSlug);
       const adminThemeData = this.adminThemesMap.get(backendSlug) ?? null;
+      const categoryData = this.resolveCategoryData(adminThemeData, categoryById);
+
+      console.log(`[buildThemeCards] preset=${preset.key} backendSlug=${backendSlug}`, {
+        adminThemeId: adminThemeData?.id,
+        adminCategoryId: adminThemeData?.category_id,
+        resolvedCategoryId: categoryData?.id,
+        resolvedCategorySlug: categoryData?.slug,
+      });
 
       return {
         key: preset.key,
@@ -459,7 +476,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         category: preset.category,
         fallbackImage: preset.fallbackImage,
         displayOrder: index + 1,
-        categoryData: this.resolveCategoryForPreset(preset.key, categoryMap),
+        categoryData,
         adminThemeData
       };
     });
@@ -510,31 +527,56 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     }
   }
 
-  private buildCategoryLookup(categories: WebsiteCategory[]): Map<string, WebsiteCategory> {
-    const lookup = new Map<string, WebsiteCategory>();
-
+  private buildCategoryById(categories: WebsiteCategory[]): Map<number, WebsiteCategory> {
+    const map = new Map<number, WebsiteCategory>();
     categories.forEach((category) => {
-      const slug = this.normalizeKey(category?.slug || '');
-      const nameKey = this.normalizeKey(category?.nama_kategori || '');
-
-      if (slug) {
-        lookup.set(slug, category);
-      }
-
-      if (nameKey && !lookup.has(nameKey)) {
-        lookup.set(nameKey, category);
+      if (category?.id) {
+        map.set(category.id, category);
       }
     });
-
-    return lookup;
+    return map;
   }
 
-  private resolveCategoryForPreset(
-    presetKey: string,
-    categoryMap: Map<string, WebsiteCategory>
+  /**
+   * Resolve categoryData for a theme card.
+   *
+   * Priority:
+   * 1. Match by adminThemeData.category_id against /admin/website-categories (real record).
+   * 2. Synthesize a WebsiteCategory-like object from the inline adminThemeData.category
+   *    field that /api/admin/themes embeds, so UI is never empty when the category record
+   *    exists in the backend but is simply missing from the local categories list.
+   */
+  private resolveCategoryData(
+    adminThemeData: AdminTheme | null,
+    categoryById: Map<number, WebsiteCategory>
   ): WebsiteCategory | null {
-    const presetSlug = this.normalizeKey(presetKey);
-    return categoryMap.get(presetSlug) ?? null;
+    if (!adminThemeData) {
+      return null;
+    }
+
+    const categoryId = adminThemeData.category_id ?? adminThemeData.category?.id;
+
+    if (categoryId) {
+      const found = categoryById.get(categoryId);
+      if (found) {
+        return found;
+      }
+    }
+
+    const inline = adminThemeData.category;
+    if (inline?.id) {
+      return {
+        id: inline.id,
+        nama_kategori: inline.name || '',
+        slug: this.normalizeKey(inline.name || ''),
+        image: '',
+        is_active: inline.is_active ?? true,
+        created_at: '',
+        updated_at: '',
+      } as WebsiteCategory;
+    }
+
+    return null;
   }
 
   private getThemePackageTiers(theme: AdminThemeCard): PackageTier[] {
