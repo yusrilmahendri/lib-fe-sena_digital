@@ -73,14 +73,8 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     'champagne-rose': ['Sapphire', 'Diamond'],
     'velvet-mauve': ['Diamond']
   };
-  private readonly themeSlugAliases: Record<string, string> = {
-    'soft-ivory': 'champagne-rose',
-    'lavender-bloom': 'lavender-bloom',
-    'garden-whisper': 'garden-whisper',
-    'modern-vows': 'modern-vows',
-    'champagne-rose': 'champagne-rose',
-    'velvet-mauve': 'velvet-mauve'
-  };
+  // Slug aliases removed — preset keys match backend slugs exactly.
+  // Each preset.key (e.g. 'soft-ivory') is looked up directly in adminThemesMap.
   private readonly themePresets: ThemePreset[] = [
     {
       key: 'soft-ivory',
@@ -257,8 +251,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.themeService.toggleThemeActivation(adminId, request).subscribe({
       next: (_result) => {
         this.notyf.success(`Status ${theme.name} berhasil diperbarui menjadi ${newActive ? 'Aktif' : 'Nonaktif'}`);
-        // Reload admin themes so local state + labels update immediately
+        // Refresh both admin themes (updates adminThemesMap + rebuilds cards)
+        // and website categories (updates allData + triggers subscription rebuild).
         this.loadAdminThemes();
+        this.getData();
       },
       error: (error) => {
         console.error('Error toggling theme status:', error);
@@ -359,8 +355,9 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return 'Nonaktif';
     }
 
-    // adminThemeData.is_active is true (or undefined/assumed active)
-    if (!theme.categoryData.is_active) {
+    // Only show "Kategori Nonaktif" when is_active is explicitly false.
+    // undefined/null = unknown → treat as active to avoid false negatives.
+    if (theme.categoryData.is_active === false) {
       return 'Kategori Nonaktif';
     }
 
@@ -470,12 +467,12 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
     const categoryById = this.buildCategoryById(categories);
     const linkedThemes = this.themePresets.map((preset, index) => {
+      // Match directly by slug — preset.key must equal adminTheme.slug exactly.
       const presetSlug = this.normalizeSlug(preset.key);
-      const backendSlug = this.normalizeSlug(this.themeSlugAliases[presetSlug] || presetSlug);
-      const adminThemeData = this.adminThemesMap.get(backendSlug) ?? null;
+      const adminThemeData = this.adminThemesMap.get(presetSlug) ?? null;
       const categoryData = this.resolveCategoryData(adminThemeData, categoryById);
 
-      console.log(`[buildThemeCards] preset=${preset.key} backendSlug=${backendSlug}`, {
+      console.log(`[buildThemeCards] preset=${preset.key} slug=${presetSlug}`, {
         adminThemeId: adminThemeData?.id,
         adminCategoryId: adminThemeData?.category_id,
         resolvedCategoryId: categoryData?.id,

@@ -426,8 +426,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
    * Resolve the preview URL for a theme card.
    *
    * Priority:
-   *   1. url_thema  — dedicated preview/demo page URL stored on the theme record
-   *   2. demo_url   — secondary demo URL (may be the root domain; validated below)
+   *   1. demo_url   — primary demo URL (may be the root domain; validated below)
+   *   2. url_thema  — dedicated preview URL stored on the theme record
    *   3. slug       — derive path as /themes/{slug} relative to the frontend origin
    *
    * A URL that is exactly the root origin (e.g. "https://sena-digital.com") without
@@ -435,8 +435,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   private resolvePreviewUrl(theme: ThemeCard): string | null {
     const candidates = [
-      theme.url_thema?.trim(),
       theme.demo_url?.trim(),
+      theme.url_thema?.trim(),
     ];
 
     for (const raw of candidates) {
