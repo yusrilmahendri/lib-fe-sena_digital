@@ -127,13 +127,16 @@
     <p>Silakan klik konfirmasi jika Anda ingin menggunakan tema tersebut.</p>
 
     <div class="theme-modal__actions">
-      <button type="button" class="theme-modal__secondary" (click)="closeSelectConfirmationModal()">
+      <button
+        type="button"
+        class="theme-modal__secondary btn-back"
+        (click)="closeSelectConfirmationModal()">
         Kembali
       </button>
       <button
-        *ngIf="canConfirmPendingTheme"
         type="button"
-        class="theme-modal__primary"
+        class="theme-modal__primary btn-confirm-theme"
+        [disabled]="!pendingThemeForConfirmation && !selectedTheme"
         (click)="confirmThemeSelection()">
         Konfirmasi
       </button>

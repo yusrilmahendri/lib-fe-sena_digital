@@ -538,12 +538,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   confirmThemeSelection(): void {
-    if (!this.pendingThemeForConfirmation) {
+    const theme = this.pendingThemeForConfirmation || this.selectedTheme;
+
+    console.log('[ConfirmThemeClick]', theme);
+
+    if (!theme) {
+      this.toastService.showToast('Tidak ada tema yang dipilih.', 'error');
       this.closeSelectConfirmationModal();
       return;
     }
 
-    this.selectTheme(this.pendingThemeForConfirmation);
+    this.selectTheme(theme);
   }
 
   closeSelectConfirmationModal(): void {
