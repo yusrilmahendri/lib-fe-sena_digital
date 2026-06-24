@@ -121,7 +121,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
       (theme) =>
         !theme.isLegacy &&
         theme.category !== 'Legacy' &&
-        isCategoryAccessibleForTier(this.activeTab, theme.category, this.themeAccessMap)
+        this.isThemeCategoryVisible(this.activeTab, theme.category)
+    );
+  }
+
+  private isThemeCategoryVisible(tier: PaidPackageTier, category: ThemeCategoryName | 'Legacy'): boolean {
+    if (category === 'Legacy') return false;
+    return (
+      isCategoryAccessibleForTier(tier, category as ThemeCategoryName, this.themeAccessMap) ||
+      isCategoryAccessibleForTier(tier, category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP)
     );
   }
 
@@ -505,7 +513,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    return isCategoryAccessibleForTier(this.userPackageTier, theme.category, this.themeAccessMap);
+    // Check the dynamic map first; fall back to the hardcoded fallback map so that
+    // an incomplete API response never blocks a user from selecting a theme they
+    // should legitimately have access to.
+    const tier = this.userPackageTier as PaidPackageTier;
+    return (
+      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
+      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP)
+    );
   }
 
   private selectTheme(theme: ThemeCard): void {

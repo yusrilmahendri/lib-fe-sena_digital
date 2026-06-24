@@ -105,7 +105,12 @@ export function buildThemeAccessMap(
     }
 
     if (mapped.length) {
-      result[tier] = sortThemeCategories(mapped);
+      // Merge API categories with the fallback so that a partial accessible_categories
+      // list from the API never removes categories that should be accessible by default.
+      const merged = Array.from(
+        new Set([...(FALLBACK_THEME_ACCESS_MAP[tier] || []), ...mapped])
+      );
+      result[tier] = sortThemeCategories(merged as ThemeCategoryName[]);
     }
   });
 
