@@ -150,17 +150,28 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get isPreviewOnlyTab(): boolean {
-    if (this.userPackageTier === 'trial') {
+    const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim() as ThemePackageTier;
+    if (userTier === 'trial') {
       return true;
     }
 
+    const activeTabNorm = ((this.activeTab as string) || '').toLowerCase().trim() as PaidPackageTier;
     const order: ThemePackageTier[] = ['trial', 'ruby', 'sapphire', 'diamond'];
-    return order.indexOf(this.activeTab) > order.indexOf(this.userPackageTier);
+    return order.indexOf(activeTabNorm) > order.indexOf(userTier);
   }
 
   get canSubmitFocusedTheme(): boolean {
     const theme = this.selectedTheme;
     return !!theme && !this.isCurrentTheme(theme) && this.canUseTheme(theme);
+  }
+
+  /**
+   * True when the pending theme (stored at modal-open time) is still
+   * eligible for confirmation.  Used by the modal Konfirmasi button *ngIf.
+   */
+  get canConfirmPendingTheme(): boolean {
+    const theme = this.pendingThemeForConfirmation;
+    return !!theme && this.canUseTheme(theme);
   }
 
   get isPrimaryButtonDisabled(): boolean {
@@ -339,8 +350,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
           category_id: category.id,
           category: resolvedCategory,
           requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
-          is_active: theme.is_active !== false,
-          category_is_active: category.is_active !== false
+          // Default to true when the field is absent (undefined/null); convert integer 0/1 to boolean
+          is_active: theme.is_active == null ? true : Boolean(theme.is_active),
+          category_is_active: category.is_active == null ? true : Boolean(category.is_active)
         });
       });
     });
@@ -474,6 +486,22 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   onPrimaryAction(): void {
     const theme = this.selectedTheme;
+
+    // Diagnostic log — remove after confirming fix
+    console.log('[TampilanDebug] onPrimaryAction', {
+      selectedTheme: theme,
+      userPackageTier: this.userPackageTier,
+      activeTab: this.activeTab,
+      isPreviewOnlyTab: this.isPreviewOnlyTab,
+      category: theme?.category,
+      is_active: theme?.is_active,
+      category_is_active: theme?.category_is_active,
+      dynamicAccess: this.themeAccessMap,
+      fallbackAccess: FALLBACK_THEME_ACCESS_MAP,
+      canUse: theme ? this.canUseTheme(theme) : null,
+      debugReason: theme ? this.getThemeDebugReason(theme) : 'no theme selected',
+    });
+
     if (!theme || theme.isLoading || this.processingPrimaryAction) {
       return;
     }
@@ -588,12 +616,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (!theme.id || theme.id <= 0) return 'theme id missing';
     if (!theme.is_active) return 'theme inactive';
     if (!theme.category_is_active) return 'category inactive';
-    if (this.userPackageTier === 'trial' || this.isPreviewOnlyTab) return 'package not allowed';
-    const tier = this.userPackageTier as PaidPackageTier;
+    const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim() as ThemePackageTier;
+    if (userTier === 'trial' || this.isPreviewOnlyTab) return 'package not allowed (trial/preview-tab)';
+    const tier = userTier as PaidPackageTier;
     const accessible =
       isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
       isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP);
-    if (!accessible) return 'package not allowed';
+    if (!accessible) return `package not allowed (tier=${tier}, category=${theme.category})`;
     return '';
   }
 
@@ -608,7 +637,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return theme.id;
   }
 
-  private canUseTheme(theme: ThemeCard): boolean {
+  canUseTheme(theme: ThemeCard): boolean {
     if (theme.isLegacy || theme.category === 'Legacy') {
       return false;
     }
@@ -618,14 +647,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    if (this.userPackageTier === 'trial' || this.isPreviewOnlyTab) {
+    const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim() as ThemePackageTier;
+    if (userTier === 'trial' || this.isPreviewOnlyTab) {
       return false;
     }
 
-    // Check the dynamic map first; fall back to the hardcoded fallback map so that
-    // an incomplete API response never blocks a user from selecting a theme they
-    // should legitimately have access to.
-    const tier = this.userPackageTier as PaidPackageTier;
+    // Normalize tier to lowercase to avoid 'Ruby' vs 'ruby' mismatch
+    const tier = userTier as PaidPackageTier;
     return (
       isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
       isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP)

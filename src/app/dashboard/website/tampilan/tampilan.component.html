@@ -130,7 +130,11 @@
       <button type="button" class="theme-modal__secondary" (click)="closeSelectConfirmationModal()">
         Kembali
       </button>
-      <button type="button" class="theme-modal__primary" (click)="confirmThemeSelection()">
+      <button
+        *ngIf="canConfirmPendingTheme"
+        type="button"
+        class="theme-modal__primary"
+        (click)="confirmThemeSelection()">
         Konfirmasi
       </button>
     </div>

@@ -28,12 +28,29 @@ export const FALLBACK_THEME_ACCESS_MAP: Record<
 export function resolvePackageTier(
   paket: Partial<PackageAccessSource> | null | undefined
 ): ThemePackageTier | null {
-  const raw = `${paket?.package_tier || paket?.name_paket || paket?.name_paket_display || paket?.jenis_paket || ''}`.toLowerCase();
+  // Collect all candidate strings from all known field names and join them
+  // so a value like "Ruby & Sapphire & Diamond" or "Paket Ruby" still matches.
+  const candidates = [
+    (paket as any)?.name,
+    (paket as any)?.tier,
+    (paket as any)?.package_name,
+    paket?.package_tier,
+    paket?.name_paket,
+    paket?.name_paket_display,
+    paket?.jenis_paket,
+  ]
+    .filter(Boolean)
+    .map((v) => String(v).toLowerCase().trim());
 
-  if (raw.includes('trial')) return 'trial';
-  if (/ruby|silver|standar/.test(raw)) return 'ruby';
-  if (/sapphire|gold/.test(raw)) return 'sapphire';
+  const raw = candidates.join(' ');
+
+  if (!raw) return null;
+
+  // Order matters: check more specific tiers first (diamond > sapphire > ruby)
   if (/diamond|platinum/.test(raw)) return 'diamond';
+  if (/sapphire|gold/.test(raw)) return 'sapphire';
+  if (/ruby|silver|standar/.test(raw)) return 'ruby';
+  if (raw.includes('trial')) return 'trial';
   return null;
 }
 
@@ -122,7 +139,11 @@ export function isCategoryAccessibleForTier(
   category: ThemeCategoryName,
   accessMap: Record<ThemePackageTier, ThemeCategoryName[]> = FALLBACK_THEME_ACCESS_MAP
 ): boolean {
-  return (accessMap[tier] || []).includes(category);
+  const normalizedCategory = (category || '').toLowerCase().trim();
+  const normalizedTier = (tier || '').toLowerCase().trim() as ThemePackageTier;
+  return (accessMap[normalizedTier] || []).some(
+    (c) => (c || '').toLowerCase().trim() === normalizedCategory
+  );
 }
 
 export function getLowestPackageTierForCategory(
@@ -135,8 +156,11 @@ export function getLowestPackageTierForCategory(
     'diamond',
   ];
 
+  const normalizedCategory = (category || '').toLowerCase().trim();
   return (
-    order.find((tier) => (accessMap[tier] || []).includes(category)) || 'ruby'
+    order.find((tier) =>
+      (accessMap[tier] || []).some((c) => (c || '').toLowerCase().trim() === normalizedCategory)
+    ) || 'ruby'
   );
 }
 
