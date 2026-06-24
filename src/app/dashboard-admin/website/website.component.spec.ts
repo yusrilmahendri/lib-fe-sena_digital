@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 
 import { WebsiteComponent } from './website.component';
 import { WebsiteCategoryService } from '../../services/website-category.service';
-import { DashboardService } from '../../dashboard.service';
+import { DashboardService, ThemeService } from '../../dashboard.service';
 
 describe('WebsiteComponent', () => {
   let component: WebsiteComponent;
@@ -18,13 +18,17 @@ describe('WebsiteComponent', () => {
   const dashboardServiceMock = {
     list: jasmine.createSpy('list').and.returnValue(of({ data: [] }))
   };
+  const themeServiceMock = {
+    toggleThemeActivation: jasmine.createSpy('toggleThemeActivation').and.returnValue(of({ status: true }))
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ WebsiteComponent ],
       providers: [
         { provide: WebsiteCategoryService, useValue: websiteCategoryServiceMock },
-        { provide: DashboardService, useValue: dashboardServiceMock }
+        { provide: DashboardService, useValue: dashboardServiceMock },
+        { provide: ThemeService, useValue: themeServiceMock }
       ]
     })
     .compileComponents();

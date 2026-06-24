@@ -1230,12 +1230,15 @@ export interface ThemeAvailableCategoriesResponse {
 export interface PublicTheme {
   id: number;
   name: string;
+  slug?: string;
   price: number;
   preview: string;
   image: string;
   preview_image: string | null;
   thumbnail_image: string | null;
+  url_thema?: string;
   demo_url: string;
+  is_active?: boolean;
   features: string[];
   description?: string;
 }
@@ -1245,6 +1248,7 @@ export interface PublicCategoryWithThemes {
   name: string;
   type: 'website' | 'video';
   description: string;
+  is_active?: boolean;
   jenis_themas: PublicTheme[];
 }
 

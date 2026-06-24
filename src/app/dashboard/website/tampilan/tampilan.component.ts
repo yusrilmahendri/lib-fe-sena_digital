@@ -31,7 +31,9 @@ interface ThemeCard {
   label: string;
   title: string;
   name: string;
+  slug: string;
   image: string;
+  url_thema: string;
   demo_url: string;
   price: number;
   isCurrentTheme: boolean;
@@ -41,6 +43,8 @@ interface ThemeCard {
   isLegacy?: boolean;
   imageFallback?: string;
   requiredPackageTier: PaidPackageTier | null;
+  is_active: boolean;
+  category_is_active: boolean;
 }
 
 interface PackageTab {
@@ -78,11 +82,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private pendingThemeForConfirmation: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
-    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
-    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null },
+    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
+    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
+    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
+    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
+    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
   ];
 
   constructor(
@@ -197,6 +201,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     if (theme.isLegacy) {
       return 'Tema default trial';
+    }
+
+    if (!theme.is_active) {
+      return 'Tema belum aktif';
+    }
+
+    if (!theme.category_is_active) {
+      return 'Kategori belum aktif';
     }
 
     return this.canUseTheme(theme) ? 'Pilih tema' : 'Upgrade Paket';
@@ -316,15 +328,19 @@ export class TampilanComponent implements OnInit, OnDestroy {
           label: resolvedCategory,
           title: theme.name,
           name: theme.name,
+          slug: theme.slug || this.toSlug(theme.name),
           image: this.getThemeImage(theme, resolvedCategory),
           imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
+          url_thema: theme.url_thema || '',
           demo_url: theme.demo_url || '',
           price: theme.price || 0,
           isCurrentTheme: false,
           isLoading: false,
           category_id: category.id,
           category: resolvedCategory,
-          requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap)
+          requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
+          is_active: theme.is_active !== false,
+          category_is_active: category.is_active !== false
         });
       });
     });
@@ -380,16 +396,80 @@ export class TampilanComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.selectedThemeId = theme.id;
 
-    if (!theme.demo_url) {
+    const previewUrl = this.resolvePreviewUrl(theme);
+    if (!previewUrl) {
+      this.toastService.showToast('Preview tema belum tersedia.', 'info');
       return;
     }
 
     try {
-      window.open(theme.demo_url, '_blank', 'noopener,noreferrer');
+      window.open(previewUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
-      console.error('Error opening demo:', error);
+      console.error('Error opening preview:', error);
       this.toastService.showToast('Gagal membuka preview tema.', 'error');
     }
+  }
+
+  /**
+   * Resolve the preview URL for a theme card.
+   *
+   * Priority:
+   *   1. url_thema  — dedicated preview/demo page URL stored on the theme record
+   *   2. demo_url   — secondary demo URL (may be the root domain; validated below)
+   *   3. slug       — derive path as /themes/{slug} relative to the frontend origin
+   *
+   * A URL that is exactly the root origin (e.g. "https://sena-digital.com") without
+   * any further path is considered invalid and skipped.
+   */
+  private resolvePreviewUrl(theme: ThemeCard): string | null {
+    const candidates = [
+      theme.url_thema?.trim(),
+      theme.demo_url?.trim(),
+    ];
+
+    for (const raw of candidates) {
+      if (!raw) continue;
+      const normalized = this.normalizePreviewUrl(raw);
+      if (normalized && !this.isRootOnlyUrl(normalized)) {
+        return normalized;
+      }
+    }
+
+    const slug = theme.slug?.trim();
+    if (slug) {
+      return `${window.location.origin}/themes/${slug}`;
+    }
+
+    return null;
+  }
+
+  private normalizePreviewUrl(url: string): string | null {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    if (url.startsWith('/')) {
+      return `${window.location.origin}${url}`;
+    }
+    return `${window.location.origin}/${url}`;
+  }
+
+  /** Returns true when the URL has no meaningful path beyond the origin root. */
+  private isRootOnlyUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return parsed.pathname === '/' || parsed.pathname === '';
+    } catch {
+      return false;
+    }
+  }
+
+  private toSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
   }
 
   onPrimaryAction(): void {
@@ -404,6 +484,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (this.isCurrentTheme(theme)) {
+      return;
+    }
+
+    // Check theme/category active status before package check
+    if (!theme.is_active) {
+      this.toastService.showToast('Tema ini belum aktif. Silakan hubungi admin.', 'info');
+      return;
+    }
+    if (!theme.category_is_active) {
+      this.toastService.showToast('Kategori tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
     }
 
@@ -493,6 +583,20 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return `Belum ada tema untuk paket ${this.getPackageLabel(this.activeTab)}.`;
   }
 
+  /** Debug: returns human-readable reason why a theme cannot be confirmed. Empty string = no issue. */
+  getThemeDebugReason(theme: ThemeCard): string {
+    if (!theme.id || theme.id <= 0) return 'theme id missing';
+    if (!theme.is_active) return 'theme inactive';
+    if (!theme.category_is_active) return 'category inactive';
+    if (this.userPackageTier === 'trial' || this.isPreviewOnlyTab) return 'package not allowed';
+    const tier = this.userPackageTier as PaidPackageTier;
+    const accessible =
+      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
+      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP);
+    if (!accessible) return 'package not allowed';
+    return '';
+  }
+
   onImageError(event: Event, theme: ThemeCard): void {
     const target = event.target as HTMLImageElement | null;
     if (target) {
@@ -506,6 +610,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   private canUseTheme(theme: ThemeCard): boolean {
     if (theme.isLegacy || theme.category === 'Legacy') {
+      return false;
+    }
+
+    // Theme or its category must be active (admin-side activation)
+    if (!theme.is_active || !theme.category_is_active) {
       return false;
     }
 

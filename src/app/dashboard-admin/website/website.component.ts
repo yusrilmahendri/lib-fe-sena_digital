@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Notyf } from 'notyf';
-import { DashboardService, DashboardServiceType } from '../../dashboard.service';
+import { DashboardService, DashboardServiceType, ThemeService, ThemeToggleRequest } from '../../dashboard.service';
 import { WebsiteCategory } from '../../interfaces/admin-category.interfaces';
 import { WebsiteCategoryService } from '../../services/website-category.service';
 
@@ -22,6 +22,7 @@ interface AdminThemeCategory {
 interface AdminTheme {
   id: number;
   slug: string;
+  is_active?: boolean;
   nama_kategori?: string;
   category_id?: number;
   category?: AdminThemeCategory;
@@ -145,6 +146,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   constructor(
     private websiteCategoryService: WebsiteCategoryService,
     private dashboardService: DashboardService,
+    private themeService: ThemeService,
     private cdr: ChangeDetectorRef
   ) {
     this.notyf = new Notyf({
@@ -241,22 +243,22 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   toggleThemeStatus(theme: AdminThemeCard): void {
-    const categoryId = theme.categoryData?.id;
-    const isActive = theme.categoryData?.is_active || false;
-
-    if (!categoryId) {
-      this.notyf.error(this.getThemeDisabledReason(theme) || 'Tema ini belum terhubung ke kategori user');
+    const adminId = theme.adminThemeData?.id;
+    if (!adminId) {
+      this.notyf.error('Data master tema tidak ditemukan. Tidak bisa mengubah status.');
       return;
     }
 
-    this.websiteCategoryService.toggleActivation(
-      categoryId,
-      !isActive
-    ).subscribe({
-      next: (result) => {
-        if (result.success) {
-          this.notyf.success(`Status ${theme.name} berhasil diperbarui`);
-        }
+    const currentActive = theme.adminThemeData?.is_active ?? false;
+    const newActive = !currentActive;
+
+    const request: ThemeToggleRequest = { is_active: newActive };
+
+    this.themeService.toggleThemeActivation(adminId, request).subscribe({
+      next: (_result) => {
+        this.notyf.success(`Status ${theme.name} berhasil diperbarui menjadi ${newActive ? 'Aktif' : 'Nonaktif'}`);
+        // Reload admin themes so local state + labels update immediately
+        this.loadAdminThemes();
       },
       error: (error) => {
         console.error('Error toggling theme status:', error);
@@ -343,27 +345,37 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
-    if (theme.categoryData) {
-      return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
+    const adminActive = theme.adminThemeData?.is_active;
+
+    if (!theme.adminThemeData) {
+      return 'Belum Terhubung';
     }
 
-    if (theme.adminThemeData) {
+    if (!theme.categoryData) {
       return 'Belum Terhubung ke User';
     }
 
-    return 'Belum Terhubung';
+    if (adminActive === false) {
+      return 'Nonaktif';
+    }
+
+    // adminThemeData.is_active is true (or undefined/assumed active)
+    if (!theme.categoryData.is_active) {
+      return 'Kategori Nonaktif';
+    }
+
+    return 'Aktif';
   }
 
   getThemeDisabledReason(theme: AdminThemeCard): string {
-    if (theme.categoryData?.id) {
-      return '';
+    if (!theme.adminThemeData?.id) {
+      return 'Data master tema tidak ditemukan.';
     }
-
-    return 'Tema belum memiliki categoryData, sehingga belum bisa ditampilkan ke user.';
+    return '';
   }
 
   canActivateTheme(theme: AdminThemeCard): boolean {
-    return !!theme.categoryData?.id;
+    return !!theme.adminThemeData?.id;
   }
 
   isThemeUploading(theme: AdminThemeCard): boolean {

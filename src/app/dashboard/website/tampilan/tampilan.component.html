@@ -98,7 +98,7 @@
         <button
           type="button"
           class="theme-picker__submit"
-          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitFocusedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme)"
+          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitFocusedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme) && selectedTheme.is_active && selectedTheme.category_is_active"
           [disabled]="isPrimaryButtonDisabled"
           (click)="onPrimaryAction()">
           <i class="far fa-window-restore" aria-hidden="true"></i>

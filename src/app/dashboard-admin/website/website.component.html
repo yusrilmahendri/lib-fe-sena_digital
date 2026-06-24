@@ -72,11 +72,11 @@
               <button
                 type="button"
                 class="status-btn"
-                [class.inactive]="!theme.categoryData?.is_active"
+                [class.inactive]="!theme.adminThemeData?.is_active"
                 [disabled]="!canActivateTheme(theme)"
                 [title]="getThemeDisabledReason(theme) || null"
                 (click)="toggleThemeStatus(theme)">
-                {{ theme.categoryData?.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                {{ theme.adminThemeData?.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
               </button>
 
               <div class="order-controls">
