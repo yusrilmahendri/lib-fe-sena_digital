@@ -53,6 +53,9 @@
               <div>
                 <h2>{{ theme.name }}</h2>
                 <p>{{ getThemeStatusLabel(theme) }}</p>
+                <p class="theme-status-hint" *ngIf="getThemeDisabledReason(theme)">
+                  {{ getThemeDisabledReason(theme) }}
+                </p>
                 <div class="theme-package-badges">
                   <span class="theme-package-badge">{{ getThemePackageBadge(theme) }}</span>
                 </div>
@@ -71,6 +74,7 @@
                 class="status-btn"
                 [class.inactive]="!theme.categoryData?.is_active"
                 [disabled]="!canActivateTheme(theme)"
+                [title]="getThemeDisabledReason(theme) || null"
                 (click)="toggleThemeStatus(theme)">
                 {{ theme.categoryData?.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
               </button>
@@ -94,7 +98,10 @@
             </div>
 
             <div class="theme-card-actions">
-              <label class="upload-btn" [class.disabled]="!canActivateTheme(theme)">
+              <label
+                class="upload-btn"
+                [class.disabled]="!canActivateTheme(theme)"
+                [title]="getThemeDisabledReason(theme) || null">
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/gif"
@@ -141,18 +148,29 @@
         <div>
           <span>Status</span>
           <strong>{{ getThemeStatusLabel(selectedThemeDetail) }}</strong>
+          <p class="theme-status-hint" *ngIf="getThemeDisabledReason(selectedThemeDetail)">
+            {{ getThemeDisabledReason(selectedThemeDetail) }}
+          </p>
         </div>
         <div>
           <span>Urutan Tampil</span>
           <strong>{{ selectedThemeDetail.displayOrder }}</strong>
         </div>
         <div>
-          <span>Slug Existing</span>
-          <strong>{{ selectedThemeDetail.adminThemeData?.slug || selectedThemeDetail.categoryData?.slug || '-' }}</strong>
+          <span>Slug Master</span>
+          <strong>{{ selectedThemeDetail.adminThemeData?.slug || '-' }}</strong>
         </div>
         <div>
-          <span>ID Existing</span>
-          <strong>{{ selectedThemeDetail.adminThemeData?.id || selectedThemeDetail.categoryData?.id || '-' }}</strong>
+          <span>Slug Kategori User</span>
+          <strong>{{ selectedThemeDetail.categoryData?.slug || '-' }}</strong>
+        </div>
+        <div>
+          <span>ID Master Theme</span>
+          <strong>{{ selectedThemeDetail.adminThemeData?.id || '-' }}</strong>
+        </div>
+        <div>
+          <span>ID Kategori User</span>
+          <strong>{{ selectedThemeDetail.categoryData?.id || '-' }}</strong>
         </div>
         <div>
           <span>Dibuat</span>

@@ -232,17 +232,16 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   toggleThemeStatus(theme: AdminThemeCard): void {
-    // Prefer adminThemeData over categoryData
-    const themeId = theme.adminThemeData?.id || theme.categoryData?.id;
+    const categoryId = theme.categoryData?.id;
     const isActive = theme.categoryData?.is_active || false;
 
-    if (!themeId) {
-      this.notyf.error('Tema ini belum terhubung ke data existing');
+    if (!categoryId) {
+      this.notyf.error(this.getThemeDisabledReason(theme) || 'Tema ini belum terhubung ke kategori user');
       return;
     }
 
     this.websiteCategoryService.toggleActivation(
-      themeId,
+      categoryId,
       !isActive
     ).subscribe({
       next: (result) => {
@@ -284,18 +283,17 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Prefer adminThemeData over categoryData
-    const themeId = theme.adminThemeData?.id || theme.categoryData?.id;
+    const categoryId = theme.categoryData?.id;
 
-    if (!themeId) {
-      this.notyf.error('Tema ini belum terhubung ke data existing');
+    if (!categoryId) {
+      this.notyf.error(this.getThemeDisabledReason(theme) || 'Tema ini belum terhubung ke kategori user');
       target.value = '';
       return;
     }
 
     this.uploadingThemeKey = theme.key;
 
-    this.websiteCategoryService.updateCategory(themeId, { image: file }).subscribe({
+    this.websiteCategoryService.updateCategory(categoryId, { image: file }).subscribe({
       next: (result) => {
         if (result.success) {
           this.notyf.success(`Preview ${theme.name} berhasil diperbarui`);
@@ -336,19 +334,27 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
+    if (theme.categoryData) {
+      return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
+    }
+
     if (theme.adminThemeData) {
-      return 'Terhubung';
+      return 'Belum Terhubung ke User';
     }
 
-    if (!theme.categoryData) {
-      return 'Belum Terhubung';
+    return 'Belum Terhubung';
+  }
+
+  getThemeDisabledReason(theme: AdminThemeCard): string {
+    if (theme.categoryData?.id) {
+      return '';
     }
 
-    return theme.categoryData.is_active ? 'Aktif' : 'Nonaktif';
+    return 'Tema belum memiliki categoryData, sehingga belum bisa ditampilkan ke user.';
   }
 
   canActivateTheme(theme: AdminThemeCard): boolean {
-    return !!(theme.adminThemeData?.id || theme.categoryData?.id);
+    return !!theme.categoryData?.id;
   }
 
   isThemeUploading(theme: AdminThemeCard): boolean {
@@ -453,7 +459,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         category: preset.category,
         fallbackImage: preset.fallbackImage,
         displayOrder: index + 1,
-        categoryData: categoryMap.get(preset.key) ?? null,
+        categoryData: this.resolveCategoryForPreset(preset.key, categoryMap),
         adminThemeData
       };
     });
@@ -508,13 +514,27 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     const lookup = new Map<string, WebsiteCategory>();
 
     categories.forEach((category) => {
-      const slug = this.normalizeKey(category?.slug || category?.nama_kategori || '');
+      const slug = this.normalizeKey(category?.slug || '');
+      const nameKey = this.normalizeKey(category?.nama_kategori || '');
+
       if (slug) {
         lookup.set(slug, category);
+      }
+
+      if (nameKey && !lookup.has(nameKey)) {
+        lookup.set(nameKey, category);
       }
     });
 
     return lookup;
+  }
+
+  private resolveCategoryForPreset(
+    presetKey: string,
+    categoryMap: Map<string, WebsiteCategory>
+  ): WebsiteCategory | null {
+    const presetSlug = this.normalizeKey(presetKey);
+    return categoryMap.get(presetSlug) ?? null;
   }
 
   private getThemePackageTiers(theme: AdminThemeCard): PackageTier[] {
