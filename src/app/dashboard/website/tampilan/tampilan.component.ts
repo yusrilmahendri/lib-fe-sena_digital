@@ -180,6 +180,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return this.canUseTheme(theme);
   }
 
+  get hasThemeForConfirmation(): boolean {
+    return !!(this.pendingThemeForConfirmation || this.selectedTheme);
+  }
+
   get isPrimaryButtonDisabled(): boolean {
     const theme = this.selectedTheme;
     if (!theme) {

@@ -136,7 +136,7 @@
       <button
         type="button"
         class="theme-modal__primary btn-confirm-theme"
-        [disabled]="!pendingThemeForConfirmation && !selectedTheme"
+        [disabled]="!hasThemeForConfirmation"
         (click)="confirmThemeSelection()">
         Konfirmasi
       </button>
