@@ -7,10 +7,12 @@ import {
   DashboardOverviewResponse,
   DashboardTrendsResponse,
   DashboardMessagesResponse,
-  DashboardMessage
+  DashboardMessage,
+  ThemeService
 } from 'src/app/dashboard.service';
 import { WeddingDataService } from 'src/app/services/wedding-data.service';
 import { forkJoin, catchError, of } from 'rxjs';
+import { ToastService } from 'src/app/toast.service';
 
 
 Chart.register(...registerables);
@@ -95,7 +97,9 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private router: Router,
     private DashBoardSvc: DashboardService,
-    private weddingDataService: WeddingDataService
+    private weddingDataService: WeddingDataService,
+    private themeService: ThemeService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -547,17 +551,25 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     // Show loading state for better UX
     this.isLoading = true;
 
-    // Get domain from SETTINGS_GET_FILTER API
-    this.DashBoardSvc.list(DashboardServiceType.SETTINGS_GET_FILTER).subscribe({
-      next: (response) => {
-        console.log('SETTINGS_GET_FILTER response:', response);
+    forkJoin({
+      settings: this.DashBoardSvc.list(DashboardServiceType.SETTINGS_GET_FILTER),
+      selectedTheme: this.themeService.getSelectedTheme().pipe(
+        catchError((error) => {
+          console.error('[Overview] Failed to refresh selected theme before opening website:', error);
+          return of(null);
+        })
+      )
+    }).subscribe({
+      next: ({ settings, selectedTheme }) => {
+        console.log('SETTINGS_GET_FILTER response:', settings);
+        console.log('[Overview] Refreshed selected theme before opening website:', selectedTheme);
 
         try {
           // Extract domain from response.setting.domain
-          const domain = response?.setting?.domain;
+          const domain = settings?.setting?.domain;
 
           if (!domain) {
-            console.warn('Domain not found in settings response:', response);
+            console.warn('Domain not found in settings response:', settings);
             this.handleFallbackUrlGeneration();
             return;
           }
@@ -573,7 +585,14 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
           // Store wedding data in service for immediate access if needed
           if (this.weddingDataFromIndex) {
-            this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+            const mergedWeddingData = selectedTheme?.status && selectedTheme?.data?.theme
+              ? {
+                  ...this.weddingDataFromIndex,
+                  selected_theme: selectedTheme.data.theme
+                }
+              : this.weddingDataFromIndex;
+
+            this.weddingDataService.setWeddingData(mergedWeddingData);
           }
 
           // Open the wedding invitation
@@ -599,6 +618,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         this.handleFallbackUrlGeneration();
+        this.toastService.showToast('Gagal memuat website. Menggunakan data terakhir yang tersedia.', 'warning');
       }
     });
   }

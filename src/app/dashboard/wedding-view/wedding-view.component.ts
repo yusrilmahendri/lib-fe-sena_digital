@@ -422,7 +422,11 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('API Response (formatted):', JSON.stringify(response, null, 2));
 
         if (response && response.data) {
-          console.log('Wedding Data from API:', JSON.stringify(response.data, null, 2));
+          const raw = response.data as any;
+          console.log('[WeddingView] API raw response.data keys:', Object.keys(raw));
+          console.log('[WeddingView] selected_theme from API:', raw.selected_theme ?? 'TIDAK ADA');
+          console.log('[WeddingView] jenis_thema from API:', raw.jenis_thema ?? 'TIDAK ADA');
+          console.log('[WeddingView] theme_slug from API:', raw.theme_slug ?? 'TIDAK ADA');
 
           this.weddingData = response.data;
           this.weddingDataService.setWeddingData(response.data);
@@ -528,17 +532,27 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   private updateWeddingContent(data: WeddingData): void {
     try {
-      console.log('Updating wedding content with fresh data:', JSON.stringify(data, null, 2));
-      console.log('Updating wedding content for:', {
+      console.log('[WeddingView] updateWeddingContent called:', {
         groom: data.mempelai?.pria?.nama_lengkap || 'Unknown',
         bride: data.mempelai?.wanita?.nama_lengkap || 'Unknown',
         user: data.user_info?.email || 'Unknown',
-        domain: this.domain
+        domain: this.domain,
+        selected_theme: (data as any).selected_theme ?? null,
+        theme_slug_field: (data as any).theme_slug ?? null,
+        jenis_thema_field: (data as any).jenis_thema ?? null,
+        tema_field: (data as any).tema ?? null,
+        themes_field: (data as any).themes ?? null,
       });
 
       this.activeThemeSlug = this.getThemeSlugFromInvitation(data);
       this.activeThemeRenderKey = resolveThemeRenderKey(this.activeThemeSlug);
       this.activeThemeComponent = this.resolveThemeComponent(this.activeThemeSlug);
+
+      console.log('[WeddingView] Theme resolved:', {
+        activeThemeSlug: this.activeThemeSlug,
+        activeThemeRenderKey: this.activeThemeRenderKey,
+        hasActiveThemeComponent: !!this.activeThemeComponent,
+      });
 
       // Initialize audio when wedding data is updated
       this.initializeAudio();
@@ -1380,8 +1394,17 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const selected = data.selected_theme as SelectedThemeSummary | null | undefined;
-    const selectedSlug = resolveThemeSlug(selected?.slug);
+    console.log('[WeddingView] getThemeSlugFromInvitation - selected_theme object:', selected);
+
+    const selectedSlug = resolveThemeSlugFromCandidates([
+      selected?.slug,
+      (selected as any)?.theme_slug,
+      (selected as any)?.jenis_thema,
+      (selected as any)?.tema,
+      selected?.name,
+    ]);
     if (selectedSlug) {
+      console.log('[WeddingView] Resolved slug from selected_theme:', selectedSlug);
       return selectedSlug;
     }
 
@@ -1398,7 +1421,21 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       (data as any)?.selected_theme?.tema,
     ];
 
-    return resolveThemeSlugFromCandidates(candidateValues);
+    if (!selected) {
+      console.log('[WeddingView] selected_theme tidak tersedia, field alternatif yang tersedia:', {
+        theme_slug: (data as any)?.theme_slug ?? null,
+        slug_theme: (data as any)?.slug_theme ?? null,
+        jenis_thema: (data as any)?.jenis_thema ?? null,
+        tema: (data as any)?.tema ?? null,
+        theme: (data as any)?.theme ?? null,
+        selected_theme_slug: (data as any)?.selected_theme_slug ?? null,
+      });
+    }
+
+    console.log('[WeddingView] Fallback candidates (selected_theme.slug not valid):', candidateValues);
+    const fallbackSlug = resolveThemeSlugFromCandidates(candidateValues);
+    console.log('[WeddingView] Resolved fallback slug:', fallbackSlug);
+    return fallbackSlug;
   }
 
   private resolveThemeComponent(slug: ThemeSlug | null): Type<unknown> | null {

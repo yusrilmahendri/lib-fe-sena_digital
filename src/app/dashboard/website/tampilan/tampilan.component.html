@@ -137,8 +137,9 @@
       <button
         type="button"
         class="btn-confirm-theme"
+        [disabled]="processingPrimaryAction || !canConfirmPendingTheme"
         (click)="confirmThemeSelection()">
-        Konfirmasi
+        {{ confirmThemeButtonLabel }}
       </button>
     </div>
   </section>
