@@ -425,10 +425,13 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
         if (response && response.data) {
           const raw = response.data as any;
+          console.log('[WeddingPublicResponse]', raw);
           console.log('[WeddingView] API raw response.data keys:', Object.keys(raw));
           console.log('[WeddingView] selected_theme from API:', raw.selected_theme ?? 'TIDAK ADA');
+          console.log('[WeddingView] themes.selected_theme from API:', raw.themes?.selected_theme ?? 'TIDAK ADA');
           console.log('[WeddingView] jenis_thema from API:', raw.jenis_thema ?? 'TIDAK ADA');
           console.log('[WeddingView] theme_slug from API:', raw.theme_slug ?? 'TIDAK ADA');
+          console.log('[WeddingView] selected_theme_slug from API:', raw.selected_theme_slug ?? 'TIDAK ADA');
 
           this.weddingData = response.data;
           this.weddingDataService.setWeddingData(response.data);
@@ -549,6 +552,22 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       this.activeThemeSlug = this.getThemeSlugFromInvitation(data);
       this.activeThemeRenderKey = resolveThemeRenderKey(this.activeThemeSlug);
       this.activeThemeComponent = this.resolveThemeComponent(this.activeThemeSlug);
+
+      if (
+        (data as any)?.selected_theme?.slug === 'soft-ivory' ||
+        (data as any)?.themes?.selected_theme?.slug === 'soft-ivory'
+      ) {
+        this.activeThemeSlug = 'soft-ivory';
+        this.activeThemeRenderKey = 'ruby-theme-one';
+        this.activeThemeComponent = this.resolveThemeComponent(this.activeThemeSlug);
+      }
+
+      console.log('[WeddingThemeDebug]', {
+        selectedTheme: (data as any)?.selected_theme ?? null,
+        themesSelectedTheme: (data as any)?.themes?.selected_theme ?? null,
+        activeThemeSlug: this.activeThemeSlug,
+        activeThemeRenderKey: this.activeThemeRenderKey
+      });
 
       console.log('[WeddingView] Theme resolved:', {
         activeThemeSlug: this.activeThemeSlug,
@@ -1402,7 +1421,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const selected = data.selected_theme as SelectedThemeSummary | null | undefined;
+    const nestedSelectedTheme = (data as any)?.themes?.selected_theme ?? null;
     console.log('[WeddingView] getThemeSlugFromInvitation - selected_theme object:', selected);
+    console.log('[WeddingView] getThemeSlugFromInvitation - themes.selected_theme object:', nestedSelectedTheme);
 
     const selectedSlug = resolveThemeSlugFromCandidates([
       selected?.slug,
@@ -1410,13 +1431,23 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       (selected as any)?.jenis_thema,
       (selected as any)?.tema,
       selected?.name,
+      nestedSelectedTheme?.slug,
+      nestedSelectedTheme?.theme_slug,
+      nestedSelectedTheme?.jenis_thema,
+      nestedSelectedTheme?.tema,
+      nestedSelectedTheme?.name,
     ]);
     if (selectedSlug) {
-      console.log('[WeddingView] Resolved slug from selected_theme:', selectedSlug);
+      console.log('[WeddingView] Resolved slug from selected theme priority:', selectedSlug);
       return selectedSlug;
     }
 
     const candidateValues = [
+      (data as any)?.themes?.selected_theme?.slug,
+      (data as any)?.themes?.selected_theme?.theme_slug,
+      (data as any)?.themes?.selected_theme?.jenis_thema,
+      (data as any)?.themes?.selected_theme?.tema,
+      (data as any)?.themes?.selected_theme?.name,
       (data as any)?.theme_slug,
       (data as any)?.slug_theme,
       (data as any)?.jenis_thema,
@@ -1437,6 +1468,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         tema: (data as any)?.tema ?? null,
         theme: (data as any)?.theme ?? null,
         selected_theme_slug: (data as any)?.selected_theme_slug ?? null,
+        themes_selected_theme_slug: (data as any)?.themes?.selected_theme?.slug ?? null,
       });
     }
 
@@ -1448,6 +1480,6 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private resolveThemeComponent(slug: ThemeSlug | null): Type<unknown> | null {
     const renderKey = resolveThemeRenderKey(slug);
-    return this.themeComponentRegistry[renderKey] || this.themeComponentRegistry['lavender-bloom'] || null;
+    return this.themeComponentRegistry[renderKey] || null;
   }
 }
