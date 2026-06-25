@@ -274,7 +274,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get confirmThemeButtonLabel(): string {
-    return this.processingPrimaryAction ? 'Menyimpan...' : 'Konfirmasi';
+    return this.processingPrimaryAction ? 'Memproses...' : 'Konfirmasi';
   }
 
   get focusedThemeSubtitle(): string {
@@ -332,9 +332,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
         console.log('[ThemeCategories] Raw response /api/themes/categories:', themes);
 
-        const extractedCategories = this.extractCategoriesFromThemesResponse(themes);
-        if (themes?.status !== false && extractedCategories.length) {
-          this.processThemeData(extractedCategories);
+        const categories = themes?.data?.categories || [];
+        if (Array.isArray(categories)) {
+          this.processThemeData(categories);
         } else {
           this.handleError('Format data tema tidak valid.');
         }
@@ -391,110 +391,37 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.syncSelectedThemeForVisibleTab();
   }
 
-  /**
-   * Process theme data from API into display format
-   */
-  private extractCategoriesFromThemesResponse(response: PublicCategoriesResponse | any): PublicCategoryWithThemes[] {
-    const data = response?.data;
-    const candidates = [
-      data?.categories,
-      data?.data,
-      data,
-      response?.categories,
-      response?.data?.items,
-      response?.items,
-    ];
-
-    const rawCategories = candidates.find((entry) => Array.isArray(entry));
-    if (!Array.isArray(rawCategories)) {
-      console.warn('[ThemeCategories] Tidak menemukan array categories pada response:', response);
-      return [];
-    }
-
-    return rawCategories
-      .map((rawCategory: any) => {
-        const extractedThemes = this.extractThemesFromCategory(rawCategory);
-        return {
-          ...rawCategory,
-          jenis_themas: extractedThemes,
-        } as PublicCategoryWithThemes;
-      })
-      .filter((category) => Array.isArray(category.jenis_themas) && category.jenis_themas.length > 0);
-  }
-
-  private extractThemesFromCategory(rawCategory: any): PublicTheme[] {
-    if (!rawCategory) {
-      return [];
-    }
-
-    const themeCandidates = [
-      rawCategory?.jenis_themas,
-      rawCategory?.themes,
-      rawCategory?.theme,
-      rawCategory?.data,
-      rawCategory?.items,
-    ];
-
-    const rawThemes = themeCandidates.find((entry) => Array.isArray(entry));
-    if (!Array.isArray(rawThemes)) {
-      return [];
-    }
-
-    return rawThemes
-      .map((theme: any) => ({
-        ...theme,
-        category: theme?.category || rawCategory,
-        category_id: theme?.category_id ?? rawCategory?.id ?? null,
-      }))
-      .filter((theme: any) => {
-        const normalizedSlug = normalizeThemeSlug(theme?.slug);
-        return !!normalizedSlug;
-      });
-  }
-
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
     const nextCards: ThemeCard[] = [];
     const backendThemesBySlug = new Map<string, { theme: PublicTheme; category: PublicCategoryWithThemes; resolvedCategory: ThemeCategoryName }>();
 
-    categories.forEach((category) => {
-      const categoryThemes = this.extractThemesFromCategory(category);
-      const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!Array.isArray(categoryThemes) || categoryThemes.length === 0) {
+    const flattenedThemes = categories.flatMap((category) =>
+      (category?.jenis_themas || []).map((theme) => ({
+        ...theme,
+        category,
+      }))
+    );
+
+    flattenedThemes.forEach((entry: any) => {
+      const normalizedSlug = normalizeThemeSlug(entry?.slug);
+      if (!normalizedSlug) {
         return;
       }
 
-      categoryThemes.forEach((theme) => {
-        const normalizedSlug = normalizeThemeSlug(theme?.slug);
-        if (!normalizedSlug) {
-          console.warn('[ThemeCards] Mengabaikan theme backend tanpa slug valid:', {
-            id: theme?.id,
-            name: theme?.name,
-            slug: theme?.slug ?? null,
-          });
-          return;
-        }
+      if (!FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug)) {
+        return;
+      }
 
-        if (!FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug)) {
-          console.log('[ThemeCards] Mengabaikan theme backend non-fixed:', {
-            id: theme?.id,
-            name: theme?.name,
-            slug: normalizedSlug,
-          });
-          return;
-        }
+      const category = (entry?.category || {}) as PublicCategoryWithThemes;
+      const resolvedCategory = resolveThemeCategory(category?.name);
+      if (!resolvedCategory) {
+        return;
+      }
 
-        const categoryNameSource = (theme as any)?.category?.name ?? category?.name;
-        const normalizedCategory = resolveThemeCategory(categoryNameSource) || resolvedCategory;
-        if (!normalizedCategory) {
-          console.warn('[ThemeCards] Theme diabaikan karena kategori tidak dikenali:', {
-            id: theme?.id,
-            slug: normalizedSlug,
-            categoryName: categoryNameSource,
-          });
-          return;
-        }
-
-        backendThemesBySlug.set(normalizedSlug, { theme, category, resolvedCategory: normalizedCategory });
+      backendThemesBySlug.set(normalizedSlug, {
+        theme: entry as PublicTheme,
+        category,
+        resolvedCategory,
       });
     });
 
@@ -970,6 +897,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
             theme_slug: theme.slug,
             response_data: response.data,
           });
+          this.closeSelectConfirmationModal();
 
           const refreshSelectedSubscription = this.themeService.getSelectedTheme().subscribe({
             next: (selectedResponse: UserSelectedThemeResponse) => {
@@ -997,16 +925,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
                 this.loadSelectedTheme();
               }
 
-              this.closeSelectConfirmationModal();
-              this.toastService.showToast('Tema berhasil dipilih', 'success');
+              this.toastService.showToast('Tema berhasil digunakan', 'success');
               theme.isLoading = false;
               this.processingPrimaryAction = false;
             },
             error: (selectedError) => {
               console.error('[SelectTheme] Gagal refresh selected theme setelah select:', selectedError);
               this.loadSelectedTheme();
-              this.closeSelectConfirmationModal();
-              this.toastService.showToast('Tema berhasil dipilih', 'success');
+              this.toastService.showToast('Tema berhasil digunakan', 'success');
               theme.isLoading = false;
               this.processingPrimaryAction = false;
             }
@@ -1015,7 +941,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           this.subscriptions.add(refreshSelectedSubscription);
         } else {
           console.warn('[SelectTheme] Gagal. Response status false:', response);
-          const message = response.message || 'Gagal memilih tema. Silakan coba lagi.';
+          const message = response.message || 'Gagal memilih tema';
           this.toastService.showToast(message, 'error');
           theme.isLoading = false;
           this.processingPrimaryAction = false;
@@ -1024,7 +950,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('[SelectTheme] Error:', error);
         console.log('[SelectTheme] Error response payload:', error?.error ?? error);
-        let message = 'Gagal memilih tema. Silakan coba lagi.';
+        let message = 'Gagal memilih tema';
 
         if (error.status === 401) {
           message = 'Sesi telah habis. Silakan login kembali.';
