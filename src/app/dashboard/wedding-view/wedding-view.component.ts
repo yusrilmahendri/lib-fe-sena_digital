@@ -91,7 +91,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   // Wedding data properties
   weddingData: WeddingData | null = null;
   activeThemeSlug: ThemeSlug | null = null;
-  activeThemeRenderKey: ThemeRenderKey = 'lavender-bloom';
+  activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   isLoading: boolean = false;
@@ -981,7 +981,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   openInvitation(): void {
     this.invitationOpened = true;
-    this.setCurrentView(this.hasActiveThemeComponent() ? ContentView.MAIN : ContentView.COUPLE);
+    // Always stay on MAIN so that the active theme component (ruby/lavender)
+    // remains rendered and shows its full scrollable content.
+    this.setCurrentView(ContentView.MAIN);
 
     // Track invitation view via attendance API
     this.submitAttendanceView();
@@ -1050,7 +1052,11 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   shouldRenderLegacyTemplate(): boolean {
-    return !this.hasActiveThemeComponent();
+    // Always use the active theme template when wedding data is available.
+    // Both ruby-theme-one and lavender-bloom are self-contained scrollable
+    // templates that include all sections. The ngSwitch default in the
+    // active theme template handles the fallback to lavender-bloom.
+    return false;
   }
 
   showMessages(): void {
@@ -1439,11 +1445,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resolveThemeComponent(slug: ThemeSlug | null): Type<unknown> | null {
-    if (!slug) {
-      return null;
-    }
-
     const renderKey = resolveThemeRenderKey(slug);
-    return this.themeComponentRegistry[renderKey] || null;
+    return this.themeComponentRegistry[renderKey] || this.themeComponentRegistry['lavender-bloom'] || null;
   }
 }

@@ -8,7 +8,7 @@ export type ThemeSlug =
 
 export type ThemeRenderKey = 'ruby-theme-one' | 'lavender-bloom';
 
-export const DEFAULT_THEME_SLUG: ThemeSlug = 'lavender-bloom';
+export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
 
 export const THEME_RENDER_MAP: Record<ThemeSlug, ThemeRenderKey> = {
   'soft-ivory': 'ruby-theme-one',

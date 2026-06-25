@@ -206,8 +206,8 @@
       </div>
     </div>
 
-    <!-- Bottom navbar - hidden until invitation opened -->
-    <nav class="bottom-navbar" *ngIf="invitationOpened">
+    <!-- Bottom navbar - only shown for legacy template, not active theme templates -->
+    <nav class="bottom-navbar" *ngIf="invitationOpened && shouldRenderLegacyTemplate()">
       <div class="nav-container">
         <button class="nav-item" *ngIf="isMessagesVisible()" (click)="showMessages()" data-bs-toggle="tooltip" data-bs-placement="top" title="Pesan">
           <i class="fas fa-envelope"></i>
