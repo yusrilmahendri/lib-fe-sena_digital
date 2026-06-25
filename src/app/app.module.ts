@@ -88,6 +88,7 @@ import { GalleryViewComponent } from './dashboard/wedding-view/gallery-view/gall
 import { PresenceViewComponent } from './dashboard/wedding-view/presence-view/presence-view.component';
 import { GiftViewComponent } from './dashboard/wedding-view/gift-view/gift-view.component';
 import { RubyThemeOneComponent } from './dashboard/wedding-view/templates/ruby-theme-one/ruby-theme-one.component';
+import { LavenderBloomThemeComponent } from './dashboard/wedding-view/themes/lavender-bloom/lavender-bloom-theme.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
@@ -170,6 +171,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     PresenceViewComponent,
     GiftViewComponent,
     RubyThemeOneComponent,
+    LavenderBloomThemeComponent,
     BillUserComponent,
     ProfileAdminComponent,
     AuthModalComponent,
