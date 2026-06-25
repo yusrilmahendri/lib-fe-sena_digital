@@ -6,6 +6,14 @@ import { DashboardService, DashboardServiceType } from 'src/app/dashboard.servic
 import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
+import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
+import {
+  resolveThemeRenderKey,
+  resolveThemeSlug,
+  resolveThemeSlugFromCandidates,
+  ThemeRenderKey,
+  ThemeSlug,
+} from '../../theme-render.registry';
 
 // Attendance interface for type safety
 interface AttendanceRequest {
@@ -66,7 +74,8 @@ enum ContentView {
   styleUrls: ['./wedding-view.component.scss']
 })
 export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly themeComponentRegistry: Record<string, Type<unknown>> = {
+  private readonly themeComponentRegistry: Record<ThemeRenderKey, Type<unknown>> = {
+    'ruby-theme-one': RubyThemeOneComponent,
     'lavender-bloom': LavenderBloomThemeComponent,
   };
 
@@ -81,7 +90,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Wedding data properties
   weddingData: WeddingData | null = null;
-  activeThemeSlug: string | null = null;
+  activeThemeSlug: ThemeSlug | null = null;
+  activeThemeRenderKey: ThemeRenderKey = 'lavender-bloom';
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   isLoading: boolean = false;
@@ -526,7 +536,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         domain: this.domain
       });
 
-      this.activeThemeSlug = this.resolveThemeSlug(data.selected_theme);
+      this.activeThemeSlug = this.getThemeSlugFromInvitation(data);
+      this.activeThemeRenderKey = resolveThemeRenderKey(this.activeThemeSlug);
       this.activeThemeComponent = this.resolveThemeComponent(this.activeThemeSlug);
 
       // Initialize audio when wedding data is updated
@@ -1363,21 +1374,39 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.renderer.appendChild(document.head, style);
   }
 
-  private resolveThemeSlug(selectedTheme?: SelectedThemeSummary | null): string | null {
-    return this.normalizeThemeSlug(selectedTheme?.slug) || null;
+  private getThemeSlugFromInvitation(data: WeddingData | null | undefined): ThemeSlug | null {
+    if (!data) {
+      return null;
+    }
+
+    const selected = data.selected_theme as SelectedThemeSummary | null | undefined;
+    const selectedSlug = resolveThemeSlug(selected?.slug);
+    if (selectedSlug) {
+      return selectedSlug;
+    }
+
+    const candidateValues = [
+      (data as any)?.theme_slug,
+      (data as any)?.slug_theme,
+      (data as any)?.jenis_thema,
+      (data as any)?.tema,
+      (data as any)?.theme,
+      (data as any)?.selected_theme_slug,
+      (data as any)?.selected_theme?.name,
+      (data as any)?.selected_theme?.theme_slug,
+      (data as any)?.selected_theme?.jenis_thema,
+      (data as any)?.selected_theme?.tema,
+    ];
+
+    return resolveThemeSlugFromCandidates(candidateValues);
   }
 
-  private resolveThemeComponent(slug: string | null): Type<unknown> | null {
+  private resolveThemeComponent(slug: ThemeSlug | null): Type<unknown> | null {
     if (!slug) {
       return null;
     }
 
-    return this.themeComponentRegistry[slug] || null;
-  }
-
-  private normalizeThemeSlug(value?: string | null): string {
-    return String(value || '')
-      .trim()
-      .toLowerCase();
+    const renderKey = resolveThemeRenderKey(slug);
+    return this.themeComponentRegistry[renderKey] || null;
   }
 }

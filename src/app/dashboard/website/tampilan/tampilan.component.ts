@@ -700,6 +700,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           this.currentThemeId = theme.id;
           this.updateCurrentThemeStatus();
           this.selectedThemeId = theme.id;
+          this.loadSelectedTheme();
           this.toastService.showToast(`Theme "${theme.name}" selected successfully!`, 'success');
         } else {
           this.toastService.showToast('Failed to select theme', 'error');

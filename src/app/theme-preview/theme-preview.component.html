@@ -1,0 +1,17 @@
+<ng-container [ngSwitch]="activeThemeRenderKey">
+  <wc-ruby-theme-one
+    *ngSwitchCase="'ruby-theme-one'"
+    [weddingData]="previewData"
+    [invitationOpened]="true">
+  </wc-ruby-theme-one>
+  <wc-lavender-bloom-theme
+    *ngSwitchCase="'lavender-bloom'"
+    [weddingData]="previewData"
+    [invitationOpened]="true">
+  </wc-lavender-bloom-theme>
+  <wc-lavender-bloom-theme
+    *ngSwitchDefault
+    [weddingData]="previewData"
+    [invitationOpened]="true">
+  </wc-lavender-bloom-theme>
+</ng-container>

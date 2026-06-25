@@ -87,12 +87,28 @@
     </ng-container>
 
     <ng-template #activeThemeTemplate>
-      <wc-lavender-bloom-theme
-        *ngIf="!isCurrentView(ContentView.GALLERY) && (!invitationOpened || isCurrentView(ContentView.MAIN))"
-        [weddingData]="weddingData"
-        [invitationOpened]="invitationOpened"
-        (openInvitationRequested)="openInvitation()">
-      </wc-lavender-bloom-theme>
+      <ng-container *ngIf="!isCurrentView(ContentView.GALLERY) && (!invitationOpened || isCurrentView(ContentView.MAIN))">
+        <ng-container [ngSwitch]="activeThemeRenderKey">
+          <wc-ruby-theme-one
+            *ngSwitchCase="'ruby-theme-one'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-ruby-theme-one>
+          <wc-lavender-bloom-theme
+            *ngSwitchCase="'lavender-bloom'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-lavender-bloom-theme>
+          <wc-lavender-bloom-theme
+            *ngSwitchDefault
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-lavender-bloom-theme>
+        </ng-container>
+      </ng-container>
 
       <div class="content themed-content-shell" *ngIf="invitationOpened && !isCurrentView(ContentView.GALLERY) && !isCurrentView(ContentView.MAIN)">
         <wc-couple-view
