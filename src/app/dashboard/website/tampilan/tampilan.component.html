@@ -125,18 +125,18 @@
 
     <h2 id="select-theme-title">Apakah Anda yakin ingin memilih tema ini?</h2>
     <p>Silakan klik konfirmasi jika Anda ingin menggunakan tema tersebut.</p>
+    <span class="debug-modal-marker">MODAL_CONFIRM_ACTIVE</span>
 
-    <div class="theme-modal__actions">
+    <div class="theme-modal__actions confirm-actions">
       <button
         type="button"
-        class="theme-modal__secondary btn-back"
+        class="btn-back"
         (click)="closeSelectConfirmationModal()">
         Kembali
       </button>
       <button
         type="button"
-        class="theme-modal__primary btn-confirm-theme"
-        [disabled]="!hasThemeForConfirmation"
+        class="btn-confirm-theme"
         (click)="confirmThemeSelection()">
         Konfirmasi
       </button>

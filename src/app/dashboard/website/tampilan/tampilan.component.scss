@@ -390,6 +390,43 @@
   flex: 1 1 140px;
 }
 
+.debug-modal-marker {
+  color: #8b124c;
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.confirm-actions {
+  display: flex !important;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-back,
+.btn-confirm-theme {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: auto !important;
+  min-width: 140px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  position: static !important;
+}
+
+.btn-confirm-theme {
+  background: #8b124c;
+  color: #ffffff;
+  border: none;
+}
+
 .theme-modal__primary,
 .theme-modal__secondary {
   border-radius: 999px;

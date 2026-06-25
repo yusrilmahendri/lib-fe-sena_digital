@@ -93,6 +93,7 @@ import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admi
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { CreateInvitationModalComponent } from './components/create-invitation-modal/create-invitation-modal.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -174,6 +175,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
     AuthModalComponent,
     CreateInvitationModalComponent,
     ResetPasswordComponent,
+    ThemePreviewComponent,
   ],
   imports: [
     BrowserModule,

@@ -38,9 +38,11 @@ import { ProfileComponent } from './dashboard/profile/profile.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
+import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
+  { path: 'themes/:slug', component: ThemePreviewComponent },
   { path: 'wedding/:coupleName', component: WeddingViewComponent },
   { path: 'wedding', component: WeddingViewComponent }, // Fallback route without parameter
   { path: 'login', component: LoginPageComponent },

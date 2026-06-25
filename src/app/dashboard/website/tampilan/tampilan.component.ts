@@ -444,6 +444,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
    * any further path is considered invalid and skipped.
    */
   private resolvePreviewUrl(theme: ThemeCard): string | null {
+    const slug = theme.slug?.trim().toLowerCase();
+    if (slug === 'soft-ivory') {
+      return '/themes/soft-ivory';
+    }
+
     const candidates = [
       theme.demo_url?.trim(),
       theme.url_thema?.trim(),
@@ -457,9 +462,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
       }
     }
 
-    const slug = theme.slug?.trim();
-    if (slug) {
-      return `${window.location.origin}/themes/${slug}`;
+    const fallbackSlug = theme.slug?.trim();
+    if (fallbackSlug) {
+      return `/themes/${fallbackSlug}`;
     }
 
     return null;
@@ -546,9 +551,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     console.log('[ConfirmThemeClick]', theme);
 
-    if (!theme) {
+    if (!theme?.id) {
       this.toastService.showToast('Tidak ada tema yang dipilih.', 'error');
-      this.closeSelectConfirmationModal();
       return;
     }
 
