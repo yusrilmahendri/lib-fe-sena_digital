@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import {
@@ -97,6 +97,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
   showSelectConfirmationModal = false;
   showUpgradeModal = false;
   processingPrimaryAction = false;
+  showThemeSuccessToast = false;
+  themeSuccessMessage = 'Theme berhasil digunakan';
 
   private subscriptions = new Subscription();
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
@@ -114,7 +116,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
     private dashboardService: DashboardService,
     private themeService: ThemeService,
     private toastService: ToastService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
@@ -921,7 +924,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           theme.isLoading = false;
           this.processingPrimaryAction = false;
           this.closeSelectConfirmationModal();
-          this.toastService.showToast('Theme berhasil digunakan', 'success');
+          this.showThemeSuccess('Theme berhasil digunakan');
 
           // --- Optimistic update state di cards ---
           this.currentThemeId = theme.backendThemeId;
@@ -975,6 +978,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
     });
 
     this.subscriptions.add(selectionSubscription);
+  }
+
+  private showThemeSuccess(message = 'Theme berhasil digunakan'): void {
+    this.themeSuccessMessage = message;
+    this.showThemeSuccessToast = true;
+    this.cdr.detectChanges();
+
+    setTimeout(() => {
+      this.showThemeSuccessToast = false;
+      this.cdr.detectChanges();
+    }, 3000);
   }
 
   private handleError(message: string): void {

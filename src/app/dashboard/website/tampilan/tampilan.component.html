@@ -177,3 +177,8 @@
     </div>
   </section>
 </div>
+
+<div *ngIf="showThemeSuccessToast" class="theme-success-toast" role="status" aria-live="polite">
+  <i class="fas fa-check-circle" aria-hidden="true"></i>
+  {{ themeSuccessMessage }}
+</div>

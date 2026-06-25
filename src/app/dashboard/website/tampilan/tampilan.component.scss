@@ -454,6 +454,41 @@
   }
 }
 
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.theme-success-toast {
+  align-items: center;
+  animation: toastSlideIn 0.25s ease;
+  background: #16a34a;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  color: #ffffff;
+  display: flex;
+  font-size: 1rem;
+  font-weight: 600;
+  gap: 10px;
+  max-width: 340px;
+  padding: 14px 20px;
+  position: fixed;
+  right: 24px;
+  top: 24px;
+  z-index: 99999;
+
+  i {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+  }
+}
+
 @media (max-width: 1199.98px) {
   .theme-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
