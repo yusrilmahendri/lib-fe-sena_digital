@@ -101,6 +101,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private subscriptions = new Subscription();
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private pendingThemeForConfirmation: ThemeCard | null = null;
+  private pendingThemeForUpgrade: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
     { id: -1, backendThemeId: null, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
     { id: -2, backendThemeId: null, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
@@ -292,14 +293,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get upgradePackageLabel(): string {
-    const theme = this.selectedTheme;
+    const theme = this.pendingThemeForUpgrade || this.selectedTheme;
     if (!theme || theme.isLegacy || theme.category === 'Legacy') {
       return 'Ruby';
     }
 
-    return this.getPackageLabel(
-      theme.requiredPackageTier || getLowestPackageTierForCategory(theme.category, this.themeAccessMap)
-    );
+    return this.getPackageLabel(this.resolveRequiredPackageTier(theme));
   }
 
   /**
@@ -679,6 +678,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (!this.canUseTheme(theme)) {
+      this.pendingThemeForUpgrade = theme;
       this.showUpgradeModal = true;
       this.showSelectConfirmationModal = false;
       return;
@@ -724,6 +724,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   closeUpgradeModal(): void {
     this.showUpgradeModal = false;
+    this.pendingThemeForUpgrade = null;
   }
 
   goToUpgradePackage(): void {
@@ -861,6 +862,25 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     const normalizedSlug = normalizeThemeSlug(theme.slug);
     return FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug);
+  }
+
+  private resolveRequiredPackageTier(theme: ThemeCard): PaidPackageTier {
+    if (theme.requiredPackageTier) {
+      return theme.requiredPackageTier;
+    }
+
+    const category = theme.category;
+    const packageOrder: PaidPackageTier[] = ['ruby', 'sapphire', 'diamond'];
+    for (const tier of packageOrder) {
+      const allowed =
+        isCategoryAccessibleForTier(tier, category as ThemeCategoryName, this.themeAccessMap) ||
+        isCategoryAccessibleForTier(tier, category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP);
+      if (allowed) {
+        return tier;
+      }
+    }
+
+    return getLowestPackageTierForCategory(category as ThemeCategoryName, this.themeAccessMap) || 'ruby';
   }
 
   private selectTheme(theme: ThemeCard): void {
