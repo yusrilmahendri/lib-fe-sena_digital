@@ -1,165 +1,230 @@
-<section class="ruby-theme" *ngIf="weddingData as data">
-  <div class="cover-card" *ngIf="!invitationOpened">
-    <div class="cover-photo" [style.background-image]="'url(' + getCoverPhoto() + ')'">
-      <div class="cover-overlay"></div>
-      <div class="cover-flower cover-flower--top-left"></div>
-      <div class="cover-flower cover-flower--bottom-right"></div>
-      <div class="cover-content">
-        <p class="cover-kicker">The Wedding Of</p>
-        <h1 class="cover-title">{{ getGroomNickname() }}<span>&</span>{{ getBrideNickname() }}</h1>
-        <p class="cover-date">{{ getOpeningDate() }}</p>
-        <button class="open-button" type="button" (click)="openInvitation()">
-          <i class="fas fa-envelope-open-text"></i>
+<section class="ruby-theme-one" *ngIf="weddingData as data">
+  <article class="ruby-shell">
+    <section class="ruby-cover" [class.ruby-cover--opened]="invitationOpened">
+      <div class="ruby-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <div class="ruby-cover__veil"></div>
+      <img class="ruby-floral ruby-floral--cover-left" [src]="floralAsset" alt="" aria-hidden="true">
+      <img class="ruby-floral ruby-floral--cover-right" [src]="floralAsset" alt="" aria-hidden="true">
+
+      <div class="ruby-cover__content">
+        <p class="ruby-cover__eyebrow">The Wedding Of</p>
+        <h1 class="ruby-cover__names">
+          <span>{{ getPrimaryDisplayName() }}</span>
+          <em>&amp;</em>
+          <span>{{ getSecondaryDisplayName() }}</span>
+        </h1>
+        <p class="ruby-cover__date">{{ getOpeningDateLabel() }}</p>
+
+        <div class="ruby-cover__guest">
+          <span>Kepada Yth. Bapak/Ibu/Saudara/i</span>
+          <strong>{{ getGuestName() }}</strong>
+        </div>
+
+        <button *ngIf="!invitationOpened" class="ruby-button ruby-button--primary" type="button" (click)="openInvitation()">
+          <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
           Buka Undangan
         </button>
       </div>
-    </div>
-  </div>
-
-  <div class="theme-page" *ngIf="invitationOpened">
-    <section class="hero-panel">
-      <div class="hero-photo" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
-      <div class="hero-overlay"></div>
-      <div class="hero-copy">
-        <p class="hero-kicker">{{ getOpeningMessage() }}</p>
-        <h2 class="hero-title">{{ getGroomNickname() }}<span>&</span>{{ getBrideNickname() }}</h2>
-        <p class="hero-date">{{ getOpeningDate() }}</p>
-      </div>
-      <div class="hero-flower hero-flower--left"></div>
-      <div class="hero-flower hero-flower--right"></div>
     </section>
 
-    <section class="paper-section intro-section">
-      <p class="section-script">{{ getOpeningMessage() }}</p>
-      <p class="section-copy">{{ getIntroductionText() }}</p>
-      <p class="section-copy">{{ getClosingText() }}</p>
-    </section>
+    <ng-container *ngIf="invitationOpened">
+      <section class="ruby-section ruby-section--quote">
+        <img class="ruby-floral ruby-floral--top-left" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAsset" alt="" aria-hidden="true">
 
-    <section class="paper-section couple-section">
-      <p class="section-label">Mempelai</p>
-      <h3 class="section-title">Kedua Mempelai</h3>
+        <h2 class="ruby-script-title">{{ getOpeningHeading() }}</h2>
+        <p class="ruby-copy ruby-copy--center">{{ getInvitationIntro() }}</p>
+        <p class="ruby-verse">{{ getQuranQuote() }}</p>
+        <p class="ruby-verse__source">{{ getQuranSource() }}</p>
+      </section>
 
-      <article class="person-card">
-        <img class="person-photo" [src]="getBride()?.photo || getCoverPhoto()" [alt]="getBrideName()">
-        <h4 class="person-name">{{ getBrideName() }}</h4>
-        <p class="person-copy">{{ getBrideParents() }}</p>
-      </article>
+      <section class="ruby-section ruby-section--couple" *ngIf="isCoupleVisible()">
+        <p class="ruby-eyebrow">MEMPELAI</p>
+        <h2 class="ruby-title">Kedua Mempelai</h2>
 
-      <div class="person-separator">&amp;</div>
-
-      <article class="person-card">
-        <img class="person-photo" [src]="getGroom()?.photo || getCoverPhoto()" [alt]="getGroomName()">
-        <h4 class="person-name">{{ getGroomName() }}</h4>
-        <p class="person-copy">{{ getGroomParents() }}</p>
-      </article>
-    </section>
-
-    <section class="paper-section event-section" *ngIf="getAkadEvent() as akad">
-      <p class="section-label">Save The Date</p>
-      <h3 class="section-title">Akad Nikah</h3>
-      <div class="event-card">
-        <p class="event-date">{{ formatDate(akad.tanggal_acara, 'long') }}</p>
-        <p class="event-time">{{ formatTimeRange(akad) }}</p>
-        <p class="event-location">{{ akad.alamat }}</p>
-      </div>
-    </section>
-
-    <section class="paper-section event-section" *ngIf="getReceptionEvent() as resepsi">
-      <p class="section-label">Save The Date</p>
-      <h3 class="section-title">Resepsi</h3>
-      <div class="event-card">
-        <p class="event-date">{{ formatDate(resepsi.tanggal_acara, 'long') }}</p>
-        <p class="event-time">{{ formatTimeRange(resepsi) }}</p>
-        <p class="event-location">{{ resepsi.alamat }}</p>
-      </div>
-    </section>
-
-    <section class="paper-section location-section">
-      <p class="section-label">Tempat</p>
-      <h3 class="section-title">{{ getLocationTitle() }}</h3>
-      <div class="map-card">
-        <div class="map-placeholder">
-          <i class="fas fa-map-marker-alt"></i>
+        <div class="ruby-person">
+          <div class="ruby-person__frame">
+            <img [src]="getBridePhoto()" [alt]="getBrideName()">
+          </div>
+          <h3>{{ getBrideName() }}</h3>
+          <p>{{ getBrideParentLine() }}</p>
+          <span *ngIf="getBrideInstagram() as instagram" class="ruby-person__social">{{ instagram }}</span>
         </div>
-        <p class="event-location">{{ getLocationAddress() }}</p>
-        <a *ngIf="getMapsLink() as mapsLink" class="map-button" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-          Gunakan Google Maps
-        </a>
-      </div>
-    </section>
 
-    <section class="paper-section countdown-section">
-      <p class="section-label">Menuju Hari Bahagia Kami</p>
-      <h3 class="section-title">Hitung Mundur</h3>
-      <div class="countdown-grid">
-        <div class="countdown-card" *ngFor="let part of getCountdownParts()">
-          <span class="countdown-value">{{ part.value }}</span>
-          <span class="countdown-label">{{ part.label }}</span>
+        <div class="ruby-separator">&amp;</div>
+
+        <div class="ruby-person">
+          <div class="ruby-person__frame">
+            <img [src]="getGroomPhoto()" [alt]="getGroomName()">
+          </div>
+          <h3>{{ getGroomName() }}</h3>
+          <p>{{ getGroomParentLine() }}</p>
+          <span *ngIf="getGroomInstagram() as instagram" class="ruby-person__social">{{ instagram }}</span>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="paper-section story-section" *ngIf="hasStories()">
-      <p class="section-label">Cerita Kami</p>
-      <h3 class="section-title">Perjalanan Cinta</h3>
-      <article class="story-card" *ngFor="let story of getStories(); trackBy: trackByStory">
-        <p class="story-date">{{ getStoryDate(story) }}</p>
-        <h4 class="story-title">{{ story.title }}</h4>
-        <p class="story-copy">{{ getStoryLead(story) }}</p>
-      </article>
-    </section>
+      <section class="ruby-section ruby-section--events" *ngIf="isEventVisible()">
+        <img class="ruby-floral ruby-floral--event-top" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--event-bottom" [src]="floralAsset" alt="" aria-hidden="true">
 
-    <section class="paper-section gallery-section">
-      <p class="section-label">Momen</p>
-      <h3 class="section-title">Galeri Foto</h3>
+        <p class="ruby-eyebrow">SAVE THE DATE</p>
+        <div class="ruby-event-block">
+          <h2 class="ruby-title ruby-title--event">Akad Nikah</h2>
+          <article class="ruby-card">
+            <h3>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</h3>
+            <p>{{ formatTimeRange(getAkadCard()) }}</p>
+            <strong>{{ getEventVenue(getAkadCard()) }}</strong>
+            <p>{{ getEventAddress(getAkadCard()) }}</p>
+          </article>
+        </div>
 
-      <ng-container *ngIf="hasGallery(); else emptyGallery">
-        <div class="gallery-featured" *ngIf="getFeaturedGalleryItem() as featured">
-          <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
-          <div class="gallery-play" *ngIf="featured.url_video">
-            <i class="fas fa-play"></i>
+        <div class="ruby-event-block">
+          <h2 class="ruby-title ruby-title--event">Resepsi</h2>
+          <article class="ruby-card">
+            <h3>{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</h3>
+            <p>{{ formatTimeRange(getReceptionCard()) }}</p>
+            <strong>{{ getEventVenue(getReceptionCard()) }}</strong>
+            <p>{{ getEventAddress(getReceptionCard()) }}</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="ruby-section ruby-section--location" *ngIf="isLocationVisible()">
+        <p class="ruby-eyebrow">TEMPAT</p>
+        <h2 class="ruby-title">Lokasi Resepsi</h2>
+        <p class="ruby-location-name">{{ getLocationVenue() }}</p>
+
+        <article class="ruby-map-card">
+          <div class="ruby-map-card__art" role="img" [attr.aria-label]="getMapPreviewLabel()">
+            <div class="ruby-map-pin"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></div>
+          </div>
+          <p>{{ getLocationAddressText() }}</p>
+          <a *ngIf="getMapsLink() as mapsLink" class="ruby-button ruby-button--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+            Gunakan Google Maps
+          </a>
+        </article>
+
+        <p class="ruby-eyebrow ruby-eyebrow--spaced">{{ getCountdownHeading() }}</p>
+        <h2 class="ruby-title">Hitung Mundur</h2>
+        <div class="ruby-countdown">
+          <div class="ruby-countdown__item" *ngFor="let part of getCountdownParts()">
+            <strong>{{ part.value }}</strong>
+            <span>{{ part.label }}</span>
           </div>
         </div>
+      </section>
 
-        <div class="gallery-grid">
-          <div class="gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-            <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
-            <div class="gallery-play gallery-play--small" *ngIf="item.url_video">
-              <i class="fas fa-play"></i>
+      <section class="ruby-section ruby-section--gallery" *ngIf="isGalleryVisible()">
+        <p class="ruby-eyebrow">MOMENTS</p>
+        <h2 class="ruby-title">Galeri Foto</h2>
+
+        <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
+          <article class="ruby-gallery-featured">
+            <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+            <div class="ruby-gallery-play" *ngIf="featured.url_video">
+              <i class="fas fa-play" aria-hidden="true"></i>
             </div>
+          </article>
+
+          <div class="ruby-gallery-grid">
+            <article class="ruby-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
+              <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+              <div class="ruby-gallery-play ruby-gallery-play--small" *ngIf="item.url_video">
+                <i class="fas fa-play" aria-hidden="true"></i>
+              </div>
+            </article>
           </div>
+        </ng-container>
+
+        <ng-template #emptyGallery>
+          <div class="ruby-empty-state">Galeri foto akan segera ditambahkan.</div>
+        </ng-template>
+      </section>
+
+      <section class="ruby-section ruby-section--wishes" *ngIf="isWishVisible()">
+        <img class="ruby-floral ruby-floral--top-left" [src]="floralAsset" alt="" aria-hidden="true">
+        <p class="ruby-eyebrow">DOA &amp; HARAPAN</p>
+        <h2 class="ruby-title">Ucapan &amp; Doa</h2>
+
+        <div class="ruby-form">
+          <label class="ruby-label" for="ruby-nama">Nama Lengkap</label>
+          <input id="ruby-nama" class="ruby-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama Anda">
+
+          <label class="ruby-label" for="ruby-pesan">Ucapan &amp; Doa</label>
+          <textarea id="ruby-pesan" class="ruby-textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan dan doa terbaikmu..."></textarea>
+
+          <label class="ruby-label">Kehadiran</label>
+          <div class="ruby-attendance">
+            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
+            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
+            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
+          </div>
+
+          <button class="ruby-button ruby-button--submit" type="button" [disabled]="isSubmittingWish" (click)="submitWish()">
+            {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
+          </button>
         </div>
-      </ng-container>
 
-      <ng-template #emptyGallery>
-        <p class="section-copy muted-copy">Galeri foto akan segera ditambahkan.</p>
-      </ng-template>
-    </section>
+        <div class="ruby-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
+          <article class="ruby-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+            <div class="ruby-wish-card__header">
+              <strong>{{ wish.nama }}</strong>
+              <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
+            </div>
+            <p>{{ wish.pesan }}</p>
+          </article>
+        </div>
 
-    <section class="paper-section wishes-section">
-      <p class="section-label">Doa Harapan</p>
-      <h3 class="section-title">Ucapan &amp; Doa</h3>
-      <wc-presence-view [weddingData]="data"></wc-presence-view>
-    </section>
+        <ng-template #emptyWishes>
+          <div class="ruby-empty-state">Belum ada ucapan. Jadilah yang pertama memberikan doa terbaik.</div>
+        </ng-template>
+      </section>
 
-    <section class="paper-section wish-list-section">
-      <p class="section-label">Ucapan Tamu</p>
-      <h3 class="section-title">List Ucapan</h3>
-      <wc-message-view [guestWishes]="data.guest_wishes"></wc-message-view>
-    </section>
+      <section class="ruby-section ruby-section--gift" *ngIf="isGiftVisible()">
+        <p class="ruby-eyebrow">WEDDING GIFT</p>
+        <h2 class="ruby-title">Tanda Kasih</h2>
+        <p class="ruby-copy ruby-copy--center">{{ getWeddingGiftIntro() }}</p>
 
-    <section class="paper-section gift-section">
-      <p class="section-label">Wedding Gift</p>
-      <h3 class="section-title">Amplop &amp; Rekening</h3>
-      <wc-gift-view [weddingData]="data"></wc-gift-view>
-    </section>
+        <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
+          <article class="ruby-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
+            <div class="ruby-bank-card__top">
+              <span>{{ bank.nama_bank || 'Bank' }}</span>
+              <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
+            </div>
+            <strong>{{ bank.nomor_rekening }}</strong>
+            <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
+            <button class="ruby-button ruby-button--secondary" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
+              Salin No. Rekening
+            </button>
+          </article>
+        </ng-container>
 
-    <section class="paper-section closing-section">
-      <p class="section-label">Penutup</p>
-      <h3 class="section-title">Tanda Kasih</h3>
-      <p class="section-copy">{{ getClosingText() }}</p>
-      <h4 class="closing-names">{{ getGroomNickname() }}<span>&amp;</span>{{ getBrideNickname() }}</h4>
-      <p class="cover-date">{{ getOpeningDate() }}</p>
-    </section>
-  </div>
+        <ng-template #emptyBanks>
+          <article class="ruby-bank-card">
+            <div class="ruby-bank-card__top">
+              <span>Bank</span>
+              <small>INFO</small>
+            </div>
+            <strong>1234 5678 90</strong>
+            <p>a/n Mempelai</p>
+          </article>
+        </ng-template>
+      </section>
+
+      <section class="ruby-section ruby-section--closing">
+        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAsset" alt="" aria-hidden="true">
+        <p class="ruby-copy ruby-copy--center">
+          Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.
+        </p>
+        <p class="ruby-eyebrow">KAMI YANG BERBAHAGIA</p>
+        <h2 class="ruby-closing-names">
+          <span>{{ getPrimaryDisplayName() }}</span>
+          <em>&amp;</em>
+          <span>{{ getSecondaryDisplayName() }}</span>
+        </h2>
+        <p class="ruby-cover__date ruby-cover__date--closing">{{ getClosingDateLabel() }}</p>
+        <p class="ruby-crafted">{{ getPackageLabelText() }} | {{ craftedByLabel }}</p>
+      </section>
+    </ng-container>
+  </article>
 </section>
