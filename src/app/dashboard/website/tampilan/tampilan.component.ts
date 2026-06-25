@@ -224,6 +224,18 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return true;
     }
 
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      return true;
+    }
+
+    if (theme.is_active === false) {
+      return true;
+    }
+
+    if (theme.category_is_active === false) {
+      return true;
+    }
+
     return false;
   }
 
@@ -239,11 +251,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (this.isCurrentTheme(theme)) {
-      return 'Tema sudah digunakan';
+      return 'Tema Dipilih';
     }
 
     if (theme.isLegacy) {
       return 'Tema default trial';
+    }
+
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      return 'Tema belum terhubung';
     }
 
     if (theme.is_active === false) {
@@ -314,8 +330,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
           return;
         }
 
-        if (themes.status && Array.isArray(themes.data?.categories)) {
-          this.processThemeData(themes.data.categories);
+        console.log('[ThemeCategories] Raw response /api/themes/categories:', themes);
+
+        const extractedCategories = this.extractCategoriesFromThemesResponse(themes);
+        if (themes?.status !== false && extractedCategories.length) {
+          this.processThemeData(extractedCategories);
         } else {
           this.handleError('Format data tema tidak valid.');
         }
@@ -375,17 +394,76 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /**
    * Process theme data from API into display format
    */
+  private extractCategoriesFromThemesResponse(response: PublicCategoriesResponse | any): PublicCategoryWithThemes[] {
+    const data = response?.data;
+    const candidates = [
+      data?.categories,
+      data?.data,
+      data,
+      response?.categories,
+      response?.data?.items,
+      response?.items,
+    ];
+
+    const rawCategories = candidates.find((entry) => Array.isArray(entry));
+    if (!Array.isArray(rawCategories)) {
+      console.warn('[ThemeCategories] Tidak menemukan array categories pada response:', response);
+      return [];
+    }
+
+    return rawCategories
+      .map((rawCategory: any) => {
+        const extractedThemes = this.extractThemesFromCategory(rawCategory);
+        return {
+          ...rawCategory,
+          jenis_themas: extractedThemes,
+        } as PublicCategoryWithThemes;
+      })
+      .filter((category) => Array.isArray(category.jenis_themas) && category.jenis_themas.length > 0);
+  }
+
+  private extractThemesFromCategory(rawCategory: any): PublicTheme[] {
+    if (!rawCategory) {
+      return [];
+    }
+
+    const themeCandidates = [
+      rawCategory?.jenis_themas,
+      rawCategory?.themes,
+      rawCategory?.theme,
+      rawCategory?.data,
+      rawCategory?.items,
+    ];
+
+    const rawThemes = themeCandidates.find((entry) => Array.isArray(entry));
+    if (!Array.isArray(rawThemes)) {
+      return [];
+    }
+
+    return rawThemes
+      .map((theme: any) => ({
+        ...theme,
+        category: theme?.category || rawCategory,
+        category_id: theme?.category_id ?? rawCategory?.id ?? null,
+      }))
+      .filter((theme: any) => {
+        const normalizedSlug = normalizeThemeSlug(theme?.slug);
+        return !!normalizedSlug;
+      });
+  }
+
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
     const nextCards: ThemeCard[] = [];
     const backendThemesBySlug = new Map<string, { theme: PublicTheme; category: PublicCategoryWithThemes; resolvedCategory: ThemeCategoryName }>();
 
     categories.forEach((category) => {
+      const categoryThemes = this.extractThemesFromCategory(category);
       const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!resolvedCategory || !Array.isArray(category.jenis_themas) || category.jenis_themas.length === 0) {
+      if (!Array.isArray(categoryThemes) || categoryThemes.length === 0) {
         return;
       }
 
-      category.jenis_themas.forEach((theme) => {
+      categoryThemes.forEach((theme) => {
         const normalizedSlug = normalizeThemeSlug(theme?.slug);
         if (!normalizedSlug) {
           console.warn('[ThemeCards] Mengabaikan theme backend tanpa slug valid:', {
@@ -405,9 +483,31 @@ export class TampilanComponent implements OnInit, OnDestroy {
           return;
         }
 
-        backendThemesBySlug.set(normalizedSlug, { theme, category, resolvedCategory });
+        const categoryNameSource = (theme as any)?.category?.name ?? category?.name;
+        const normalizedCategory = resolveThemeCategory(categoryNameSource) || resolvedCategory;
+        if (!normalizedCategory) {
+          console.warn('[ThemeCards] Theme diabaikan karena kategori tidak dikenali:', {
+            id: theme?.id,
+            slug: normalizedSlug,
+            categoryName: categoryNameSource,
+          });
+          return;
+        }
+
+        backendThemesBySlug.set(normalizedSlug, { theme, category, resolvedCategory: normalizedCategory });
       });
     });
+
+    console.log('[ThemeCards] Extracted backend themes:', Array.from(backendThemesBySlug.values()).map((entry) => ({
+      id: entry.theme?.id,
+      slug: entry.theme?.slug,
+      name: entry.theme?.name,
+      category_id: (entry.theme as any)?.category_id ?? entry.category?.id ?? null,
+      category_name: (entry.theme as any)?.category?.name ?? entry.category?.name ?? null,
+      is_active: entry.theme?.is_active,
+      category_is_active: (entry.theme as any)?.category?.is_active ?? entry.category?.is_active,
+    })));
+    console.log('[ThemeCards] backendThemeMap keys:', Array.from(backendThemesBySlug.keys()));
 
     FIXED_THEME_PRESETS.forEach((preset) => {
       const matched = backendThemesBySlug.get(preset.slug);
@@ -439,8 +539,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
       }
 
       const { theme, category, resolvedCategory } = matched;
-      const isThemeActive = theme.is_active == null ? true : Boolean(theme.is_active);
-      const isCategoryActive = category.is_active == null ? true : Boolean(category.is_active);
+      const resolvedThemeId = Number((theme as any)?.id) || null;
+      const resolvedThemeSlug = normalizeThemeSlug(theme?.slug);
+      const rawCategory = (theme as any)?.category || category;
+      const resolvedCategoryId = Number((theme as any)?.category_id ?? rawCategory?.id) || 0;
+      const isThemeActive = theme?.is_active === true;
+      const isCategoryActive = rawCategory?.is_active == null ? true : rawCategory.is_active === true;
+      const isConnectedToBackend = !!resolvedThemeId && !!resolvedThemeSlug;
       const availabilityMessage = !isThemeActive
         ? 'Tema belum aktif'
         : !isCategoryActive
@@ -448,8 +553,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
           : undefined;
 
       nextCards.push({
-        id: theme.id,
-        backendThemeId: theme.id,
+        id: resolvedThemeId || -100 - nextCards.length,
+        backendThemeId: resolvedThemeId,
         label: resolvedCategory,
         title: theme.name || preset.name,
         name: theme.name || preset.name,
@@ -461,15 +566,27 @@ export class TampilanComponent implements OnInit, OnDestroy {
         price: theme.price || 0,
         isCurrentTheme: false,
         isLoading: false,
-        category_id: category.id,
+        category_id: resolvedCategoryId,
         category: resolvedCategory,
         requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
         is_active: isThemeActive,
         category_is_active: isCategoryActive,
-        isConnectedToBackend: true,
+        isConnectedToBackend,
         availabilityMessage
       });
     });
+
+    console.log('[ThemeCards] Built cards:', nextCards.map((card) => ({
+      title: card.title,
+      presetKey: card.slug,
+      backendThemeId: card.backendThemeId,
+      slug: card.slug,
+      isActive: card.is_active,
+      category: card.category,
+      categoryIsActive: card.category_is_active,
+      connected: card.isConnectedToBackend,
+      message: card.availabilityMessage || null,
+    })));
 
     this.themeCards = nextCards;
     this.updateCurrentThemeStatus();
@@ -515,9 +632,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onThemeCardClick(theme: ThemeCard): void {
-    if (this.isCardLocked(theme)) {
-      return;
-    }
     this.selectedThemeId = theme.id;
   }
 
@@ -663,7 +777,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     console.log('[ConfirmThemeClick]', theme);
 
-    if (!theme?.id) {
+    if (!theme?.backendThemeId) {
       this.toastService.showToast('Tidak ada tema yang dipilih.', 'error');
       return;
     }
@@ -745,6 +859,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     if (theme.availabilityMessage) {
       return theme.availabilityMessage;
+    }
+
+    if (!this.canUseTheme(theme)) {
+      return 'Upgrade Paket';
     }
 
     return `${this.getPackageLabel(theme.requiredPackageTier)} template`;
