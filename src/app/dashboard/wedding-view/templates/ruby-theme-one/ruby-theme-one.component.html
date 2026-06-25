@@ -1,7 +1,15 @@
 <section class="ruby-theme-one" *ngIf="weddingData as data">
   <article class="ruby-shell">
     <section class="ruby-cover" [class.ruby-cover--opened]="invitationOpened">
-      <div class="ruby-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
+        <div class="ruby-cover__media" [style.background-image]="'url(' + coverPhoto + ')'"></div>
+      </ng-container>
+      <ng-template #coverPlaceholder>
+        <div class="ruby-cover__placeholder" aria-hidden="true">
+          <div class="ruby-cover__placeholder-bloom ruby-cover__placeholder-bloom--left"></div>
+          <div class="ruby-cover__placeholder-bloom ruby-cover__placeholder-bloom--right"></div>
+        </div>
+      </ng-template>
       <div class="ruby-cover__veil"></div>
       <img class="ruby-floral ruby-floral--cover-left" [src]="floralAsset" alt="" aria-hidden="true">
       <img class="ruby-floral ruby-floral--cover-right" [src]="floralAsset" alt="" aria-hidden="true">
@@ -44,7 +52,14 @@
 
         <div class="ruby-person">
           <div class="ruby-person__frame">
-            <img [src]="getBridePhoto()" [alt]="getBrideName()">
+            <ng-container *ngIf="getBridePhoto() as bridePhoto; else bridePlaceholder">
+              <img [src]="bridePhoto" [alt]="getBrideName()">
+            </ng-container>
+            <ng-template #bridePlaceholder>
+              <div class="ruby-person__avatar-placeholder" aria-hidden="true">
+                <span>{{ getBrideName().charAt(0) || 'I' }}</span>
+              </div>
+            </ng-template>
           </div>
           <h3>{{ getBrideName() }}</h3>
           <p>{{ getBrideParentLine() }}</p>
@@ -55,7 +70,14 @@
 
         <div class="ruby-person">
           <div class="ruby-person__frame">
-            <img [src]="getGroomPhoto()" [alt]="getGroomName()">
+            <ng-container *ngIf="getGroomPhoto() as groomPhoto; else groomPlaceholder">
+              <img [src]="groomPhoto" [alt]="getGroomName()">
+            </ng-container>
+            <ng-template #groomPlaceholder>
+              <div class="ruby-person__avatar-placeholder" aria-hidden="true">
+                <span>{{ getGroomName().charAt(0) || 'K' }}</span>
+              </div>
+            </ng-template>
           </div>
           <h3>{{ getGroomName() }}</h3>
           <p>{{ getGroomParentLine() }}</p>

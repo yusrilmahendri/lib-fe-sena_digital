@@ -53,6 +53,60 @@
   transform: scale(1.02);
 }
 
+.ruby-cover__placeholder {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 22%, rgba(255, 255, 255, 0.88), transparent 28%),
+    radial-gradient(circle at 78% 18%, rgba(255, 240, 236, 0.8), transparent 22%),
+    linear-gradient(180deg, #fff8f6 0%, #fde7e9 50%, #f7d7da 100%);
+}
+
+.ruby-cover__placeholder::before,
+.ruby-cover__placeholder::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(159, 53, 45, 0.1);
+  filter: blur(1px);
+}
+
+.ruby-cover__placeholder::before {
+  width: 180px;
+  height: 180px;
+  left: -42px;
+  bottom: 120px;
+}
+
+.ruby-cover__placeholder::after {
+  width: 160px;
+  height: 160px;
+  right: -34px;
+  top: 112px;
+}
+
+.ruby-cover__placeholder-bloom {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.82) 0 22%, rgba(234, 178, 171, 0.42) 23% 44%, transparent 45%),
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.7), transparent 24%),
+    radial-gradient(circle at 30% 68%, rgba(243, 198, 191, 0.72), transparent 32%);
+  opacity: 0.85;
+}
+
+.ruby-cover__placeholder-bloom--left {
+  left: -20px;
+  bottom: 34px;
+}
+
+.ruby-cover__placeholder-bloom--right {
+  right: -18px;
+  bottom: 108px;
+}
+
 .ruby-cover__veil {
   position: absolute;
   inset: 0;
@@ -268,6 +322,22 @@
   object-fit: cover;
   border-radius: 18px;
   display: block;
+}
+
+.ruby-person__avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.9), transparent 44%),
+    linear-gradient(180deg, #f9e1e2 0%, #f4cfd1 100%);
+  color: var(--ruby-primary);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3rem;
+  box-shadow: inset 0 0 0 1px rgba(159, 53, 45, 0.08);
 }
 
 .ruby-person h3,

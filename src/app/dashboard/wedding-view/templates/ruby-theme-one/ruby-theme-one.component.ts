@@ -91,34 +91,32 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override getCoverPhoto(): string {
-    return this.getSafeImageUrl([
+    const coverPhoto = this.getSafeImageUrl([
       this.weddingData?.mempelai?.cover_photo,
-      this.getBride()?.photo,
-      this.getGroom()?.photo,
-    ], this.createCouplePlaceholder());
+    ], '');
+    console.log('[RubyCoverPhoto]', coverPhoto);
+    return coverPhoto;
   }
 
   getBridePhoto(): string {
     return this.getSafeImageUrl([
       this.getBride()?.photo,
-    ], this.createPersonPlaceholder(this.getBrideNickname() || 'Isabela'));
+    ], '');
   }
 
   getGroomPhoto(): string {
     return this.getSafeImageUrl([
       this.getGroom()?.photo,
-    ], this.createPersonPlaceholder(this.getGroomNickname() || 'Ketut'));
+    ], '');
   }
 
   getSafeGalleryPhotos(): GalleryItem[] {
-    return this.getGalleryItems().filter((item) => {
+    const photos = this.getGalleryItems().filter((item) => {
       const photo = item?.photo;
-      if (!this.isSafePublicImage(photo)) {
-        return false;
-      }
-
-      return !this.isLikelyThemeSelectionImage(photo);
+      return !!photo && !this.isUnsafeThemeImage(photo);
     });
+    console.log('[RubyGalleryPhotos]', photos);
+    return photos;
   }
 
   override hasGallery(): boolean {
@@ -333,69 +331,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   private getSafeImageUrl(candidates: Array<string | null | undefined>, fallback: string): string {
     for (const candidate of candidates) {
-      if (this.isSafePublicImage(candidate)) {
+      if (!this.isUnsafeThemeImage(candidate)) {
         return String(candidate);
       }
     }
     return fallback;
   }
 
-  private isSafePublicImage(value: string | null | undefined): boolean {
-    if (!value) {
-      return false;
-    }
-
-    const normalized = String(value).toLowerCase().trim();
-    if (!normalized) {
-      return false;
-    }
-
-    const blockedTokens = [
-      'assets/landing/template-',
-      'assets/themas',
-      'dashboard',
-      '/dashboard/',
-      'website/tampilan',
-      'website-categories',
-      'admin/themes',
-      'admin/categories',
-      'theme-preview',
-      'preview tema',
-      'preview-image',
-      'thumbnail',
-      '/themes/',
-      'theme selection',
-      'pilih tema',
-      'screenshot',
-      'soft-ivory',
-      'lavender-bloom',
-      'garden-whisper',
-      'modern-vows',
-      'champagne-rose',
-      'velvet-mauve',
-    ];
-
-    return !blockedTokens.some((token) => normalized.includes(token));
-  }
-
-  private isLikelyThemeSelectionImage(value: string | null | undefined): boolean {
-    if (!value) {
-      return false;
-    }
-
-    const normalized = String(value).toLowerCase().trim();
-    const suspiciousTokens = [
-      'paket-ruby',
-      'paket ruby',
-      'preview',
-      'tampilan',
-      'thema',
-      'theme-card',
-      'template-card',
-      'category',
-    ];
-
-    return suspiciousTokens.some((token) => normalized.includes(token));
+  private isUnsafeThemeImage(url: any): boolean {
+    const value = String(url || '').toLowerCase().trim();
+    return !value ||
+      value.includes('dashboard') ||
+      value.includes('website/tampilan') ||
+      value.includes('theme') ||
+      value.includes('/themes/') ||
+      value.includes('preview') ||
+      value.includes('thumbnail') ||
+      value.includes('soft-ivory') ||
+      value.includes('lavender-bloom') ||
+      value.includes('garden-whisper') ||
+      value.includes('modern-vows') ||
+      value.includes('champagne-rose') ||
+      value.includes('velvet-mauve');
   }
 
   private createCouplePlaceholder(): string {
