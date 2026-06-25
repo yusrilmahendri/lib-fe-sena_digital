@@ -911,71 +911,55 @@ export class TampilanComponent implements OnInit, OnDestroy {
         console.log('[SelectTheme] Response:', response);
 
         if (response.status) {
-          console.log('[SelectTheme] Sukses. Theme yang dipilih:', {
+          console.log('[SelectTheme] Sukses:', {
             theme_id: theme.backendThemeId,
             theme_name: theme.name,
             theme_slug: theme.slug,
-            response_data: response.data,
           });
+
+          // --- Feedback langsung: tidak menunggu refetch ---
+          theme.isLoading = false;
+          this.processingPrimaryAction = false;
           this.closeSelectConfirmationModal();
+          this.toastService.showToast('Theme berhasil digunakan', 'success');
 
-          const refreshSelectedSubscription = this.themeService.getSelectedTheme().subscribe({
+          // --- Optimistic update state di cards ---
+          this.currentThemeId = theme.backendThemeId;
+          this.selectedThemeId = theme.backendThemeId;
+          this.updateCurrentThemeStatus();
+
+          // --- Background refetch untuk sinkronisasi data dari server ---
+          const refreshSub = this.themeService.getSelectedTheme().subscribe({
             next: (selectedResponse: UserSelectedThemeResponse) => {
-              console.log('[SelectTheme] Refetch selected theme response:', selectedResponse);
-
+              console.log('[SelectTheme] Refetch selected theme:', selectedResponse);
               if (selectedResponse.status && selectedResponse.data?.theme) {
                 this.applySelectedThemeResponse(selectedResponse);
-
-                const refreshedTheme = selectedResponse.data.theme as any;
-                const refreshedSlug = refreshedTheme?.slug ?? refreshedTheme?.theme_slug ?? null;
-                console.log('[SelectTheme] Selected theme setelah refresh:', {
-                  id: refreshedTheme?.id,
-                  slug: refreshedSlug ?? 'TIDAK ADA SLUG',
-                  name: refreshedTheme?.name,
-                });
-
-                if (theme.slug && refreshedSlug && refreshedSlug !== theme.slug) {
-                  console.warn('[SelectTheme] Slug selected theme setelah refresh tidak sama dengan theme yang diklik:', {
-                    clickedThemeSlug: theme.slug,
-                    refreshedThemeSlug: refreshedSlug,
-                  });
-                }
-              } else {
-                console.warn('[SelectTheme] Refetch selected theme tidak berisi theme:', selectedResponse);
-                this.loadSelectedTheme();
+                const t = selectedResponse.data.theme as any;
+                console.log('[SelectTheme] Slug setelah refresh:', t?.slug ?? 'TIDAK ADA');
               }
-
-              this.toastService.showToast('Tema berhasil digunakan', 'success');
-              theme.isLoading = false;
-              this.processingPrimaryAction = false;
             },
-            error: (selectedError) => {
-              console.error('[SelectTheme] Gagal refresh selected theme setelah select:', selectedError);
-              this.loadSelectedTheme();
-              this.toastService.showToast('Tema berhasil digunakan', 'success');
-              theme.isLoading = false;
-              this.processingPrimaryAction = false;
+            error: (err) => {
+              console.warn('[SelectTheme] Refetch selected theme gagal (diabaikan):', err);
             }
           });
 
-          this.subscriptions.add(refreshSelectedSubscription);
+          this.subscriptions.add(refreshSub);
         } else {
-          console.warn('[SelectTheme] Gagal. Response status false:', response);
-          const message = response.message || 'Gagal memilih tema';
+          console.warn('[SelectTheme] Response status false:', response);
+          const message = (response as any).message || 'Gagal menggunakan theme';
           this.toastService.showToast(message, 'error');
           theme.isLoading = false;
           this.processingPrimaryAction = false;
         }
       },
       error: (error) => {
-        console.error('[SelectTheme] Error:', error);
-        console.log('[SelectTheme] Error response payload:', error?.error ?? error);
-        let message = 'Gagal memilih tema';
+        console.error('[SelectTheme] HTTP error:', error);
+        let message = 'Gagal menggunakan theme';
 
         if (error.status === 401) {
           message = 'Sesi telah habis. Silakan login kembali.';
         } else if (error.status === 403) {
-          message = error.error?.message || 'Tema ini tidak tersedia untuk paket Anda.';
+          message = error.error?.message || 'Theme ini tidak tersedia untuk paket Anda.';
         } else if (error.status === 422) {
           message = error.error?.message || 'Data tema tidak valid.';
         } else if (error.status === 500) {
