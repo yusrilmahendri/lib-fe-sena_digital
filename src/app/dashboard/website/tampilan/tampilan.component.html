@@ -47,6 +47,7 @@
           [class.theme-card--selected]="isSelectedTheme(theme)"
           [class.theme-card--used]="isCurrentTheme(theme)"
           [class.theme-card--locked]="isCardLocked(theme)"
+          [attr.aria-disabled]="isCardLocked(theme)"
           (click)="onThemeCardClick(theme)">
           <div class="theme-card__media">
             <img
@@ -75,6 +76,7 @@
           <div class="theme-card__body">
             <h3>{{ theme.name }}</h3>
             <p>{{ getCardSubtitle(theme) }}</p>
+            <small *ngIf="!theme.isConnectedToBackend" class="text-muted">Theme belum terhubung</small>
           </div>
         </article>
       </div>

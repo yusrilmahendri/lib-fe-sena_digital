@@ -23,11 +23,20 @@ import {
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../../theme-package-access.util';
+import { normalizeThemeSlug } from '../../../theme-render.registry';
 
 type PaidPackageTier = Exclude<ThemePackageTier, 'trial'>;
 
+interface FixedThemePreset {
+  slug: string;
+  name: string;
+  category: ThemeCategoryName;
+  fallbackImage: string;
+}
+
 interface ThemeCard {
   id: number;
+  backendThemeId: number | null;
   label: string;
   title: string;
   name: string;
@@ -45,6 +54,8 @@ interface ThemeCard {
   requiredPackageTier: PaidPackageTier | null;
   is_active: boolean;
   category_is_active: boolean;
+  isConnectedToBackend: boolean;
+  availabilityMessage?: string;
 }
 
 interface PackageTab {
@@ -56,6 +67,15 @@ const PACKAGE_TABS: PackageTab[] = [
   { tier: 'ruby', label: 'Ruby' },
   { tier: 'sapphire', label: 'Sapphire' },
   { tier: 'diamond', label: 'Diamond' },
+];
+
+const FIXED_THEME_PRESETS: FixedThemePreset[] = [
+  { slug: 'soft-ivory', name: 'Soft Ivory', category: 'Minimalis', fallbackImage: 'assets/themas3.png' },
+  { slug: 'lavender-bloom', name: 'Lavender Bloom', category: 'Floral', fallbackImage: 'assets/landing/template-1.png' },
+  { slug: 'garden-whisper', name: 'Garden Whisper', category: 'Floral', fallbackImage: 'assets/landing/template-6.png' },
+  { slug: 'modern-vows', name: 'Modern Vows', category: 'Modern', fallbackImage: 'assets/themas2.png' },
+  { slug: 'champagne-rose', name: 'Champagne Rose', category: 'Elegant', fallbackImage: 'assets/landing/template-5.png' },
+  { slug: 'velvet-mauve', name: 'Velvet Mauve', category: 'Luxury', fallbackImage: 'assets/landing/template-3.png' },
 ];
 
 @Component({
@@ -82,11 +102,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private pendingThemeForConfirmation: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
-    { id: -1, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
-    { id: -2, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
-    { id: -3, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
-    { id: -4, label: 'Scroll', title: 'Pinky', name: 'Pinky', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
-    { id: -5, label: 'Mobile', title: 'Elegant', name: 'Elegant', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true },
+    { id: -1, backendThemeId: null, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
+    { id: -2, backendThemeId: null, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
+    { id: -3, backendThemeId: null, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
+    { id: -4, backendThemeId: null, label: 'Scroll', title: 'Pinky', name: 'Pinky', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
+    { id: -5, backendThemeId: null, label: 'Mobile', title: 'Elegant', name: 'Elegant', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
   ];
 
   constructor(
@@ -178,6 +198,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (theme.isLoading || this.processingPrimaryAction) return false;
     if (theme.is_active === false) return false;
     if (theme.category_is_active === false) return false;
+    if (!this.hasValidBackendThemeConnection(theme)) return false;
     return this.canUseTheme(theme);
   }
 
@@ -356,38 +377,97 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
     const nextCards: ThemeCard[] = [];
+    const backendThemesBySlug = new Map<string, { theme: PublicTheme; category: PublicCategoryWithThemes; resolvedCategory: ThemeCategoryName }>();
 
     categories.forEach((category) => {
       const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!resolvedCategory) {
-        return;
-      }
-
-      if (!Array.isArray(category.jenis_themas) || category.jenis_themas.length === 0) {
+      if (!resolvedCategory || !Array.isArray(category.jenis_themas) || category.jenis_themas.length === 0) {
         return;
       }
 
       category.jenis_themas.forEach((theme) => {
+        const normalizedSlug = normalizeThemeSlug(theme?.slug);
+        if (!normalizedSlug) {
+          console.warn('[ThemeCards] Mengabaikan theme backend tanpa slug valid:', {
+            id: theme?.id,
+            name: theme?.name,
+            slug: theme?.slug ?? null,
+          });
+          return;
+        }
+
+        if (!FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug)) {
+          console.log('[ThemeCards] Mengabaikan theme backend non-fixed:', {
+            id: theme?.id,
+            name: theme?.name,
+            slug: normalizedSlug,
+          });
+          return;
+        }
+
+        backendThemesBySlug.set(normalizedSlug, { theme, category, resolvedCategory });
+      });
+    });
+
+    FIXED_THEME_PRESETS.forEach((preset) => {
+      const matched = backendThemesBySlug.get(preset.slug);
+      if (!matched) {
+        console.warn('[ThemeCards] Preset frontend belum terhubung ke backend theme:', preset.slug);
         nextCards.push({
-          id: theme.id,
-          label: resolvedCategory,
-          title: theme.name,
-          name: theme.name,
-          slug: theme.slug || this.toSlug(theme.name),
-          image: this.getThemeImage(theme, resolvedCategory),
-          imageFallback: this.getThemeFallbackImage(theme.name, resolvedCategory),
-          url_thema: theme.url_thema || '',
-          demo_url: theme.demo_url || '',
-          price: theme.price || 0,
+          id: -100 - nextCards.length,
+          backendThemeId: null,
+          label: preset.category,
+          title: preset.name,
+          name: preset.name,
+          slug: preset.slug,
+          image: preset.fallbackImage,
+          imageFallback: preset.fallbackImage,
+          url_thema: '',
+          demo_url: '',
+          price: 0,
           isCurrentTheme: false,
           isLoading: false,
-          category_id: category.id,
-          category: resolvedCategory,
-          requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
-          // Default to true when the field is absent (undefined/null); convert integer 0/1 to boolean
-          is_active: theme.is_active == null ? true : Boolean(theme.is_active),
-          category_is_active: category.is_active == null ? true : Boolean(category.is_active)
+          category_id: 0,
+          category: preset.category,
+          requiredPackageTier: getLowestPackageTierForCategory(preset.category, this.themeAccessMap),
+          is_active: false,
+          category_is_active: false,
+          isConnectedToBackend: false,
+          availabilityMessage: 'Theme belum terhubung'
         });
+        return;
+      }
+
+      const { theme, category, resolvedCategory } = matched;
+      const isThemeActive = theme.is_active == null ? true : Boolean(theme.is_active);
+      const isCategoryActive = category.is_active == null ? true : Boolean(category.is_active);
+      const availabilityMessage = !isThemeActive
+        ? 'Tema belum aktif'
+        : !isCategoryActive
+          ? 'Kategori belum aktif'
+          : undefined;
+
+      nextCards.push({
+        id: theme.id,
+        backendThemeId: theme.id,
+        label: resolvedCategory,
+        title: theme.name || preset.name,
+        name: theme.name || preset.name,
+        slug: preset.slug,
+        image: this.getThemeImage(theme, resolvedCategory),
+        imageFallback: preset.fallbackImage,
+        url_thema: theme.url_thema || '',
+        demo_url: theme.demo_url || '',
+        price: theme.price || 0,
+        isCurrentTheme: false,
+        isLoading: false,
+        category_id: category.id,
+        category: resolvedCategory,
+        requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
+        is_active: isThemeActive,
+        category_is_active: isCategoryActive,
+        isConnectedToBackend: true,
+        availabilityMessage
       });
     });
 
@@ -435,6 +515,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onThemeCardClick(theme: ThemeCard): void {
+    if (this.isCardLocked(theme)) {
+      return;
+    }
     this.selectedThemeId = theme.id;
   }
 
@@ -535,6 +618,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      this.toastService.showToast('Theme belum terhubung dengan data backend.', 'error');
+      return;
+    }
+
     if (this.isCurrentTheme(theme)) {
       return;
     }
@@ -580,6 +668,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      this.toastService.showToast('Theme belum terhubung dengan data backend.', 'error');
+      return;
+    }
+
     this.selectTheme(theme);
   }
 
@@ -604,6 +697,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   isCardLocked(theme: ThemeCard): boolean {
     if (theme.isLegacy) {
+      return true;
+    }
+    if (!theme.isConnectedToBackend || !this.hasValidBackendThemeConnection(theme)) {
       return true;
     }
     // Explicitly inactive themes are locked regardless of package tier
@@ -643,6 +739,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Tema default trial';
     }
 
+    if (!theme.isConnectedToBackend) {
+      return 'Theme belum terhubung';
+    }
+
+    if (theme.availabilityMessage) {
+      return theme.availabilityMessage;
+    }
+
     return `${this.getPackageLabel(theme.requiredPackageTier)} template`;
   }
 
@@ -657,6 +761,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /** Debug: returns human-readable reason why a theme cannot be confirmed. Empty string = no issue. */
   getThemeDebugReason(theme: ThemeCard): string {
     if (!theme.id || theme.id <= 0) return 'theme id missing';
+    if (!theme.isConnectedToBackend) return 'theme not connected';
     if (theme.is_active === false) return 'theme inactive';
     if (theme.category_is_active === false) return 'category inactive';
     if (!this.canUseTheme(theme)) {
@@ -700,6 +805,19 @@ export class TampilanComponent implements OnInit, OnDestroy {
     );
   }
 
+  private hasValidBackendThemeConnection(theme: ThemeCard | null | undefined): boolean {
+    if (!theme || theme.isLegacy || !theme.isConnectedToBackend) {
+      return false;
+    }
+
+    if (!Number.isInteger(theme.backendThemeId) || (theme.backendThemeId ?? 0) <= 0) {
+      return false;
+    }
+
+    const normalizedSlug = normalizeThemeSlug(theme.slug);
+    return FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug);
+  }
+
   private selectTheme(theme: ThemeCard): void {
     if (theme.isLoading || this.processingPrimaryAction) {
       return;
@@ -711,11 +829,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      this.toastService.showToast('Theme belum terhubung dengan data backend.', 'error');
+      return;
+    }
+
     this.processingPrimaryAction = true;
     theme.isLoading = true;
 
     const request: ThemeSelectionRequest = {
-      theme_id: theme.id
+      theme_id: theme.backendThemeId as number
     };
 
     const selectionSubscription = this.themeService.selectTheme(request).subscribe({
@@ -724,14 +847,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
         if (response.status) {
           console.log('[SelectTheme] Sukses. Theme yang dipilih:', {
-            theme_id: theme.id,
+            theme_id: theme.backendThemeId,
             theme_name: theme.name,
             theme_slug: theme.slug,
             response_data: response.data,
           });
-          this.currentThemeId = theme.id;
-          this.selectedThemeId = theme.id;
-          this.updateCurrentThemeStatus();
 
           const refreshSelectedSubscription = this.themeService.getSelectedTheme().subscribe({
             next: (selectedResponse: UserSelectedThemeResponse) => {
@@ -790,6 +910,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
         if (error.status === 401) {
           message = 'Sesi telah habis. Silakan login kembali.';
+        } else if (error.status === 403) {
+          message = error.error?.message || 'Tema ini tidak tersedia untuk paket Anda.';
         } else if (error.status === 422) {
           message = error.error?.message || 'Data tema tidak valid.';
         } else if (error.status === 500) {
