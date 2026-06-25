@@ -95,6 +95,12 @@
             [invitationOpened]="invitationOpened"
             (openInvitationRequested)="openInvitation()">
           </wc-ruby-theme-one>
+          <wc-ruby-theme-two
+            *ngSwitchCase="'ruby-theme-two'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-ruby-theme-two>
           <wc-lavender-bloom-theme
             *ngSwitchCase="'lavender-bloom'"
             [weddingData]="weddingData"

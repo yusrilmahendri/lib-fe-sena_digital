@@ -38,6 +38,12 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
 
   private buildPreviewData(slug: ThemeSlug): WeddingData {
     const themedName = this.toTitle(slug);
+    const isRubyThemeTwo = slug === 'garden-whisper';
+    const groomPreviewName = isRubyThemeTwo ? 'Sena' : 'Ketut';
+    const bridePreviewName = isRubyThemeTwo ? 'Arya' : 'Isabela';
+    const coverPreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-2.png';
+    const bridePreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-1.png';
+    const groomPreviewImage = isRubyThemeTwo ? 'assets/landing/template-6.png' : 'assets/landing/template-2.png';
 
     const preview: any = {
       user_info: {
@@ -63,27 +69,27 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
         pria: {
           id: 1,
           user_id: 0,
-          nama_lengkap: 'Ketut',
-          nama_panggilan: 'Ketut',
-          photo: 'assets/landing/template-2.png',
-          ayah: 'Bapak Ketut',
-          ibu: 'Ibu Ketut',
+          nama_lengkap: groomPreviewName,
+          nama_panggilan: groomPreviewName,
+          photo: groomPreviewImage,
+          ayah: `Bapak ${groomPreviewName}`,
+          ibu: `Ibu ${groomPreviewName}`,
           created_at: '',
           updated_at: '',
         },
         wanita: {
           id: 2,
           user_id: 0,
-          nama_lengkap: 'Isabela',
-          nama_panggilan: 'Isabela',
-          photo: 'assets/landing/template-1.png',
-          ayah: 'Bapak Isabela',
-          ibu: 'Ibu Isabela',
+          nama_lengkap: bridePreviewName,
+          nama_panggilan: bridePreviewName,
+          photo: bridePreviewImage,
+          ayah: `Bapak ${bridePreviewName}`,
+          ibu: `Ibu ${bridePreviewName}`,
           created_at: '',
           updated_at: '',
         },
         urutan_mempelai: 'pria',
-        cover_photo: 'assets/landing/template-2.png',
+        cover_photo: coverPreviewImage,
       },
       invitation_package: {
         id: 0,
@@ -106,10 +112,21 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
         created_at: '',
         updated_at: '',
       }],
-      stories: [],
+      stories: isRubyThemeTwo ? [
+        { id: 1, title: 'Pertemuan Pertama', lead_cerita: 'Pertemuan sederhana yang mengawali cerita kami.', tanggal_cerita: '2019-05-12', created_at: '' },
+        { id: 2, title: 'Menjalin Hubungan', lead_cerita: 'Kami belajar tumbuh bersama dan saling mendukung.', tanggal_cerita: '2020-10-20', created_at: '' },
+        { id: 3, title: 'Lamaran', lead_cerita: 'Dengan restu keluarga, kami memutuskan melangkah ke tahap berikutnya.', tanggal_cerita: '2025-03-08', created_at: '' },
+      ] : [],
       quotes: [],
-      gallery: [],
-      bank_accounts: [],
+      gallery: [
+        { id: 1, photo: coverPreviewImage, url_video: '', nama_foto: 'Preview 1', status: 1, created_at: '' },
+        { id: 2, photo: bridePreviewImage, url_video: '', nama_foto: 'Preview 2', status: 1, created_at: '' },
+        { id: 3, photo: groomPreviewImage, url_video: '', nama_foto: 'Preview 3', status: 1, created_at: '' },
+      ],
+      bank_accounts: [
+        { id: 1, kode_bank: 'BCA', nomor_rekening: '1234 5678 90', nama_bank: 'BCA', nama_pemilik: groomPreviewName, methode_pembayaran: 'transfer', photo_rek: null },
+        { id: 2, kode_bank: 'BNI', nomor_rekening: '0987 6543 21', nama_bank: 'BNI', nama_pemilik: bridePreviewName, methode_pembayaran: 'transfer', photo_rek: null },
+      ],
       settings: {
         id: 0,
         user_id: 0,
@@ -133,7 +150,10 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
         halaman_send_gift: 1,
         halaman_qoute: 1,
       },
-      guest_wishes: [],
+      guest_wishes: [
+        { id: 1, nama: 'Rani', kehadiran: 'hadir', pesan: 'Semoga lancar sampai hari bahagia.', created_at: new Date().toISOString() },
+        { id: 2, nama: 'Dimas', kehadiran: 'mungkin', pesan: 'Turut berbahagia untuk kalian berdua.', created_at: new Date().toISOString() },
+      ],
       guest_book: [],
       testimonials: [],
       themes: [],

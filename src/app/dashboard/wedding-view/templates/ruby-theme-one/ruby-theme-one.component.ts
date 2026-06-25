@@ -93,7 +93,8 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   override getCoverPhoto(): string {
     return this.getSafeImageUrl([
       this.weddingData?.mempelai?.cover_photo,
-      this.getSafeGalleryPhotos()[0]?.photo,
+      this.getBride()?.photo,
+      this.getGroom()?.photo,
     ], this.createCouplePlaceholder());
   }
 
@@ -110,7 +111,14 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getSafeGalleryPhotos(): GalleryItem[] {
-    return this.getGalleryItems().filter((item) => this.isSafePublicImage(item?.photo));
+    return this.getGalleryItems().filter((item) => {
+      const photo = item?.photo;
+      if (!this.isSafePublicImage(photo)) {
+        return false;
+      }
+
+      return !this.isLikelyThemeSelectionImage(photo);
+    });
   }
 
   override hasGallery(): boolean {
@@ -346,15 +354,48 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       'assets/landing/template-',
       'assets/themas',
       'dashboard',
+      '/dashboard/',
+      'website/tampilan',
+      'website-categories',
+      'admin/themes',
+      'admin/categories',
       'theme-preview',
       'preview tema',
+      'preview-image',
+      'thumbnail',
       '/themes/',
       'theme selection',
       'pilih tema',
       'screenshot',
+      'soft-ivory',
+      'lavender-bloom',
+      'garden-whisper',
+      'modern-vows',
+      'champagne-rose',
+      'velvet-mauve',
     ];
 
     return !blockedTokens.some((token) => normalized.includes(token));
+  }
+
+  private isLikelyThemeSelectionImage(value: string | null | undefined): boolean {
+    if (!value) {
+      return false;
+    }
+
+    const normalized = String(value).toLowerCase().trim();
+    const suspiciousTokens = [
+      'paket-ruby',
+      'paket ruby',
+      'preview',
+      'tampilan',
+      'thema',
+      'theme-card',
+      'template-card',
+      'category',
+    ];
+
+    return suspiciousTokens.some((token) => normalized.includes(token));
   }
 
   private createCouplePlaceholder(): string {

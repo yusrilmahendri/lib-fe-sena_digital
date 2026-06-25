@@ -7,6 +7,7 @@ import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../ser
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
+import { RubyThemeTwoComponent } from './templates/ruby-theme-two/ruby-theme-two.component';
 import {
   resolveThemeRenderKey,
   resolveThemeSlug,
@@ -76,6 +77,7 @@ enum ContentView {
 export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly themeComponentRegistry: Record<ThemeRenderKey, Type<unknown>> = {
     'ruby-theme-one': RubyThemeOneComponent,
+    'ruby-theme-two': RubyThemeTwoComponent,
     'lavender-bloom': LavenderBloomThemeComponent,
   };
 

@@ -6,15 +6,14 @@ export type ThemeSlug =
   | 'champagne-rose'
   | 'velvet-mauve';
 
-export type ThemeRenderKey = 'ruby-theme-one' | 'lavender-bloom';
+export type ThemeRenderKey = 'ruby-theme-one' | 'ruby-theme-two' | 'lavender-bloom';
 
 export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
 
 export const THEME_RENDER_MAP: Record<ThemeSlug, ThemeRenderKey> = {
   'soft-ivory': 'ruby-theme-one',
   'lavender-bloom': 'lavender-bloom',
-  // TODO: replace with GardenWhisperComponent when available
-  'garden-whisper': 'lavender-bloom',
+  'garden-whisper': 'ruby-theme-two',
   // TODO: replace with ModernVowsComponent when available
   'modern-vows': 'lavender-bloom',
   // TODO: replace with ChampagneRoseComponent when available
