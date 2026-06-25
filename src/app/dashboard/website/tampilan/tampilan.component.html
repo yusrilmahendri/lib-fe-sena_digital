@@ -182,3 +182,20 @@
   <i class="fas fa-check-circle" aria-hidden="true"></i>
   {{ themeSuccessMessage }}
 </div>
+
+<div
+  *ngIf="showThemeFeedbackModal"
+  class="theme-feedback-backdrop"
+  (click)="closeThemeFeedbackModal()">
+  <section
+    class="theme-feedback-modal"
+    [class.theme-feedback-modal--error]="themeFeedbackType === 'error'"
+    role="alertdialog"
+    aria-modal="true"
+    aria-labelledby="theme-feedback-title"
+    (click)="$event.stopPropagation()">
+    <h3 id="theme-feedback-title">{{ themeFeedbackType === 'success' ? 'Berhasil' : 'Gagal' }}</h3>
+    <p>{{ themeFeedbackMessage }}</p>
+    <button type="button" (click)="closeThemeFeedbackModal()">Tutup</button>
+  </section>
+</div>

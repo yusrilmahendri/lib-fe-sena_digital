@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { forkJoin, Subscription } from 'rxjs';
+import { finalize, forkJoin, Subscription } from 'rxjs';
 import {
   DashboardService,
   DashboardServiceType,
@@ -99,6 +99,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
   processingPrimaryAction = false;
   showThemeSuccessToast = false;
   themeSuccessMessage = 'Theme berhasil digunakan';
+  showThemeFeedbackModal = false;
+  themeFeedbackType: 'success' | 'error' = 'success';
+  themeFeedbackMessage = '';
 
   private subscriptions = new Subscription();
   private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
@@ -730,6 +733,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.pendingThemeForUpgrade = null;
   }
 
+  closeThemeFeedbackModal(): void {
+    this.showThemeFeedbackModal = false;
+  }
+
   goToUpgradePackage(): void {
     this.closeUpgradeModal();
     this.router.navigate([this.upgradeRoute]);
@@ -909,7 +916,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
       theme_id: theme.backendThemeId as number
     };
 
-    const selectionSubscription = this.themeService.selectTheme(request).subscribe({
+    const selectionSubscription = this.themeService.selectTheme(request).pipe(
+      finalize(() => {
+        theme.isLoading = false;
+        this.processingPrimaryAction = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
       next: (response) => {
         console.log('[SelectTheme] Response:', response);
 
@@ -920,10 +933,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
             theme_slug: theme.slug,
           });
 
-          // --- Feedback langsung: tidak menunggu refetch ---
-          theme.isLoading = false;
-          this.processingPrimaryAction = false;
           this.closeSelectConfirmationModal();
+          this.showThemeFeedback('success', 'Theme berhasil digunakan');
           this.showThemeSuccess('Theme berhasil digunakan');
 
           // --- Optimistic update state di cards ---
@@ -949,35 +960,39 @@ export class TampilanComponent implements OnInit, OnDestroy {
           this.subscriptions.add(refreshSub);
         } else {
           console.warn('[SelectTheme] Response status false:', response);
-          const message = (response as any).message || 'Gagal menggunakan theme';
+          const message = (response as any)?.message || 'Gagal menggunakan theme';
+          this.closeSelectConfirmationModal();
+          this.showThemeFeedback('error', message);
           this.toastService.showToast(message, 'error');
-          theme.isLoading = false;
-          this.processingPrimaryAction = false;
         }
       },
       error: (error) => {
         console.error('[SelectTheme] HTTP error:', error);
-        let message = 'Gagal menggunakan theme';
+        const message =
+          error?.error?.message ||
+          error?.response?.message ||
+          (error.status === 401
+            ? 'Sesi telah habis. Silakan login kembali.'
+            : error.status === 422
+              ? 'Data tema tidak valid.'
+              : error.status === 500
+                ? 'Terjadi kesalahan server. Silakan coba beberapa saat lagi.'
+                : 'Gagal menggunakan theme');
 
-        if (error.status === 401) {
-          message = 'Sesi telah habis. Silakan login kembali.';
-        } else if (error.status === 403) {
-          message = error.error?.message || 'Theme ini tidak tersedia untuk paket Anda.';
-        } else if (error.status === 422) {
-          message = error.error?.message || 'Data tema tidak valid.';
-        } else if (error.status === 500) {
-          message = 'Terjadi kesalahan server. Silakan coba beberapa saat lagi.';
-        } else if (error?.error?.message) {
-          message = error.error.message;
-        }
-
+        this.closeSelectConfirmationModal();
+        this.showThemeFeedback('error', message);
         this.toastService.showToast(message, 'error');
-        theme.isLoading = false;
-        this.processingPrimaryAction = false;
       }
     });
 
     this.subscriptions.add(selectionSubscription);
+  }
+
+  private showThemeFeedback(type: 'success' | 'error', message: string): void {
+    this.themeFeedbackType = type;
+    this.themeFeedbackMessage = message;
+    this.showThemeFeedbackModal = true;
+    this.cdr.detectChanges();
   }
 
   private showThemeSuccess(message = 'Theme berhasil digunakan'): void {
