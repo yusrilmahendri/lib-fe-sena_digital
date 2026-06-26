@@ -24,8 +24,12 @@
 
   <!-- Instructions -->
   <div class="pc-instructions">
-    <p>
-      Silahkan melakukan konfirmasi pembayaran dengan klik "Konfirmasi" untuk mengaktifkan paket yang Anda pilih.
+    <p *ngIf="!isTrialPackage">
+      Konfirmasi manual hanya dapat diverifikasi oleh admin.
+      Silakan kirim kode pemesanan ini ke admin melalui WhatsApp.
+    </p>
+    <p *ngIf="isTrialPackage">
+      Silakan klik "Konfirmasi" untuk melanjutkan ke dashboard.
     </p>
     <p>
       Selama proses konfirmasi, status Anda masih "trial. Proses konfirmasi akan otomatis diperbaharui di akun Anda,
@@ -58,7 +62,7 @@
       [disabled]="isPaymentSubmitting"
       (click)="onConfirm()"
     >
-      {{ isPaymentSubmitting ? 'Memproses…' : 'Konfirmasi' }}
+      {{ isPaymentSubmitting ? 'Memproses…' : (isTrialPackage ? 'Konfirmasi' : 'Hubungi Admin') }}
     </button>
   </div>
 </form>

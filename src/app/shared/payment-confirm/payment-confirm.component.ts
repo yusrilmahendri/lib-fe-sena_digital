@@ -2,9 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
-import { DashboardService, DashboardServiceType } from '../../dashboard.service';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { SuccessConfirmPaymentComponent } from '../success-confirm-payment/success-confirm-payment.component';
 
 @Component({
   selector: 'wc-payment-confirm',
@@ -12,6 +10,7 @@ import { SuccessConfirmPaymentComponent } from '../success-confirm-payment/succe
   styleUrls: ['./payment-confirm.component.scss']
 })
 export class PaymentConfirmComponent implements OnInit {
+  private readonly adminWhatsappNumber = '628817587308';
 
   private notyf: Notyf;
   kodePayment: any;
@@ -26,7 +25,6 @@ export class PaymentConfirmComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private dashboardSvc: DashboardService,
     private modalService: BsModalService,
     private router: Router,
   ) {
@@ -90,78 +88,30 @@ export class PaymentConfirmComponent implements OnInit {
       return;
     }
 
-    // For Manual payment: call RDM_CONFIRM_PAYMENT API
-    const payload = this.form.value;
-    this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
-      next: () => {
-        this.isPaymentSubmitting = false;
-        this.notyf.success('Berhasil konfirmasi pembayaran');
-        this.modalService.hide();
-        this.clearWizardState();
-        setTimeout(() => {
-          this.modalService.show(SuccessConfirmPaymentComponent, {
-            initialState: {
-              message: 'Konfirmasi berhasil!'
-            }
-          });
-        }, 300);
-      },
-      error: (err) => {
-        // Never redirect, logout, clear the token, or close the modal on error.
-        // Keep the user in the flow with a clear, user-friendly message.
-        this.isPaymentSubmitting = false;
-        this.paymentErrorMessage = this.mapPaymentError(err);
-      }
-    });
+    // For Manual payment: users must NOT call admin-only confirmation endpoint.
+    // Redirect user to admin WhatsApp with order code for manual verification.
+    const kodePemesanan = String(this.form.get('kode_pemesanan')?.value || this.kodePayment || '').trim();
+    if (!kodePemesanan) {
+      this.isPaymentSubmitting = false;
+      this.paymentErrorMessage = 'Kode pemesanan tidak ditemukan. Silakan salin ulang kode pemesanan Anda.';
+      return;
+    }
+
+    const whatsappUrl = this.buildAdminWhatsappUrl(kodePemesanan);
+    this.isPaymentSubmitting = false;
+    this.paymentErrorMessage =
+      'Konfirmasi manual hanya dapat diverifikasi oleh admin. Silakan kirim kode pemesanan ke admin.';
+
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 
-  /** Map a payment error to a clear, user-friendly Indonesian message. */
-  private mapPaymentError(err: any): string {
-    const status = err?.status;
-    const backendMessage = err?.error?.message || err?.message;
-
-    if (backendMessage) {
-      return backendMessage;
-    }
-
-    if (status === 401) {
-      return 'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.';
-    }
-    if (status === 403) {
-      return 'Akun Anda belum memiliki akses untuk melanjutkan pembayaran. ' +
-        'Silakan lengkapi data undangan terlebih dahulu atau hubungi admin.';
-    }
-    if (status === 422) {
-      const validationMsg = this.firstValidationError(err);
-      return (
-        validationMsg ||
-        backendMessage ||
-        'Data pembayaran belum lengkap. Silakan periksa kembali.'
-      );
-    }
-    if (status === 500) {
-      return 'Terjadi gangguan pada server pembayaran. Silakan coba beberapa saat lagi.';
-    }
-    if (status === 0 || status == null) {
-      return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-    }
-
-    return 'Pembayaran belum dapat diproses. Silakan coba kembali.';
-  }
-
-  private firstValidationError(err: any): string | null {
-    const errors = err?.error?.errors;
-    if (errors && typeof errors === 'object') {
-      const firstKey = Object.keys(errors)[0];
-      const firstVal = firstKey ? errors[firstKey] : null;
-      if (Array.isArray(firstVal) && firstVal.length) {
-        return firstVal[0];
-      }
-      if (typeof firstVal === 'string') {
-        return firstVal;
-      }
-    }
-    return null;
+  private buildAdminWhatsappUrl(kodePemesanan: string): string {
+    const text = encodeURIComponent(
+      `Halo Admin, saya ingin konfirmasi pembayaran manual.\n` +
+      `Kode pemesanan: ${kodePemesanan}\n` +
+      `Mohon dibantu verifikasi pembayaran saya.`
+    );
+    return `https://wa.me/${this.adminWhatsappNumber}?text=${text}`;
   }
 
   private clearWizardState(): void {
