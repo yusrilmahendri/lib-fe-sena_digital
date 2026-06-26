@@ -10,6 +10,7 @@ import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one
 import { RubyThemeTwoComponent } from './templates/ruby-theme-two/ruby-theme-two.component';
 import { SapphireThemeOneComponent } from './templates/sapphire-theme-one/sapphire-theme-one.component';
 import { DiamondThemeOneComponent } from './templates/diamond-theme-one/diamond-theme-one.component';
+import { DiamondThemeTwoComponent } from './templates/diamond-theme-two/diamond-theme-two.component';
 import {
   resolveThemeRenderKey,
   resolveThemeSlug,
@@ -82,6 +83,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     'ruby-theme-two': RubyThemeTwoComponent,
     'sapphire-theme-one': SapphireThemeOneComponent,
     'diamond-theme-one': DiamondThemeOneComponent,
+    'diamond-theme-two': DiamondThemeTwoComponent,
     'lavender-bloom': LavenderBloomThemeComponent,
   };
 
@@ -102,7 +104,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostBinding('class.no-outer-bg') get isNeutralBackgroundTheme(): boolean {
     return this.activeThemeRenderKey === 'ruby-theme-two'
       || this.activeThemeRenderKey === 'sapphire-theme-one'
-      || this.activeThemeRenderKey === 'diamond-theme-one';
+      || this.activeThemeRenderKey === 'diamond-theme-one'
+      || this.activeThemeRenderKey === 'diamond-theme-two';
   }
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain

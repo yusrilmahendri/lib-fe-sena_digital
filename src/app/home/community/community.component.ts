@@ -12,8 +12,10 @@ import { LandingModalService } from '../../landing-modal.service';
 import {
   buildThemeAccessMap,
   FALLBACK_THEME_ACCESS_MAP,
-  getLowestPackageTierForCategory,
-  resolveThemeCategory,
+  getLowestPackageTierForTheme,
+  getThemePresetBySlug,
+  resolvePublicThemeSlug,
+  ThemeAccessMap,
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../theme-package-access.util';
@@ -22,7 +24,6 @@ type ThemeFilter =
   | 'Semua'
   | 'Minimalis'
   | 'Floral'
-  | 'Modern'
   | 'Elegant'
   | 'Luxury';
 
@@ -72,7 +73,6 @@ export class CommunityComponent implements OnInit, OnDestroy {
     'Semua',
     'Minimalis',
     'Floral',
-    'Modern',
     'Elegant',
     'Luxury',
   ];
@@ -103,7 +103,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
     },
     {
       name: 'Garden Whisper',
-      tier: 'ruby',
+      tier: 'sapphire',
       badge: 'Floral',
       slug: 'garden-whisper',
       image: 'assets/landing/template-6.png',
@@ -112,34 +112,24 @@ export class CommunityComponent implements OnInit, OnDestroy {
       features: ['Galeri foto', 'Countdown acara', 'Google Maps', 'Amplop digital'],
     },
     {
-      name: 'Modern Vows',
-      tier: 'sapphire',
-      badge: 'Modern',
-      slug: 'modern-vows',
-      image: 'assets/landing/template-4.png',
-      description:
-        'Tema modern dengan layout tegas dan visual bersih untuk pasangan yang ingin tampil kontemporer.',
-      features: ['Layout modern', 'RSVP & ucapan', 'Galeri foto', 'Share WhatsApp'],
-    },
-    {
       name: 'Champagne Rose',
-      tier: 'sapphire',
+      tier: 'diamond',
       badge: 'Elegant',
-      slug: 'champagne-rose',
+      slug: 'diamond',
       image: 'assets/landing/template-5.png',
       description:
         'Palet champagne yang elegan dengan aksen romantis, cocok untuk undangan berkelas dan hangat.',
       features: ['Animasi halus', 'Google Maps', 'Amplop digital', 'Galeri foto'],
     },
     {
-      name: 'Velvet Mauve',
+      name: 'Diamond Garden',
       tier: 'diamond',
       badge: 'Luxury',
-      slug: 'velvet-mauve',
+      slug: 'diamond-garden',
       image: 'assets/landing/template-3.png',
       description:
-        'Tampilan mewah dengan warna mauve yang kaya, cocok untuk undangan dengan kesan eksklusif.',
-      features: ['Hero mewah', 'RSVP & ucapan', 'Musik latar', 'Amplop digital'],
+        'Tema hijau gelap dengan aksen floral klasik dan nuansa kebun elegan untuk undangan yang hangat dan berkelas.',
+      features: ['Hero elegan', 'Countdown acara', 'RSVP & ucapan', 'Amplop digital'],
     },
   ];
   themes: ThemeCard[] = this.createFallbackThemes();
@@ -154,7 +144,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
   private readonly themeService: ThemeService;
   private readonly subscriptions = new Subscription();
   private shareMessageTimer: ReturnType<typeof setTimeout> | null = null;
-  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+  private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
 
   constructor(
     private router: Router,
@@ -259,10 +249,22 @@ export class CommunityComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.themeService.getPublicThemeDetails(theme.id).subscribe({
         next: (res) => {
+          const detailSlug = resolvePublicThemeSlug(res?.data);
+          const preset =
+            getThemePresetBySlug(detailSlug || theme.slug) ||
+            this.getFallbackSeed(theme.slug);
+
+          if (!preset) {
+            this.previewState = {
+              ...this.previewState,
+              isLoading: false,
+            };
+            return;
+          }
+
           const detailedTheme = this.mapTheme(
             res?.data as Partial<PublicTheme>,
-            theme.badge,
-            this.themes.findIndex((item) => item.slug === theme.slug)
+            preset.slug
           );
 
           this.previewState = {
@@ -358,8 +360,11 @@ export class CommunityComponent implements OnInit, OnDestroy {
         next: (res) => {
           const list = Array.isArray(res?.data) ? res.data : [];
           const mappedThemes = list
-            .map((item, index) => this.mapTheme(item, this.resolveBadge(item), index))
-            .filter((theme) => !!theme.name);
+            .map((item) => {
+              const slug = resolvePublicThemeSlug(item);
+              return slug ? this.mapTheme(item, slug) : null;
+            })
+            .filter((theme): theme is ThemeCard => !!theme?.name);
 
           this.themes = mappedThemes.length
             ? this.mergeMappedThemesWithFallback(mappedThemes)
@@ -381,14 +386,16 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   private mapThemesFromCategories(categories: PublicCategoryWithThemes[]): ThemeCard[] {
     const safeCategories = Array.isArray(categories) ? categories : [];
-    const mappedThemes = safeCategories.flatMap((category, categoryIndex) => {
+    const mappedThemes = safeCategories.flatMap((category) => {
       const themes = Array.isArray(category?.jenis_themas) ? category.jenis_themas : [];
 
       return themes
         .filter((item: any) => item?.is_active !== false)
-        .map((item, themeIndex) =>
-          this.mapTheme(item, category?.name || this.resolveBadge(item), categoryIndex + themeIndex)
-        );
+        .map((item) => {
+          const slug = resolvePublicThemeSlug(item);
+          return slug ? this.mapTheme(item, slug) : null;
+        })
+        .filter((theme): theme is ThemeCard => !!theme);
     });
 
     return mappedThemes.length
@@ -396,11 +403,17 @@ export class CommunityComponent implements OnInit, OnDestroy {
       : this.createFallbackThemes();
   }
 
-  private mapTheme(item: Partial<PublicTheme> & any, badge: string, index: number): ThemeCard {
-    const fallbackSeed =
-      this.fallbackThemeSeeds[index % this.fallbackThemeSeeds.length];
+  private mapTheme(
+    item: Partial<PublicTheme> & any,
+    slug: string
+  ): ThemeCard {
+    const fallbackSeed = this.getFallbackSeed(slug);
+    if (!fallbackSeed) {
+      throw new Error(`Unknown theme preset: ${slug}`);
+    }
+
     const fallbackImage = fallbackSeed.image;
-    const name = item?.name || item?.title || fallbackSeed.name;
+    const name = fallbackSeed.name;
     const previewUrl = item?.demo_url || item?.preview_url || item?.url_thema || '';
     const image =
       item?.thumbnail_image ||
@@ -413,23 +426,19 @@ export class CommunityComponent implements OnInit, OnDestroy {
       item?.category_description ||
       fallbackSeed.description;
     const features = this.normalizeFeatures(item?.features, fallbackSeed.features);
-    const slug = item?.slug || this.slugify(name) || fallbackSeed.slug;
-    const normalizedBadge = this.normalizeBadge(badge, fallbackSeed.badge);
-    const resolvedCategory =
-      resolveThemeCategory(normalizedBadge) || fallbackSeed.badge;
 
     return {
       id: item?.id != null ? Number(item.id) : undefined,
-      slug,
+      slug: fallbackSeed.slug,
       name,
-      tier: this.resolveTier(item, fallbackSeed.tier, resolvedCategory),
-      badge: normalizedBadge,
+      tier: getLowestPackageTierForTheme(fallbackSeed.slug, this.themeAccessMap),
+      badge: fallbackSeed.badge,
       description,
       features,
       image,
       fallbackImage,
       previewUrl,
-      shareUrl: previewUrl || this.getThemeFallbackShareUrl({ slug } as ThemeCard),
+      shareUrl: previewUrl || this.getThemeFallbackShareUrl({ slug: fallbackSeed.slug } as ThemeCard),
     };
   }
 
@@ -462,47 +471,6 @@ export class CommunityComponent implements OnInit, OnDestroy {
     return fallbackFeatures.map((label) => ({ label }));
   }
 
-  private normalizeBadge(badge: string, fallbackBadge: ThemeFilter = 'Modern'): ThemeFilter {
-    if (this.filters.includes(badge as ThemeFilter)) {
-      return badge as ThemeFilter;
-    }
-
-    return fallbackBadge;
-  }
-
-  private resolveBadge(item: any): string {
-    const badge =
-      item?.category_name ||
-      item?.category?.name ||
-      item?.category ||
-      item?.jenis_paket ||
-      item?.package_tier ||
-      '';
-
-    if (/minimal/i.test(badge)) return 'Minimalis';
-    if (/floral|bloom|garden/i.test(badge)) return 'Floral';
-    if (/modern/i.test(badge)) return 'Modern';
-    if (/elegant|rose|grace/i.test(badge)) return 'Elegant';
-    if (/luxury|luxe|mauve|diamond/i.test(badge)) return 'Luxury';
-    return 'Modern';
-  }
-
-  private resolveTier(
-    item: any,
-    fallbackTier: ThemePackageTier = 'ruby',
-    category?: ThemeCategoryName
-  ): ThemePackageTier {
-    const raw = `${item?.package_tier || item?.tier || item?.name_paket_display || item?.jenis_paket || ''}`.toLowerCase();
-    if (raw.includes('trial')) return 'trial';
-    if (/ruby|silver|standar/.test(raw)) return 'ruby';
-    if (/sapphire|gold/.test(raw)) return 'sapphire';
-    if (/diamond|platinum/.test(raw)) return 'diamond';
-    if (category) {
-      return getLowestPackageTierForCategory(category, this.themeAccessMap);
-    }
-    return fallbackTier;
-  }
-
   private createFallbackThemes(): ThemeCard[] {
     const seeds = Array.isArray(this.fallbackThemeSeeds) ? this.fallbackThemeSeeds : [];
 
@@ -523,10 +491,12 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   private mergeMappedThemesWithFallback(mappedThemes: ThemeCard[]): ThemeCard[] {
     const fallbackThemes = this.createFallbackThemes();
-    const safeMappedThemes = Array.isArray(mappedThemes) ? mappedThemes.slice(0, fallbackThemes.length) : [];
+    const mappedBySlug = new Map(
+      (Array.isArray(mappedThemes) ? mappedThemes : []).map((theme) => [theme.slug, theme] as const)
+    );
 
-    return fallbackThemes.map((fallbackTheme, index) => {
-      const mappedTheme = safeMappedThemes[index];
+    return fallbackThemes.map((fallbackTheme) => {
+      const mappedTheme = mappedBySlug.get(fallbackTheme.slug);
       return mappedTheme
         ? {
             ...fallbackTheme,
@@ -541,14 +511,16 @@ export class CommunityComponent implements OnInit, OnDestroy {
     });
   }
 
-  private slugify(value: string): string {
-    return String(value || '')
-      .toLowerCase()
-      .trim()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+  private getFallbackSeed(slug: string): FallbackThemeSeed | null {
+    const normalizedSlug = resolvePublicThemeSlug(slug);
+    if (!normalizedSlug) {
+      return null;
+    }
+
+    return (
+      this.fallbackThemeSeeds.find((theme) => theme.slug === normalizedSlug) ||
+      null
+    );
   }
 
   private getThemeFallbackShareUrl(theme: Partial<ThemeCard>): string {

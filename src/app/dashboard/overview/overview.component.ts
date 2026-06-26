@@ -1,5 +1,4 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
 import {
   DashboardService,
@@ -7,8 +6,7 @@ import {
   DashboardOverviewResponse,
   DashboardTrendsResponse,
   DashboardMessagesResponse,
-  DashboardMessage,
-  ThemeService
+  DashboardMessage
 } from 'src/app/dashboard.service';
 import { WeddingDataService } from 'src/app/services/wedding-data.service';
 import { forkJoin, catchError, of } from 'rxjs';
@@ -48,6 +46,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   activeFilter = 'totalPengunjung';
   userData: any;
   weddingDataFromIndex: any;
+  publicWebsiteUrl: string | null = null;
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -95,10 +94,8 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   chartData: ChartDataPoint[] = [];
 
   constructor(
-    private router: Router,
     private DashBoardSvc: DashboardService,
     private weddingDataService: WeddingDataService,
-    private themeService: ThemeService,
     private toastService: ToastService
   ) { }
 
@@ -114,6 +111,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       (res) => {
         this.userData = res.data;
         console.log('User profile data:', this.userData);
+        this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
 
         if (this.userData && this.userData.id) {
           // Load dashboard data after getting user profile
@@ -125,9 +123,14 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
             (res) => {
               this.weddingDataFromIndex = res.data;
               console.log('Wedding data loaded:', this.weddingDataFromIndex);
+              if (this.weddingDataFromIndex) {
+                this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+              }
+              this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
             },
             (error) => {
               console.error('Error fetching wedding data:', error);
+              this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
             }
           );
         } else {
@@ -542,124 +545,41 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Generate and open wedding URL using domain from SETTINGS_GET_FILTER
-   * New implementation: Gets domain from API instead of using nama_panggilan
+   * Open the public wedding website using already-loaded API data.
+   * Uses a synchronous click flow so Safari iPhone does not block navigation.
    */
-  onViewWebsite(): void {
-    console.log('Starting wedding website generation with domain-based approach');
+  onViewWebsite(event?: Event): void {
+    this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
 
-    // Show loading state for better UX
-    this.isLoading = true;
+    if (!this.publicWebsiteUrl) {
+      event?.preventDefault();
+      this.toastService.showToast('Website undangan belum tersedia.', 'info');
+      return;
+    }
 
-    forkJoin({
-      settings: this.DashBoardSvc.list(DashboardServiceType.SETTINGS_GET_FILTER),
-      selectedTheme: this.themeService.getSelectedTheme().pipe(
-        catchError((error) => {
-          console.error('[Overview] Failed to refresh selected theme before opening website:', error);
-          return of(null);
-        })
-      )
-    }).subscribe({
-      next: ({ settings, selectedTheme }) => {
-        console.log('SETTINGS_GET_FILTER response:', settings);
-        console.log('[Overview] Refreshed selected theme before opening website:', selectedTheme);
-
-        try {
-          // Extract domain from response.setting.domain
-          const domain = settings?.setting?.domain;
-
-          if (!domain) {
-            console.warn('Domain not found in settings response:', settings);
-            this.handleFallbackUrlGeneration();
-            return;
-          }
-
-          console.log('Domain extracted from settings:', domain);
-
-          // Generate URL with domain parameter
-          const url = this.router.serializeUrl(
-            this.router.createUrlTree(['/wedding', domain])
-          );
-
-          console.log('Generated wedding URL with domain:', url);
-
-          // Store wedding data in service for immediate access if needed
-          if (this.weddingDataFromIndex) {
-            const mergedWeddingData = selectedTheme?.status && selectedTheme?.data?.theme
-              ? {
-                  ...this.weddingDataFromIndex,
-                  selected_theme: selectedTheme.data.theme
-                }
-              : this.weddingDataFromIndex;
-
-            this.weddingDataService.setWeddingData(mergedWeddingData);
-          }
-
-          // Open the wedding invitation
-          window.open(url, '_blank');
-
-        } catch (error) {
-          console.error('Error processing domain from settings:', error);
-          this.handleFallbackUrlGeneration();
-        } finally {
-          this.isLoading = false;
-        }
-      },
-      error: (error) => {
-        console.error('Error fetching settings for domain:', error);
-
-        // Log specific error details
-        if (error.status === 401) {
-          console.error('Authentication required to fetch settings');
-        } else if (error.status === 404) {
-          console.error('Settings endpoint not found');
-        } else if (error.status === 500) {
-          console.error('Server error while fetching settings');
-        }
-
-        this.handleFallbackUrlGeneration();
-        this.toastService.showToast('Gagal memuat website. Menggunakan data terakhir yang tersedia.', 'warning');
-      }
-    });
+    if (this.weddingDataFromIndex) {
+      this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+    }
   }
 
-  /**
-   * Fallback method for URL generation when domain is not available
-   * Uses the old coupleName approach as backup
-   */
-  private handleFallbackUrlGeneration(): void {
-    console.log('Using fallback URL generation method');
+  private resolvePublicWebsiteUrl(): string | null {
+    const domainCandidates = [
+      this.weddingDataFromIndex?.settings?.domain,
+      this.weddingDataFromIndex?.domain,
+      this.userData?.domain_info?.domain,
+      this.userData?.invitation?.domain,
+      this.userData?.domain,
+    ];
 
-    try {
-      if (this.weddingDataFromIndex?.mempelai) {
-        // Generate couple name from mempelai data (old approach)
-        const coupleName = this.weddingDataService.generateCoupleName(this.weddingDataFromIndex.mempelai);
+    const domain = domainCandidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value);
 
-        const url = this.router.serializeUrl(
-          this.router.createUrlTree(['/wedding', coupleName])
-        );
-
-        console.log('Generated fallback wedding URL with coupleName:', url);
-
-        // Store data in service
-        this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
-
-        window.open(url, '_blank');
-      } else {
-        // Last resort: basic wedding route
-        console.warn('No wedding data available, using basic route');
-        const url = this.router.serializeUrl(this.router.createUrlTree(['/wedding']));
-        window.open(url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error in fallback URL generation:', error);
-
-      // Final fallback
-      const url = this.router.serializeUrl(this.router.createUrlTree(['/wedding']));
-      window.open(url, '_blank');
-    } finally {
-      this.isLoading = false;
+    if (!domain) {
+      return null;
     }
+
+    return this.weddingDataService.generateWeddingUrlWithDomain(domain);
   }
 
 }

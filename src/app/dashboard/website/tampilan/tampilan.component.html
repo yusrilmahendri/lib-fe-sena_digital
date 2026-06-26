@@ -13,7 +13,7 @@
 
     <div *ngIf="userPackageTier !== 'trial'" class="theme-tabs" role="tablist" aria-label="Pilih paket tema">
       <button
-        *ngFor="let tab of packageTabs"
+        *ngFor="let tab of availablePackageTabs"
         type="button"
         class="theme-tabs__button"
         [class.theme-tabs__button--active]="activeTab === tab.tier"

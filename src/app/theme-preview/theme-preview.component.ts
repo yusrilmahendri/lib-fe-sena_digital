@@ -40,11 +40,29 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
     const themedName = this.toTitle(slug);
     const renderKey = resolveThemeRenderKey(slug);
     const isRubyThemeTwo = renderKey === 'ruby-theme-two';
-    const groomPreviewName = isRubyThemeTwo ? 'Arya' : 'Ketut';
-    const bridePreviewName = isRubyThemeTwo ? 'Sena' : 'Isabela';
-    const coverPreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-2.png';
-    const bridePreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-1.png';
-    const groomPreviewImage = isRubyThemeTwo ? 'assets/landing/template-6.png' : 'assets/landing/template-2.png';
+    const isDiamondGarden = renderKey === 'diamond-theme-two';
+    const packageLabel = renderKey === 'diamond-theme-one' || isDiamondGarden
+      ? 'Diamond'
+      : renderKey === 'sapphire-theme-one'
+        ? 'Sapphire'
+        : 'Ruby';
+    const groomPreviewName = isRubyThemeTwo || isDiamondGarden ? 'Arya' : 'Ketut';
+    const bridePreviewName = isRubyThemeTwo || isDiamondGarden ? 'Sena' : 'Isabela';
+    const coverPreviewImage = isDiamondGarden
+      ? 'assets/landing/template-5.png'
+      : isRubyThemeTwo
+        ? 'assets/landing/template-3.png'
+        : 'assets/landing/template-2.png';
+    const bridePreviewImage = isDiamondGarden
+      ? 'assets/landing/template-6.png'
+      : isRubyThemeTwo
+        ? 'assets/landing/template-3.png'
+        : 'assets/landing/template-1.png';
+    const groomPreviewImage = isDiamondGarden
+      ? 'assets/landing/template-2.png'
+      : isRubyThemeTwo
+        ? 'assets/landing/template-6.png'
+        : 'assets/landing/template-2.png';
 
     const preview: any = {
       user_info: {
@@ -94,7 +112,7 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
       },
       invitation_package: {
         id: 0,
-        nama_paket: 'Ruby',
+        nama_paket: packageLabel,
         deskripsi: 'Preview mode',
         harga: 0,
         status: '',
@@ -113,7 +131,7 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
         created_at: '',
         updated_at: '',
       }],
-      stories: isRubyThemeTwo ? [
+      stories: isRubyThemeTwo || isDiamondGarden ? [
         { id: 1, title: 'Pertemuan Pertama', lead_cerita: 'Pertemuan sederhana yang mengawali cerita kami.', tanggal_cerita: '2019-05-12', created_at: '' },
         { id: 2, title: 'Menjalin Hubungan', lead_cerita: 'Kami belajar tumbuh bersama dan saling mendukung.', tanggal_cerita: '2020-10-20', created_at: '' },
         { id: 3, title: 'Lamaran', lead_cerita: 'Dengan restu keluarga, kami memutuskan melangkah ke tahap berikutnya.', tanggal_cerita: '2025-03-08', created_at: '' },

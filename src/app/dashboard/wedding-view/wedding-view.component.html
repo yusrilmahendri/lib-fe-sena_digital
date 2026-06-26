@@ -113,6 +113,12 @@
             [invitationOpened]="invitationOpened"
             (openInvitationRequested)="openInvitation()">
           </wc-diamond-theme-one>
+          <wc-diamond-theme-two
+            *ngSwitchCase="'diamond-theme-two'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-diamond-theme-two>
           <wc-lavender-bloom-theme
             *ngSwitchCase="'lavender-bloom'"
             [weddingData]="weddingData"

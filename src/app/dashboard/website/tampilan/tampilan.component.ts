@@ -16,23 +16,19 @@ import { ToastService } from '../../../toast.service';
 import {
   buildThemeAccessMap,
   FALLBACK_THEME_ACCESS_MAP,
-  getLowestPackageTierForCategory,
-  isCategoryAccessibleForTier,
+  getLowestPackageTierForTheme,
+  getThemePresetBySlug,
+  isThemeAccessibleForTier,
+  PaidThemePackageTier,
+  PUBLIC_THEME_PRESETS,
   resolvePackageTier,
-  resolveThemeCategory,
+  ThemeAccessMap,
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../../theme-package-access.util';
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 
-type PaidPackageTier = Exclude<ThemePackageTier, 'trial'>;
-
-interface FixedThemePreset {
-  slug: string;
-  name: string;
-  category: ThemeCategoryName;
-  fallbackImage: string;
-}
+type PaidPackageTier = PaidThemePackageTier;
 
 interface ThemeCard {
   id: number;
@@ -69,14 +65,11 @@ const PACKAGE_TABS: PackageTab[] = [
   { tier: 'diamond', label: 'Diamond' },
 ];
 
-const FIXED_THEME_PRESETS: FixedThemePreset[] = [
-  { slug: 'soft-ivory', name: 'Soft Ivory', category: 'Minimalis', fallbackImage: 'assets/themas3.png' },
-  { slug: 'lavender-bloom', name: 'Lavender Bloom', category: 'Floral', fallbackImage: 'assets/landing/template-1.png' },
-  { slug: 'garden-whisper', name: 'Garden Whisper', category: 'Floral', fallbackImage: 'assets/landing/template-6.png' },
-  { slug: 'modern-vows', name: 'Modern Vows', category: 'Modern', fallbackImage: 'assets/themas2.png' },
-  { slug: 'champagne-rose', name: 'Champagne Rose', category: 'Elegant', fallbackImage: 'assets/landing/template-5.png' },
-  { slug: 'velvet-mauve', name: 'Velvet Mauve', category: 'Luxury', fallbackImage: 'assets/landing/template-3.png' },
-];
+const FIXED_THEME_PRESETS = PUBLIC_THEME_PRESETS.map((preset) => ({
+  ...preset,
+  fallbackImage:
+    preset.slug === 'soft-ivory' ? 'assets/themas3.png' : preset.fallbackImage,
+}));
 
 @Component({
   selector: 'wc-tampilan',
@@ -104,7 +97,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   themeFeedbackMessage = '';
 
   private subscriptions = new Subscription();
-  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+  private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private pendingThemeForConfirmation: ThemeCard | null = null;
   private pendingThemeForUpgrade: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
@@ -152,15 +145,26 @@ export class TampilanComponent implements OnInit, OnDestroy {
       (theme) =>
         !theme.isLegacy &&
         theme.category !== 'Legacy' &&
-        this.isThemeCategoryVisible(this.activeTab, theme.category)
+        this.isThemeVisibleInTab(this.activeTab, theme)
     );
   }
 
-  private isThemeCategoryVisible(tier: PaidPackageTier, category: ThemeCategoryName | 'Legacy'): boolean {
-    if (category === 'Legacy') return false;
+  get availablePackageTabs(): PackageTab[] {
+    if (this.userPackageTier === 'trial') {
+      return [];
+    }
+
+    return this.packageTabs.filter((tab) => tab.tier === this.userPackageTier);
+  }
+
+  private isThemeVisibleInTab(tier: PaidPackageTier, theme: ThemeCard): boolean {
+    if (theme.category === 'Legacy') {
+      return false;
+    }
+
     return (
-      isCategoryAccessibleForTier(tier, category as ThemeCategoryName, this.themeAccessMap) ||
-      isCategoryAccessibleForTier(tier, category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP)
+      isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap) ||
+      isThemeAccessibleForTier(tier, theme.slug, FALLBACK_THEME_ACCESS_MAP)
     );
   }
 
@@ -398,7 +402,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
     const nextCards: ThemeCard[] = [];
-    const backendThemesBySlug = new Map<string, { theme: PublicTheme; category: PublicCategoryWithThemes; resolvedCategory: ThemeCategoryName }>();
+    const backendThemesBySlug = new Map<string, { theme: PublicTheme; category: PublicCategoryWithThemes }>();
 
     const flattenedThemes = categories.flatMap((category) =>
       (category?.jenis_themas || []).map((theme) => ({
@@ -409,24 +413,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     flattenedThemes.forEach((entry: any) => {
       const normalizedSlug = normalizeThemeSlug(entry?.slug);
-      if (!normalizedSlug) {
+      const preset = getThemePresetBySlug(normalizedSlug);
+      if (!preset) {
         return;
       }
 
-      if (!FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug)) {
-        return;
-      }
-
-      const category = (entry?.category || {}) as PublicCategoryWithThemes;
-      const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!resolvedCategory) {
-        return;
-      }
-
-      backendThemesBySlug.set(normalizedSlug, {
+      backendThemesBySlug.set(preset.slug, {
         theme: entry as PublicTheme,
-        category,
-        resolvedCategory,
+        category: (entry?.category || {}) as PublicCategoryWithThemes,
       });
     });
 
@@ -461,7 +455,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           isLoading: false,
           category_id: 0,
           category: preset.category,
-          requiredPackageTier: getLowestPackageTierForCategory(preset.category, this.themeAccessMap),
+          requiredPackageTier: getLowestPackageTierForTheme(preset.slug, this.themeAccessMap),
           is_active: false,
           category_is_active: false,
           isConnectedToBackend: false,
@@ -470,14 +464,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const { theme, category, resolvedCategory } = matched;
+      const { theme, category } = matched;
       const resolvedThemeId = Number((theme as any)?.id) || null;
-      const resolvedThemeSlug = normalizeThemeSlug(theme?.slug);
       const rawCategory = (theme as any)?.category || category;
       const resolvedCategoryId = Number((theme as any)?.category_id ?? rawCategory?.id) || 0;
       const isThemeActive = theme?.is_active === true;
       const isCategoryActive = rawCategory?.is_active == null ? true : rawCategory.is_active === true;
-      const isConnectedToBackend = !!resolvedThemeId && !!resolvedThemeSlug;
+      const isConnectedToBackend = !!resolvedThemeId && !!preset.slug;
       const availabilityMessage = !isThemeActive
         ? 'Tema belum aktif'
         : !isCategoryActive
@@ -487,11 +480,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
       nextCards.push({
         id: resolvedThemeId || -100 - nextCards.length,
         backendThemeId: resolvedThemeId,
-        label: resolvedCategory,
-        title: theme.name || preset.name,
-        name: theme.name || preset.name,
+        label: preset.category,
+        title: preset.name,
+        name: preset.name,
         slug: preset.slug,
-        image: this.getThemeImage(theme, resolvedCategory),
+        image: this.getThemeImage(theme, preset.category),
         imageFallback: preset.fallbackImage,
         url_thema: theme.url_thema || '',
         demo_url: theme.demo_url || '',
@@ -499,8 +492,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
         isCurrentTheme: false,
         isLoading: false,
         category_id: resolvedCategoryId,
-        category: resolvedCategory,
-        requiredPackageTier: getLowestPackageTierForCategory(resolvedCategory, this.themeAccessMap),
+        category: preset.category,
+        requiredPackageTier: getLowestPackageTierForTheme(preset.slug, this.themeAccessMap),
         is_active: isThemeActive,
         category_is_active: isCategoryActive,
         isConnectedToBackend,
@@ -856,8 +849,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     const tier = userTier as PaidPackageTier;
     return (
-      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, this.themeAccessMap) ||
-      isCategoryAccessibleForTier(tier, theme.category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP)
+      isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap) ||
+      isThemeAccessibleForTier(tier, theme.slug, FALLBACK_THEME_ACCESS_MAP)
     );
   }
 
@@ -870,8 +863,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const normalizedSlug = normalizeThemeSlug(theme.slug);
-    return FIXED_THEME_PRESETS.some((preset) => preset.slug === normalizedSlug);
+    return !!getThemePresetBySlug(normalizeThemeSlug(theme.slug));
   }
 
   private resolveRequiredPackageTier(theme: ThemeCard): PaidPackageTier {
@@ -879,18 +871,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return theme.requiredPackageTier;
     }
 
-    const category = theme.category;
-    const packageOrder: PaidPackageTier[] = ['ruby', 'sapphire', 'diamond'];
-    for (const tier of packageOrder) {
-      const allowed =
-        isCategoryAccessibleForTier(tier, category as ThemeCategoryName, this.themeAccessMap) ||
-        isCategoryAccessibleForTier(tier, category as ThemeCategoryName, FALLBACK_THEME_ACCESS_MAP);
-      if (allowed) {
-        return tier;
-      }
-    }
-
-    return getLowestPackageTierForCategory(category as ThemeCategoryName, this.themeAccessMap) || 'ruby';
+    return getLowestPackageTierForTheme(theme.slug, this.themeAccessMap);
   }
 
   private selectTheme(theme: ThemeCard): void {
@@ -1040,8 +1021,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
         return 'assets/themas3.png';
       case 'Floral':
         return 'assets/landing/template-1.png';
-      case 'Modern':
-        return 'assets/themas2.png';
       case 'Elegant':
         return 'assets/landing/template-5.png';
       case 'Luxury':

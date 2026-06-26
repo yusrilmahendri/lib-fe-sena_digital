@@ -6,13 +6,15 @@ export type ThemeSlug =
   | 'sapphire'
   | 'champagne-rose'
   | 'velvet-mauve'
-  | 'diamond';
+  | 'diamond'
+  | 'diamond-garden';
 
 export type ThemeRenderKey =
   | 'ruby-theme-one'
   | 'ruby-theme-two'
   | 'sapphire-theme-one'
   | 'diamond-theme-one'
+  | 'diamond-theme-two'
   | 'lavender-bloom';
 
 export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
@@ -20,14 +22,15 @@ export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
 export const THEME_RENDER_MAP: Record<ThemeSlug, ThemeRenderKey> = {
   'soft-ivory': 'ruby-theme-one',
   'lavender-bloom': 'ruby-theme-two',
-  'garden-whisper': 'ruby-theme-two',
-  // Sapphire-tier (Modern category) themes render the dedicated Sapphire design.
+  // Sapphire package now exposes Garden Whisper as the public-facing theme name.
+  'garden-whisper': 'sapphire-theme-one',
   'modern-vows': 'sapphire-theme-one',
   'sapphire': 'sapphire-theme-one',
-  'champagne-rose': 'ruby-theme-two',
-  // Diamond-tier (Luxury category) themes render the dedicated Diamond design.
-  'velvet-mauve': 'diamond-theme-one',
+  // Diamond package exposes the existing Diamond theme and the new Diamond Garden theme.
+  'champagne-rose': 'diamond-theme-one',
+  'velvet-mauve': 'diamond-theme-two',
   'diamond': 'diamond-theme-one',
+  'diamond-garden': 'diamond-theme-two',
 };
 
 export function normalizeThemeSlug(value?: string | null): string {

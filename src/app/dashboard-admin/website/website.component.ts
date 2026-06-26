@@ -4,11 +4,19 @@ import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType, ThemeService, ThemeToggleRequest } from '../../dashboard.service';
 import { WebsiteCategory } from '../../interfaces/admin-category.interfaces';
 import { WebsiteCategoryService } from '../../services/website-category.service';
+import {
+  buildThemeAccessMap,
+  FALLBACK_THEME_ACCESS_MAP,
+  getThemePresetBySlug,
+  PUBLIC_THEME_PRESETS,
+  ThemeAccessMap,
+  ThemeCategoryName,
+} from '../../theme-package-access.util';
 
 interface ThemePreset {
   key: string;
   name: string;
-  category: 'Minimalis' | 'Floral' | 'Modern' | 'Elegant' | 'Luxury';
+  category: ThemeCategoryName;
   fallbackImage: string;
 }
 
@@ -42,15 +50,6 @@ interface AdminThemeCard {
 type ThemeCategory = ThemePreset['category'];
 type PackageTier = 'Ruby' | 'Sapphire' | 'Diamond';
 
-interface PackageApiItem {
-  id: number;
-  package_tier?: string;
-  name_paket?: string;
-  name_paket_display?: string;
-  jenis_paket?: string;
-  accessible_categories?: any[];
-}
-
 @Component({
   selector: 'wc-website',
   templateUrl: './website.component.html',
@@ -58,67 +57,19 @@ interface PackageApiItem {
 })
 export class WebsiteComponent implements OnInit, OnDestroy {
   private readonly storageKey = 'admin-website-theme-order';
-  private readonly fallbackCategoryPackages: Record<ThemeCategory, PackageTier[]> = {
-    Minimalis: ['Ruby'],
-    Floral: ['Ruby'],
-    Modern: ['Sapphire'],
-    Elegant: ['Sapphire', 'Diamond'],
-    Luxury: ['Diamond']
-  };
-  private readonly fallbackThemePackages: Record<string, PackageTier[]> = {
-    'soft-ivory': ['Ruby'],
-    'lavender-bloom': ['Ruby'],
-    'garden-whisper': ['Ruby'],
-    'modern-vows': ['Sapphire'],
-    'champagne-rose': ['Sapphire', 'Diamond'],
-    'velvet-mauve': ['Diamond']
-  };
   // Slug aliases removed — preset keys match backend slugs exactly.
   // Each preset.key (e.g. 'soft-ivory') is looked up directly in adminThemesMap.
-  private readonly themePresets: ThemePreset[] = [
-    {
-      key: 'soft-ivory',
-      name: 'Soft Ivory',
-      category: 'Minimalis',
-      fallbackImage: 'assets/landing/template-2.png'
-    },
-    {
-      key: 'lavender-bloom',
-      name: 'Lavender Bloom',
-      category: 'Floral',
-      fallbackImage: 'assets/landing/template-1.png'
-    },
-    {
-      key: 'garden-whisper',
-      name: 'Garden Whisper',
-      category: 'Floral',
-      fallbackImage: 'assets/landing/template-6.png'
-    },
-    {
-      key: 'modern-vows',
-      name: 'Modern Vows',
-      category: 'Modern',
-      fallbackImage: 'assets/landing/template-4.png'
-    },
-    {
-      key: 'champagne-rose',
-      name: 'Champagne Rose',
-      category: 'Elegant',
-      fallbackImage: 'assets/landing/template-5.png'
-    },
-    {
-      key: 'velvet-mauve',
-      name: 'Velvet Mauve',
-      category: 'Luxury',
-      fallbackImage: 'assets/landing/template-3.png'
-    }
-  ];
+  private readonly themePresets: ThemePreset[] = PUBLIC_THEME_PRESETS.map((preset) => ({
+    key: preset.slug,
+    name: preset.name,
+    category: preset.category,
+    fallbackImage: preset.fallbackImage,
+  }));
 
   readonly filters: Array<'Semua' | ThemePreset['category']> = [
     'Semua',
     'Minimalis',
     'Floral',
-    'Modern',
     'Elegant',
     'Luxury'
   ];
@@ -129,6 +80,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   packageCategoryMap: Partial<Record<ThemeCategory, PackageTier[]>> = {};
   packageThemeMap: Partial<Record<string, PackageTier[]>> = {};
   adminThemesMap: Map<string, AdminTheme> = new Map();
+  private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   loading = false;
   error: string | null = null;
   uploadingThemeKey: string | null = null;
@@ -425,41 +377,15 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.dashboardService.list(DashboardServiceType.MNL_MD_PACK_INVITATION).subscribe({
       next: (res: any) => {
         const packages = Array.isArray(res?.data) ? res.data : [];
-        const categoryMap: Partial<Record<ThemeCategory, Set<PackageTier>>> = {};
-        const themeMap: Partial<Record<string, Set<PackageTier>>> = {};
-
-        packages.forEach((paket: PackageApiItem) => {
-          const tier = this.resolvePackageTier(paket);
-          if (!tier) {
-            return;
-          }
-
-          const accessibleCategories = Array.isArray(paket?.accessible_categories)
-            ? paket.accessible_categories
-            : [];
-
-          accessibleCategories.forEach((entry) => {
-            const category = this.resolveThemeCategory(entry);
-            if (category) {
-              categoryMap[category] = categoryMap[category] || new Set<PackageTier>();
-              categoryMap[category]?.add(tier);
-            }
-
-            const themeKey = this.resolveThemeKey(entry);
-            if (themeKey) {
-              themeMap[themeKey] = themeMap[themeKey] || new Set<PackageTier>();
-              themeMap[themeKey]?.add(tier);
-            }
-          });
-        });
-
-        this.packageCategoryMap = this.convertSetMap(categoryMap);
-        this.packageThemeMap = this.convertSetMap(themeMap);
+        this.themeAccessMap = buildThemeAccessMap(packages);
+        this.packageThemeMap = this.buildPackageThemeMap(this.themeAccessMap);
+        this.packageCategoryMap = this.buildPackageCategoryMap(this.packageThemeMap);
         this.cdr.detectChanges();
       },
       error: () => {
-        this.packageCategoryMap = {};
-        this.packageThemeMap = {};
+        this.themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+        this.packageThemeMap = this.buildPackageThemeMap(this.themeAccessMap);
+        this.packageCategoryMap = this.buildPackageCategoryMap(this.packageThemeMap);
       }
     });
   }
@@ -589,59 +515,48 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   private getThemePackageTiers(theme: AdminThemeCard): PackageTier[] {
-    const stableKey = this.normalizeKey(theme.categoryData?.slug || theme.key);
-    return this.packageThemeMap[stableKey]
-      || this.packageCategoryMap[theme.category]
-      || this.fallbackThemePackages[theme.key]
-      || this.fallbackCategoryPackages[theme.category]
-      || [];
+    return this.packageThemeMap[this.normalizeKey(theme.key)] || [];
   }
 
   private getCategoryPackageTiers(category: ThemeCategory): PackageTier[] {
-    return this.packageCategoryMap[category]
-      || this.fallbackCategoryPackages[category]
-      || [];
+    return this.packageCategoryMap[category] || [];
   }
 
   private formatPackageLabels(packages: PackageTier[]): string {
     return packages.join(' & ');
   }
 
-  private resolvePackageTier(paket: PackageApiItem): PackageTier | null {
-    const raw = `${paket?.package_tier || paket?.name_paket || paket?.name_paket_display || paket?.jenis_paket || ''}`.toLowerCase();
-    if (/ruby|silver|standar/.test(raw)) return 'Ruby';
-    if (/sapphire|gold/.test(raw)) return 'Sapphire';
-    if (/diamond|platinum/.test(raw)) return 'Diamond';
-    return null;
+  private buildPackageThemeMap(
+    accessMap: ThemeAccessMap
+  ): Partial<Record<string, PackageTier[]>> {
+    const map: Partial<Record<string, Set<PackageTier>>> = {};
+
+    (['ruby', 'sapphire', 'diamond'] as const).forEach((tier) => {
+      accessMap[tier].forEach((slug) => {
+        map[slug] = map[slug] || new Set<PackageTier>();
+        map[slug]?.add(this.toPackageLabel(tier));
+      });
+    });
+
+    return this.convertSetMap(map);
   }
 
-  private resolveThemeCategory(value: any): ThemeCategory | null {
-    const raw = this.normalizeKey(
-      typeof value === 'string'
-        ? value
-        : value?.slug || value?.name || value?.nama_kategori || value?.category || ''
-    );
+  private buildPackageCategoryMap(
+    themeMap: Partial<Record<string, PackageTier[]>>
+  ): Partial<Record<ThemeCategory, PackageTier[]>> {
+    const map: Partial<Record<ThemeCategory, Set<PackageTier>>> = {};
 
-    if (raw.includes('minimal')) return 'Minimalis';
-    if (raw.includes('floral')) return 'Floral';
-    if (raw.includes('modern')) return 'Modern';
-    if (raw.includes('elegant')) return 'Elegant';
-    if (raw.includes('luxury')) return 'Luxury';
-    return null;
-  }
+    Object.entries(themeMap).forEach(([slug, packages]) => {
+      const preset = getThemePresetBySlug(slug);
+      if (!preset || !packages?.length) {
+        return;
+      }
 
-  private resolveThemeKey(value: any): string | null {
-    const raw = this.normalizeKey(
-      typeof value === 'string'
-        ? value
-        : value?.slug || value?.theme_slug || value?.key || value?.name || ''
-    );
+      map[preset.category] = map[preset.category] || new Set<PackageTier>();
+      packages.forEach((tier) => map[preset.category]?.add(tier));
+    });
 
-    if (!raw) {
-      return null;
-    }
-
-    return this.themePresets.find((preset) => raw === preset.key || raw.includes(preset.key))?.key || null;
+    return this.convertSetMap(map);
   }
 
   private convertSetMap(
@@ -663,6 +578,12 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   private sortPackageTiers(tiers: PackageTier[]): PackageTier[] {
     const order: PackageTier[] = ['Ruby', 'Sapphire', 'Diamond'];
     return [...tiers].sort((left, right) => order.indexOf(left) - order.indexOf(right));
+  }
+
+  private toPackageLabel(tier: 'ruby' | 'sapphire' | 'diamond'): PackageTier {
+    if (tier === 'ruby') return 'Ruby';
+    if (tier === 'sapphire') return 'Sapphire';
+    return 'Diamond';
   }
 
   private normalizeKey(value: string): string {

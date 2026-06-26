@@ -1,0 +1,238 @@
+<section class="diamond-garden-theme" *ngIf="weddingData">
+  <article class="diamond-garden-shell">
+    <section class="diamond-garden-cover" *ngIf="!invitationOpened">
+      <div class="diamond-garden-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <div class="diamond-garden-cover__overlay"></div>
+      <div class="diamond-garden-cover__content">
+        <p class="diamond-garden-cover__eyebrow">{{ getHeroLabel() }}</p>
+        <h1 class="diamond-garden-cover__names">
+          <span>{{ getPrimaryDisplayName() }}</span>
+          <em>&amp;</em>
+          <span>{{ getSecondaryDisplayName() }}</span>
+        </h1>
+        <p class="diamond-garden-cover__date">{{ getHeroDateLabel() }}</p>
+        <div class="diamond-garden-cover__guest">
+          <span>Kepada Yth.</span>
+          <strong>{{ getGuestName() }}</strong>
+        </div>
+        <button class="diamond-garden-button diamond-garden-button--primary" type="button" (click)="openInvitation()">
+          <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+          Buka Undangan
+        </button>
+      </div>
+    </section>
+
+    <ng-container *ngIf="invitationOpened">
+      <section class="diamond-garden-hero">
+        <div class="diamond-garden-hero__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-garden-hero__overlay"></div>
+        <div class="diamond-garden-hero__content">
+          <p class="diamond-garden-hero__eyebrow">{{ getHeroLabel() }}</p>
+          <h1 class="diamond-garden-cover__names">
+            <span>{{ getPrimaryDisplayName() }}</span>
+            <em>&amp;</em>
+            <span>{{ getSecondaryDisplayName() }}</span>
+          </h1>
+          <p class="diamond-garden-cover__date">{{ getHeroDateLabel() }}</p>
+        </div>
+      </section>
+
+      <section class="diamond-garden-quote" *ngIf="isQuoteVisible()">
+        <div class="diamond-garden-quote__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-garden-quote__overlay"></div>
+        <div class="diamond-garden-quote__content">
+          <p class="diamond-garden-section__eyebrow diamond-garden-section__eyebrow--light">Ayat &amp; Doa Pembuka</p>
+          <blockquote class="diamond-garden-quote__text">{{ getQuranQuote() }}</blockquote>
+          <p class="diamond-garden-quote__source">{{ getQuranSource() }}</p>
+          <p class="diamond-garden-quote__lead">{{ getOpeningQuote() }}</p>
+        </div>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--couple" *ngIf="isCoupleVisible()">
+        <div class="diamond-garden-floral diamond-garden-floral--left" aria-hidden="true"></div>
+        <div class="diamond-garden-floral diamond-garden-floral--right" aria-hidden="true"></div>
+        <p class="diamond-garden-section__eyebrow">The Wedding Couple</p>
+        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Kedua Mempelai</h2>
+
+        <article class="diamond-garden-polaroid">
+          <div class="diamond-garden-polaroid__frame">
+            <img [src]="getBridePortrait()" [alt]="getBrideFullName()">
+          </div>
+          <h3>{{ getBrideFullName() }}</h3>
+          <p>{{ getBrideParentLine() }}</p>
+          <small>@ {{ getBrideNickname() }}</small>
+        </article>
+
+        <div class="diamond-garden-couple__ornament" aria-hidden="true">
+          <span></span>
+          <i class="fas fa-infinity"></i>
+          <span></span>
+        </div>
+
+        <article class="diamond-garden-polaroid diamond-garden-polaroid--alt">
+          <div class="diamond-garden-polaroid__frame">
+            <img [src]="getGroomPortrait()" [alt]="getGroomFullName()">
+          </div>
+          <h3>{{ getGroomFullName() }}</h3>
+          <p>{{ getGroomParentLine() }}</p>
+          <small>@ {{ getGroomNickname() }}</small>
+        </article>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--event" *ngIf="isEventVisible()">
+        <div class="diamond-garden-section__header">
+          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
+          <p class="diamond-garden-section__eyebrow">Save The Date</p>
+          <h2 class="diamond-garden-section__title">Akad Nikah</h2>
+        </div>
+
+        <article class="diamond-garden-event-card">
+          <div class="diamond-garden-event-card__date">
+            <span class="diamond-garden-event-card__day">{{ getEventDay(getAkadCard()) }}</span>
+            <div>
+              <strong>{{ getEventMonthName(getAkadCard()) }}</strong>
+              <small>{{ getEventYear(getAkadCard()) }}</small>
+            </div>
+          </div>
+          <div class="diamond-garden-event-card__detail">
+            <p>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</p>
+            <p>{{ formatTimeRange(getAkadCard()) }}</p>
+            <strong>{{ getDetailEventVenue(getAkadCard()) }}</strong>
+            <span>{{ getEventAddress(getAkadCard()) }}</span>
+          </div>
+          <div class="diamond-garden-map-preview" role="img" aria-label="Preview lokasi akad nikah">
+            <div class="diamond-garden-map-preview__pin">
+              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            </div>
+            <div class="diamond-garden-map-preview__roads"></div>
+            <div class="diamond-garden-map-preview__label">{{ getMapPreviewCaption(getAkadCard()) }}</div>
+          </div>
+          <a
+            *ngIf="getAkadMapLink() as mapsLink"
+            class="diamond-garden-button diamond-garden-button--secondary"
+            [href]="mapsLink"
+            target="_blank"
+            rel="noopener noreferrer">
+            <i class="fas fa-location-arrow" aria-hidden="true"></i>
+            Lihat Lokasi
+          </a>
+        </article>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--moment">
+        <p class="diamond-garden-section__eyebrow">Special Moments</p>
+        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Moment Menuju Hari Bahagia</h2>
+        <div class="diamond-garden-countdown">
+          <article class="diamond-garden-countdown__card" *ngFor="let part of getCountdownParts()">
+            <strong>{{ part.value }}</strong>
+            <span>{{ part.label }}</span>
+          </article>
+        </div>
+
+        <div class="diamond-garden-gallery">
+          <figure class="diamond-garden-gallery__item" *ngFor="let item of getMomentGalleryItems()">
+            <img [src]="item.photo" [alt]="item.alt">
+          </figure>
+        </div>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--wishes" *ngIf="isWishVisible()">
+        <div class="diamond-garden-section__header">
+          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
+          <p class="diamond-garden-section__eyebrow">Send Your Wish</p>
+          <h2 class="diamond-garden-section__title">Ucapan &amp; Doa</h2>
+        </div>
+
+        <div class="diamond-garden-form">
+          <label class="diamond-garden-form__label" for="diamond-garden-name">Nama Lengkap</label>
+          <input id="diamond-garden-name" class="diamond-garden-form__input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama kamu">
+
+          <label class="diamond-garden-form__label" for="diamond-garden-message">Ucapan &amp; Doa</label>
+          <textarea id="diamond-garden-message" class="diamond-garden-form__textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan & doa terbaikmu..."></textarea>
+
+          <label class="diamond-garden-form__label">Kehadiran</label>
+          <div class="diamond-garden-form__attendance">
+            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
+            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
+            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
+          </div>
+
+          <button class="diamond-garden-button diamond-garden-button--primary diamond-garden-button--full" type="button" [disabled]="isSubmittingWish" (click)="submitWish()">
+            {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
+          </button>
+        </div>
+
+        <div class="diamond-garden-wishes" *ngIf="getDisplayedWishes().length; else emptyWishes">
+          <article class="diamond-garden-wish" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+            <div class="diamond-garden-wish__head">
+              <strong>{{ wish.nama }}</strong>
+              <span class="diamond-garden-wish__badge" [ngClass]="getWishBadgeClass(wish.kehadiran)">
+                {{ getAttendanceLabel(wish.kehadiran) }}
+              </span>
+            </div>
+            <p>{{ wish.pesan }}</p>
+          </article>
+        </div>
+
+        <ng-template #emptyWishes>
+          <div class="diamond-garden-empty">Belum ada ucapan. Jadilah yang pertama mengirim doa terbaik.</div>
+        </ng-template>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--story" *ngIf="isStoryVisible()">
+        <p class="diamond-garden-section__eyebrow">Our Journey</p>
+        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Cerita Perjalanan Kami</h2>
+        <div class="diamond-garden-timeline">
+          <article class="diamond-garden-timeline__item" *ngFor="let item of getLoveStoryItems(); trackBy: getStoryTrackBy">
+            <span class="diamond-garden-timeline__year">{{ item.date }}</span>
+            <div class="diamond-garden-timeline__dot"></div>
+            <div class="diamond-garden-timeline__body">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="diamond-garden-section diamond-garden-section--gift" *ngIf="isGiftVisible()">
+        <div class="diamond-garden-section__header">
+          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
+          <p class="diamond-garden-section__eyebrow">Wedding Gift</p>
+          <h2 class="diamond-garden-section__title">Tanda Kasih</h2>
+        </div>
+
+        <div class="diamond-garden-gifts" *ngIf="getVisibleBankAccounts().length; else emptyBanks">
+          <article class="diamond-garden-gift-card" *ngFor="let bank of getVisibleBankAccounts()">
+            <div class="diamond-garden-gift-card__bank">{{ bank.nomor_rekening }} / {{ bank.nama_bank || bank.bank?.name || 'BANK' }}</div>
+            <strong>{{ getGiftAddress(bank) }}</strong>
+            <button class="diamond-garden-button diamond-garden-button--outline" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
+              <i class="far fa-copy" aria-hidden="true"></i>
+              Salin
+            </button>
+          </article>
+        </div>
+
+        <ng-template #emptyBanks>
+          <article class="diamond-garden-gift-card">
+            <div class="diamond-garden-gift-card__bank">Informasi Rekening</div>
+            <strong>Detail hadiah akan diperbarui</strong>
+          </article>
+        </ng-template>
+      </section>
+
+      <section class="diamond-garden-closing">
+        <div class="diamond-garden-closing__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-garden-closing__overlay"></div>
+        <div class="diamond-garden-closing__content">
+          <p>Merupakan suatu kehormatan dan kebahagiaan bagi kami atas kehadiran dan doa restunya.</p>
+          <h2>
+            <span>{{ getPrimaryDisplayName() }}</span>
+            <em>&amp;</em>
+            <span>{{ getSecondaryDisplayName() }}</span>
+          </h2>
+          <small>Terima kasih telah menjadi bagian dari hari bahagia kami.</small>
+        </div>
+      </section>
+    </ng-container>
+  </article>
+</section>

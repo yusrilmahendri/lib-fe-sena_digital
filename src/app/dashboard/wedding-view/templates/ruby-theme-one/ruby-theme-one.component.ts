@@ -351,6 +351,8 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       value.includes('lavender-bloom') ||
       value.includes('garden-whisper') ||
       value.includes('modern-vows') ||
+      value.includes('diamond-garden') ||
+      value.includes('diamond') ||
       value.includes('champagne-rose') ||
       value.includes('velvet-mauve');
   }

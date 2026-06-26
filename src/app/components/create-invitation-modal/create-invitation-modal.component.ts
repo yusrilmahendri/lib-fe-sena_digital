@@ -15,8 +15,12 @@ import {
 import {
   buildThemeAccessMap,
   FALLBACK_THEME_ACCESS_MAP,
-  isCategoryAccessibleForTier,
-  resolveThemeCategory,
+  getLowestPackageTierForTheme,
+  getThemePresetBySlug,
+  isThemeAccessibleForTier,
+  PaidThemePackageTier,
+  PUBLIC_THEME_PRESETS,
+  ThemeAccessMap,
   ThemeCategoryName,
 } from '../../theme-package-access.util';
 
@@ -53,6 +57,7 @@ interface ThemeCatalogSeed {
   image?: string;
   name: string;
   slug: string;
+  packageTier: PaidThemePackageTier;
 }
 
 /** Resolved package mapping for a tier (from /v1/paket-undangan). */
@@ -133,15 +138,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   ];
 
   private readonly defaultThemeCatalog: ThemeCatalogSeed[] = [
-    { slug: 'soft-ivory', name: 'Soft Ivory', category: 'Minimalis', fallbackImage: 'assets/landing/template-2.png' },
-    { slug: 'lavender-bloom', name: 'Lavender Bloom', category: 'Floral', fallbackImage: 'assets/landing/template-1.png' },
-    { slug: 'garden-whisper', name: 'Garden Whisper', category: 'Floral', fallbackImage: 'assets/landing/template-6.png' },
-    { slug: 'modern-vows', name: 'Modern Vows', category: 'Modern', fallbackImage: 'assets/landing/template-4.png' },
-    { slug: 'champagne-rose', name: 'Champagne Rose', category: 'Elegant', fallbackImage: 'assets/landing/template-5.png' },
-    { slug: 'velvet-mauve', name: 'Velvet Mauve', category: 'Luxury', fallbackImage: 'assets/landing/template-3.png' },
+    ...PUBLIC_THEME_PRESETS,
   ];
   private themeCatalog: ThemeCatalogSeed[] = [...this.defaultThemeCatalog];
-  private themeAccessMap = FALLBACK_THEME_ACCESS_MAP;
+  private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
 
   themesByCategory: Record<ThemeTier, ThemeOption[]> = this.buildThemesByCategory();
 
@@ -225,17 +225,19 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   }
 
   private resetWizard(prefill?: CreateInvitationThemePrefill | null): void {
+    const prefilledTheme = this.buildPrefilledTheme(prefill);
+
     this.step = 'couple-detail';
     this.isSubmitting = false;
     this.errorMessage = '';
     this.showPassword = false;
     this.coupleNameTouched = false;
     this.domainTouched = false;
-    this.activeCategory = this.resolvePrefillTier(prefill?.tier);
+    this.activeCategory = prefilledTheme?.tier || this.resolvePrefillTier(prefill?.tier);
     this.coupleDetailForm.reset();
     this.accountForm.reset({ terms: false });
     this.selectedTheme =
-      this.buildPrefilledTheme(prefill) ||
+      prefilledTheme ||
       this.themesByCategory[this.activeCategory][0] ||
       null;
 
@@ -317,7 +319,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return null;
   }
 
-  /** Build available themes from public categories, filtered by accessible package categories. */
+  /** Build available themes from public categories, filtered by explicit theme access. */
   private loadThemes(): void {
     this.themeService.getPublicCategoriesWithThemes('website').subscribe({
       next: (res: any) => {
@@ -345,7 +347,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   private buildThemesByCategory(): Record<ThemeTier, ThemeOption[]> {
     const buildTierThemes = (tier: Exclude<ThemeTier, 'trial'>): ThemeOption[] => {
       const filtered = this.themeCatalog
-        .filter((theme) => isCategoryAccessibleForTier(tier, theme.category, this.themeAccessMap))
+        .filter((theme) => isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap))
         .map((theme) => ({
           id: theme.id,
           slug: theme.slug,
@@ -360,7 +362,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       }
 
       return this.defaultThemeCatalog
-        .filter((theme) => isCategoryAccessibleForTier(tier, theme.category, this.themeAccessMap))
+        .filter((theme) => isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap))
         .map((theme) => ({
           slug: theme.slug,
           name: theme.name,
@@ -379,36 +381,34 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   private buildThemeCatalogFromApi(categories: PublicCategoryWithThemes[]): ThemeCatalogSeed[] {
     const catalog = categories.flatMap((category) => {
-      const resolvedCategory = resolveThemeCategory(category?.name);
-      if (!resolvedCategory) {
-        return [];
-      }
-
       const themes = Array.isArray(category?.jenis_themas) ? category.jenis_themas : [];
-      return themes.map((theme) => ({
-        id: theme.id,
-        slug: (theme as any)?.slug || this.slugifyThemeName(theme.name),
-        name: theme.name,
-        category: resolvedCategory,
-        image:
-          theme.thumbnail_image ||
-          theme.preview_image ||
-          theme.image ||
-          undefined,
-        fallbackImage: this.findFallbackImage(theme.name, resolvedCategory),
-      }));
+      return themes.reduce<ThemeCatalogSeed[]>((result, theme) => {
+        const preset = getThemePresetBySlug(
+          (theme as any)?.slug || this.slugifyThemeName(theme.name)
+        );
+        if (!preset) {
+          return result;
+        }
+
+        result.push({
+          id: theme.id,
+          slug: preset.slug,
+          name: preset.name,
+          category: preset.category,
+          packageTier: preset.packageTier,
+          image:
+            theme.thumbnail_image ||
+            theme.preview_image ||
+            theme.image ||
+            undefined,
+          fallbackImage: preset.fallbackImage,
+        });
+
+        return result;
+      }, []);
     });
 
     return catalog.length ? catalog : [...this.defaultThemeCatalog];
-  }
-
-  private findFallbackImage(name: string, category: ThemeCategoryName): string {
-    const normalizedName = this.slugifyThemeName(name);
-    return (
-      this.defaultThemeCatalog.find((theme) => theme.slug === normalizedName)?.fallbackImage ||
-      this.defaultThemeCatalog.find((theme) => theme.category === category)?.fallbackImage ||
-      this.defaultThemeImages['default']
-    );
   }
 
   private slugifyThemeName(value: string): string {
@@ -745,14 +745,17 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return null;
     }
 
+    const preset = getThemePresetBySlug(prefill.slug);
+    const resolvedTier = preset?.packageTier || this.resolvePrefillTier(prefill.tier);
+
     return {
       id: prefill.id,
-      slug: prefill.slug,
-      name: prefill.name || prefill.slug,
-      tier: this.resolvePrefillTier(prefill.tier),
+      slug: preset?.slug || prefill.slug,
+      name: preset?.name || prefill.name || prefill.slug,
+      tier: resolvedTier,
       image: prefill.image,
       fallbackImage:
-        prefill.fallbackImage || this.defaultThemeImages['default'],
+        prefill.fallbackImage || preset?.fallbackImage || this.defaultThemeImages['default'],
     };
   }
 
@@ -761,7 +764,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const tier = this.resolvePrefillTier(this.themePrefill.tier);
+    const tier =
+      getThemePresetBySlug(this.themePrefill.slug)?.packageTier ||
+      this.resolvePrefillTier(this.themePrefill.tier);
     const prefills = this.themesByCategory[tier];
     const matchedTheme =
       prefills.find((theme) => theme.slug === this.themePrefill?.slug) ||

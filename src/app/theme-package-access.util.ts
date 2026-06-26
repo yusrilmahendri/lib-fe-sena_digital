@@ -1,11 +1,26 @@
 export type ThemePackageTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
+export type PaidThemePackageTier = Exclude<ThemePackageTier, 'trial'>;
 
 export type ThemeCategoryName =
   | 'Minimalis'
   | 'Floral'
-  | 'Modern'
   | 'Elegant'
   | 'Luxury';
+
+export type PublicThemeSlug =
+  | 'soft-ivory'
+  | 'lavender-bloom'
+  | 'garden-whisper'
+  | 'diamond'
+  | 'diamond-garden';
+
+export interface ThemePresetDefinition {
+  slug: PublicThemeSlug;
+  name: string;
+  category: ThemeCategoryName;
+  packageTier: PaidThemePackageTier;
+  fallbackImage: string;
+}
 
 export interface PackageAccessSource {
   accessible_categories?: any[];
@@ -15,14 +30,70 @@ export interface PackageAccessSource {
   package_tier?: string;
 }
 
-export const FALLBACK_THEME_ACCESS_MAP: Record<
-  ThemePackageTier,
-  ThemeCategoryName[]
-> = {
+export type ThemeAccessMap = Record<ThemePackageTier, PublicThemeSlug[]>;
+
+export const PUBLIC_THEME_PRESETS: ThemePresetDefinition[] = [
+  {
+    slug: 'soft-ivory',
+    name: 'Soft Ivory',
+    category: 'Minimalis',
+    packageTier: 'ruby',
+    fallbackImage: 'assets/landing/template-2.png',
+  },
+  {
+    slug: 'lavender-bloom',
+    name: 'Lavender Bloom',
+    category: 'Floral',
+    packageTier: 'ruby',
+    fallbackImage: 'assets/landing/template-1.png',
+  },
+  {
+    slug: 'garden-whisper',
+    name: 'Garden Whisper',
+    category: 'Floral',
+    packageTier: 'sapphire',
+    fallbackImage: 'assets/landing/template-6.png',
+  },
+  {
+    slug: 'diamond',
+    name: 'Champagne Rose',
+    category: 'Elegant',
+    packageTier: 'diamond',
+    fallbackImage: 'assets/landing/template-5.png',
+  },
+  {
+    slug: 'diamond-garden',
+    name: 'Diamond Garden',
+    category: 'Luxury',
+    packageTier: 'diamond',
+    fallbackImage: 'assets/landing/template-3.png',
+  },
+];
+
+const THEME_PRESET_BY_SLUG: Record<PublicThemeSlug, ThemePresetDefinition> = {
+  'soft-ivory': PUBLIC_THEME_PRESETS[0],
+  'lavender-bloom': PUBLIC_THEME_PRESETS[1],
+  'garden-whisper': PUBLIC_THEME_PRESETS[2],
+  'diamond': PUBLIC_THEME_PRESETS[3],
+  'diamond-garden': PUBLIC_THEME_PRESETS[4],
+};
+
+const THEME_SLUG_ALIASES: Record<string, PublicThemeSlug> = {
+  sapphire: 'garden-whisper',
+  'modern-vows': 'garden-whisper',
+  'champagne-rose': 'diamond',
+  'velvet-mauve': 'diamond-garden',
+};
+
+const THEME_SLUG_ORDER: PublicThemeSlug[] = PUBLIC_THEME_PRESETS.map(
+  (preset) => preset.slug
+);
+
+export const FALLBACK_THEME_ACCESS_MAP: ThemeAccessMap = {
   trial: [],
-  ruby: ['Minimalis', 'Floral'],
-  sapphire: ['Minimalis', 'Floral', 'Modern', 'Elegant'],
-  diamond: ['Minimalis', 'Floral', 'Modern', 'Elegant', 'Luxury'],
+  ruby: ['soft-ivory', 'lavender-bloom'],
+  sapphire: ['garden-whisper'],
+  diamond: ['diamond', 'diamond-garden'],
 };
 
 export function resolvePackageTier(
@@ -65,10 +136,38 @@ export function resolveThemeCategory(
 
   if (raw.includes('minimal')) return 'Minimalis';
   if (raw.includes('floral')) return 'Floral';
-  if (raw.includes('modern')) return 'Modern';
   if (raw.includes('elegant')) return 'Elegant';
   if (raw.includes('luxury')) return 'Luxury';
   return null;
+}
+
+export function resolvePublicThemeSlug(
+  value: any
+): PublicThemeSlug | null {
+  const raw = normalizeStableKey(
+    typeof value === 'string'
+      ? value
+      : value?.slug || value?.theme_slug || value?.key || value?.name || value?.tema || ''
+  );
+
+  if (!raw) {
+    return null;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(THEME_SLUG_ALIASES, raw)) {
+    return THEME_SLUG_ALIASES[raw];
+  }
+
+  return Object.prototype.hasOwnProperty.call(THEME_PRESET_BY_SLUG, raw)
+    ? (raw as PublicThemeSlug)
+    : null;
+}
+
+export function getThemePresetBySlug(
+  value: string | null | undefined
+): ThemePresetDefinition | null {
+  const slug = resolvePublicThemeSlug(value);
+  return slug ? THEME_PRESET_BY_SLUG[slug] : null;
 }
 
 export function normalizeStableKey(value: string): string {
@@ -82,8 +181,8 @@ export function normalizeStableKey(value: string): string {
 
 export function buildThemeAccessMap(
   packages: PackageAccessSource[] | null | undefined
-): Record<ThemePackageTier, ThemeCategoryName[]> {
-  const result: Record<ThemePackageTier, ThemeCategoryName[]> = {
+): ThemeAccessMap {
+  const result: ThemeAccessMap = {
     trial: [...FALLBACK_THEME_ACCESS_MAP.trial],
     ruby: [...FALLBACK_THEME_ACCESS_MAP.ruby],
     sapphire: [...FALLBACK_THEME_ACCESS_MAP.sapphire],
@@ -111,69 +210,113 @@ export function buildThemeAccessMap(
     const mapped = Array.from(
       new Set(
         accessibleCategories
-          .map((entry) => resolveThemeCategory(entry))
-          .filter((category): category is ThemeCategoryName => !!category)
+          .flatMap((entry) => resolveThemeAccessEntry(entry, tier))
       )
     );
 
     if (tier === 'trial') {
-      result.trial = mapped;
+      result.trial = sortThemeSlugs(mapped);
       return;
     }
 
     if (mapped.length) {
-      // Merge API categories with the fallback so that a partial accessible_categories
-      // list from the API never removes categories that should be accessible by default.
       const merged = Array.from(
         new Set([...(FALLBACK_THEME_ACCESS_MAP[tier] || []), ...mapped])
       );
-      result[tier] = sortThemeCategories(merged as ThemeCategoryName[]);
+      result[tier] = sortThemeSlugs(merged);
     }
   });
 
   return result;
 }
 
+export function getThemeSlugsForTier(
+  tier: ThemePackageTier,
+  accessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP
+): PublicThemeSlug[] {
+  return [...(accessMap[tier] || [])];
+}
+
+export function isThemeAccessibleForTier(
+  tier: ThemePackageTier,
+  slug: string | null | undefined,
+  accessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP
+): boolean {
+  const normalizedSlug = resolvePublicThemeSlug(slug);
+  if (!normalizedSlug) {
+    return false;
+  }
+
+  return getThemeSlugsForTier(tier, accessMap).includes(normalizedSlug);
+}
+
+export function getLowestPackageTierForTheme(
+  slug: string | null | undefined,
+  accessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP
+): PaidThemePackageTier {
+  const normalizedSlug = resolvePublicThemeSlug(slug);
+  if (!normalizedSlug) {
+    return 'ruby';
+  }
+
+  const order: PaidThemePackageTier[] = ['ruby', 'sapphire', 'diamond'];
+  return (
+    order.find((tier) => isThemeAccessibleForTier(tier, normalizedSlug, accessMap)) ||
+    THEME_PRESET_BY_SLUG[normalizedSlug].packageTier
+  );
+}
+
 export function isCategoryAccessibleForTier(
   tier: ThemePackageTier,
   category: ThemeCategoryName,
-  accessMap: Record<ThemePackageTier, ThemeCategoryName[]> = FALLBACK_THEME_ACCESS_MAP
+  accessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP
 ): boolean {
   const normalizedCategory = (category || '').toLowerCase().trim();
-  const normalizedTier = (tier || '').toLowerCase().trim() as ThemePackageTier;
-  return (accessMap[normalizedTier] || []).some(
-    (c) => (c || '').toLowerCase().trim() === normalizedCategory
-  );
+  return getThemeSlugsForTier(tier, accessMap).some((slug) => {
+    const preset = THEME_PRESET_BY_SLUG[slug];
+    return preset?.category.toLowerCase().trim() === normalizedCategory;
+  });
 }
 
 export function getLowestPackageTierForCategory(
   category: ThemeCategoryName,
-  accessMap: Record<ThemePackageTier, ThemeCategoryName[]> = FALLBACK_THEME_ACCESS_MAP
-): Exclude<ThemePackageTier, 'trial'> {
-  const order: Array<Exclude<ThemePackageTier, 'trial'>> = [
-    'ruby',
-    'sapphire',
-    'diamond',
-  ];
+  accessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP
+): PaidThemePackageTier {
+  const order: PaidThemePackageTier[] = ['ruby', 'sapphire', 'diamond'];
+  const matchedTier =
+    order.find((tier) => isCategoryAccessibleForTier(tier, category, accessMap)) ||
+    PUBLIC_THEME_PRESETS.find((preset) => preset.category === category)?.packageTier;
 
-  const normalizedCategory = (category || '').toLowerCase().trim();
-  return (
-    order.find((tier) =>
-      (accessMap[tier] || []).some((c) => (c || '').toLowerCase().trim() === normalizedCategory)
-    ) || 'ruby'
-  );
+  return matchedTier || 'ruby';
 }
 
-function sortThemeCategories(
-  categories: ThemeCategoryName[]
-): ThemeCategoryName[] {
-  const order: ThemeCategoryName[] = [
-    'Minimalis',
-    'Floral',
-    'Modern',
-    'Elegant',
-    'Luxury',
-  ];
+function resolveThemeAccessEntry(
+  entry: any,
+  tier: ThemePackageTier
+): PublicThemeSlug[] {
+  const directSlug = resolvePublicThemeSlug(entry);
+  if (directSlug) {
+    return [directSlug];
+  }
 
-  return [...categories].sort((left, right) => order.indexOf(left) - order.indexOf(right));
+  if (tier === 'trial') {
+    return [];
+  }
+
+  const category = resolveThemeCategory(entry);
+  if (!category) {
+    return [];
+  }
+
+  return PUBLIC_THEME_PRESETS
+    .filter((preset) => preset.category === category && preset.packageTier === tier)
+    .map((preset) => preset.slug);
+}
+
+function sortThemeSlugs(
+  slugs: PublicThemeSlug[]
+): PublicThemeSlug[] {
+  return [...slugs].sort(
+    (left, right) => THEME_SLUG_ORDER.indexOf(left) - THEME_SLUG_ORDER.indexOf(right)
+  );
 }
