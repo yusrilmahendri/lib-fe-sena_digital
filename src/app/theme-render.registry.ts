@@ -3,10 +3,17 @@ export type ThemeSlug =
   | 'lavender-bloom'
   | 'garden-whisper'
   | 'modern-vows'
+  | 'sapphire'
   | 'champagne-rose'
-  | 'velvet-mauve';
+  | 'velvet-mauve'
+  | 'diamond';
 
-export type ThemeRenderKey = 'ruby-theme-one' | 'ruby-theme-two' | 'lavender-bloom';
+export type ThemeRenderKey =
+  | 'ruby-theme-one'
+  | 'ruby-theme-two'
+  | 'sapphire-theme-one'
+  | 'diamond-theme-one'
+  | 'lavender-bloom';
 
 export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
 
@@ -14,9 +21,13 @@ export const THEME_RENDER_MAP: Record<ThemeSlug, ThemeRenderKey> = {
   'soft-ivory': 'ruby-theme-one',
   'lavender-bloom': 'ruby-theme-two',
   'garden-whisper': 'ruby-theme-two',
-  'modern-vows': 'ruby-theme-two',
+  // Sapphire-tier (Modern category) themes render the dedicated Sapphire design.
+  'modern-vows': 'sapphire-theme-one',
+  'sapphire': 'sapphire-theme-one',
   'champagne-rose': 'ruby-theme-two',
-  'velvet-mauve': 'ruby-theme-two',
+  // Diamond-tier (Luxury category) themes render the dedicated Diamond design.
+  'velvet-mauve': 'diamond-theme-one',
+  'diamond': 'diamond-theme-one',
 };
 
 export function normalizeThemeSlug(value?: string | null): string {

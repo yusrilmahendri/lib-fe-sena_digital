@@ -1,0 +1,718 @@
+:host {
+  display: block;
+}
+
+.diamond-theme {
+  --diamond-forest: #2f3a31;
+  --diamond-forest-deep: #1d251f;
+  --diamond-accent: #c0552f;
+  --diamond-accent-soft: #e08a5f;
+  --diamond-ink: #25291f;
+  --diamond-muted: #7d8275;
+  --diamond-line: rgba(47, 58, 49, 0.12);
+  --diamond-surface: #ffffff;
+  --diamond-soft: #f3f1eb;
+  --diamond-shadow: 0 18px 38px rgba(29, 37, 31, 0.14);
+
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  overflow-x: hidden;
+  color: var(--diamond-ink);
+  background: var(--diamond-surface);
+  font-family: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
+}
+
+.diamond-shell {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ee 100%);
+}
+
+/* ── Full-image sections ──────────────────────────────────────── */
+.diamond-cover,
+.diamond-hero,
+.diamond-quote-block,
+.diamond-savedate,
+.diamond-countdown,
+.diamond-wishes,
+.diamond-gift,
+.diamond-closing {
+  position: relative;
+  overflow: hidden;
+}
+
+.diamond-cover__media,
+.diamond-hero__media,
+.diamond-quote-block__media,
+.diamond-savedate__media,
+.diamond-countdown__media,
+.diamond-wishes__media,
+.diamond-gift__media,
+.diamond-closing__media {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+}
+
+.diamond-cover__overlay,
+.diamond-hero__overlay,
+.diamond-quote-block__overlay,
+.diamond-savedate__overlay,
+.diamond-countdown__overlay,
+.diamond-wishes__overlay,
+.diamond-gift__overlay,
+.diamond-closing__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(29, 37, 31, 0.45) 0%, rgba(29, 37, 31, 0.68) 100%);
+}
+
+.diamond-cover__overlay {
+  background: linear-gradient(180deg, rgba(29, 37, 31, 0.25) 0%, rgba(29, 37, 31, 0.55) 55%, rgba(20, 26, 21, 0.82) 100%);
+}
+
+.diamond-closing__overlay {
+  background: linear-gradient(180deg, rgba(15, 19, 16, 0.55) 0%, rgba(15, 19, 16, 0.85) 100%);
+}
+
+/* ── Cover / Hero ─────────────────────────────────────────────── */
+.diamond-cover {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 32px 22px 48px;
+}
+
+.diamond-cover__content,
+.diamond-hero__content,
+.diamond-quote-block__content,
+.diamond-savedate__content,
+.diamond-countdown__content,
+.diamond-wishes__content,
+.diamond-gift__content,
+.diamond-closing__content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #fff;
+}
+
+.diamond-eyebrow {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: var(--diamond-accent);
+}
+
+.diamond-eyebrow--light {
+  color: var(--diamond-accent-soft);
+}
+
+.diamond-names,
+.diamond-closing__content h2 {
+  margin: 12px 0 10px;
+  font-size: clamp(2.6rem, 11vw, 4rem);
+  font-weight: 600;
+  line-height: 1.0;
+}
+
+.diamond-names span {
+  display: block;
+  font-size: 0.55em;
+  font-style: italic;
+  color: var(--diamond-accent-soft);
+}
+
+.diamond-cover__date {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.diamond-cover__guest {
+  width: min(100%, 230px);
+  margin: 18px auto 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+}
+
+.diamond-cover__guest span {
+  display: block;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.diamond-cover__guest strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1rem;
+}
+
+.diamond-hero {
+  min-height: 300px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 24px 20px 32px;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.diamond-btn {
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 18px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.diamond-btn:hover { transform: translateY(-1px); }
+.diamond-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.diamond-btn--primary {
+  background: linear-gradient(135deg, var(--diamond-accent) 0%, #a8421f 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(192, 85, 47, 0.32);
+}
+
+.diamond-btn--ghost {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.diamond-btn--full { width: 100%; }
+
+/* ── Quote block ──────────────────────────────────────────────── */
+.diamond-quote-block {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.diamond-script {
+  margin: 0 0 14px;
+  font-size: 1.6rem;
+  font-style: italic;
+  color: var(--diamond-accent-soft);
+}
+
+.diamond-quote {
+  margin: 16px auto;
+  max-width: 320px;
+  font-size: 1.05rem;
+  font-style: italic;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.diamond-quote__source {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  color: var(--diamond-accent-soft);
+}
+
+/* ── Generic light sections ───────────────────────────────────── */
+.diamond-section {
+  padding: 40px 22px;
+}
+
+.diamond-section--inviting {
+  background: var(--diamond-soft);
+  text-align: center;
+}
+
+.diamond-title {
+  margin: 6px 0 18px;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--diamond-ink);
+}
+
+.diamond-title--light {
+  color: #fff;
+}
+
+.diamond-copy {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--diamond-muted);
+}
+
+.diamond-copy--light {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.diamond-copy--center {
+  text-align: center;
+}
+
+/* ── Mempelai (person) ────────────────────────────────────────── */
+.diamond-person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 42px 22px;
+  text-align: center;
+}
+
+.diamond-person--reverse {
+  background: var(--diamond-soft);
+}
+
+.diamond-person__photo {
+  width: 200px;
+  height: 260px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--diamond-shadow);
+  background: var(--diamond-soft);
+}
+
+.diamond-person__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.diamond-person__name {
+  margin: 8px 0 8px;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--diamond-ink);
+}
+
+/* ── Save the Date ────────────────────────────────────────────── */
+.diamond-savedate {
+  padding: 48px 22px;
+}
+
+.diamond-event-card {
+  margin: 0 auto 18px;
+  max-width: 340px;
+  padding: 22px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--diamond-shadow);
+  text-align: center;
+  color: var(--diamond-ink);
+}
+
+.diamond-event-card__badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 5px 16px;
+  border-radius: 6px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--diamond-forest);
+}
+
+.diamond-event-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.25rem;
+}
+
+.diamond-event-card p {
+  margin: 0 0 4px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.84rem;
+  color: var(--diamond-muted);
+}
+
+.diamond-event-card strong {
+  display: block;
+  margin: 8px 0 2px;
+  font-size: 1rem;
+}
+
+.diamond-event-card__addr {
+  margin-bottom: 14px !important;
+}
+
+.diamond-event-card__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.diamond-event-card__actions .diamond-btn--ghost {
+  background: var(--diamond-soft);
+  color: var(--diamond-forest);
+  border-color: var(--diamond-line);
+}
+
+/* ── Turut Mengundang ─────────────────────────────────────────── */
+.diamond-inviting-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.diamond-inviting-list li {
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--diamond-line);
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.88rem;
+  color: var(--diamond-ink);
+}
+
+/* ── Countdown ────────────────────────────────────────────────── */
+.diamond-countdown {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 22px;
+}
+
+.diamond-countdown__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.diamond-countdown__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 22px rgba(15, 19, 16, 0.25);
+}
+
+.diamond-countdown__card strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--diamond-accent);
+}
+
+.diamond-countdown__card span {
+  margin-top: 4px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--diamond-muted);
+}
+
+/* ── Wishes ───────────────────────────────────────────────────── */
+.diamond-wishes {
+  padding: 46px 22px;
+}
+
+.diamond-form {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diamond-input,
+.diamond-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.88rem;
+}
+
+.diamond-input::placeholder,
+.diamond-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.diamond-textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.diamond-attendance {
+  display: flex;
+  gap: 8px;
+}
+
+.diamond-chip {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.diamond-chip--active {
+  background: var(--diamond-accent);
+  border-color: transparent;
+  color: #fff;
+}
+
+.diamond-wishes-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diamond-wish-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  text-align: left;
+}
+
+.diamond-wish-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.diamond-wish-card__top strong {
+  font-size: 0.92rem;
+}
+
+.diamond-wish-card__top span {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.64rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(192, 85, 47, 0.4);
+}
+
+.diamond-wish-card p {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* ── Gift ─────────────────────────────────────────────────────── */
+.diamond-gift {
+  padding: 46px 22px;
+}
+
+.diamond-bank-card {
+  margin: 0 auto 14px;
+  max-width: 340px;
+  padding: 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--diamond-shadow);
+  color: var(--diamond-ink);
+}
+
+.diamond-bank-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.diamond-bank-card__top span {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--diamond-forest);
+}
+
+.diamond-bank-card__top small {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  color: var(--diamond-muted);
+}
+
+.diamond-bank-card strong {
+  display: block;
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+}
+
+.diamond-bank-card p {
+  margin: 4px 0 14px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.84rem;
+  color: var(--diamond-muted);
+}
+
+.diamond-bank-card .diamond-btn--ghost {
+  background: var(--diamond-soft);
+  color: var(--diamond-forest);
+  border-color: var(--diamond-line);
+}
+
+/* ── Story ────────────────────────────────────────────────────── */
+.diamond-section--story {
+  background: var(--diamond-forest-deep);
+}
+
+.diamond-section--story .diamond-title { color: #fff; }
+.diamond-section--story .diamond-eyebrow { color: var(--diamond-accent-soft); }
+
+.diamond-story-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.diamond-story-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.diamond-story-item__year {
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--diamond-accent-soft);
+}
+
+.diamond-story-item__body h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.diamond-story-item__body p {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ── Gallery ──────────────────────────────────────────────────── */
+.diamond-section--gallery {
+  background: var(--diamond-surface);
+}
+
+.diamond-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.diamond-gallery-item {
+  margin: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  background: var(--diamond-soft);
+}
+
+.diamond-gallery-item--wide {
+  grid-column: 1 / -1;
+  aspect-ratio: 16 / 10;
+}
+
+.diamond-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Closing ──────────────────────────────────────────────────── */
+.diamond-closing {
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+}
+
+.diamond-closing__content p {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.diamond-closing__content small {
+  display: block;
+  margin-top: 14px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ── Empty states ─────────────────────────────────────────────── */
+.diamond-empty {
+  padding: 22px;
+  border-radius: 10px;
+  text-align: center;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.86rem;
+  color: var(--diamond-muted);
+  background: var(--diamond-soft);
+  border: 1px dashed var(--diamond-line);
+}
+
+.diamond-empty--light {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 360px) {
+  .diamond-countdown__card strong { font-size: 1.25rem; }
+  .diamond-title { font-size: 1.75rem; }
+  .diamond-person__photo { width: 170px; height: 220px; }
+}

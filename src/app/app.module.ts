@@ -89,6 +89,8 @@ import { PresenceViewComponent } from './dashboard/wedding-view/presence-view/pr
 import { GiftViewComponent } from './dashboard/wedding-view/gift-view/gift-view.component';
 import { RubyThemeOneComponent } from './dashboard/wedding-view/templates/ruby-theme-one/ruby-theme-one.component';
 import { RubyThemeTwoComponent } from './dashboard/wedding-view/templates/ruby-theme-two/ruby-theme-two.component';
+import { SapphireThemeOneComponent } from './dashboard/wedding-view/templates/sapphire-theme-one/sapphire-theme-one.component';
+import { DiamondThemeOneComponent } from './dashboard/wedding-view/templates/diamond-theme-one/diamond-theme-one.component';
 import { LavenderBloomThemeComponent } from './dashboard/wedding-view/themes/lavender-bloom/lavender-bloom-theme.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
@@ -173,6 +175,8 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     GiftViewComponent,
     RubyThemeOneComponent,
     RubyThemeTwoComponent,
+    SapphireThemeOneComponent,
+    DiamondThemeOneComponent,
     LavenderBloomThemeComponent,
     BillUserComponent,
     ProfileAdminComponent,

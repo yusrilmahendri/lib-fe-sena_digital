@@ -8,6 +8,8 @@ import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-m
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
 import { RubyThemeTwoComponent } from './templates/ruby-theme-two/ruby-theme-two.component';
+import { SapphireThemeOneComponent } from './templates/sapphire-theme-one/sapphire-theme-one.component';
+import { DiamondThemeOneComponent } from './templates/diamond-theme-one/diamond-theme-one.component';
 import {
   resolveThemeRenderKey,
   resolveThemeSlug,
@@ -78,6 +80,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly themeComponentRegistry: Record<ThemeRenderKey, Type<unknown>> = {
     'ruby-theme-one': RubyThemeOneComponent,
     'ruby-theme-two': RubyThemeTwoComponent,
+    'sapphire-theme-one': SapphireThemeOneComponent,
+    'diamond-theme-one': DiamondThemeOneComponent,
     'lavender-bloom': LavenderBloomThemeComponent,
   };
 
@@ -96,7 +100,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
 
   @HostBinding('class.no-outer-bg') get isNeutralBackgroundTheme(): boolean {
-    return this.activeThemeRenderKey === 'ruby-theme-two';
+    return this.activeThemeRenderKey === 'ruby-theme-two'
+      || this.activeThemeRenderKey === 'sapphire-theme-one'
+      || this.activeThemeRenderKey === 'diamond-theme-one';
   }
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain

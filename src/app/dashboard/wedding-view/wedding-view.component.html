@@ -101,6 +101,18 @@
             [invitationOpened]="invitationOpened"
             (openInvitationRequested)="openInvitation()">
           </wc-ruby-theme-two>
+          <wc-sapphire-theme-one
+            *ngSwitchCase="'sapphire-theme-one'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-sapphire-theme-one>
+          <wc-diamond-theme-one
+            *ngSwitchCase="'diamond-theme-one'"
+            [weddingData]="weddingData"
+            [invitationOpened]="invitationOpened"
+            (openInvitationRequested)="openInvitation()">
+          </wc-diamond-theme-one>
           <wc-lavender-bloom-theme
             *ngSwitchCase="'lavender-bloom'"
             [weddingData]="weddingData"
