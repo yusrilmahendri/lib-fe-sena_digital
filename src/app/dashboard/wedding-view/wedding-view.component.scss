@@ -20,6 +20,16 @@
   // min-height: 100vh;
 }
 
+/* When ruby-theme-two is active, strip the outer floral/image background */
+:host.no-outer-bg {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+.no-outer-bg .floral-bg {
+  display: none;
+}
+
 /* Side icons container */
   /* Side icons collapsible container */
   .side-icons-container {

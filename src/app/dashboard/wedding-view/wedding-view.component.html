@@ -1,4 +1,4 @@
-<div class="wedding-container">
+<div class="wedding-container" [class.no-outer-bg]="activeThemeRenderKey === 'ruby-theme-two'">
   <!-- Loading State -->
   <div class="wedding-loading" *ngIf="isLoading">
     <div class="loading-spinner">

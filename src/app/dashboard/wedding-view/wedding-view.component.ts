@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy, Type } from '@angular/core';
+import { Component, HostBinding, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy, Type } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
@@ -94,6 +94,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   weddingData: WeddingData | null = null;
   activeThemeSlug: ThemeSlug | null = null;
   activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
+
+  @HostBinding('class.no-outer-bg') get isNeutralBackgroundTheme(): boolean {
+    return this.activeThemeRenderKey === 'ruby-theme-two';
+  }
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   isLoading: boolean = false;
