@@ -38,9 +38,10 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
 
   private buildPreviewData(slug: ThemeSlug): WeddingData {
     const themedName = this.toTitle(slug);
-    const isRubyThemeTwo = slug === 'garden-whisper';
-    const groomPreviewName = isRubyThemeTwo ? 'Sena' : 'Ketut';
-    const bridePreviewName = isRubyThemeTwo ? 'Arya' : 'Isabela';
+    const renderKey = resolveThemeRenderKey(slug);
+    const isRubyThemeTwo = renderKey === 'ruby-theme-two';
+    const groomPreviewName = isRubyThemeTwo ? 'Arya' : 'Ketut';
+    const bridePreviewName = isRubyThemeTwo ? 'Sena' : 'Isabela';
     const coverPreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-2.png';
     const bridePreviewImage = isRubyThemeTwo ? 'assets/landing/template-3.png' : 'assets/landing/template-1.png';
     const groomPreviewImage = isRubyThemeTwo ? 'assets/landing/template-6.png' : 'assets/landing/template-2.png';

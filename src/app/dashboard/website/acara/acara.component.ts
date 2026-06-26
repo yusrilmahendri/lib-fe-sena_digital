@@ -305,7 +305,8 @@ submitDynamicEventForm(): void {
 
     if (eventsToCreate.length > 0) {
       const createPayload = {
-        nama_acara: eventsToCreate.map(event => event.nama_acara),
+        jenis_acara: eventsToCreate.map(event => (event as any).jenis_acara || event.nama_acara || ''),
+        nama_acara: eventsToCreate.map(event => event.nama_acara || (event as any).jenis_acara || ''),
         tanggal_acara: eventsToCreate.map(event =>
           event.tanggal_acara instanceof Date
             ? event.tanggal_acara.toISOString().split('T')[0]
@@ -317,6 +318,8 @@ submitDynamicEventForm(): void {
         link_maps: eventsToCreate.map(event => event.link_maps),
       };
 
+      console.log('[SubmissionAcaraPayload]', createPayload);
+
       const createPromise = this.dashboardSvc.create(DashboardServiceType.ACARA_SUBMIT_DYNAMIC, createPayload);
       promises.push(createPromise);
     }
@@ -325,7 +328,8 @@ submitDynamicEventForm(): void {
     if (eventsToUpdate.length > 0) {
       const updatePayload = eventsToUpdate.map(event => ({
         id: event.id,
-        nama_acara: event.nama_acara,
+        jenis_acara: (event as any).jenis_acara || event.nama_acara || '',
+        nama_acara: event.nama_acara || (event as any).jenis_acara || '',
         tanggal_acara: event.tanggal_acara instanceof Date
           ? event.tanggal_acara.toISOString().split('T')[0]
           : event.tanggal_acara,

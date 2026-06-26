@@ -12,14 +12,11 @@ export const DEFAULT_THEME_SLUG: ThemeSlug = 'soft-ivory';
 
 export const THEME_RENDER_MAP: Record<ThemeSlug, ThemeRenderKey> = {
   'soft-ivory': 'ruby-theme-one',
-  'lavender-bloom': 'lavender-bloom',
+  'lavender-bloom': 'ruby-theme-two',
   'garden-whisper': 'ruby-theme-two',
-  // TODO: replace with ModernVowsComponent when available
-  'modern-vows': 'lavender-bloom',
-  // TODO: replace with ChampagneRoseComponent when available
-  'champagne-rose': 'lavender-bloom',
-  // TODO: replace with VelvetMauveComponent when available
-  'velvet-mauve': 'lavender-bloom',
+  'modern-vows': 'ruby-theme-two',
+  'champagne-rose': 'ruby-theme-two',
+  'velvet-mauve': 'ruby-theme-two',
 };
 
 export function normalizeThemeSlug(value?: string | null): string {
