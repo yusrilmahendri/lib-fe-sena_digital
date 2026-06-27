@@ -1,21 +1,24 @@
 <section class="ruby-theme-one" *ngIf="weddingData as data">
   <article class="ruby-shell">
-    <section class="ruby-cover" [class.ruby-cover--opened]="invitationOpened">
+    <section class="ruby-cover"
+             [class.ruby-cover--opening]="isOpening"
+             [class.ruby-cover--opened]="invitationOpened">
       <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
-        <div class="ruby-cover__media" [style.background-image]="'url(' + coverPhoto + ')'"></div>
+        <div class="ruby-cover__media ruby-cover__bg" [style.background-image]="'url(' + coverPhoto + ')'"></div>
       </ng-container>
       <ng-template #coverPlaceholder>
-        <div class="ruby-cover__placeholder" aria-hidden="true">
-          <div class="ruby-cover__placeholder-bloom ruby-cover__placeholder-bloom--left"></div>
-          <div class="ruby-cover__placeholder-bloom ruby-cover__placeholder-bloom--right"></div>
-        </div>
+        <div class="ruby-cover__placeholder" aria-hidden="true"></div>
       </ng-template>
-      <div class="ruby-cover__veil"></div>
-      <div class="ruby-cover__bottom-softener" aria-hidden="true"></div>
-      <div class="ruby-cover__flower-layer" aria-hidden="true">
-        <img class="flower flower-left" [src]="floralAssetLeft" alt="">
-        <img class="flower flower-right" [src]="floralAssetRight" alt="">
-      </div>
+      <div class="ruby-cover__overlay ruby-cover__veil"></div>
+
+      <img
+        class="ruby-cover-frame"
+        src="assets/thema-1/frame-1.png"
+        alt=""
+        aria-hidden="true"
+      >
+
+      <div class="ruby-opening-veil" *ngIf="isOpening" aria-hidden="true"></div>
 
       <div class="ruby-cover__content">
         <h1 class="ruby-cover__names">
@@ -30,86 +33,110 @@
           <strong>{{ getGuestName() }}</strong>
         </div>
 
-        <button *ngIf="!invitationOpened" class="ruby-button ruby-button--primary" type="button" (click)="openInvitation()">
+        <button
+          *ngIf="!invitationOpened"
+          class="ruby-button ruby-button--primary ruby-cover__button"
+          type="button"
+          [disabled]="isOpening"
+          (click)="openInvitation()"
+        >
           <i class="far fa-envelope" aria-hidden="true"></i>
           Buka Undangan
         </button>
       </div>
     </section>
 
-    <ng-container *ngIf="invitationOpened">
-      <section class="ruby-section ruby-section--quote">
-        <img class="ruby-floral ruby-floral--top-left" [src]="floralAssetLeft" alt="" aria-hidden="true">
-        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAssetRight" alt="" aria-hidden="true">
+    <div class="ruby-main" *ngIf="invitationOpened" [class.ruby-main--visible]="hasOpened">
+      <section class="ruby-opening-section ruby-quote-section">
+        <img
+          class="ruby-quote-frame"
+          src="assets/thema-1/frame-2.png"
+          alt=""
+          aria-hidden="true"
+        >
 
-        <h2 class="ruby-script-title">{{ getOpeningHeading() }}</h2>
-        <p class="ruby-copy ruby-copy--center">{{ getInvitationIntro() }}</p>
-        <p class="ruby-verse">{{ getQuranQuote() }}</p>
-        <p class="ruby-verse__source">{{ getQuranSource() }}</p>
+        <div class="ruby-quote-content">
+          <h2>Bismillahirrahmanirrahim</h2>
+          <div class="ruby-quote-line"></div>
+
+          <p class="ruby-quote-opening">
+            Dengan memohon rahmat dan ridho Allah SWT,<br>
+            kami bermaksud mengundang Bapak/Ibu/Saudara/<br>
+            i untuk menghadiri dan memberikan doa restu<br>
+            pada acara pernikahan kami.
+          </p>
+
+          <p class="ruby-quote-text" *ngIf="getQuoteText() as quoteText">
+            "{{ getShortQuote(quoteText) }}"
+          </p>
+          <p class="ruby-quote-source" *ngIf="getQuoteName() as quoteName">
+            {{ quoteName }}
+          </p>
+        </div>
       </section>
 
-      <section class="ruby-section ruby-section--couple" *ngIf="isCoupleVisible()">
-        <p class="ruby-eyebrow">MEMPELAI</p>
-        <h2 class="ruby-title">Kedua Mempelai</h2>
+      <section class="ruby-couple-section" *ngIf="isCoupleVisible()">
+        <div class="ruby-couple-content">
+          <div class="ruby-couple-header">
+            <p class="ruby-couple-label">MEMPELAI</p>
+            <h2>Kedua Mempelai</h2>
+            <div class="ruby-couple-line"></div>
+          </div>
 
-        <div class="ruby-person">
-          <div class="ruby-person__frame">
+          <div class="ruby-couple-card ruby-couple-card--bride">
             <ng-container *ngIf="getBridePhoto() as bridePhoto; else bridePlaceholder">
-              <img [src]="bridePhoto" [alt]="getBrideName()">
+              <img class="ruby-couple-photo" [src]="bridePhoto" [alt]="getBrideName()">
             </ng-container>
             <ng-template #bridePlaceholder>
-              <div class="ruby-person__avatar-placeholder" aria-hidden="true">
+              <div class="ruby-couple-photo ruby-couple-photo--placeholder" aria-hidden="true">
                 <span>{{ getBrideName().charAt(0) || 'I' }}</span>
               </div>
             </ng-template>
+            <h3>{{ getBrideName() }}</h3>
+            <p class="ruby-couple-parent">{{ getBrideParentLine() }}</p>
+            <p class="ruby-couple-instagram" *ngIf="getBrideInstagram() as instagram">◎ {{ instagram }}</p>
           </div>
-          <h3>{{ getBrideName() }}</h3>
-          <p>{{ getBrideParentLine() }}</p>
-          <span *ngIf="getBrideInstagram() as instagram" class="ruby-person__social">{{ instagram }}</span>
-        </div>
 
-        <div class="ruby-separator">&amp;</div>
+          <div class="ruby-couple-separator">&amp;</div>
 
-        <div class="ruby-person">
-          <div class="ruby-person__frame">
+          <div class="ruby-couple-card ruby-couple-card--groom">
             <ng-container *ngIf="getGroomPhoto() as groomPhoto; else groomPlaceholder">
-              <img [src]="groomPhoto" [alt]="getGroomName()">
+              <img class="ruby-couple-photo" [src]="groomPhoto" [alt]="getGroomName()">
             </ng-container>
             <ng-template #groomPlaceholder>
-              <div class="ruby-person__avatar-placeholder" aria-hidden="true">
+              <div class="ruby-couple-photo ruby-couple-photo--placeholder" aria-hidden="true">
                 <span>{{ getGroomName().charAt(0) || 'K' }}</span>
               </div>
             </ng-template>
+            <h3>{{ getGroomName() }}</h3>
+            <p class="ruby-couple-parent">{{ getGroomParentLine() }}</p>
+            <p class="ruby-couple-instagram" *ngIf="getGroomInstagram() as instagram">◎ {{ instagram }}</p>
           </div>
-          <h3>{{ getGroomName() }}</h3>
-          <p>{{ getGroomParentLine() }}</p>
-          <span *ngIf="getGroomInstagram() as instagram" class="ruby-person__social">{{ instagram }}</span>
         </div>
       </section>
 
-      <section class="ruby-section ruby-section--events" *ngIf="isEventVisible()">
-        <img class="ruby-floral ruby-floral--event-top" [src]="floralAssetLeft" alt="" aria-hidden="true">
-        <img class="ruby-floral ruby-floral--event-bottom" [src]="floralAssetRight" alt="" aria-hidden="true">
+      <section class="ruby-event-section" *ngIf="isEventVisible()">
+        <div class="ruby-event-content">
+          <p class="ruby-event-label">SAVE THE DATE</p>
+          <h2>Akad Nikah</h2>
 
-        <p class="ruby-eyebrow">SAVE THE DATE</p>
-        <div class="ruby-event-block">
-          <h2 class="ruby-title ruby-title--event">Akad Nikah</h2>
-          <article class="ruby-card">
-            <h3>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</h3>
-            <p>{{ formatTimeRange(getAkadCard()) }}</p>
-            <strong>{{ getEventVenue(getAkadCard()) }}</strong>
-            <p>{{ getEventAddress(getAkadCard()) }}</p>
-          </article>
-        </div>
+          <div class="ruby-event-card">
+            <p class="ruby-event-date">{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</p>
+            <p class="ruby-event-time">{{ formatTimeRange(getAkadCard()) }}</p>
+            <div class="ruby-event-divider"></div>
+            <h3>{{ getEventVenue(getAkadCard()) }}</h3>
+            <p class="ruby-event-address">{{ getEventAddress(getAkadCard()) }}</p>
+          </div>
 
-        <div class="ruby-event-block">
-          <h2 class="ruby-title ruby-title--event">Resepsi</h2>
-          <article class="ruby-card">
-            <h3>{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</h3>
-            <p>{{ formatTimeRange(getReceptionCard()) }}</p>
-            <strong>{{ getEventVenue(getReceptionCard()) }}</strong>
-            <p>{{ getEventAddress(getReceptionCard()) }}</p>
-          </article>
+          <h2 class="ruby-event-title-secondary">Resepsi</h2>
+
+          <div class="ruby-event-card">
+            <p class="ruby-event-date">{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</p>
+            <p class="ruby-event-time">{{ formatTimeRange(getReceptionCard()) }}</p>
+            <div class="ruby-event-divider"></div>
+            <h3>{{ getEventVenue(getReceptionCard()) }}</h3>
+            <p class="ruby-event-address">{{ getEventAddress(getReceptionCard()) }}</p>
+          </div>
         </div>
       </section>
 
@@ -249,6 +276,6 @@
         <p class="ruby-cover__date ruby-cover__date--closing">{{ getClosingDateLabel() }}</p>
         <p class="ruby-crafted">{{ getPackageLabelText() }} | {{ craftedByLabel }}</p>
       </section>
-    </ng-container>
+    </div>
   </article>
 </section>

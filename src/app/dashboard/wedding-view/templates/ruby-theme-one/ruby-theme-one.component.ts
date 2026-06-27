@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   BankAccount,
   GalleryItem,
@@ -30,7 +30,7 @@ interface RubyWishForm {
   templateUrl: './ruby-theme-one.component.html',
   styleUrls: ['./ruby-theme-one.component.scss'],
 })
-export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnDestroy {
+export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
   readonly floralAssetLeft = 'assets/thema-1/flower-1.png';
   readonly floralAssetRight = 'assets/thema-1/flower-2.png';
   readonly craftedByLabel = 'crafted by Sena Digital';
@@ -42,7 +42,12 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   };
 
   isSubmittingWish = false;
+  isOpening = false;
+  hasOpened = false;
+
   private readonly subscriptions = new Subscription();
+  private openingTimer: any;
+  private openingTimer2: any;
 
   constructor(
     private dashboardService: DashboardService,
@@ -51,7 +56,41 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     super();
   }
 
+  override ngOnInit(): void {
+    super.ngOnInit();
+    if (this.invitationOpened) {
+      this.hasOpened = true;
+    }
+  }
+
+  override openInvitation(): void {
+    if (this.isOpening || this.hasOpened) {
+      return;
+    }
+
+    this.isOpening = true;
+
+    this.openingTimer = setTimeout(() => {
+      super.openInvitation();
+      this.hasOpened = true;
+      this.isOpening = false;
+
+      this.openingTimer2 = setTimeout(() => {
+        const openingSection = document.querySelector('.ruby-opening-section');
+        if (openingSection) {
+          openingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+    }, 850);
+  }
+
   override ngOnDestroy(): void {
+    if (this.openingTimer) {
+      clearTimeout(this.openingTimer);
+    }
+    if (this.openingTimer2) {
+      clearTimeout(this.openingTimer2);
+    }
     this.subscriptions.unsubscribe();
     super.ngOnDestroy();
   }
@@ -143,6 +182,36 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   getInvitationIntro(): string {
     return this.weddingData?.settings?.salam_atas
       || 'Dengan memohon rahmat dan ridha Allah SWT, kami bermaksud mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.';
+  }
+
+  getQuoteText(): string {
+    return ((this.weddingData?.quotes || []).find((item) => item?.qoute)?.qoute || '').trim();
+  }
+
+  getQuoteSource(): string {
+    const quote = (this.weddingData?.quotes || []).find((item) => item?.qoute) as any;
+    return (
+      quote?.source
+      || quote?.reference
+      || quote?.referensi
+      || quote?.ayat
+      || quote?.surat
+      || ''
+    ).trim();
+  }
+
+  getShortQuote(value: string | undefined | null): string {
+    if (!value) {
+      return '';
+    }
+
+    const text = value.replace(/^["“”]+|["“”]+$/g, '').trim();
+    return text.length > 150 ? text.slice(0, 147).trim() + '...' : text;
+  }
+
+  getQuoteName(): string {
+    const quote = (this.weddingData?.quotes || []).find((item) => item?.qoute) as any;
+    return (quote?.name || '').trim();
   }
 
   getQuranQuote(): string {
