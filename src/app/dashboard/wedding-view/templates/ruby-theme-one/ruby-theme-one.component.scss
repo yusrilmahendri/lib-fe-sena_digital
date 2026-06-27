@@ -1121,30 +1121,19 @@
   position: relative;
   width: 100%;
   max-width: 410px;
-  min-height: 610px;
+  min-height: 690px;
   margin: 0 auto;
   background: #fff;
   overflow: hidden;
   box-sizing: border-box;
 }
 
-.ruby-gallery-frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 1;
-  pointer-events: none;
-  display: block;
-}
-
 .ruby-gallery-content {
   position: relative;
   z-index: 2;
-  padding: 104px 28px 90px;
-  box-sizing: border-box;
+  padding: 112px 28px 96px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .ruby-gallery-label {
@@ -1156,49 +1145,45 @@
 }
 
 .ruby-gallery-content h2 {
-  margin: 0 0 56px;
-  color: #2a2430;
-  font-size: 28px;
+  margin: 0;
+  color: #3f334d;
+  font-size: 30px;
   line-height: 1.2;
   font-weight: 800;
   font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
-.ruby-gallery-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.ruby-gallery-line {
+  width: 48px;
+  height: 1px;
+  margin: 16px auto 56px;
+  background: rgba(179, 64, 50, 0.35);
 }
 
-.ruby-gallery-feature,
-.ruby-gallery-thumb {
+.ruby-gallery-feature {
   position: relative;
   width: 100%;
+  height: 200px;
   border: 0;
   padding: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   background: #f8eeee;
-  box-shadow: none;
+  display: block;
   appearance: none;
   -webkit-appearance: none;
 }
 
-.ruby-gallery-feature {
-  grid-column: 1 / -1;
-  height: 200px;
-}
-
-.ruby-gallery-thumb {
-  height: 205px;
-}
-
-.ruby-gallery-feature img,
-.ruby-gallery-thumb img {
+.ruby-gallery-feature img {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
+  filter: brightness(0.72);
+}
+
+.ruby-gallery-feature--video {
+  cursor: pointer;
 }
 
 .ruby-gallery-play {
@@ -1206,16 +1191,74 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  background: rgba(0, 0, 0, 0.28);
-  font-size: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(2px);
+  font-size: 30px;
   line-height: 1;
+}
+
+.ruby-gallery-slider {
+  width: calc(100% + 56px);
+  margin: 12px -28px 0;
+  overflow: hidden;
+}
+
+.ruby-gallery-track {
+  display: flex;
+  gap: 12px;
+  padding: 0 28px;
+  width: max-content;
+}
+
+.ruby-gallery-slider--animate .ruby-gallery-track {
+  animation: rubyGalleryMarquee 18s linear infinite;
+}
+
+.ruby-gallery-slider--animate:hover .ruby-gallery-track {
+  animation-play-state: paused;
+}
+
+.ruby-gallery-thumb {
+  position: relative;
+  flex: 0 0 156px;
+  width: 156px;
+  height: 205px;
+  border: 0;
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f8eeee;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ruby-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes rubyGalleryMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruby-gallery-slider--animate .ruby-gallery-track {
+    animation: none !important;
+  }
 }
 
 .ruby-form {

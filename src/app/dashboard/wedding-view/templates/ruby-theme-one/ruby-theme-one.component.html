@@ -208,31 +208,62 @@
         </div>
       </section>
 
-      <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && galleryPhotos.length">
-        <img
-          class="ruby-gallery-frame"
-          src="assets/thema-1/frame-4.png"
-          alt=""
-          aria-hidden="true"
-        >
-
+      <section class="ruby-gallery-section" *ngIf="mainGalleryPhoto">
         <div class="ruby-gallery-content">
           <p class="ruby-gallery-label">MOMENTS</p>
           <h2>Galeri Foto</h2>
+          <div class="ruby-gallery-line"></div>
 
-          <div class="ruby-gallery-grid">
-            <button class="ruby-gallery-feature" type="button" *ngIf="galleryPhotos[0] as featured">
-              <img [src]="getPhotoUrl(featured.photo)" [alt]="getGalleryAlt(featured, 0)">
-              <span class="ruby-gallery-play" aria-hidden="true" *ngIf="featured.url_video">▶</span>
-            </button>
+          <button
+            class="ruby-gallery-feature"
+            type="button"
+            [class.ruby-gallery-feature--video]="hasVideo(mainGalleryPhoto)"
+            (click)="openGalleryVideo(mainGalleryPhoto)"
+          >
+            <img
+              [src]="getGalleryPhotoUrl(mainGalleryPhoto)"
+              [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
+              (error)="onGalleryImageError($event)"
+            />
 
-            <button
-              class="ruby-gallery-thumb"
-              type="button"
-              *ngFor="let item of galleryPhotos.slice(1, 3); trackBy: trackByGallery; let i = index"
-            >
-              <img [src]="getPhotoUrl(item.photo)" [alt]="getGalleryAlt(item, i + 1)">
-            </button>
+            <span class="ruby-gallery-play" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true">
+              ▶
+            </span>
+          </button>
+
+          <div
+            class="ruby-gallery-slider"
+            *ngIf="galleryThumbs.length"
+            [class.ruby-gallery-slider--animate]="galleryThumbs.length > 2"
+          >
+            <div class="ruby-gallery-track">
+              <button
+                class="ruby-gallery-thumb"
+                type="button"
+                *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+              >
+                <img
+                  [src]="getGalleryPhotoUrl(item)"
+                  [alt]="item.nama_foto || 'Galeri foto'"
+                  (error)="onGalleryImageError($event)"
+                />
+              </button>
+
+              <ng-container *ngIf="galleryThumbs.length > 2">
+                <button
+                  class="ruby-gallery-thumb"
+                  type="button"
+                  *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+                  aria-hidden="true"
+                >
+                  <img
+                    [src]="getGalleryPhotoUrl(item)"
+                    alt=""
+                    (error)="onGalleryImageError($event)"
+                  />
+                </button>
+              </ng-container>
+            </div>
           </div>
         </div>
       </section>

@@ -190,7 +190,22 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   get galleryPhotos(): GalleryItem[] {
-    return this.getSafeGalleryPhotos();
+    const photos = ((this as any)?.data?.gallery || this.weddingData?.gallery || []) as GalleryItem[];
+    return photos.filter((item) => !this.isUnsafeThemeImage(item?.photo) && !!this.getGalleryPhotoUrl(item));
+  }
+
+  get mainGalleryPhoto(): GalleryItem | null {
+    const photos = this.galleryPhotos;
+    if (!photos.length) {
+      return null;
+    }
+
+    return photos.find((item) => this.hasVideo(item)) || photos[0];
+  }
+
+  get galleryThumbs(): GalleryItem[] {
+    const main = this.mainGalleryPhoto;
+    return this.galleryPhotos.filter((item) => !main || item.id !== main.id);
   }
 
   override getFeaturedGalleryItem(): GalleryItem | null {
@@ -205,8 +220,46 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return this.getSafeGalleryPhotos().slice(0, 5);
   }
 
-  getPhotoUrl(photo: string | null | undefined): string {
-    return this.resolveMediaUrl(photo);
+  hasVideo(item: any): boolean {
+    return !!(item && item.url_video && item.url_video.toString().trim());
+  }
+
+  getGalleryPhotoUrl(item: any): string {
+    if (!item) {
+      return '';
+    }
+
+    const directUrl = item.photo_url || item.url_photo;
+    if (directUrl) {
+      return directUrl;
+    }
+
+    const photo = String(item.photo || '').trim();
+    if (!photo) {
+      return '';
+    }
+
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+
+    const cleanPhoto = photo.replace(/^\/+/, '');
+    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
+
+    return `${apiBaseUrl}/storage/${cleanPhoto}`;
+  }
+
+  openGalleryVideo(item: any): void {
+    if (!this.hasVideo(item)) {
+      return;
+    }
+
+    window.open(item.url_video, '_blank', 'noopener,noreferrer');
+  }
+
+  onGalleryImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
   }
 
   getOpeningHeading(): string {
