@@ -11,11 +11,13 @@
         </div>
       </ng-template>
       <div class="ruby-cover__veil"></div>
-      <img class="ruby-floral ruby-floral--cover-left" [src]="floralAsset" alt="" aria-hidden="true">
-      <img class="ruby-floral ruby-floral--cover-right" [src]="floralAsset" alt="" aria-hidden="true">
+      <div class="ruby-cover__bottom-softener" aria-hidden="true"></div>
+      <div class="ruby-cover__flower-layer" aria-hidden="true">
+        <img class="flower flower-left" [src]="floralAssetLeft" alt="">
+        <img class="flower flower-right" [src]="floralAssetRight" alt="">
+      </div>
 
       <div class="ruby-cover__content">
-        <p class="ruby-cover__eyebrow">The Wedding Of</p>
         <h1 class="ruby-cover__names">
           <span>{{ getPrimaryDisplayName() }}</span>
           <em>&amp;</em>
@@ -24,12 +26,12 @@
         <p class="ruby-cover__date">{{ getOpeningDateLabel() }}</p>
 
         <div class="ruby-cover__guest">
-          <span>Kepada Yth. Bapak/Ibu/Saudara/i</span>
+          <span class="ruby-cover__guest-label">Kepada Yth. Bapak/Ibu/Saudara/i</span>
           <strong>{{ getGuestName() }}</strong>
         </div>
 
         <button *ngIf="!invitationOpened" class="ruby-button ruby-button--primary" type="button" (click)="openInvitation()">
-          <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+          <i class="far fa-envelope" aria-hidden="true"></i>
           Buka Undangan
         </button>
       </div>
@@ -37,8 +39,8 @@
 
     <ng-container *ngIf="invitationOpened">
       <section class="ruby-section ruby-section--quote">
-        <img class="ruby-floral ruby-floral--top-left" [src]="floralAsset" alt="" aria-hidden="true">
-        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--top-left" [src]="floralAssetLeft" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAssetRight" alt="" aria-hidden="true">
 
         <h2 class="ruby-script-title">{{ getOpeningHeading() }}</h2>
         <p class="ruby-copy ruby-copy--center">{{ getInvitationIntro() }}</p>
@@ -86,8 +88,8 @@
       </section>
 
       <section class="ruby-section ruby-section--events" *ngIf="isEventVisible()">
-        <img class="ruby-floral ruby-floral--event-top" [src]="floralAsset" alt="" aria-hidden="true">
-        <img class="ruby-floral ruby-floral--event-bottom" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--event-top" [src]="floralAssetLeft" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--event-bottom" [src]="floralAssetRight" alt="" aria-hidden="true">
 
         <p class="ruby-eyebrow">SAVE THE DATE</p>
         <div class="ruby-event-block">
@@ -164,7 +166,7 @@
       </section>
 
       <section class="ruby-section ruby-section--wishes" *ngIf="isWishVisible()">
-        <img class="ruby-floral ruby-floral--top-left" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--top-left" [src]="floralAssetLeft" alt="" aria-hidden="true">
         <p class="ruby-eyebrow">DOA &amp; HARAPAN</p>
         <h2 class="ruby-title">Ucapan &amp; Doa</h2>
 
@@ -234,7 +236,7 @@
       </section>
 
       <section class="ruby-section ruby-section--closing">
-        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAsset" alt="" aria-hidden="true">
+        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAssetRight" alt="" aria-hidden="true">
         <p class="ruby-copy ruby-copy--center">
           Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.
         </p>

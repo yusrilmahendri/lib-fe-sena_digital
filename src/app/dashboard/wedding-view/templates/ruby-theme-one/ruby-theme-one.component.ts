@@ -31,7 +31,8 @@ interface RubyWishForm {
   styleUrls: ['./ruby-theme-one.component.scss'],
 })
 export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnDestroy {
-  readonly floralAsset = 'assets/flower.png';
+  readonly floralAssetLeft = 'assets/thema-1/flower-1.png';
+  readonly floralAssetRight = 'assets/thema-1/flower-2.png';
   readonly craftedByLabel = 'crafted by Sena Digital';
 
   wishForm: RubyWishForm = {
@@ -293,11 +294,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   getOpeningDateLabel(): string {
     const event = this.getPrimaryEvent() || this.createFallbackEvent('Resepsi', 'The LaFaYe Hotel');
-    return this.formatDate(event.tanggal_acara, 'long');
+    return this.formatOpeningDate(event.tanggal_acara);
   }
 
   getClosingDateLabel(): string {
     return this.getOpeningDateLabel();
+  }
+
+  private formatOpeningDate(dateValue?: string | null): string {
+    if (!dateValue) {
+      return '12 · 12 · 2026';
+    }
+
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) {
+      return dateValue;
+    }
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear());
+
+    return `${day} · ${month} · ${year}`;
   }
 
   getPackageLabelText(): string {
