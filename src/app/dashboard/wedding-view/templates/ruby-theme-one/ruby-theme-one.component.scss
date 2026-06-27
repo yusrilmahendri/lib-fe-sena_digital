@@ -24,10 +24,12 @@
 .ruby-shell {
   position: relative;
   width: 100%;
-  max-width: 430px;
+  max-width: 410px;
   min-height: 100vh;
   margin: 0 auto;
-  background: #fff;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  background: transparent !important;
   box-shadow: none;
   overflow: hidden;
 }
@@ -348,10 +350,13 @@
 .ruby-quote-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: none;
   min-height: 559px;
-  margin: 0 auto;
+  margin: 0 !important;
   background: #ffffff;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -632,17 +637,20 @@
 .ruby-couple-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: none;
   min-height: 1150px;
-  margin: 0 auto;
+  margin: 0 !important;
   overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
   box-sizing: border-box;
   text-align: center;
   background-color: #fde3e3;
   background-image: url('/assets/thema-1/frame-3.png');
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: cover;
+  background-size: 100% 100%;
 }
 
 .ruby-couple-content {
@@ -813,17 +821,20 @@
 .ruby-event-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: none;
   min-height: 960px;
-  margin: 0 auto;
+  margin: 0 !important;
   overflow: hidden;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
   box-sizing: border-box;
   text-align: center;
   background-color: #ffffff;
   background-image: url('/assets/thema-1/frame-4.png');
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: cover;
+  background-size: 100% 100%;
 }
 
 .ruby-event-content {
@@ -1235,12 +1246,12 @@
   }
 
   .ruby-shell {
-    border-radius: 28px;
-    box-shadow: 0 24px 60px rgba(67, 46, 37, 0.12);
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .ruby-cover {
-    border-radius: 32px;
+    border-radius: 0;
   }
 }
 
@@ -1398,6 +1409,13 @@
 }
 
 .ruby-main {
+  width: 100%;
+  max-width: 410px;
+  margin: 0 auto;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  background: transparent !important;
+  overflow: hidden;
   opacity: 0;
   transform: translateY(22px);
   transition:
