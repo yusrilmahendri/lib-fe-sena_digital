@@ -577,7 +577,6 @@
   width: clamp(215px, 58vw, 245px);
 }
 
-.ruby-section--location,
 .ruby-section--gift {
   background: var(--ruby-soft);
 }
@@ -938,146 +937,285 @@
   margin: 8px 0 4px;
 }
 
-.ruby-location-name {
-  margin: 10px 0 16px;
+.ruby-location-section {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 880px;
+  margin: 0 auto;
+  background: #ffe3e3;
+  overflow: hidden;
+  box-sizing: border-box;
   text-align: center;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.5rem;
+}
+
+.ruby-location-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+
+.ruby-location-content {
+  position: relative;
+  z-index: 2;
+  padding: 96px 28px 72px;
+  box-sizing: border-box;
+}
+
+.ruby-section-label {
+  margin: 0 0 10px;
+  color: #b34032;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-align: center;
+}
+
+.ruby-location-content h2,
+.ruby-countdown h2 {
+  margin: 0;
+  color: #3b2d40;
+  font-size: 32px;
+  line-height: 1.15;
+  font-weight: 700;
+  font-family: sans-serif;
+}
+
+.ruby-location-content h3 {
+  margin: 22px 0 20px;
+  color: #3b2d40;
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 700;
+  font-family: sans-serif;
 }
 
 .ruby-map-card {
-  padding: 14px;
-  text-align: center;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 18px;
+  background: transparent;
+  box-shadow: 0 10px 24px rgba(120, 57, 52, .18);
 }
 
-.ruby-map-card__art {
-  position: relative;
+.ruby-map-preview {
+  width: 100%;
+  height: 150px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f8dfe2;
+}
+
+.ruby-map-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.ruby-map-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 170px;
-  border-radius: 18px;
-  margin-bottom: 14px;
-  overflow: hidden;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(253, 225, 227, 0.85)),
-    linear-gradient(90deg, rgba(159, 53, 45, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(159, 53, 45, 0.08) 1px, transparent 1px);
-  background-size: auto, 28px 28px, 28px 28px;
-}
-
-.ruby-map-card__art::before,
-.ruby-map-card__art::after {
-  content: "";
-  position: absolute;
-  inset: auto;
-  width: 160px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(159, 53, 45, 0.12);
-  transform: rotate(-18deg);
-}
-
-.ruby-map-card__art::after {
-  width: 130px;
-  transform: rotate(24deg);
+    linear-gradient(25deg, transparent 48%, rgba(179,64,50,.12) 50%, transparent 52%),
+    linear-gradient(155deg, transparent 48%, rgba(179,64,50,.12) 50%, transparent 52%),
+    #f9e7e8;
 }
 
 .ruby-map-pin {
-  position: relative;
-  z-index: 1;
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #fffaf8;
-  color: var(--ruby-primary);
-  box-shadow: 0 12px 28px rgba(159, 53, 45, 0.16);
-  font-size: 1.8rem;
+  background: #fff;
+  color: #b34032;
+  box-shadow: 0 10px 20px rgba(120,57,52,.16);
 }
 
-.ruby-eyebrow--spaced {
-  margin-top: 28px;
+.ruby-location-address {
+  margin: 0;
+  color: #211923;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.ruby-map-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px auto 0;
+  min-width: 190px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #b34032;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(179,64,50,.28);
+}
+
+.ruby-map-button-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .ruby-countdown {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
+  margin-top: 50px;
 }
 
-.ruby-countdown__item {
-  padding: 12px 6px;
-  border-radius: 18px;
-  border: 1px solid var(--ruby-border);
-  background: #fffaf8;
-  box-shadow: 0 10px 20px rgba(120, 57, 52, 0.08);
+.ruby-section-label--countdown {
+  margin-bottom: 12px;
+  letter-spacing: 5px;
+}
+
+.ruby-countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.ruby-countdown-box {
+  height: 70px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(179,64,50,.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ruby-countdown-box strong {
+  color: #b34032;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.ruby-countdown-box span {
+  margin-top: 8px;
+  color: #8a3a2f;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.ruby-gallery-section {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 610px;
+  margin: 0 auto;
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ruby-gallery-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+
+.ruby-gallery-content {
+  position: relative;
+  z-index: 2;
+  padding: 104px 28px 90px;
+  box-sizing: border-box;
   text-align: center;
 }
 
-.ruby-countdown__item strong {
-  display: block;
-  font-size: 1.45rem;
-  color: var(--ruby-primary);
+.ruby-gallery-label {
+  margin: 0 0 12px;
+  color: #a83a2f;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 6px;
 }
 
-.ruby-countdown__item span {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(33, 25, 35, 0.68);
-}
-
-.ruby-gallery-featured,
-.ruby-gallery-item {
-  position: relative;
-  overflow: hidden;
-  border-radius: 20px;
-  box-shadow: 0 14px 28px rgba(120, 57, 52, 0.12);
-}
-
-.ruby-gallery-featured {
-  margin-top: 18px;
-  height: 220px;
+.ruby-gallery-content h2 {
+  margin: 0 0 56px;
+  color: #2a2430;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 800;
+  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
 .ruby-gallery-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.ruby-gallery-item {
-  height: 112px;
+.ruby-gallery-feature,
+.ruby-gallery-thumb {
+  position: relative;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8eeee;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.ruby-gallery-featured img,
-.ruby-gallery-item img {
+.ruby-gallery-feature {
+  grid-column: 1 / -1;
+  height: 200px;
+}
+
+.ruby-gallery-thumb {
+  height: 205px;
+}
+
+.ruby-gallery-feature img,
+.ruby-gallery-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
+  object-fit: cover;
 }
 
 .ruby-gallery-play {
   position: absolute;
-  inset: 0;
-  display: flex;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, transparent 0%, rgba(33, 25, 35, 0.28) 100%);
-  color: #fffaf8;
-  font-size: 1.9rem;
-}
-
-.ruby-gallery-play--small {
-  font-size: 1.2rem;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 28px;
+  line-height: 1;
 }
 
 .ruby-form {

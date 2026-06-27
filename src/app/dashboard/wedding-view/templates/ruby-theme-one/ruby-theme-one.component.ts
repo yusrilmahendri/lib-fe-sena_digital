@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   BankAccount,
   GalleryItem,
@@ -11,6 +12,7 @@ import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavende
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { Subscription } from 'rxjs';
+import { environment } from '../../../../../environments/environment';
 
 interface AttendanceRequest {
   user_id: number;
@@ -30,10 +32,19 @@ interface RubyWishForm {
   templateUrl: './ruby-theme-one.component.html',
   styleUrls: ['./ruby-theme-one.component.scss'],
 })
-export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
+export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   readonly floralAssetLeft = 'assets/thema-1/flower-1.png';
   readonly floralAssetRight = 'assets/thema-1/flower-2.png';
   readonly craftedByLabel = 'crafted by Sena Digital';
+  receptionEvent: any;
+  safeMapEmbedUrl?: SafeResourceUrl;
+  googleMapsUrl = '';
+  receptionVenueName = '';
+  receptionAddress = '';
+  countdownDays = '00';
+  countdownHours = '00';
+  countdownMinutes = '00';
+  countdownSeconds = '00';
 
   wishForm: RubyWishForm = {
     nama: '',
@@ -48,8 +59,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   private readonly subscriptions = new Subscription();
   private openingTimer: any;
   private openingTimer2: any;
+  private countdownTimer?: any;
 
   constructor(
+    private sanitizer: DomSanitizer,
     private dashboardService: DashboardService,
     private toastService: ToastService
   ) {
@@ -58,8 +71,17 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   override ngOnInit(): void {
     super.ngOnInit();
+    this.setupRubyReceptionFromEvents();
+    this.initCountdown();
     if (this.invitationOpened) {
       this.hasOpened = true;
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['weddingData']) {
+      this.setupRubyReceptionFromEvents();
+      this.initCountdown();
     }
   }
 
@@ -90,6 +112,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
     if (this.openingTimer2) {
       clearTimeout(this.openingTimer2);
+    }
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = undefined;
     }
     this.subscriptions.unsubscribe();
     super.ngOnDestroy();
@@ -163,6 +189,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return this.getSafeGalleryPhotos().length > 0;
   }
 
+  get galleryPhotos(): GalleryItem[] {
+    return this.getSafeGalleryPhotos();
+  }
+
   override getFeaturedGalleryItem(): GalleryItem | null {
     return this.getSafeGalleryPhotos()[0] || null;
   }
@@ -173,6 +203,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   getGalleryCollection(): GalleryItem[] {
     return this.getSafeGalleryPhotos().slice(0, 5);
+  }
+
+  getPhotoUrl(photo: string | null | undefined): string {
+    return this.resolveMediaUrl(photo);
   }
 
   getOpeningHeading(): string {
@@ -249,11 +283,11 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getLocationVenue(): string {
-    return this.getReceptionCard().nama_acara || 'The LaFaYe Hotel';
+    return this.receptionVenueName;
   }
 
   getLocationAddressText(): string {
-    return this.getReceptionCard().alamat || 'Jl. Merdeka No. 1, Jakarta';
+    return this.receptionAddress;
   }
 
   getMapPreviewLabel(): string {
@@ -419,10 +453,30 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   private getSafeImageUrl(candidates: Array<string | null | undefined>, fallback: string): string {
     for (const candidate of candidates) {
       if (!this.isUnsafeThemeImage(candidate)) {
-        return String(candidate);
+        return this.resolveMediaUrl(candidate);
       }
     }
     return fallback;
+  }
+
+  private resolveMediaUrl(value: string | null | undefined): string {
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+      return '';
+    }
+
+    if (/^(https?:)?\/\//i.test(rawValue) || rawValue.startsWith('data:')) {
+      return rawValue;
+    }
+
+    const cleanValue = rawValue.replace(/^\/+/, '');
+    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
+
+    if (!apiBaseUrl) {
+      return `/${cleanValue}`;
+    }
+
+    return `${apiBaseUrl}/${cleanValue}`;
   }
 
   private isUnsafeThemeImage(url: any): boolean {
@@ -517,5 +571,132 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       link_maps: '',
       countdown: null,
     };
+  }
+
+  private setupRubyReceptionFromEvents(): void {
+    const events = (this as any)?.data?.events || this.weddingData?.events || (this as any)?.events || [];
+
+    this.receptionEvent = events.find((event: any) => {
+      const type = String(event?.jenis_acara || event?.nama_acara || '').toLowerCase();
+      return type.includes('resepsi');
+    }) || events[0];
+
+    this.receptionVenueName = '';
+    this.receptionAddress = '';
+    this.googleMapsUrl = '';
+    this.safeMapEmbedUrl = undefined;
+    this.countdownDays = '00';
+    this.countdownHours = '00';
+    this.countdownMinutes = '00';
+    this.countdownSeconds = '00';
+
+    if (!this.receptionEvent) {
+      return;
+    }
+
+    this.receptionVenueName = String(this.receptionEvent.nama_acara || '').trim();
+    this.receptionAddress = String(this.receptionEvent.alamat || '').trim();
+    this.googleMapsUrl = String(this.receptionEvent.link_maps || '').trim();
+
+    const mapQuery = this.receptionAddress || this.receptionVenueName;
+    if (mapQuery) {
+      const embed = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed`;
+      this.safeMapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embed);
+    }
+
+    if (!this.googleMapsUrl && mapQuery) {
+      this.googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
+    }
+
+  }
+
+  private initCountdown(): void {
+    const target = this.getCountdownTargetDate();
+
+    if (!target) {
+      this.setCountdownZero();
+      return;
+    }
+
+    this.updateCountdown(target);
+
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+    }
+
+    this.countdownTimer = setInterval(() => {
+      this.updateCountdown(target);
+    }, 1000);
+  }
+
+  private getCountdownTargetDate(): Date | null {
+    const events = (this as any)?.data?.events || this.weddingData?.events || [];
+    const countdownName = (
+      (this as any)?.data?.countdown?.name_countdown ||
+      (this.weddingData as any)?.countdown?.name_countdown ||
+      ''
+    ).toString().toLowerCase().trim();
+
+    if (!events.length) {
+      return null;
+    }
+
+    const selectedEvent = events.find((event: any) => {
+      const namaAcara = (event?.nama_acara || '').toString().toLowerCase().trim();
+      const jenisAcara = (event?.jenis_acara || '').toString().toLowerCase().trim();
+      return namaAcara === countdownName || jenisAcara === countdownName;
+    }) || events[0];
+
+    const tanggal = selectedEvent?.tanggal_acara;
+    const jam = selectedEvent?.start_acara || '00:00';
+
+    if (!tanggal) {
+      return null;
+    }
+
+    const dateOnly = tanggal.toString().split('T')[0];
+    const timeOnly = jam.toString().slice(0, 5);
+    const target = new Date(`${dateOnly}T${timeOnly}:00`);
+
+    if (isNaN(target.getTime())) {
+      return null;
+    }
+
+    return target;
+  }
+
+  private updateCountdown(target: Date): void {
+    const now = new Date().getTime();
+    const distance = target.getTime() - now;
+
+    if (distance <= 0) {
+      this.setCountdownZero();
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = undefined;
+      }
+      return;
+    }
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((distance / (1000 * 60)) % 60);
+    const seconds = Math.floor((distance / 1000) % 60);
+
+    this.countdownDays = this.padCountdown(days);
+    this.countdownHours = this.padCountdown(hours);
+    this.countdownMinutes = this.padCountdown(minutes);
+    this.countdownSeconds = this.padCountdown(seconds);
+  }
+
+  private padCountdown(value: number): string {
+    return value < 10 ? `0${value}` : `${value}`;
+  }
+
+  private setCountdownZero(): void {
+    this.countdownDays = '00';
+    this.countdownHours = '00';
+    this.countdownMinutes = '00';
+    this.countdownSeconds = '00';
   }
 }

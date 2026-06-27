@@ -140,56 +140,101 @@
         </div>
       </section>
 
-      <section class="ruby-section ruby-section--location" *ngIf="isLocationVisible()">
-        <p class="ruby-eyebrow">TEMPAT</p>
-        <h2 class="ruby-title">Lokasi Resepsi</h2>
-        <p class="ruby-location-name">{{ getLocationVenue() }}</p>
+      <section class="ruby-location-section" *ngIf="isLocationVisible() && receptionEvent">
+        <img
+          class="ruby-location-frame"
+          src="assets/thema-1/frame-5.png"
+          alt=""
+          aria-hidden="true"
+        >
 
-        <article class="ruby-map-card">
-          <div class="ruby-map-card__art" role="img" [attr.aria-label]="getMapPreviewLabel()">
-            <div class="ruby-map-pin"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></div>
+        <div class="ruby-location-content">
+          <p class="ruby-section-label">TEMPAT</p>
+          <h2>Lokasi Resepsi</h2>
+          <h3 *ngIf="receptionVenueName">{{ receptionVenueName }}</h3>
+
+          <div class="ruby-map-card">
+            <div class="ruby-map-preview">
+              <iframe
+                *ngIf="safeMapEmbedUrl"
+                [src]="safeMapEmbedUrl"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen>
+              </iframe>
+
+              <div class="ruby-map-placeholder" *ngIf="!safeMapEmbedUrl">
+                <span class="ruby-map-pin">📍</span>
+              </div>
+            </div>
+
+            <p class="ruby-location-address" *ngIf="receptionAddress">{{ receptionAddress }}</p>
           </div>
-          <p>{{ getLocationAddressText() }}</p>
-          <a *ngIf="getMapsLink() as mapsLink" class="ruby-button ruby-button--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+
+          <a
+            class="ruby-map-button"
+            *ngIf="googleMapsUrl"
+            [href]="googleMapsUrl"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="ruby-map-button-icon">⌖</span>
             Gunakan Google Maps
           </a>
-        </article>
 
-        <p class="ruby-eyebrow ruby-eyebrow--spaced">{{ getCountdownHeading() }}</p>
-        <h2 class="ruby-title">Hitung Mundur</h2>
-        <div class="ruby-countdown">
-          <div class="ruby-countdown__item" *ngFor="let part of getCountdownParts()">
-            <strong>{{ part.value }}</strong>
-            <span>{{ part.label }}</span>
+          <div class="ruby-countdown">
+            <p class="ruby-section-label ruby-section-label--countdown">{{ getCountdownHeading() }}</p>
+            <h2>Hitung Mundur</h2>
+
+            <div class="ruby-countdown-grid">
+              <div class="ruby-countdown-box">
+                <strong>{{ countdownDays }}</strong>
+                <span>HARI</span>
+              </div>
+              <div class="ruby-countdown-box">
+                <strong>{{ countdownHours }}</strong>
+                <span>JAM</span>
+              </div>
+              <div class="ruby-countdown-box">
+                <strong>{{ countdownMinutes }}</strong>
+                <span>MENIT</span>
+              </div>
+              <div class="ruby-countdown-box">
+                <strong>{{ countdownSeconds }}</strong>
+                <span>DETIK</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="ruby-section ruby-section--gallery" *ngIf="isGalleryVisible()">
-        <p class="ruby-eyebrow">MOMENTS</p>
-        <h2 class="ruby-title">Galeri Foto</h2>
+      <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && galleryPhotos.length">
+        <img
+          class="ruby-gallery-frame"
+          src="assets/thema-1/frame-4.png"
+          alt=""
+          aria-hidden="true"
+        >
 
-        <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
-          <article class="ruby-gallery-featured">
-            <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
-            <div class="ruby-gallery-play" *ngIf="featured.url_video">
-              <i class="fas fa-play" aria-hidden="true"></i>
-            </div>
-          </article>
+        <div class="ruby-gallery-content">
+          <p class="ruby-gallery-label">MOMENTS</p>
+          <h2>Galeri Foto</h2>
 
           <div class="ruby-gallery-grid">
-            <article class="ruby-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
-              <div class="ruby-gallery-play ruby-gallery-play--small" *ngIf="item.url_video">
-                <i class="fas fa-play" aria-hidden="true"></i>
-              </div>
-            </article>
-          </div>
-        </ng-container>
+            <button class="ruby-gallery-feature" type="button" *ngIf="galleryPhotos[0] as featured">
+              <img [src]="getPhotoUrl(featured.photo)" [alt]="getGalleryAlt(featured, 0)">
+              <span class="ruby-gallery-play" aria-hidden="true" *ngIf="featured.url_video">▶</span>
+            </button>
 
-        <ng-template #emptyGallery>
-          <div class="ruby-empty-state">Galeri foto akan segera ditambahkan.</div>
-        </ng-template>
+            <button
+              class="ruby-gallery-thumb"
+              type="button"
+              *ngFor="let item of galleryPhotos.slice(1, 3); trackBy: trackByGallery; let i = index"
+            >
+              <img [src]="getPhotoUrl(item.photo)" [alt]="getGalleryAlt(item, i + 1)">
+            </button>
+          </div>
+        </div>
       </section>
 
       <section class="ruby-section ruby-section--wishes" *ngIf="isWishVisible()">
