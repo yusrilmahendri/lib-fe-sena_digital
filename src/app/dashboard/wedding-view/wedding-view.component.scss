@@ -35,8 +35,9 @@
   .side-icons-container {
     position: fixed;
     right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: auto;
+    bottom: 90px;
+    transform: none;
     z-index: 1002;
     display: flex;
     flex-direction: column;
@@ -131,8 +132,9 @@
   /* Responsive design for side icons */
   @media (max-width: 768px) {
     .side-icons-container {
-      right: 10px;
-      gap: 6px;
+      top: auto;
+      bottom: 90px;
+      transform: none;
     }
 
     .side-icon-toggle {
@@ -150,8 +152,9 @@
 
   @media (max-width: 480px) {
     .side-icons-container {
-      right: 8px;
-      top: 45%;
+      top: auto;
+      bottom: 90px;
+      transform: none;
     }
 
     .side-icon-toggle {
@@ -669,5 +672,40 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* ===================================================
+   FINAL OVERRIDE – tombol tiga titik kanan bawah
+   :host ::ng-deep menembus ViewEncapsulation.
+   Selector: .side-icons-container (wedding-view.component.html)
+   =================================================== */
+:host ::ng-deep .side-icons-container {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: 15px !important;
+  bottom: 90px !important;
+  transform: none !important;
+  z-index: 1002 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 768px) {
+  :host ::ng-deep .side-icons-container {
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  :host ::ng-deep .side-icons-container {
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
   }
 }

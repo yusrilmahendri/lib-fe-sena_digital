@@ -1,2 +1,38 @@
 @import "./styles/variable", "./styles/global", "./styles/animation" , "~notyf/notyf.min.css";
 
+/* ==========================================================
+   GLOBAL OVERRIDE – wedding-view side-icons-container
+   Rule global tidak punya _ngcontent scoping sehingga
+   !important di sini tidak bisa dikalahkan oleh rule komponen.
+   Selector: .side-icons-container (wedding-view.component.html)
+   ========================================================== */
+.side-icons-container {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: 15px !important;
+  bottom: 90px !important;
+  transform: none !important;
+  z-index: 1002 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 768px) {
+  .side-icons-container {
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .side-icons-container {
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
+  }
+}
+
