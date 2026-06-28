@@ -362,7 +362,35 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getDisplayedWishes(): GuestWish[] {
-    return this.getGuestWishes().slice(0, 8);
+    return this.visibleGuestWishes.slice(0, 8);
+  }
+
+  get visibleGuestWishes(): GuestWish[] {
+    const wishes = this.getGuestWishes();
+    return wishes.filter((item: GuestWish) => this.isRealGuestWish(item));
+  }
+
+  isRealGuestWish(item: any): boolean {
+    const name = String(item?.nama || item?.name || '').trim().toLowerCase();
+    const message = String(item?.pesan || item?.message || '').trim();
+    const normalizedMessage = message.toLowerCase();
+
+    if (!message) {
+      return false;
+    }
+
+    if (name === 'viewer') {
+      return false;
+    }
+
+    if (
+      normalizedMessage.startsWith('undangan ') &&
+      normalizedMessage.endsWith(' telah dilihat')
+    ) {
+      return false;
+    }
+
+    return true;
   }
 
   submitWish(): void {

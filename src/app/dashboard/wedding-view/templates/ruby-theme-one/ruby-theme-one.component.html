@@ -334,8 +334,8 @@
             </button>
           </div>
 
-          <div class="ruby-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
-            <article class="ruby-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+          <div class="ruby-wish-list" *ngIf="visibleGuestWishes.length > 0; else emptyWishes">
+            <article class="ruby-wish-card" *ngFor="let wish of visibleGuestWishes; trackBy: trackByWish">
               <div class="ruby-wish-card__header">
                 <p class="ruby-wish-card__name">{{ wish.nama }}</p>
                 <span class="ruby-wish-card__attendance">{{ getAttendanceLabel(wish.kehadiran) }}</span>

@@ -354,71 +354,36 @@ export class RekeningComponent implements OnInit, OnDestroy {
 
     const accountData = accountForm.value;
     const normalized = this.normalizeAccountPayload(accountData);
+    const accountId = accountData?.id;
+
+    if (!accountId) {
+      this.notyf.error('ID rekening tidak ditemukan.');
+      return;
+    }
 
     if (!normalized.kode_bank || !normalized.nomor_rekening || !normalized.nama_pemilik) {
       this.notyf.error('Harap lengkapi semua field yang wajib diisi');
       return;
     }
 
-    // Use FormData if file is present, otherwise use JSON
-    if (accountData.photo_rek instanceof File) {
-      const formData = new FormData();
-
-      // Laravel method spoofing for PUT request via POST
-      formData.append('_method', 'PUT');
-
-      // Append data in the exact format Laravel expects for nested arrays
-      formData.append('rekenings[0][id]', accountData.id.toString());
-      formData.append('rekenings[0][kode_bank]', normalized.kode_bank);
-      formData.append('rekenings[0][nomor_rekening]', normalized.nomor_rekening);
-      formData.append('rekenings[0][nama_pemilik]', normalized.nama_pemilik);
-      formData.append('rekenings[0][photo_rek]', accountData.photo_rek);
-
-      this.isSubmitting = true;
-      this.dashboardSvc.uploadFile(DashboardServiceType.REKENINGS_UPDATE_JSON, formData).subscribe({
-        next: (res: any) => {
-          this.notyf.success(res?.message || 'Rekening berhasil diperbarui');
-          accountForm.get('editMode')?.setValue(false);
-          this.loadBankAccounts();
-          this.isSubmitting = false;
-        },
-        error: (err: any) => {
-          this.handleApiError(err);
-          this.isSubmitting = false;
-        }
-      });
-    } else {
-      // For JSON payload, only include basic fields
-      // Don't include photo_rek if it's a string URL (existing photo)
-      const payload: any = {
-        rekenings: [{
-          id: accountData.id,
-          kode_bank: normalized.kode_bank,
-          nomor_rekening: normalized.nomor_rekening,
-          nama_pemilik: normalized.nama_pemilik
-        }]
-      };
-
-      // Only include photo_rek if it's explicitly null (user wants to remove photo)
-      if (accountData.photo_rek === null) {
-        payload.rekenings[0].photo_rek = null;
+    this.isSubmitting = true;
+    this.dashboardSvc.updateRekening(accountId, {
+      kode_bank: normalized.kode_bank,
+      nomor_rekening: normalized.nomor_rekening,
+      nama_pemilik: normalized.nama_pemilik,
+      photo_rek: accountData.photo_rek
+    }).subscribe({
+      next: (res: any) => {
+        this.notyf.success(res?.message || 'Rekening berhasil diperbarui');
+        accountForm.get('editMode')?.setValue(false);
+        this.loadBankAccounts();
+        this.isSubmitting = false;
+      },
+      error: (err: any) => {
+        this.handleApiError(err);
+        this.isSubmitting = false;
       }
-      // If photo_rek is a string URL, don't include it in payload (keep existing photo)
-
-      this.isSubmitting = true;
-      this.dashboardSvc.update(DashboardServiceType.REKENINGS_UPDATE_JSON, '', payload).subscribe({
-        next: (res: any) => {
-          this.notyf.success(res?.message || 'Rekening berhasil diperbarui');
-          accountForm.get('editMode')?.setValue(false);
-          this.loadBankAccounts();
-          this.isSubmitting = false;
-        },
-        error: (err: any) => {
-          this.handleApiError(err);
-          this.isSubmitting = false;
-        }
-      });
-    }
+    });
   }
 
   onDelete(index: number): void {

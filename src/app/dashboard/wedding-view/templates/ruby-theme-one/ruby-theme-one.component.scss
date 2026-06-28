@@ -1,5 +1,6 @@
 :host {
   display: block;
+  width: 100%;
   background: #fff;
 }
 
@@ -16,15 +17,21 @@
   --ruby-cover-overlay-bottom: rgba(255, 255, 255, 0.96);
   background: #fff;
   color: var(--ruby-text);
+  width: min(100%, 430px);
+  max-width: 430px;
+  min-width: 0;
+  margin: 0 auto;
   min-height: 100vh;
   overflow-x: hidden;
   padding: 0;
+  box-sizing: border-box;
 }
 
 .ruby-shell {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0 auto;
   padding-left: 0 !important;
@@ -38,6 +45,7 @@
   position: relative;
   width: 100%;
   max-width: 430px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0 auto;
   overflow: hidden;
@@ -158,6 +166,7 @@
   right: 0;
   bottom: 0;
   width: 100%;
+  max-width: none;
   height: auto;
   z-index: 4;
   display: block !important;
@@ -350,9 +359,10 @@
 .ruby-quote-section {
   position: relative;
   width: 100%;
-  max-width: none;
+  max-width: 430px;
+  min-width: 0;
   min-height: 559px;
-  margin: 0 !important;
+  margin: 0 auto !important;
   background: #ffffff;
   border: 0;
   border-radius: 0 !important;
@@ -369,6 +379,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
+  max-width: none;
   height: 100%;
   object-fit: cover;
   z-index: 1;
@@ -460,6 +471,7 @@
   min-height: 100vh;
   width: 100%;
   max-width: 430px;
+  min-width: 0;
   margin: 0 auto;
   padding: 150px 28px 120px;
   background: #ffffff !important;
@@ -631,9 +643,10 @@
 .ruby-couple-section {
   position: relative;
   width: 100%;
-  max-width: none;
+  max-width: 430px;
+  min-width: 0;
   min-height: 1150px;
-  margin: 0 !important;
+  margin: 0 auto !important;
   overflow: hidden;
   border: 0;
   border-radius: 0 !important;
@@ -815,9 +828,10 @@
 .ruby-event-section {
   position: relative;
   width: 100%;
-  max-width: none;
+  max-width: 430px;
+  min-width: 0;
   min-height: 960px;
-  margin: 0 !important;
+  margin: 0 auto !important;
   overflow: hidden;
   border: 0;
   border-radius: 0 !important;
@@ -1115,7 +1129,8 @@
 .ruby-gallery-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 690px;
   margin: 0 auto;
   background: #fff;
@@ -1259,7 +1274,8 @@
 .ruby-wish-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0 auto;
   background: #fde1e2;
@@ -1459,7 +1475,8 @@
 .ruby-gift-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 660px;
   margin: 0 auto;
   overflow: hidden;
@@ -1472,6 +1489,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
+  max-width: none;
   height: 100%;
   object-fit: cover;
   z-index: 1;
@@ -1616,7 +1634,8 @@
 .ruby-footer-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 560px;
   margin: 0 auto;
   overflow: hidden;
@@ -1628,6 +1647,7 @@
   position: absolute;
   inset: 0;
   width: 100%;
+  max-width: none;
   height: 100%;
   object-fit: cover;
   z-index: 1;
@@ -2077,7 +2097,8 @@
 
 .ruby-main {
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   margin: 0 auto;
   padding-left: 0 !important;
   padding-right: 0 !important;
@@ -2088,6 +2109,54 @@
   transition:
     opacity 760ms ease 260ms,
     transform 760ms ease 260ms;
+}
+
+@media (max-width: 430px) {
+  .ruby-theme-one,
+  .ruby-shell,
+  .ruby-cover,
+  .ruby-main,
+  .ruby-quote-section,
+  .ruby-section--quote,
+  .ruby-couple-section,
+  .ruby-event-section,
+  .ruby-gallery-section,
+  .ruby-wish-section,
+  .ruby-gift-section,
+  .ruby-footer-section {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .ruby-cover__content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .ruby-cover__names {
+    font-size: clamp(38px, 13vw, 52px);
+  }
+
+  .ruby-cover__date {
+    font-size: 12px;
+    letter-spacing: 3px;
+    white-space: normal;
+  }
+
+  .ruby-cover__guest-label {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    white-space: normal;
+  }
+
+  .ruby-cover__button {
+    width: 170px;
+  }
 }
 
 .ruby-main--visible {

@@ -740,6 +740,25 @@ export class DashboardService {
     return this.httpSvc.post(this.getUrl(serviceType), formData);
   }
 
+  updateRekening(id: number | string, payload: {
+    kode_bank: any;
+    nomor_rekening: any;
+    nama_pemilik: any;
+    photo_rek?: File | string | null;
+  }): Observable<any> {
+    const formData = new FormData();
+    formData.append('_method', 'PUT');
+    formData.append('kode_bank', String(payload?.kode_bank ?? '').trim());
+    formData.append('nomor_rekening', String(payload?.nomor_rekening ?? '').trim());
+    formData.append('nama_pemilik', String(payload?.nama_pemilik ?? '').trim());
+
+    if (payload?.photo_rek instanceof File) {
+      formData.append('photo_rek', payload.photo_rek);
+    }
+
+    return this.httpSvc.post(`${this.getUrl(DashboardServiceType.REKENINGS_UPDATE_JSON)}/${id}`, formData);
+  }
+
   updateFile(serviceType: DashboardServiceType, formData: FormData): Observable<any> {
     // Don't set Content-Type header, let browser set it automatically for multipart/form-data
     return this.httpSvc.put(this.getUrl(serviceType), formData);
