@@ -130,16 +130,6 @@
 
   /* Responsive design for side icons */
   @media (max-width: 768px) {
-    .side-icons-container {
-      right: 14px;
-      top: auto;
-      transform: none;
-      bottom: calc(90px + env(safe-area-inset-bottom));
-      z-index: 9999;
-      flex-direction: column-reverse;
-      gap: 6px;
-    }
-
     .side-icon-toggle {
       width: 42px;
       height: 42px;
@@ -154,10 +144,6 @@
   }
 
   @media (max-width: 480px) {
-    .side-icons-container {
-      right: 14px;
-    }
-
     .side-icon-toggle {
       width: 40px;
       height: 40px;
@@ -673,5 +659,22 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* ===================================================
+   Mobile override: paksa tombol tiga titik ke kanan bawah
+   Diletakkan paling bawah agar menang dalam cascade.
+   Selector: .side-icons-container (lihat wedding-view.component.html)
+   =================================================== */
+@media (max-width: 768px) {
+  .side-icons-container {
+    position: fixed !important;
+    right: 14px !important;
+    top: auto !important;
+    transform: none !important;
+    bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+    z-index: 99999 !important;
+    flex-direction: column-reverse !important;
   }
 }
