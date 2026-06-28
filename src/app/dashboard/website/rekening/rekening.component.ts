@@ -258,8 +258,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const payload = this.buildCreatePayload(newAccounts);
-    this.createBankAccounts(payload);
+    this.createBankAccounts(newAccounts);
   }
 
   private getNewAccounts(): BankAccountFormData[] {
@@ -279,32 +278,47 @@ export class RekeningComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private buildCreatePayload(accounts: BankAccountFormData[]): FormData {
+  private buildCreatePayload(account: BankAccountFormData): FormData {
+    const normalized = this.normalizeAccountPayload(account);
     const formData = new FormData();
 
-    // Add array data
-    accounts.forEach((acc, index) => {
-      const normalized = this.normalizeAccountPayload(acc);
-      formData.append(`kode_bank[${index}]`, normalized.kode_bank);
-      formData.append(`nomor_rekening[${index}]`, normalized.nomor_rekening);
-      formData.append(`nama_pemilik[${index}]`, normalized.nama_pemilik);
+    formData.append('kode_bank', normalized.kode_bank);
+    formData.append('nomor_rekening', normalized.nomor_rekening);
+    formData.append('nama_pemilik', normalized.nama_pemilik);
 
-      // Add file if exists
-      if (acc.photo_rek instanceof File) {
-        formData.append(`photo_rek[${index}]`, acc.photo_rek);
-      }
-    });
+    if (account.photo_rek instanceof File) {
+      formData.append('foto_rekening', account.photo_rek);
+    }
 
     return formData;
   }
 
-  private createBankAccounts(payload: FormData): void {
+  private createBankAccounts(accounts: BankAccountFormData[]): void {
+    if (!accounts.length) {
+      this.notyf.error('Tidak ada rekening baru untuk disimpan');
+      return;
+    }
+
     this.isSubmitting = true;
+    this.submitBankAccountAtIndex(accounts, 0);
+  }
+
+  private submitBankAccountAtIndex(accounts: BankAccountFormData[], index: number): void {
+    if (index >= accounts.length) {
+      this.notyf.success('Rekening berhasil ditambahkan');
+      this.loadBankAccounts();
+      this.isSubmitting = false;
+      return;
+    }
+
+    const payload = this.buildCreatePayload(accounts[index]);
+    payload.forEach((value, key) => {
+      console.log(key, value, typeof value);
+    });
+
     this.dashboardSvc.uploadFile(DashboardServiceType.REKENINGS_STORE, payload).subscribe({
-      next: (res) => {
-        this.notyf.success(res?.message || 'Rekening berhasil ditambahkan');
-        this.loadBankAccounts();
-        this.isSubmitting = false;
+      next: () => {
+        this.submitBankAccountAtIndex(accounts, index + 1);
       },
       error: (err) => {
         this.handleApiError(err);
@@ -523,20 +537,26 @@ export class RekeningComponent implements OnInit, OnDestroy {
   }
 
   private normalizeKodeBank(value: any): string {
-    const bankValue = value?.kode_bank || value?.nama_bank || value?.bank || value;
+    if (!value) return '';
 
-    if (typeof bankValue === 'object' && bankValue !== null) {
+    if (typeof value === 'string') return value;
+
+    if (typeof value === 'number') return String(value);
+
+    if (typeof value === 'object') {
       return String(
-        bankValue.value ||
-        bankValue.kode ||
-        bankValue.kode_bank ||
-        bankValue.name ||
-        bankValue.label ||
+        value.kode_bank ||
+        value.kode ||
+        value.value ||
+        value.id ||
+        value.nama_bank ||
+        value.label ||
+        value.name ||
         ''
-      ).trim();
+      );
     }
 
-    return String(bankValue || '').trim();
+    return String(value);
   }
 
   private normalizeAccountPayload(account: BankAccountFormData): BankAccountFormData {
