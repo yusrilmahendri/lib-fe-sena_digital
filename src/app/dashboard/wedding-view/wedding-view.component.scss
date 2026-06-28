@@ -131,7 +131,12 @@
   /* Responsive design for side icons */
   @media (max-width: 768px) {
     .side-icons-container {
-      right: 10px;
+      right: 14px;
+      top: auto;
+      transform: none;
+      bottom: calc(90px + env(safe-area-inset-bottom));
+      z-index: 9999;
+      flex-direction: column-reverse;
       gap: 6px;
     }
 
@@ -150,8 +155,7 @@
 
   @media (max-width: 480px) {
     .side-icons-container {
-      right: 8px;
-      top: 45%;
+      right: 14px;
     }
 
     .side-icon-toggle {
