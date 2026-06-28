@@ -78,6 +78,7 @@ enum ContentView {
   styleUrls: ['./wedding-view.component.scss']
 })
 export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly STORAGE_VERSION = '2026-06-28-ruby-theme-refresh';
   private readonly themeComponentRegistry: Record<ThemeRenderKey, Type<unknown>> = {
     'ruby-theme-one': RubyThemeOneComponent,
     'ruby-theme-two': RubyThemeTwoComponent,
@@ -127,6 +128,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // LocalStorage keys - Updated to use domain instead of couple name
   private readonly STORAGE_KEYS = {
+    CACHE_VERSION: 'wedding_cache_version',
     CURRENT_VIEW: 'wedding_current_view',
     INVITATION_OPENED: 'wedding_invitation_opened',
     SIDE_ICONS_VISIBLE: 'wedding_side_icons_visible',
@@ -177,10 +179,22 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   private loadStateFromLocalStorage(): void {
     try {
+      const savedVersion = localStorage.getItem(this.STORAGE_KEYS.CACHE_VERSION);
+      if (savedVersion !== this.STORAGE_VERSION) {
+        console.log('localStorage version mismatch, clearing stale cache:', {
+          savedVersion,
+          expectedVersion: this.STORAGE_VERSION,
+        });
+        this.clearLocalStorage();
+        localStorage.setItem(this.STORAGE_KEYS.CACHE_VERSION, this.STORAGE_VERSION);
+        return;
+      }
+
       // Validate localStorage data first
       if (!this.validateLocalStorageData()) {
         console.log('localStorage data invalid, clearing...');
         this.clearLocalStorage();
+        localStorage.setItem(this.STORAGE_KEYS.CACHE_VERSION, this.STORAGE_VERSION);
         return;
       }
 
@@ -227,13 +241,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('Restored domain from localStorage:', savedDomain);
       }
 
-      // Restore wedding data if exists and is valid
+      // Keep wedding data in storage for debugging/fallback, but public
+      // invitations should wait for a fresh API response before rendering.
       if (savedWeddingData) {
         try {
-          const parsedWeddingData = JSON.parse(savedWeddingData);
-          this.weddingData = parsedWeddingData;
-          this.weddingDataService.setWeddingData(parsedWeddingData);
-          console.log('Restored wedding data from localStorage');
+          JSON.parse(savedWeddingData);
+          console.log('Found cached wedding data in localStorage; waiting for fresh API response before rendering');
         } catch (parseError) {
           console.error('Failed to parse saved wedding data:', parseError);
           localStorage.removeItem(this.STORAGE_KEYS.WEDDING_DATA);
@@ -243,6 +256,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       console.error('Failed to load state from localStorage:', error);
       this.clearLocalStorage();
+      localStorage.setItem(this.STORAGE_KEYS.CACHE_VERSION, this.STORAGE_VERSION);
     }
   }
 
@@ -251,6 +265,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   private saveStateToLocalStorage(): void {
     try {
+      localStorage.setItem(this.STORAGE_KEYS.CACHE_VERSION, this.STORAGE_VERSION);
       localStorage.setItem(this.STORAGE_KEYS.CURRENT_VIEW, this.currentView);
       localStorage.setItem(this.STORAGE_KEYS.INVITATION_OPENED, this.invitationOpened.toString());
       localStorage.setItem(this.STORAGE_KEYS.SIDE_ICONS_VISIBLE, this.sideIconsVisible.toString());
@@ -294,8 +309,13 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   private validateLocalStorageData(): boolean {
     try {
+      const savedVersion = localStorage.getItem(this.STORAGE_KEYS.CACHE_VERSION);
       const savedWeddingData = localStorage.getItem(this.STORAGE_KEYS.WEDDING_DATA);
       const savedDomain = localStorage.getItem(this.STORAGE_KEYS.DOMAIN);
+
+      if (savedVersion !== this.STORAGE_VERSION) {
+        return false;
+      }
 
       if (!savedWeddingData || !savedDomain) {
         return false;
@@ -343,26 +363,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       if (routeDomain) {
         this.domain = routeDomain;
         console.log('Using domain from route params:', routeDomain);
-
-        // Check if we have valid wedding data in localStorage for this domain
-        if (this.weddingData && this.domain === routeDomain) {
-          console.log('Using wedding data from localStorage for domain:', this.domain);
-          this.updateWeddingContent(this.weddingData);
-          // Still fetch fresh data in background for updates
-          this.loadWeddingDataFromAPI(this.domain!, true);
-        } else {
-          // Load fresh data from API using domain
-          this.loadWeddingDataFromAPI(this.domain!);
-        }
+        this.weddingData = null;
+        this.loadWeddingDataFromAPI(this.domain!);
       } else if (this.domain) {
         console.log('Using domain from localStorage:', this.domain);
-        // Use stored domain
-        if (this.weddingData) {
-          this.updateWeddingContent(this.weddingData);
-          this.loadWeddingDataFromAPI(this.domain!, true);
-        } else {
-          this.loadWeddingDataFromAPI(this.domain!);
-        }
+        this.weddingData = null;
+        this.loadWeddingDataFromAPI(this.domain!);
       } else {
         // No domain available, get it from settings
         console.log('No domain available, fetching from SETTINGS_GET_FILTER');

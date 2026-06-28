@@ -451,8 +451,7 @@
 
 .ruby-section--quote,
 .ruby-section--events,
-.ruby-section--wishes,
-.ruby-section--closing {
+.ruby-section--wishes {
   background: linear-gradient(180deg, rgba(255, 250, 248, 0.8) 0%, rgba(253, 225, 227, 0.72) 100%);
 }
 
@@ -575,10 +574,6 @@
   right: -10px;
   bottom: -6px;
   width: clamp(215px, 58vw, 245px);
-}
-
-.ruby-section--gift {
-  background: var(--ruby-soft);
 }
 
 .ruby-section--gallery {
@@ -1261,124 +1256,480 @@
   }
 }
 
-.ruby-form {
-  margin-top: 18px;
-}
-
-.ruby-label {
-  display: block;
-  margin: 0 0 8px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--ruby-primary-dark);
-}
-
-.ruby-input,
-.ruby-textarea {
+.ruby-wish-section {
+  position: relative;
   width: 100%;
-  border: 1px solid rgba(159, 53, 45, 0.18);
-  border-radius: 14px;
-  padding: 12px 14px;
-  background: rgba(255, 250, 248, 0.96);
-  color: var(--ruby-text);
-  font: inherit;
+  max-width: 410px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #fde1e2;
+  overflow: hidden;
   box-sizing: border-box;
-  margin-bottom: 14px;
 }
 
-.ruby-textarea {
-  min-height: 112px;
-  resize: vertical;
-}
-
-.ruby-attendance {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.ruby-choice {
-  min-height: 40px;
-  border-radius: 999px;
-  border: 1px solid rgba(159, 53, 45, 0.18);
-  background: #fffaf8;
-  color: rgba(33, 25, 35, 0.82);
-  font: inherit;
-}
-
-.ruby-choice--active {
-  background: linear-gradient(180deg, #e48a7b 0%, #c35f53 100%);
-  color: #fffaf8;
-  border-color: transparent;
-}
-
-.ruby-button--submit {
+.ruby-wish-frame {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
 }
 
-.ruby-wish-list {
-  margin-top: 18px;
-  display: grid;
+.ruby-wish-content {
+  position: relative;
+  z-index: 2;
+  padding: 112px 32px 96px;
+  box-sizing: border-box;
+}
+
+.ruby-wish-header {
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.ruby-wish-label {
+  margin: 0 0 10px;
+  color: #b34032;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.ruby-wish-header h2 {
+  margin: 0;
+  color: #49354f;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 800;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+.ruby-wish-line {
+  width: 48px;
+  height: 1px;
+  margin: 16px auto 0;
+  background: rgba(179, 64, 50, 0.35);
+}
+
+.ruby-wish-form {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
 }
 
+.ruby-wish-form label {
+  color: #6b4c64;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.ruby-wish-input,
+.ruby-wish-textarea {
+  width: 100%;
+  border: 1.5px solid #c9564b;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #49354f;
+  font-size: 15px;
+  line-height: 1.5;
+  outline: none;
+  box-sizing: border-box;
+  appearance: none;
+}
+
+.ruby-wish-input::placeholder,
+.ruby-wish-textarea::placeholder {
+  color: rgba(73, 53, 79, 0.58);
+}
+
+.ruby-wish-input {
+  height: 56px;
+  padding: 0 18px;
+}
+
+.ruby-wish-textarea {
+  min-height: 104px;
+  padding: 16px 18px;
+  resize: vertical;
+}
+
+.ruby-attendance-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ruby-attendance-button {
+  min-height: 48px;
+  padding: 10px 8px;
+  border-radius: 999px;
+  border: 1.5px solid #c9564b;
+  background: transparent;
+  color: #49354f;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  font-family: inherit;
+  appearance: none;
+}
+
+.ruby-attendance-button--active,
+.ruby-attendance-button.active,
+.ruby-attendance-button.is-active {
+  background: #b34032;
+  color: #ffffff;
+  border-color: #b34032;
+}
+
+.ruby-submit-button {
+  width: 100%;
+  height: 52px;
+  margin-top: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #b34032;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  box-shadow: 0 14px 30px rgba(179, 64, 50, 0.18);
+}
+
+.ruby-submit-button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.ruby-wish-list {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .ruby-wish-card {
-  padding: 14px 16px;
+  position: relative;
+  border: 1.5px solid #c9564b;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  padding: 18px 20px;
+  color: #49354f;
+  box-shadow: 0 12px 28px rgba(179, 64, 50, 0.08);
 }
 
 .ruby-wish-card__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-.ruby-wish-card__header span {
-  flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(159, 53, 45, 0.08);
-  color: var(--ruby-primary);
-  font-size: 0.72rem;
+.ruby-wish-card__name {
+  margin: 0;
+  color: #b34032;
+  font-size: 15px;
   font-weight: 700;
+  line-height: 1.4;
+}
+
+.ruby-wish-card__attendance {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(179, 64, 50, 0.1);
+  color: #b34032;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ruby-wish-card__message {
+  margin: 0;
+  color: #49354f;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.ruby-gift-section {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 660px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.ruby-gift-frame,
+.ruby-section-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+}
+
+.ruby-gift-content {
+  position: relative;
+  z-index: 2;
+  padding: 72px 28px 70px;
+  text-align: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ruby-gift-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.ruby-gift-label {
+  margin: 0 0 10px;
+  color: #b34032;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+}
+
+.ruby-gift-header h2 {
+  margin: 0;
+  color: #49354f;
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 800;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+.ruby-gift-line {
+  width: 48px;
+  height: 1px;
+  margin: 14px auto 20px;
+  background: rgba(179, 64, 50, 0.35);
+}
+
+.ruby-gift-description {
+  margin: 0 auto;
+  max-width: 340px;
+  color: #49354f;
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.ruby-bank-list {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ruby-bank-empty,
+.ruby-bank-card {
+  border: 1.5px solid rgba(179, 64, 50, 0.45);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.86);
+  box-sizing: border-box;
+  color: #49354f;
+}
+
+.ruby-bank-empty {
+  min-height: 58px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 13px;
 }
 
 .ruby-bank-card {
-  padding: 18px 16px;
-}
-
-.ruby-bank-card + .ruby-bank-card {
-  margin-top: 14px;
+  min-height: 148px;
+  padding: 18px;
+  box-shadow: 0 12px 26px rgba(179, 64, 50, 0.08);
 }
 
 .ruby-bank-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-  color: var(--ruby-primary-dark);
-  font-size: 0.9rem;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+
+.ruby-bank-icon {
+  flex-shrink: 0;
+  color: #b34032;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ruby-bank-name {
+  flex: 1;
+  text-align: right;
+  color: #2c5aa0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ruby-bank-number {
+  margin: 0 0 4px;
+  color: #49354f;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+.ruby-bank-owner {
+  margin: 0 0 14px;
+  color: #49354f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ruby-copy-button {
+  min-width: 132px;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #b34032;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+
+.ruby-footer-section {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.ruby-footer-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
+  display: block;
+}
+
+.ruby-footer-content {
+  position: relative;
+  z-index: 2;
+  padding: 120px 28px 60px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ruby-footer-message {
+  margin: 0 auto 34px;
+  max-width: 340px;
+  color: #111827;
+  font-size: 13px;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.ruby-footer-label {
+  margin: 0 0 16px;
+  color: #b34032;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.ruby-footer-names {
+  margin: 0;
+  color: #111111;
+  font-size: 42px;
+  line-height: 1.08;
+  font-weight: 800;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.ruby-footer-names em {
+  font-style: normal;
+}
+
+.ruby-footer-date {
+  margin: 16px 0 50px;
+  color: #b34032;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.ruby-footer-credit {
+  color: #111827;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.ruby-footer-credit p {
+  margin: 0 0 2px;
   font-weight: 700;
 }
 
-.ruby-bank-card strong {
+.ruby-footer-credit span {
   display: block;
-  font-size: 1.3rem;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+}
+
+.ruby-footer-credit strong {
+  display: block;
+  margin-top: 2px;
+  color: #b34032;
+  font-size: 11px;
+  letter-spacing: 1px;
 }
 
 .ruby-empty-state {
-  margin-top: 18px;
   padding: 18px 14px;
-  border: 1px dashed rgba(159, 53, 45, 0.2);
   border-radius: 18px;
-  background: rgba(255, 250, 248, 0.72);
   text-align: center;
-  font-size: 0.9rem;
-  color: rgba(33, 25, 35, 0.72);
+}
+
+.ruby-empty-state--wish {
+  margin-top: 40px;
+  border: 1.5px solid rgba(201, 86, 75, 0.42);
+  border-style: solid;
+  background: rgba(255, 255, 255, 0.72);
+  color: #6b4c64;
+}
+
+.ruby-empty-state--gift {
+  margin-top: 0;
+  border: 1.5px solid rgba(179, 64, 50, 0.28);
+  background: rgba(255, 255, 255, 0.86);
+  color: #6b4c64;
 }
 
 .ruby-crafted {
@@ -1437,6 +1788,18 @@
 }
 
 @media (max-width: 414px) {
+  .ruby-footer-content {
+    padding: 114px 24px 52px;
+  }
+
+  .ruby-gift-content {
+    padding: 68px 24px 64px;
+  }
+
+  .ruby-wish-content {
+    padding: 104px 24px 88px;
+  }
+
   .ruby-section--quote {
     padding: 146px 24px 114px;
   }
@@ -1482,6 +1845,52 @@
 }
 
 @media (max-width: 390px) {
+  .ruby-footer-content {
+    padding: 110px 22px 48px;
+  }
+
+  .ruby-footer-names {
+    font-size: 38px;
+  }
+
+  .ruby-footer-date {
+    margin-bottom: 46px;
+    letter-spacing: 3px;
+  }
+
+  .ruby-gift-content {
+    padding: 66px 22px 60px;
+  }
+
+  .ruby-gift-header h2 {
+    font-size: 27px;
+  }
+
+  .ruby-bank-card {
+    padding: 16px;
+  }
+
+  .ruby-bank-number {
+    font-size: 18px;
+  }
+
+  .ruby-wish-content {
+    padding: 96px 22px 82px;
+  }
+
+  .ruby-wish-header h2 {
+    font-size: 28px;
+  }
+
+  .ruby-attendance-group {
+    gap: 8px;
+  }
+
+  .ruby-attendance-button {
+    min-height: 46px;
+    font-size: 14px;
+  }
+
   .ruby-section--quote {
     padding: 142px 22px 108px;
   }
@@ -1527,6 +1936,83 @@
 }
 
 @media (max-width: 360px) {
+  .ruby-footer-content {
+    padding: 104px 18px 44px;
+  }
+
+  .ruby-footer-message {
+    margin-bottom: 30px;
+    font-size: 13px;
+  }
+
+  .ruby-footer-label {
+    letter-spacing: 4px;
+  }
+
+  .ruby-footer-names {
+    font-size: 34px;
+  }
+
+  .ruby-footer-date {
+    margin: 16px 0 44px;
+    font-size: 12px;
+  }
+
+  .ruby-gift-content {
+    padding: 62px 18px 56px;
+  }
+
+  .ruby-gift-label {
+    letter-spacing: 4px;
+  }
+
+  .ruby-gift-header h2 {
+    font-size: 25px;
+  }
+
+  .ruby-bank-card__top {
+    margin-bottom: 22px;
+  }
+
+  .ruby-bank-name {
+    font-size: 12px;
+  }
+
+  .ruby-bank-number {
+    font-size: 17px;
+  }
+
+  .ruby-wish-content {
+    padding: 92px 18px 76px;
+  }
+
+  .ruby-wish-header {
+    margin-bottom: 28px;
+  }
+
+  .ruby-wish-label {
+    letter-spacing: 4px;
+  }
+
+  .ruby-wish-header h2 {
+    font-size: 25px;
+  }
+
+  .ruby-attendance-button {
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 13px;
+  }
+
+  .ruby-wish-card {
+    padding: 16px;
+  }
+
+  .ruby-wish-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .ruby-section--quote {
     padding: 132px 18px 104px;
   }

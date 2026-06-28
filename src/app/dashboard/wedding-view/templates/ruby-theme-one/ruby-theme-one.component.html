@@ -268,89 +268,156 @@
         </div>
       </section>
 
-      <section class="ruby-section ruby-section--wishes" *ngIf="isWishVisible()">
-        <img class="ruby-floral ruby-floral--top-left" [src]="floralAssetLeft" alt="" aria-hidden="true">
-        <p class="ruby-eyebrow">DOA &amp; HARAPAN</p>
-        <h2 class="ruby-title">Ucapan &amp; Doa</h2>
+      <section class="ruby-wish-section" *ngIf="isWishVisible()">
+        <img class="ruby-wish-frame" src="assets/thema-1/frame-6.png" alt="" aria-hidden="true">
 
-        <div class="ruby-form">
-          <label class="ruby-label" for="ruby-nama">Nama Lengkap</label>
-          <input id="ruby-nama" class="ruby-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama Anda">
-
-          <label class="ruby-label" for="ruby-pesan">Ucapan &amp; Doa</label>
-          <textarea id="ruby-pesan" class="ruby-textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan dan doa terbaikmu..."></textarea>
-
-          <label class="ruby-label">Kehadiran</label>
-          <div class="ruby-attendance">
-            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
-            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
-            <button type="button" class="ruby-choice" [class.ruby-choice--active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
+        <div class="ruby-wish-content">
+          <div class="ruby-wish-header">
+            <p class="ruby-wish-label">DOA &amp; HARAPAN</p>
+            <h2>Ucapan &amp; Doa</h2>
+            <div class="ruby-wish-line"></div>
           </div>
 
-          <button class="ruby-button ruby-button--submit" type="button" [disabled]="isSubmittingWish" (click)="submitWish()">
-            {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
-          </button>
-        </div>
+          <div class="ruby-wish-form">
+            <label for="ruby-nama">Nama Lengkap</label>
+            <input
+              id="ruby-nama"
+              class="ruby-wish-input"
+              type="text"
+              [(ngModel)]="wishForm.nama"
+              placeholder="Nama kamu"
+            >
 
-        <div class="ruby-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
-          <article class="ruby-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
-            <div class="ruby-wish-card__header">
-              <strong>{{ wish.nama }}</strong>
-              <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
+            <label for="ruby-pesan">Ucapan &amp; Doa</label>
+            <textarea
+              id="ruby-pesan"
+              class="ruby-wish-textarea"
+              [(ngModel)]="wishForm.pesan"
+              placeholder="Tulis ucapan &amp; doa terbaikmu..."
+            ></textarea>
+
+            <label>Kehadiran</label>
+            <div class="ruby-attendance-group">
+              <button
+                type="button"
+                class="ruby-attendance-button"
+                [class.ruby-attendance-button--active]="wishForm.kehadiran === 'hadir'"
+                (click)="wishForm.kehadiran = 'hadir'"
+              >
+                Hadir
+              </button>
+              <button
+                type="button"
+                class="ruby-attendance-button"
+                [class.ruby-attendance-button--active]="wishForm.kehadiran === 'mungkin'"
+                (click)="wishForm.kehadiran = 'mungkin'"
+              >
+                Mungkin
+              </button>
+              <button
+                type="button"
+                class="ruby-attendance-button"
+                [class.ruby-attendance-button--active]="wishForm.kehadiran === 'tidak_hadir'"
+                (click)="wishForm.kehadiran = 'tidak_hadir'"
+              >
+                Tidak Hadir
+              </button>
             </div>
-            <p>{{ wish.pesan }}</p>
-          </article>
-        </div>
 
-        <ng-template #emptyWishes>
-          <div class="ruby-empty-state">Belum ada ucapan. Jadilah yang pertama memberikan doa terbaik.</div>
-        </ng-template>
-      </section>
-
-      <section class="ruby-section ruby-section--gift" *ngIf="isGiftVisible()">
-        <p class="ruby-eyebrow">WEDDING GIFT</p>
-        <h2 class="ruby-title">Tanda Kasih</h2>
-        <p class="ruby-copy ruby-copy--center">{{ getWeddingGiftIntro() }}</p>
-
-        <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
-          <article class="ruby-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
-            <div class="ruby-bank-card__top">
-              <span>{{ bank.nama_bank || 'Bank' }}</span>
-              <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
-            </div>
-            <strong>{{ bank.nomor_rekening }}</strong>
-            <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
-            <button class="ruby-button ruby-button--secondary" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
-              Salin No. Rekening
+            <button
+              class="ruby-submit-button"
+              type="button"
+              [disabled]="isSubmittingWish"
+              (click)="submitWish()"
+            >
+              {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
             </button>
-          </article>
-        </ng-container>
+          </div>
 
-        <ng-template #emptyBanks>
-          <article class="ruby-bank-card">
-            <div class="ruby-bank-card__top">
-              <span>Bank</span>
-              <small>INFO</small>
+          <div class="ruby-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
+            <article class="ruby-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+              <div class="ruby-wish-card__header">
+                <p class="ruby-wish-card__name">{{ wish.nama }}</p>
+                <span class="ruby-wish-card__attendance">{{ getAttendanceLabel(wish.kehadiran) }}</span>
+              </div>
+              <p class="ruby-wish-card__message">{{ wish.pesan }}</p>
+            </article>
+          </div>
+
+          <ng-template #emptyWishes>
+            <div class="ruby-empty-state ruby-empty-state--wish">
+              Belum ada ucapan. Jadilah yang pertama memberikan doa terbaik.
             </div>
-            <strong>1234 5678 90</strong>
-            <p>a/n Mempelai</p>
-          </article>
-        </ng-template>
+          </ng-template>
+        </div>
       </section>
 
-      <section class="ruby-section ruby-section--closing">
-        <img class="ruby-floral ruby-floral--bottom-right" [src]="floralAssetRight" alt="" aria-hidden="true">
-        <p class="ruby-copy ruby-copy--center">
-          Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.
-        </p>
-        <p class="ruby-eyebrow">KAMI YANG BERBAHAGIA</p>
-        <h2 class="ruby-closing-names">
-          <span>{{ getPrimaryDisplayName() }}</span>
-          <em>&amp;</em>
-          <span>{{ getSecondaryDisplayName() }}</span>
-        </h2>
-        <p class="ruby-cover__date ruby-cover__date--closing">{{ getClosingDateLabel() }}</p>
-        <p class="ruby-crafted">{{ getPackageLabelText() }} | {{ craftedByLabel }}</p>
+      <section class="ruby-gift-section" *ngIf="isGiftVisible()">
+        <img class="ruby-gift-frame" src="assets/thema-1/frame-7.png" alt="" aria-hidden="true">
+
+        <div class="ruby-gift-content">
+          <div class="ruby-gift-header">
+            <p class="ruby-gift-label">WEDDING GIFT</p>
+            <h2>Tanda Kasih</h2>
+            <div class="ruby-gift-line"></div>
+            <p class="ruby-gift-description">
+              Doa restu Anda adalah hadiah terindah. Namun jika<br>
+              ingin memberi tanda kasih, dapat melalui:
+            </p>
+          </div>
+
+          <div class="ruby-bank-list" *ngIf="getVisibleBankAccounts().length; else emptyBank">
+            <article class="ruby-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
+              <div class="ruby-bank-card__top">
+                <span class="ruby-bank-icon" aria-hidden="true">🎁</span>
+                <span class="ruby-bank-name">{{ bank.nama_bank || bank.bank?.name || 'Bank' }}</span>
+              </div>
+
+              <p class="ruby-bank-number">{{ bank.nomor_rekening || '-' }}</p>
+              <p class="ruby-bank-owner">a.n. {{ bank.nama_pemilik || 'Mempelai' }}</p>
+
+              <button
+                type="button"
+                class="ruby-copy-button"
+                (click)="copyAccountNumber(bank.nomor_rekening)"
+              >
+                Salin No. Rekening
+              </button>
+            </article>
+          </div>
+
+          <ng-template #emptyBank>
+            <div class="ruby-bank-empty">Data rekening belum tersedia.</div>
+          </ng-template>
+        </div>
+      </section>
+
+      <section class="ruby-footer-section">
+        <img class="ruby-footer-frame" src="assets/thema-1/frame-8.png" alt="" aria-hidden="true">
+
+        <div class="ruby-footer-content">
+          <p class="ruby-footer-message">
+            Merupakan suatu kehormatan dan kebahagiaan<br>
+            bagi kami apabila Bapak/Ibu/Saudara/i berkenan<br>
+            hadir dan memberikan doa restu.
+          </p>
+
+          <p class="ruby-footer-label">KAMI YANG BERBAHAGIA</p>
+
+          <h2 class="ruby-footer-names">
+            <span>{{ getPrimaryDisplayName() }}</span>
+            <em>&amp;</em>
+            <span>{{ getSecondaryDisplayName() }}</span>
+          </h2>
+
+          <p class="ruby-footer-date">{{ getClosingDateLabel() }}</p>
+
+          <div class="ruby-footer-credit">
+            <p>{{ getPackageLabelText() }}</p>
+            <span>Crafted with &#9829; by</span>
+            <strong>SENA DIGITAL</strong>
+          </div>
+        </div>
       </section>
     </div>
   </article>

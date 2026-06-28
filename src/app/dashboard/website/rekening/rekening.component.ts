@@ -16,9 +16,9 @@ interface Bank {
 
 interface BankAccountFormData {
   id?: number;
-  kode_bank: string;
-  nomor_rekening: string;
-  nama_pemilik: string;
+  kode_bank: any;
+  nomor_rekening: any;
+  nama_pemilik: any;
   photo_rek?: File | string | null;
   editMode?: boolean;
 }
@@ -151,9 +151,9 @@ export class RekeningComponent implements OnInit, OnDestroy {
     }
   }
 
-  onBankSelect(index: number, bankCode: string): void {
+  onBankSelect(index: number, bankCode: any): void {
     const account = this.accounts.at(index);
-    account.get('kode_bank')?.setValue(bankCode);
+    account.get('kode_bank')?.setValue(this.normalizeKodeBank(bankCode));
   }
 
   onFileSelect(event: Event, index: number): void {
@@ -270,7 +270,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
 
   private validateNewAccounts(accounts: BankAccountFormData[]): boolean {
     for (let i = 0; i < accounts.length; i++) {
-      const account = accounts[i];
+      const account = this.normalizeAccountPayload(accounts[i]);
       if (!account.kode_bank || !account.nomor_rekening || !account.nama_pemilik) {
         this.notyf.error(`Semua field wajib diisi untuk rekening #${i + 1}`);
         return false;
@@ -284,9 +284,10 @@ export class RekeningComponent implements OnInit, OnDestroy {
 
     // Add array data
     accounts.forEach((acc, index) => {
-      formData.append(`kode_bank[${index}]`, acc.kode_bank);
-      formData.append(`nomor_rekening[${index}]`, acc.nomor_rekening);
-      formData.append(`nama_pemilik[${index}]`, acc.nama_pemilik);
+      const normalized = this.normalizeAccountPayload(acc);
+      formData.append(`kode_bank[${index}]`, normalized.kode_bank);
+      formData.append(`nomor_rekening[${index}]`, normalized.nomor_rekening);
+      formData.append(`nama_pemilik[${index}]`, normalized.nama_pemilik);
 
       // Add file if exists
       if (acc.photo_rek instanceof File) {
@@ -338,6 +339,12 @@ export class RekeningComponent implements OnInit, OnDestroy {
     }
 
     const accountData = accountForm.value;
+    const normalized = this.normalizeAccountPayload(accountData);
+
+    if (!normalized.kode_bank || !normalized.nomor_rekening || !normalized.nama_pemilik) {
+      this.notyf.error('Harap lengkapi semua field yang wajib diisi');
+      return;
+    }
 
     // Use FormData if file is present, otherwise use JSON
     if (accountData.photo_rek instanceof File) {
@@ -348,16 +355,10 @@ export class RekeningComponent implements OnInit, OnDestroy {
 
       // Append data in the exact format Laravel expects for nested arrays
       formData.append('rekenings[0][id]', accountData.id.toString());
-      formData.append('rekenings[0][kode_bank]', accountData.kode_bank);
-      formData.append('rekenings[0][nomor_rekening]', accountData.nomor_rekening);
-      formData.append('rekenings[0][nama_pemilik]', accountData.nama_pemilik);
+      formData.append('rekenings[0][kode_bank]', normalized.kode_bank);
+      formData.append('rekenings[0][nomor_rekening]', normalized.nomor_rekening);
+      formData.append('rekenings[0][nama_pemilik]', normalized.nama_pemilik);
       formData.append('rekenings[0][photo_rek]', accountData.photo_rek);
-
-      // Debug: Log FormData contents
-      console.log('FormData contents for update:');
-      formData.forEach((value, key) => {
-        console.log(key + ': ' + value);
-      });
 
       this.isSubmitting = true;
       this.dashboardSvc.uploadFile(DashboardServiceType.REKENINGS_UPDATE_JSON, formData).subscribe({
@@ -378,9 +379,9 @@ export class RekeningComponent implements OnInit, OnDestroy {
       const payload: any = {
         rekenings: [{
           id: accountData.id,
-          kode_bank: accountData.kode_bank,
-          nomor_rekening: accountData.nomor_rekening,
-          nama_pemilik: accountData.nama_pemilik
+          kode_bank: normalized.kode_bank,
+          nomor_rekening: normalized.nomor_rekening,
+          nama_pemilik: normalized.nama_pemilik
         }]
       };
 
@@ -519,5 +520,31 @@ export class RekeningComponent implements OnInit, OnDestroy {
     // Cleanup object URLs to prevent memory leaks
     this.objectUrls.forEach(url => URL.revokeObjectURL(url));
     this.objectUrls = [];
+  }
+
+  private normalizeKodeBank(value: any): string {
+    const bankValue = value?.kode_bank || value?.nama_bank || value?.bank || value;
+
+    if (typeof bankValue === 'object' && bankValue !== null) {
+      return String(
+        bankValue.value ||
+        bankValue.kode ||
+        bankValue.kode_bank ||
+        bankValue.name ||
+        bankValue.label ||
+        ''
+      ).trim();
+    }
+
+    return String(bankValue || '').trim();
+  }
+
+  private normalizeAccountPayload(account: BankAccountFormData): BankAccountFormData {
+    return {
+      ...account,
+      kode_bank: this.normalizeKodeBank(account?.kode_bank),
+      nomor_rekening: String(account?.nomor_rekening || '').trim(),
+      nama_pemilik: String(account?.nama_pemilik || '').trim(),
+    };
   }
 }
