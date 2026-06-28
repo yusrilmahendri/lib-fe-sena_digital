@@ -663,18 +663,51 @@
 }
 
 /* ===================================================
-   Mobile override: paksa tombol tiga titik ke kanan bawah
-   Diletakkan paling bawah agar menang dalam cascade.
-   Selector: .side-icons-container (lihat wedding-view.component.html)
+   FINAL OVERRIDE – tombol tiga titik ke kanan bawah
+   Menggunakan :host ::ng-deep untuk menembus Angular
+   ViewEncapsulation dan menang atas semua rule lain.
+   Selector: .side-icons-container (wedding-view.component.html)
    =================================================== */
-@media (max-width: 768px) {
-  .side-icons-container {
-    position: fixed !important;
-    right: 14px !important;
-    top: auto !important;
-    transform: none !important;
-    bottom: calc(24px + env(safe-area-inset-bottom)) !important;
-    z-index: 99999 !important;
-    flex-direction: column-reverse !important;
+:host ::ng-deep .wedding-container .side-icons-container,
+:host ::ng-deep .side-icons-container {
+  position: fixed !important;
+  top: auto !important;
+  right: 14px !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px) !important;
+  left: auto !important;
+  transform: none !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column-reverse !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+:host ::ng-deep .wedding-container .side-icons-container.open,
+:host ::ng-deep .side-icons-container.open,
+:host ::ng-deep .wedding-container .side-icons-container.active,
+:host ::ng-deep .side-icons-container.active {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px) !important;
+  top: auto !important;
+  transform: none !important;
+}
+
+:host ::ng-deep .side-icons-container .toggle-button,
+:host ::ng-deep .side-icons-container button {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+:host ::ng-deep .side-icons-container .side-icons,
+:host ::ng-deep .side-icons-container .icons-list {
+  position: static !important;
+  transform: none !important;
+}
+
+@media (max-width: 430px) {
+  :host ::ng-deep .wedding-container .side-icons-container,
+  :host ::ng-deep .side-icons-container {
+    right: 12px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 82px) !important;
   }
 }
