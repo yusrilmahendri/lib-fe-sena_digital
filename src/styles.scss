@@ -3,86 +3,36 @@
 /* ==========================================================
    GLOBAL OVERRIDE – wedding-view side-icons-container
    Rule global tidak punya _ngcontent scoping sehingga
-   !important di sini tidak bisa dikalahkan oleh rule apapun.
+   !important di sini tidak bisa dikalahkan oleh rule komponen.
    Selector: .side-icons-container (wedding-view.component.html)
    ========================================================== */
 .side-icons-container {
   position: fixed !important;
   top: auto !important;
   left: auto !important;
-  right: 12px !important;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px) !important;
+  right: 15px !important;
+  bottom: 90px !important;
   transform: none !important;
-  z-index: 99999 !important;
-
-  display: flex !important;
-  flex-direction: column-reverse !important;
-  align-items: center !important;
-  gap: 8px !important;
-
-  width: auto !important;
-  height: auto !important;
-  margin: 0 !important;
-}
-
-.side-icons-container.open,
-.side-icons-container.active {
-  top: auto !important;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px) !important;
-  transform: none !important;
-}
-
-.side-icons-container button,
-.side-icons-container .toggle-button,
-.side-icons-container .side-icon {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
-  max-width: 44px !important;
-  max-height: 44px !important;
-  border-radius: 50% !important;
-  padding: 0 !important;
-  font-size: 18px !important;
-  line-height: 1 !important;
-}
-
-.side-icons-container .side-icons,
-.side-icons-container .icons-list {
-  position: static !important;
-  transform: none !important;
+  z-index: 1002 !important;
   display: flex !important;
   flex-direction: column !important;
+  align-items: center !important;
   gap: 8px !important;
 }
 
-.side-icons-container svg,
-.side-icons-container i {
-  width: 20px !important;
-  height: 20px !important;
-  font-size: 20px !important;
+@media (max-width: 768px) {
+  .side-icons-container {
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
+  }
 }
 
-@media (max-width: 430px) {
+@media (max-width: 480px) {
   .side-icons-container {
-    right: 10px !important;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
-  }
-
-  .side-icons-container.open,
-  .side-icons-container.active {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 92px) !important;
-  }
-
-  .side-icons-container button,
-  .side-icons-container .toggle-button,
-  .side-icons-container .side-icon {
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px !important;
-    min-height: 42px !important;
-    max-width: 42px !important;
-    max-height: 42px !important;
+    top: auto !important;
+    bottom: 90px !important;
+    transform: none !important;
   }
 }
 
