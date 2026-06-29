@@ -1,11 +1,30 @@
 <div class="wedding-container" [class.no-outer-bg]="activeThemeRenderKey === 'ruby-theme-two'">
   <!-- Loading State -->
-  <div class="wedding-loading" *ngIf="isLoading">
-    <div class="loading-spinner">
-      <i class="fas fa-heart fa-beat" style="color: #e91e63; font-size: 2rem;"></i>
+  <div class="premium-wedding-loading" *ngIf="isLoading" aria-busy="true" aria-label="Memuat undangan">
+    <div class="premium-wedding-loading__ornament premium-wedding-loading__ornament--one"></div>
+    <div class="premium-wedding-loading__ornament premium-wedding-loading__ornament--two"></div>
+
+    <div class="premium-wedding-loading__card">
+      <div class="premium-wedding-loading__icon">
+        <i class="fas fa-heart"></i>
+      </div>
+
+      <p class="premium-wedding-loading__eyebrow">Sena Digital Invitation</p>
+      <h2>Menyiapkan Undangan</h2>
+      <p class="premium-wedding-loading__subtitle">
+        Sebentar lagi momen bahagia akan tampil
+      </p>
+
+      <div class="premium-wedding-loading__progress" aria-hidden="true">
+        <span></span>
+      </div>
+
+      <div class="premium-wedding-loading__dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
     </div>
-    <h3 style="margin-top: 1rem; color: #666;">Loading Wedding Invitation...</h3>
-    <p style="color: #888;">Please wait while we prepare your special moment</p>
   </div>
 
   <!-- Error State -->

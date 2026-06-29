@@ -30,6 +30,207 @@
   display: none;
 }
 
+/* ============================================================
+   Premium Wedding Loading Screen
+   ============================================================ */
+.premium-wedding-loading {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.95) 0%, transparent 32%),
+    radial-gradient(circle at 82% 18%, rgba(232, 95, 164, 0.18) 0%, transparent 34%),
+    radial-gradient(circle at 50% 92%, rgba(155, 77, 227, 0.18) 0%, transparent 40%),
+    linear-gradient(180deg, #fff8fb 0%, #f9ecff 48%, #fff7f0 100%);
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    filter: blur(22px);
+    opacity: 0.36;
+    pointer-events: none;
+  }
+
+  &::before {
+    top: -70px;
+    left: -80px;
+    background: rgba(232, 95, 164, 0.28);
+  }
+
+  &::after {
+    right: -90px;
+    bottom: -80px;
+    background: rgba(155, 77, 227, 0.28);
+  }
+}
+
+.premium-wedding-loading__ornament {
+  position: absolute;
+  border: 1px solid rgba(155, 77, 227, 0.16);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.premium-wedding-loading__ornament--one {
+  width: 260px;
+  height: 260px;
+  top: 12%;
+  right: -120px;
+}
+
+.premium-wedding-loading__ornament--two {
+  width: 180px;
+  height: 180px;
+  left: -90px;
+  bottom: 18%;
+}
+
+.premium-wedding-loading__card {
+  position: relative;
+  z-index: 2;
+  width: min(340px, 90vw);
+  padding: 36px 26px 32px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 24px 70px rgba(88, 45, 110, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  text-align: center;
+}
+
+.premium-wedding-loading__icon {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #9b4de3 0%, #e85fa4 100%);
+  color: #ffffff;
+  font-size: 28px;
+  box-shadow:
+    0 16px 34px rgba(155, 77, 227, 0.28),
+    0 0 0 10px rgba(155, 77, 227, 0.08);
+  animation: premiumLoadingPulse 1.9s ease-in-out infinite;
+}
+
+.premium-wedding-loading__eyebrow {
+  margin: 0 0 8px;
+  color: #9b4de3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.premium-wedding-loading__card h2 {
+  margin: 0;
+  color: #2b2430;
+  font-size: 25px;
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.premium-wedding-loading__subtitle {
+  margin: 12px auto 0;
+  max-width: 240px;
+  color: #7b6f82;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.premium-wedding-loading__progress {
+  position: relative;
+  width: 150px;
+  height: 4px;
+  margin: 24px auto 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(155, 77, 227, 0.12);
+
+  span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 48%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #9b4de3, #e85fa4);
+    animation: premiumLoadingBar 1.6s ease-in-out infinite;
+  }
+}
+
+.premium-wedding-loading__dots {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 18px;
+
+  span {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #9b4de3;
+    animation: premiumLoadingDot 1.2s ease-in-out infinite;
+
+    &:nth-child(2) { animation-delay: 0.15s; }
+    &:nth-child(3) { animation-delay: 0.3s; }
+  }
+}
+
+@keyframes premiumLoadingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.06); opacity: 0.88; }
+}
+
+@keyframes premiumLoadingBar {
+  0%   { transform: translateX(-110%); }
+  50%  { transform: translateX(70%); }
+  100% { transform: translateX(230%); }
+}
+
+@keyframes premiumLoadingDot {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.38; }
+  40%           { transform: translateY(-7px); opacity: 1; }
+}
+
+@media (max-width: 430px) {
+  .premium-wedding-loading {
+    padding: 20px;
+  }
+
+  .premium-wedding-loading__card {
+    width: min(310px, 88vw);
+    padding: 32px 22px 28px;
+    border-radius: 26px;
+  }
+
+  .premium-wedding-loading__icon {
+    width: 66px;
+    height: 66px;
+    font-size: 25px;
+  }
+
+  .premium-wedding-loading__card h2 {
+    font-size: 23px;
+  }
+
+  .premium-wedding-loading__subtitle {
+    font-size: 13px;
+  }
+}
+
 /* Side icons container */
   /* Side icons collapsible container */
   .side-icons-container {
