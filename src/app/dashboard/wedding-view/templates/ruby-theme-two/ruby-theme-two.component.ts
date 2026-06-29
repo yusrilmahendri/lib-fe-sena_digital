@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
-import { GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
+import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
+import { environment } from '../../../../../environments/environment';
 
 interface WishForm {
   nama: string;
@@ -14,34 +16,83 @@ interface WishForm {
   templateUrl: './ruby-theme-two.component.html',
   styleUrls: ['./ruby-theme-two.component.scss'],
 })
-export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
+export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
 
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
   isSubmittingWish = false;
+  isOpening = false;
+  hasOpened = false;
 
   private readonly FALLBACK_EVENT = {} as WeddingEvent;
+  private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
+  private openingTimer: any;
 
-  constructor(private svc: DashboardService) {
+  constructor(
+    private svc: DashboardService,
+    private sanitizer?: DomSanitizer
+  ) {
     super();
+  }
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    if (this.invitationOpened) {
+      this.hasOpened = true;
+    }
+    console.log('[RubyThemeTwoStories]', this.weddingData?.stories, this.getLoveStories());
+  }
+
+  openRubyTwoInvitation(): void {
+    if (this.isOpening || this.hasOpened) {
+      return;
+    }
+
+    this.isOpening = true;
+
+    this.openingTimer = setTimeout(() => {
+      super.openInvitation();
+      this.hasOpened = true;
+      this.isOpening = false;
+    }, 650);
+  }
+
+  override ngOnDestroy(): void {
+    if (this.openingTimer) {
+      clearTimeout(this.openingTimer);
+    }
+    super.ngOnDestroy();
   }
 
   // ─── Display helpers ─────────────────────────────────────────────────
 
   getPrimaryDisplayName(): string {
-    return this.getGroomNickname() || 'Arya';
+    return this.getGroomNickname() || 'Ketut';
   }
 
   getSecondaryDisplayName(): string {
-    return this.getBrideNickname() || 'Sena';
+    return this.getBrideNickname() || 'Isabela';
   }
 
   getGuestName(): string {
-    return 'Tamu Undangan';
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.guest_name,
+      data?.nama_tamu,
+      data?.guest?.nama,
+      data?.guest?.name,
+      data?.guest_book?.[0]?.nama,
+      data?.guest_book?.[0]?.name,
+    ];
+
+    const guestName = candidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value);
+
+    return guestName || 'Tamu Undangan';
   }
 
   getHeroDateLabel(): string {
-    const ev = this.getPrimaryEvent();
-    return ev ? this.formatDate(ev.tanggal_acara, 'long') : 'Tanggal menyusul';
+    return this.formatOpeningDate(this.getPrimaryEvent()?.tanggal_acara);
   }
 
   // ─── Intro / Quote ────────────────────────────────────────────────────
@@ -55,32 +106,97 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
   }
 
   getQuranQuote(): string {
-    return (
-      '"Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu ' +
-      'dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya."'
-    );
+    const quote = this.getPrimaryQuote();
+    return quote?.text
+      || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu agar kamu cenderung dan merasa tenteram kepadanya.';
   }
 
   getQuranSource(): string {
-    return '— QS. Ar-Rum: 21';
+    const quote = this.getPrimaryQuote();
+    return quote ? quote.source : 'QS. Ar-Rum: 21';
+  }
+
+  getBrideInstagram(): string | null {
+    return this.extractInstagram(this.getBride());
+  }
+
+  getGroomInstagram(): string | null {
+    return this.extractInstagram(this.getGroom());
   }
 
   // ─── Photos ──────────────────────────────────────────────────────────
 
+  override getCoverPhoto(): string {
+    return this.getSafeImageUrl([
+      this.weddingData?.mempelai?.cover_photo,
+      this.getBride()?.photo,
+      this.getGroom()?.photo,
+    ], 'assets/landing/template-1.png');
+  }
+
   getBridePhoto(): string {
-    return this.getBride()?.photo || '';
+    return this.getSafeImageUrl([
+      this.getBride()?.photo,
+    ], '');
   }
 
   getGroomPhoto(): string {
-    return this.getGroom()?.photo || '';
+    return this.getSafeImageUrl([
+      this.getGroom()?.photo,
+    ], '');
   }
 
   getSafeGalleryPhotos(): GalleryItem[] {
-    return this.getGalleryItems();
+    return this.getGalleryItems().filter((item) => {
+      const source = (item as any)?.photo_url || (item as any)?.url_photo || item?.photo;
+      const photoUrl = this.getGalleryPhotoUrl(item);
+      return !!photoUrl && !this.isUnsafeThemeImage(source);
+    });
   }
 
   getGalleryPhotos(): GalleryItem[] {
     return this.getSafeGalleryPhotos();
+  }
+
+  override hasGallery(): boolean {
+    return this.getSafeGalleryPhotos().length > 0;
+  }
+
+  override getFeaturedGalleryItem(): GalleryItem | null {
+    return this.getSafeGalleryPhotos()[0] || null;
+  }
+
+  override getGalleryGridItems(): GalleryItem[] {
+    return this.getSafeGalleryPhotos().slice(1, 5);
+  }
+
+  getGalleryPhotoUrl(item: GalleryItem | null | undefined): string {
+    if (!item) {
+      return '';
+    }
+
+    const directUrl = (item as any).photo_url || (item as any).url_photo;
+    if (directUrl) {
+      return String(directUrl);
+    }
+
+    const photo = String(item.photo || '').trim();
+    if (!photo) {
+      return '';
+    }
+
+    if (/^(https?:)?\/\//i.test(photo) || photo.startsWith('data:')) {
+      return photo;
+    }
+
+    const cleanPhoto = photo.replace(/^\/+/, '');
+    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
+
+    if (!apiBaseUrl) {
+      return `/storage/${cleanPhoto}`;
+    }
+
+    return `${apiBaseUrl}/storage/${cleanPhoto}`;
   }
 
   // ─── Parents ─────────────────────────────────────────────────────────
@@ -108,35 +224,136 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
   }
 
   getDetailEventVenue(event: WeddingEvent): string {
-    return event?.nama_acara || 'Lokasi menyusul';
+    const data = event as any;
+    return (
+      data?.nama_lokasi ||
+      data?.nama_tempat ||
+      data?.venue ||
+      data?.tempat ||
+      data?.lokasi ||
+      event?.nama_acara ||
+      'Lokasi menyusul'
+    );
   }
 
   getAkadMapLink(): string | null {
-    return (this.getAkadCard() as any)?.link_maps || this.getMapsLink();
+    return this.getEventMapLink(this.getAkadCard());
   }
 
   getReceptionMapLink(): string | null {
-    return (this.getReceptionCard() as any)?.link_maps || this.getMapsLink();
+    return this.getEventMapLink(this.getReceptionCard());
+  }
+
+  getEventMapLink(event: WeddingEvent): string | null {
+    const data = event as any;
+    const directLink = [
+      data?.link_maps,
+      data?.map_url,
+      data?.google_maps,
+      data?.maps_url,
+      data?.location_url,
+    ].map((value) => String(value || '').trim()).find((value) => !!value);
+
+    if (directLink) {
+      return directLink;
+    }
+
+    const query = this.getMapQuery(event);
+    return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
+  }
+
+  getMapEmbedUrl(event: any): string {
+    const data = event as any;
+    const directEmbed = [
+      data?.maps_embed,
+      data?.map_embed,
+      data?.embed_maps,
+      data?.iframe_maps,
+    ].map((value) => String(value || '').trim()).find((value) => !!value);
+
+    if (directEmbed) {
+      return directEmbed;
+    }
+
+    const query = this.getMapQuery(event);
+    if (!query) {
+      return '';
+    }
+
+    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
+  }
+
+  getSafeMapUrl(event: any): SafeResourceUrl | null {
+    if (!this.sanitizer) {
+      return null;
+    }
+
+    const rawUrl = this.getMapEmbedUrl(event);
+    if (!rawUrl) {
+      return null;
+    }
+
+    const cacheKey = String(rawUrl);
+    if (!this.mapUrlCache.has(cacheKey)) {
+      this.mapUrlCache.set(
+        cacheKey,
+        this.sanitizer.bypassSecurityTrustResourceUrl(cacheKey)
+      );
+    }
+
+    return this.mapUrlCache.get(cacheKey) || null;
+  }
+
+  getEventMapEmbedUrl(event: WeddingEvent): SafeResourceUrl | null {
+    return this.getSafeMapUrl(event);
   }
 
   // ─── Bank accounts ────────────────────────────────────────────────────
 
-  getVisibleBankAccounts(): any[] {
-    const accounts = (this.weddingData as any)?.bank_accounts;
-    return Array.isArray(accounts) ? accounts : [];
+  getVisibleBankAccounts(): BankAccount[] {
+    return Array.isArray(this.weddingData?.bank_accounts)
+      ? this.weddingData?.bank_accounts.slice(0, 2) || []
+      : [];
   }
 
   copyAccountNumber(number: string): void {
-    if (!number) { return; }
-    if (navigator?.clipboard) {
-      navigator.clipboard.writeText(number).catch(() => {});
+    this.copyText(number);
+  }
+
+  getGiftAddress(bank?: any): string {
+    if (bank) {
+      return String(bank.alamat_kado || bank.gift_address || bank.alamat || '').trim();
     }
+
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.alamat_kado,
+      data?.gift_address,
+      data?.send_gift_address,
+      data?.settings?.alamat_kado,
+      data?.settings?.gift_address,
+      data?.mempelai?.alamat_kado,
+    ];
+
+    return candidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value) || '';
+  }
+
+  copyGiftAddress(): void {
+    this.copyText(this.getGiftAddress());
+  }
+
+  getWeddingGiftIntro(): string {
+    return 'Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:';
   }
 
   // ─── Wishes ──────────────────────────────────────────────────────────
 
   getDisplayedWishes(): GuestWish[] {
-    return this.getGuestWishes().slice(0, 10);
+    return this.getGuestWishes()
+      .filter((item) => this.isRealGuestWish(item))
+      .slice(0, 8);
   }
 
   getAttendanceLabel(kehadiran: string): string {
@@ -163,6 +380,24 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
 
     this.svc.create(DashboardServiceType.ATTENDANCE, payload).subscribe({
       next: () => {
+        const currentWishes = Array.isArray(this.weddingData?.guest_wishes)
+          ? [...(this.weddingData?.guest_wishes || [])]
+          : [];
+        const nextWish: GuestWish = {
+          id: Date.now(),
+          nama: payload.nama,
+          kehadiran: payload.kehadiran,
+          pesan: payload.pesan,
+          created_at: new Date().toISOString(),
+        };
+
+        if (this.weddingData) {
+          this.weddingData = {
+            ...this.weddingData,
+            guest_wishes: [nextWish, ...currentWishes],
+          };
+        }
+
         this.isSubmittingWish = false;
         this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
       },
@@ -174,37 +409,65 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
 
   // ─── Love story ───────────────────────────────────────────────────────
 
-  getLoveStoryItems(): Array<{ title: string; date: string; description: string }> {
-    const stories = this.getStories();
-    if (stories.length) {
-      return stories.slice(0, 4).map((s, i) => ({
-        title: s.title || this.fallbackStoryTitle(i),
-        date: this.getStoryDate(s),
-        description: this.getStoryLead(s) || this.fallbackStoryDescription(i),
-      }));
+  getLoveStories(): Array<{ year: string; title: string; description: string }> {
+    const data = this.weddingData as any;
+    const rawStories =
+      this.weddingData?.stories ||
+      data?.data?.stories ||
+      data?.cerita_cinta ||
+      data?.love_stories ||
+      [];
+
+    if (Array.isArray(rawStories) && rawStories.length) {
+      return rawStories.map((story: any) => {
+        const date = story.tanggal_cerita || story.date || story.tanggal || '';
+        const year = date ? String(date).slice(0, 4) : String(story.year || story.tahun || '');
+
+        return {
+          year,
+          title: story.title || story.judul || story.name || 'Cerita Kami',
+          description:
+            story.lead_cerita ||
+            story.description ||
+            story.deskripsi ||
+            story.content ||
+            story.cerita ||
+            story.story ||
+            '',
+        };
+      });
     }
+
     return [
       {
-        title: 'Pertemuan Pertama',
-        date: '2019',
-        description: 'Pertemuan di sebuah acara sederhana menjadi awal kisah yang penuh kehangatan.',
+        year: '2019',
+        title: 'Pertama Bertemu',
+        description: 'Dipertemukan di sebuah acara, percakapan singkat berubah menjadi awal dari segalanya.',
       },
       {
+        year: '2022',
         title: 'Menjalin Hubungan',
-        date: '2020',
-        description: 'Kami saling mengenal lebih dekat dan tumbuh menjadi tempat pulang satu sama lain.',
+        description: 'Setiap hari menjadi lebih berwarna. Kami belajar tumbuh dan saling melengkapi.',
       },
       {
+        year: '2025',
         title: 'Lamaran',
-        date: '2025',
-        description: 'Dengan restu keluarga, kami mantap melangkah menuju ikatan yang lebih sakral.',
+        description: 'Di bawah langit senja, sebuah janji diucapkan untuk melangkah ke jenjang yang lebih serius.',
       },
       {
+        year: '2026',
         title: 'Hari Bahagia',
-        date: '2026',
-        description: 'Kini kami mengundang Anda untuk menjadi bagian dari hari istimewa kami.',
+        description: 'Dengan restu keluarga, kami siap memulai babak baru sebagai pasangan suami istri.',
       },
     ];
+  }
+
+  getLoveStoryItems(): Array<{ title: string; date: string; description: string }> {
+    return this.getLoveStories().map((story) => ({
+      title: story.title,
+      date: story.year,
+      description: story.description,
+    }));
   }
 
   getStoryTrackBy(index: number, item: { title: string }): string {
@@ -217,6 +480,14 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
 
   getMapPreviewLabel(): string {
     return this.getMapsLink() ? 'Peta lokasi acara' : 'Peta lokasi akan segera diperbarui';
+  }
+
+  getClosingDateLabel(): string {
+    return this.getHeroDateLabel();
+  }
+
+  getPackageLabelText(): string {
+    return 'Paket Ruby';
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────
@@ -235,6 +506,132 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
         'Dengan restu keluarga besar, kami memutuskan untuk melangkah ke tahap yang lebih serius.',
         'Hari ini menjadi awal baru bagi kami untuk membangun kisah rumah tangga bersama.',
       ][i] || 'Cerita cinta kami akan terus bertumbuh.'
+    );
+  }
+
+  private getLoveStoryYear(story: any): string {
+    const rawDate = story?.tanggal_cerita || story?.date || story?.tanggal || story?.year || story?.tahun || '';
+    const value = String(rawDate || '').trim();
+    if (!value) {
+      return '';
+    }
+
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return String(date.getFullYear());
+    }
+
+    return value;
+  }
+
+  private getPrimaryQuote(): { text: string; source: string } | null {
+    const quote = this.getQuotes().find((item: any) => item?.quote || item?.qoute);
+    if (!quote) {
+      return null;
+    }
+
+    const data = quote as any;
+    return {
+      text: String(data.quote || data.qoute || '').replace(/^["“”]+|["“”]+$/g, '').trim(),
+      source: String(data.name || data.source || data.reference || data.referensi || '').trim(),
+    };
+  }
+
+  private getMapQuery(event: WeddingEvent): string {
+    return [
+      this.getEventAddress(event),
+      this.getDetailEventVenue(event),
+    ].map((value) => String(value || '').trim())
+      .filter((value) => !!value && !/menyusul|diumumkan/i.test(value))
+      .join(', ');
+  }
+
+  private extractInstagram(person: any): string | null {
+    const rawValue = person?.instagram || person?.ig || person?.username || '';
+    const normalized = String(rawValue || '').trim();
+    if (!normalized) {
+      return null;
+    }
+
+    return normalized.startsWith('@') ? normalized : `@${normalized}`;
+  }
+
+  private copyText(value: string): void {
+    const text = String(value || '').trim();
+    if (!text || !navigator?.clipboard) {
+      return;
+    }
+
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  private formatOpeningDate(dateValue?: string | null): string {
+    if (!dateValue) {
+      return '12 · 12 · 2026';
+    }
+
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) {
+      return dateValue;
+    }
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear());
+
+    return `${day} · ${month} · ${year}`;
+  }
+
+  private getSafeImageUrl(candidates: Array<string | null | undefined>, fallback: string): string {
+    for (const candidate of candidates) {
+      if (!this.isUnsafeThemeImage(candidate)) {
+        return this.resolveMediaUrl(candidate);
+      }
+    }
+    return fallback;
+  }
+
+  private resolveMediaUrl(value: string | null | undefined): string {
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+      return '';
+    }
+
+    if (/^(https?:)?\/\//i.test(rawValue) || rawValue.startsWith('data:')) {
+      return rawValue;
+    }
+
+    const cleanValue = rawValue.replace(/^\/+/, '');
+    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
+
+    if (!apiBaseUrl) {
+      return `/${cleanValue}`;
+    }
+
+    return `${apiBaseUrl}/${cleanValue}`;
+  }
+
+  private isUnsafeThemeImage(value: string | null | undefined): boolean {
+    const image = String(value || '').trim();
+    if (!image) {
+      return true;
+    }
+
+    return /^assets\/(?:landing\/template-|thema-|bg-|feature|Rectangle|Ellipse|logo|LOGO|landing_page|themas)/i.test(image);
+  }
+
+  private isRealGuestWish(item: GuestWish): boolean {
+    const name = String((item as any)?.nama || (item as any)?.name || '').trim().toLowerCase();
+    const message = String((item as any)?.pesan || (item as any)?.message || '').trim();
+    const normalizedMessage = message.toLowerCase();
+
+    if (!message || name === 'viewer') {
+      return false;
+    }
+
+    return !(
+      normalizedMessage.startsWith('undangan ') &&
+      normalizedMessage.endsWith(' telah dilihat')
     );
   }
 }

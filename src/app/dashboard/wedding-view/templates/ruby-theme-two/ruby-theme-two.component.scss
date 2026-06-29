@@ -3,14 +3,15 @@
 }
 
 .ruby-theme-two {
-  --ruby-two-primary: #8d4cc2;
-  --ruby-two-primary-dark: #6e34a0;
-  --ruby-two-soft: #f7e8ff;
-  --ruby-two-soft-2: #f4e3ff;
+  --ruby-two-primary: #9b4de3;
+  --ruby-two-primary-dark: #6f35a8;
+  --ruby-two-soft: #f2e1ff;
+  --ruby-two-soft-2: #f8efff;
   --ruby-two-surface: #fff;
-  --ruby-two-text: #24202a;
-  --ruby-two-border: rgba(141, 76, 194, 0.18);
-  --ruby-two-shadow: 0 18px 36px rgba(93, 56, 132, 0.12);
+  --ruby-two-text: #2b2430;
+  --ruby-two-muted: rgba(43, 36, 48, 0.68);
+  --ruby-two-border: rgba(155, 77, 227, 0.16);
+  --ruby-two-shadow: 0 18px 34px rgba(86, 46, 124, 0.12);
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
@@ -26,6 +27,31 @@
     linear-gradient(180deg, #f7e8ff 0%, #f4e3ff 42%, #f8edff 100%);
 }
 
+.ruby-two-main {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 620ms ease, transform 620ms ease;
+  will-change: opacity, transform;
+}
+
+.ruby-two-main--visible {
+  opacity: 1;
+  transform: translateY(0);
+  animation: rubyTwoMainEnter 620ms ease both;
+}
+
+@keyframes rubyTwoMainEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .ruby-two-cover,
 .ruby-two-hero,
 .ruby-two-closing {
@@ -34,11 +60,24 @@
 }
 
 .ruby-two-cover {
+  z-index: 1004;
+  width: 100%;
   min-height: 100vh;
+  height: 100vh;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 28px 20px 44px;
+  padding: 0 28px;
+  text-align: center;
+  transition: opacity 650ms ease, transform 650ms ease, filter 650ms ease;
+  will-change: opacity, transform, filter;
+}
+
+.ruby-two-cover--opening {
+  opacity: 0;
+  transform: translateY(-24px);
+  filter: blur(1px);
+  pointer-events: none;
 }
 
 .ruby-two-cover__media,
@@ -50,12 +89,26 @@
   background-size: cover;
 }
 
+.ruby-two-cover__media {
+  filter: blur(0.4px);
+}
+
 .ruby-two-cover__overlay,
 .ruby-two-hero__overlay,
 .ruby-two-closing__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(39, 28, 51, 0.2) 0%, rgba(76, 43, 107, 0.5) 62%, rgba(46, 25, 70, 0.72) 100%);
+  background: linear-gradient(180deg, rgba(28, 16, 42, 0.42) 0%, rgba(76, 43, 107, 0.66) 56%, rgba(38, 18, 62, 0.82) 100%);
+}
+
+.ruby-two-cover__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 16, 28, 0.18) 0%,
+    rgba(39, 31, 50, 0.32) 38%,
+    rgba(37, 24, 54, 0.58) 72%,
+    rgba(42, 25, 66, 0.72) 100%
+  );
 }
 
 .ruby-two-cover__content,
@@ -67,6 +120,12 @@
   color: #fff;
 }
 
+.ruby-two-cover__content {
+  width: min(100%, 374px);
+  transform: translateY(12px);
+  text-shadow: 0 2px 14px rgba(18, 8, 28, 0.34);
+}
+
 .ruby-two-cover__eyebrow,
 .ruby-two-section__eyebrow {
   margin: 0;
@@ -74,6 +133,17 @@
   font-weight: 700;
   letter-spacing: 0.32em;
   text-transform: uppercase;
+}
+
+.ruby-two-cover .ruby-two-cover__eyebrow,
+.ruby-two-hero .ruby-two-cover__eyebrow {
+  color: #fff;
+  font-family: Poppins, Inter, Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  line-height: 1.2;
+  margin-bottom: 14px;
 }
 
 .ruby-two-cover__names,
@@ -93,6 +163,58 @@
   font-size: 0.7em;
 }
 
+.ruby-two-cover .ruby-two-cover__names,
+.ruby-two-cover .ruby-two-cover__names span,
+.ruby-two-cover .ruby-two-cover__names em,
+.ruby-two-hero .ruby-two-cover__names,
+.ruby-two-hero .ruby-two-cover__names span,
+.ruby-two-hero .ruby-two-cover__names em {
+  color: #fff;
+}
+
+.ruby-two-cover .ruby-two-cover__names,
+.ruby-two-hero .ruby-two-cover__names {
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
+  row-gap: 0;
+  font-family: Poppins, Inter, Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.ruby-two-cover .ruby-two-cover__names em,
+.ruby-two-hero .ruby-two-cover__names em {
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.05;
+}
+
+.opening-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0 10px;
+}
+
+.opening-divider .divider-line {
+  width: 46px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.opening-divider .divider-mark {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 10px;
+  line-height: 1;
+}
+
 .ruby-two-cover__date {
   margin: 0;
   font-size: 0.84rem;
@@ -100,24 +222,49 @@
   text-transform: uppercase;
 }
 
+.ruby-two-cover .ruby-two-cover__date,
+.ruby-two-hero .ruby-two-cover__date {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  line-height: 1.35;
+  margin-top: 0;
+}
+
 .ruby-two-cover__guest {
-  width: min(100%, 226px);
-  margin: 18px auto 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(6px);
+  width: 100%;
+  max-width: none;
+  margin: 28px auto 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  backdrop-filter: none;
+  color: #fff;
 }
 
 .ruby-two-cover__guest span {
   display: block;
-  font-size: 0.78rem;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.ruby-two-cover__guest .recipient-label {
+  white-space: nowrap;
 }
 
 .ruby-two-cover__guest strong {
   display: block;
-  margin-top: 4px;
-  font-size: 0.92rem;
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #fff;
 }
 
 .ruby-two-button {
@@ -149,14 +296,39 @@
   box-shadow: 0 14px 28px rgba(123, 63, 181, 0.26);
 }
 
+.ruby-two-cover .ruby-two-button--primary,
+.ruby-two-cover .ruby-two-button--primary i {
+  color: #fff;
+}
+
+.ruby-two-cover .ruby-two-button--primary {
+  margin-top: 22px;
+  min-height: 40px;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8d46d5, #a852e7);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(119, 55, 190, 0.28);
+}
+
+.ruby-two-cover .ruby-two-button--primary i {
+  font-size: 14px;
+}
+
 .ruby-two-button--ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(141, 76, 194, 0.08);
-  color: var(--ruby-two-primary-dark);
-  border: 1px solid var(--ruby-two-border);
+  min-height: 32px;
+  padding: 0 18px;
+  background: rgba(155, 77, 227, 0.1);
+  color: var(--ruby-two-primary);
+  border: 1px solid rgba(155, 77, 227, 0.18);
   text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .ruby-two-button--full {
@@ -164,26 +336,47 @@
 }
 
 .ruby-two-hero {
-  min-height: 300px;
+  min-height: 62vh;
+  height: 62vh;
+  max-height: 620px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 24px 20px 28px;
+  padding: 0 28px;
+}
+
+.ruby-two-hero__content {
+  width: min(100%, 374px);
+  text-shadow: 0 2px 14px rgba(18, 8, 28, 0.34);
 }
 
 .ruby-two-section {
-  padding: 34px 20px;
+  padding: 46px 28px;
+}
+
+.ruby-two-hero + .ruby-two-section--intro {
+  padding-top: 42px;
 }
 
 .ruby-two-section--intro,
+.ruby-two-section--events,
 .ruby-two-section--story,
 .ruby-two-section--wishes {
-  background: rgba(255, 255, 255, 0.75);
+  background: #fff;
+}
+
+.ruby-two-section--couple,
+.ruby-two-section--countdown,
+.ruby-two-section--gallery,
+.ruby-two-section--gift {
+  background: var(--ruby-two-soft);
 }
 
 .ruby-two-section__eyebrow {
   text-align: center;
-  color: rgba(141, 76, 194, 0.74);
+  color: var(--ruby-two-primary);
+  font-size: 9px;
+  letter-spacing: 0.26em;
 }
 
 .ruby-two-title,
@@ -195,8 +388,19 @@
 }
 
 .ruby-two-title {
-  font-size: clamp(1.9rem, 7vw, 2.4rem);
+  font-family: Poppins, Inter, Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.05;
+}
+
+.ruby-two-title::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 1px;
+  margin: 14px auto 0;
+  background: rgba(155, 77, 227, 0.28);
 }
 
 .ruby-two-script {
@@ -215,6 +419,10 @@
   line-height: 1.7;
 }
 
+.ruby-two-bank-card .ruby-two-button--ghost {
+  min-height: 30px;
+}
+
 .ruby-two-copy--center,
 .ruby-two-quote,
 .ruby-two-quote__source {
@@ -224,7 +432,7 @@
 .ruby-two-quote {
   margin: 18px auto 10px;
   max-width: 320px;
-  color: rgba(36, 32, 42, 0.74);
+  color: var(--ruby-two-muted);
   font-style: italic;
 }
 
@@ -236,7 +444,6 @@
   color: var(--ruby-two-primary);
 }
 
-.ruby-two-person-card,
 .ruby-two-event-card,
 .ruby-two-bank-card,
 .ruby-two-wish-card {
@@ -247,18 +454,23 @@
 }
 
 .ruby-two-person-card {
-  margin-top: 18px;
-  padding: 18px 16px;
+  margin-top: 24px;
+  padding: 0;
   text-align: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .ruby-two-person-card__frame {
-  width: 146px;
-  height: 184px;
-  margin: 0 auto 14px;
-  padding: 7px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #efe0fb 0%, #ffffff 100%);
+  width: 150px;
+  height: 190px;
+  margin: 0 auto 16px;
+  padding: 0;
+  border-radius: 54px 54px 18px 18px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 16px 30px rgba(95, 51, 135, 0.12);
 }
 
 .ruby-two-person-card__frame img {
@@ -266,7 +478,7 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 54px 54px 18px 18px;
 }
 
 .ruby-two-person-card h3,
@@ -278,42 +490,65 @@
 }
 
 .ruby-two-separator {
-  margin: 12px 0 4px;
+  margin: 16px 0 2px;
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   color: var(--ruby-two-primary);
 }
 
+.ruby-two-person-card h3 {
+  font-size: 18px;
+}
+
+.ruby-two-person-card p {
+  max-width: 270px;
+  margin: 6px auto 0;
+  color: var(--ruby-two-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.ruby-two-person-card small {
+  display: block;
+  margin-top: 8px;
+  color: var(--ruby-two-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .ruby-two-event-card {
-  margin-top: 18px;
-  padding: 18px 16px;
+  margin-top: 20px;
+  padding: 22px 18px;
   text-align: center;
+  border-radius: 22px;
 }
 
 .ruby-two-event-card__label {
   display: inline-block;
   margin-bottom: 10px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(141, 76, 194, 0.1);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--ruby-two-primary);
-  font-size: 0.8rem;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .ruby-two-event-card strong {
   display: block;
   margin: 8px 0 4px;
+  color: var(--ruby-two-text);
 }
 
 .ruby-two-map-preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100px;
-  margin: 12px 0;
+  height: 138px;
+  margin: 14px 0 12px;
   border-radius: 16px;
+  overflow: hidden;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(244, 227, 255, 0.92)),
     linear-gradient(90deg, rgba(141, 76, 194, 0.08) 1px, transparent 1px),
@@ -321,6 +556,13 @@
   background-size: auto, 24px 24px, 24px 24px;
   color: var(--ruby-two-primary);
   font-size: 1.7rem;
+}
+
+.ruby-two-map-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
 .ruby-two-countdown {
@@ -356,7 +598,7 @@
 
 .ruby-two-story-list {
   position: relative;
-  margin-top: 18px;
+  margin-top: 24px;
   padding-left: 18px;
 }
 
@@ -396,6 +638,113 @@
   color: rgba(141, 76, 194, 0.76);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.ruby-two-story-item h3 {
+  font-size: 14px;
+}
+
+.ruby-two-story-item p {
+  margin: 5px 0 0;
+  color: var(--ruby-two-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ruby-two-section--journey {
+  background: #ffffff;
+  padding: 80px 34px;
+  position: relative;
+}
+
+.ruby-two-section--journey .ruby-two-section-heading {
+  text-align: center;
+  margin-bottom: 42px;
+}
+
+.ruby-two-section--journey .ruby-two-section-heading p {
+  color: #9b4de3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  margin: 0 0 10px;
+}
+
+.ruby-two-section--journey .ruby-two-section-heading h2 {
+  color: #2b2430;
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0;
+  font-weight: 700;
+}
+
+.ruby-two-section--journey .ruby-two-section-heading span {
+  display: block;
+  width: 44px;
+  height: 1px;
+  background: rgba(155, 77, 227, 0.35);
+  margin: 14px auto 0;
+}
+
+.ruby-two-journey-timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.ruby-two-journey-timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 12px;
+  width: 1px;
+  background: rgba(155, 77, 227, 0.28);
+}
+
+.ruby-two-journey-item {
+  position: relative;
+  margin-bottom: 34px;
+}
+
+.ruby-two-journey-item:last-child {
+  margin-bottom: 0;
+}
+
+.ruby-two-journey-dot {
+  position: absolute;
+  left: -29px;
+  top: 4px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #9b4de3;
+  box-shadow: 0 0 0 4px rgba(155, 77, 227, 0.12);
+}
+
+.ruby-two-journey-content {
+  text-align: left;
+}
+
+.ruby-two-journey-year {
+  color: #9b4de3;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.ruby-two-journey-content h3 {
+  color: #4b3b55;
+  font-size: 18px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.ruby-two-journey-content p {
+  color: #7b6f82;
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
 }
 
 .ruby-two-gallery-featured,
@@ -521,23 +870,68 @@
 }
 
 .ruby-two-bank-card {
-  margin-top: 18px;
-  padding: 18px 16px;
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 0;
+  box-shadow: 0 14px 28px rgba(86, 46, 124, 0.1);
 }
 
 .ruby-two-bank-card__top {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 22px;
   color: var(--ruby-two-primary-dark);
   font-size: 0.88rem;
   font-weight: 700;
 }
 
+.ruby-two-bank-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(155, 77, 227, 0.1);
+  color: var(--ruby-two-primary);
+}
+
+.ruby-two-bank-card__top small {
+  color: #315ca8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .ruby-two-bank-card strong {
   display: block;
-  font-size: 1.24rem;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--ruby-two-text);
+}
+
+.ruby-two-bank-card p {
+  margin: 5px 0 14px;
+  color: var(--ruby-two-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ruby-two-gift-description {
+  max-width: 300px;
+  margin: 14px auto 22px;
+  color: var(--ruby-two-muted);
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.ruby-two-gift-address strong {
+  font-size: 16px;
 }
 
 .ruby-two-empty {
@@ -551,29 +945,143 @@
 }
 
 .ruby-two-closing {
-  min-height: 300px;
+  min-height: 520px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 28px 20px 34px;
+  padding: 62px 28px;
+  text-align: center;
+}
+
+.ruby-two-closing__overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(28, 18, 42, 0.28) 0%,
+    rgba(54, 35, 73, 0.58) 46%,
+    rgba(33, 18, 48, 0.86) 100%
+  );
 }
 
 .ruby-two-closing__content p,
-.ruby-two-closing__content small {
+.ruby-two-closing__content small,
+.ruby-two-closing__content time,
+.ruby-two-closing__label {
   margin: 0;
 }
 
 .ruby-two-closing__content p {
-  max-width: 260px;
+  max-width: 310px;
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.ruby-two-closing__label {
+  display: block;
+  margin-top: 36px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.ruby-two-closing__content h2 {
+  margin: 12px 0 12px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  column-gap: 0.28em;
+  font-family: Poppins, Inter, Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.05;
+  color: #fff;
+}
+
+.ruby-two-closing__content h2 em {
+  font-size: 1em;
+}
+
+.ruby-two-closing__content time {
+  display: block;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
 }
 
 .ruby-two-closing__content small {
   display: block;
-  margin-top: 12px;
+  margin-top: 30px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.86;
+}
+
+.ruby-two-closing__credit {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 11px;
+}
+
+.ruby-two-closing__credit span,
+.ruby-two-closing__credit strong {
+  display: block;
+}
+
+.ruby-two-closing__credit strong {
+  margin-top: 4px;
+  letter-spacing: 0.22em;
+  color: #fff;
+}
+
+@media screen and (min-width: 769px) {
+  .ruby-two-hero {
+    min-height: 520px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ruby-theme-two {
+    max-width: 430px;
+  }
+
+  .ruby-two-cover {
+    min-height: 100vh;
+    height: 100vh;
+    padding: 0 28px;
+  }
+
+  .ruby-two-cover__content {
+    width: min(100%, 374px);
+  }
+
+  .ruby-two-cover .ruby-two-cover__eyebrow {
+    font-size: 10px;
+  }
+
+  .ruby-two-cover .ruby-two-cover__names,
+  .ruby-two-hero .ruby-two-cover__names {
+    font-size: 42px;
+  }
+}
+
+@media screen and (max-width: 340px) {
+  .ruby-two-cover__guest span {
+    font-size: 8px;
+    letter-spacing: 1.2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruby-two-cover,
+  .ruby-two-main {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
 }

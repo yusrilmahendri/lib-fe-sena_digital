@@ -91,7 +91,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     }
   }
 
-  getGiftAddress(bank: any): string {
+  override getGiftAddress(bank?: any): string {
     return bank?.nama_pemilik ? `a/n ${bank.nama_pemilik}` : 'Atas nama mempelai';
   }
 

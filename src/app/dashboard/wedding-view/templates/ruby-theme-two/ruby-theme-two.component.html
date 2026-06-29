@@ -1,38 +1,55 @@
 <section class="ruby-theme-two" *ngIf="weddingData">
   <article class="ruby-two-shell">
-    <section class="ruby-two-cover" *ngIf="!invitationOpened">
+    <section
+      class="ruby-two-cover"
+      *ngIf="!hasOpened"
+      [class.ruby-two-cover--opening]="isOpening">
       <div class="ruby-two-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
       <div class="ruby-two-cover__overlay"></div>
       <div class="ruby-two-cover__content">
-        <p class="ruby-two-cover__eyebrow">The Wedding Of</p>
+        <p class="ruby-two-cover__eyebrow">THE WEDDING OF</p>
         <h1 class="ruby-two-cover__names">
           <span>{{ getPrimaryDisplayName() }}</span>
           <em>&amp;</em>
           <span>{{ getSecondaryDisplayName() }}</span>
         </h1>
+        <div class="opening-divider" aria-hidden="true">
+          <span class="divider-line"></span>
+          <span class="divider-mark">◊</span>
+          <span class="divider-line"></span>
+        </div>
         <p class="ruby-two-cover__date">{{ getHeroDateLabel() }}</p>
         <div class="ruby-two-cover__guest">
-          <span>Kepada Yth.</span>
-          <strong>{{ getGuestName() }}</strong>
+          <span class="recipient-label">Kepada Yth. Bapak/Ibu/Saudara/i</span>
+          <strong class="recipient-name">{{ getGuestName() }}</strong>
         </div>
-        <button class="ruby-two-button ruby-two-button--primary" type="button" (click)="openInvitation()">
+        <button
+          class="ruby-two-button ruby-two-button--primary"
+          type="button"
+          [disabled]="isOpening"
+          (click)="openRubyTwoInvitation()">
           <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
           Buka Undangan
         </button>
       </div>
     </section>
 
-    <ng-container *ngIf="invitationOpened">
+    <div class="ruby-two-main" *ngIf="hasOpened" [class.ruby-two-main--visible]="hasOpened">
       <section class="ruby-two-hero">
         <div class="ruby-two-hero__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
         <div class="ruby-two-hero__overlay"></div>
         <div class="ruby-two-hero__content">
-          <p class="ruby-two-cover__eyebrow">The Wedding Of</p>
+          <p class="ruby-two-cover__eyebrow">THE WEDDING OF</p>
           <h1 class="ruby-two-cover__names">
             <span>{{ getPrimaryDisplayName() }}</span>
             <em>&amp;</em>
             <span>{{ getSecondaryDisplayName() }}</span>
           </h1>
+          <div class="opening-divider" aria-hidden="true">
+            <span class="divider-line"></span>
+            <span class="divider-mark">◊</span>
+            <span class="divider-line"></span>
+          </div>
           <p class="ruby-two-cover__date">{{ getHeroDateLabel() }}</p>
         </div>
       </section>
@@ -42,7 +59,7 @@
         <h2 class="ruby-two-script">Bismillahirrahmanirrahim</h2>
         <p class="ruby-two-copy ruby-two-copy--center">{{ getInvitationIntro() }}</p>
         <blockquote class="ruby-two-quote">{{ getQuranQuote() }}</blockquote>
-        <p class="ruby-two-quote__source">{{ getQuranSource() }}</p>
+        <p class="ruby-two-quote__source" *ngIf="getQuranSource()">{{ getQuranSource() }}</p>
       </section>
 
       <section class="ruby-two-section ruby-two-section--couple" *ngIf="isCoupleVisible()">
@@ -55,6 +72,7 @@
           </div>
           <h3>{{ getBrideName() }}</h3>
           <p>{{ getBrideParentLine() }}</p>
+          <small *ngIf="getBrideInstagram() as instagram">◎ {{ instagram }}</small>
         </article>
 
         <div class="ruby-two-separator">&amp;</div>
@@ -65,11 +83,12 @@
           </div>
           <h3>{{ getGroomName() }}</h3>
           <p>{{ getGroomParentLine() }}</p>
+          <small *ngIf="getGroomInstagram() as instagram">◎ {{ instagram }}</small>
         </article>
       </section>
 
       <section class="ruby-two-section ruby-two-section--events" *ngIf="isEventVisible()">
-        <p class="ruby-two-section__eyebrow">Detail Hari Bahagia</p>
+        <p class="ruby-two-section__eyebrow">Save The Date</p>
         <h2 class="ruby-two-title">Detail Acara</h2>
 
         <article class="ruby-two-event-card">
@@ -79,7 +98,16 @@
           <strong>{{ getDetailEventVenue(getAkadCard()) }}</strong>
           <p>{{ getEventAddress(getAkadCard()) }}</p>
           <div class="ruby-two-map-preview" role="img" aria-label="Preview peta akad nikah">
-            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <iframe
+              *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder"
+              [src]="mapEmbed"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen>
+            </iframe>
+            <ng-template #akadMapPlaceholder>
+              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            </ng-template>
           </div>
           <a *ngIf="getAkadMapLink() as mapsLink" class="ruby-two-button ruby-two-button--ghost" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
             Lihat Lokasi
@@ -93,7 +121,16 @@
           <strong>{{ getDetailEventVenue(getReceptionCard()) }}</strong>
           <p>{{ getEventAddress(getReceptionCard()) }}</p>
           <div class="ruby-two-map-preview" role="img" aria-label="Preview peta resepsi">
-            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <iframe
+              *ngIf="getSafeMapUrl(getReceptionCard()) as mapEmbed; else receptionMapPlaceholder"
+              [src]="mapEmbed"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen>
+            </iframe>
+            <ng-template #receptionMapPlaceholder>
+              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            </ng-template>
           </div>
           <a *ngIf="getReceptionMapLink() as mapsLink" class="ruby-two-button ruby-two-button--ghost" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
             Lihat Lokasi
@@ -112,18 +149,23 @@
         </div>
       </section>
 
-      <section class="ruby-two-section ruby-two-section--story" *ngIf="isStoryVisible()">
-        <p class="ruby-two-section__eyebrow">Our Journey</p>
-        <h2 class="ruby-two-title">Cerita Cinta</h2>
-        <div class="ruby-two-story-list">
-          <article class="ruby-two-story-item" *ngFor="let item of getLoveStoryItems(); trackBy: getStoryTrackBy">
-            <span class="ruby-two-story-item__dot"></span>
-            <div class="ruby-two-story-item__content">
-              <small>{{ item.date }}</small>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.description }}</p>
+      <section class="ruby-two-section ruby-two-section--journey">
+        <div class="ruby-two-section-heading">
+          <p>OUR JOURNEY</p>
+          <h2>Cerita Cinta</h2>
+          <span></span>
+        </div>
+
+        <div class="ruby-two-journey-timeline">
+          <div class="ruby-two-journey-item" *ngFor="let story of getLoveStories(); trackBy: getStoryTrackBy">
+            <span class="ruby-two-journey-dot"></span>
+
+            <div class="ruby-two-journey-content">
+              <p class="ruby-two-journey-year">{{ story.year }}</p>
+              <h3>{{ story.title }}</h3>
+              <p>{{ story.description }}</p>
             </div>
-          </article>
+          </div>
         </div>
       </section>
 
@@ -133,7 +175,7 @@
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
           <article class="ruby-two-gallery-featured">
-            <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+            <img [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)">
             <div class="ruby-two-gallery-featured__play" *ngIf="featured.url_video">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
@@ -141,7 +183,7 @@
 
           <div class="ruby-two-gallery-grid">
             <article class="ruby-two-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+              <img [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)">
             </article>
           </div>
         </ng-container>
@@ -192,29 +234,42 @@
       <section class="ruby-two-section ruby-two-section--gift" *ngIf="isGiftVisible()">
         <p class="ruby-two-section__eyebrow">Wedding Gift</p>
         <h2 class="ruby-two-title">Tanda Kasih</h2>
+        <p class="ruby-two-gift-description">{{ getWeddingGiftIntro() }}</p>
 
         <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
           <article class="ruby-two-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
             <div class="ruby-two-bank-card__top">
-              <span>{{ bank.nama_bank || 'Bank' }}</span>
-              <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
+              <span class="ruby-two-bank-icon" aria-hidden="true"><i class="fas fa-gift"></i></span>
+              <small>{{ bank.nama_bank || bank.bank?.name || bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
             </div>
             <strong>{{ bank.nomor_rekening }}</strong>
             <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
             <button class="ruby-two-button ruby-two-button--ghost" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
-              Salin Rekening
+              Salin No. Rekening
             </button>
           </article>
         </ng-container>
 
+        <article class="ruby-two-bank-card ruby-two-gift-address" *ngIf="getGiftAddress() as giftAddress">
+          <div class="ruby-two-bank-card__top">
+            <span class="ruby-two-bank-icon" aria-hidden="true"><i class="fas fa-gift"></i></span>
+            <small>Kirim Kado</small>
+          </div>
+          <strong>Kirim Kado</strong>
+          <p>{{ giftAddress }}</p>
+          <button class="ruby-two-button ruby-two-button--ghost" type="button" (click)="copyGiftAddress()">
+            Salin Alamat
+          </button>
+        </article>
+
         <ng-template #emptyBanks>
           <article class="ruby-two-bank-card">
             <div class="ruby-two-bank-card__top">
-              <span>Bank</span>
+              <span class="ruby-two-bank-icon" aria-hidden="true"><i class="fas fa-gift"></i></span>
               <small>INFO</small>
             </div>
-            <strong>Lokasi menyusul</strong>
-            <p>Informasi rekening akan diperbarui</p>
+            <strong>Data rekening belum tersedia.</strong>
+            <p>Informasi tanda kasih akan diperbarui.</p>
           </article>
         </ng-template>
       </section>
@@ -223,15 +278,21 @@
         <div class="ruby-two-closing__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
         <div class="ruby-two-closing__overlay"></div>
         <div class="ruby-two-closing__content">
-          <p>Terima kasih atas doa dan restu yang diberikan.</p>
+          <p>{{ weddingData?.settings?.salam_bawah || 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.' }}</p>
+          <span class="ruby-two-closing__label">KAMI YANG BERBAHAGIA</span>
           <h2>
             <span>{{ getPrimaryDisplayName() }}</span>
             <em>&amp;</em>
             <span>{{ getSecondaryDisplayName() }}</span>
           </h2>
-          <small>crafted by Sena Digital</small>
+          <time>{{ getClosingDateLabel() }}</time>
+          <small>{{ getPackageLabelText() }}</small>
+          <div class="ruby-two-closing__credit">
+            <span>Crafted with love by</span>
+            <strong>SENA DIGITAL</strong>
+          </div>
         </div>
       </section>
-    </ng-container>
+    </div>
   </article>
 </section>
