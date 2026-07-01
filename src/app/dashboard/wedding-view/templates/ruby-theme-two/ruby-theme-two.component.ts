@@ -83,6 +83,11 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
     return this.getSafeGalleryPhotos();
   }
 
+  /** Public wrapper so the template can call the protected base-class helper. */
+  public getRubyTwoGalleryPhotoUrl(item: any): string {
+    return this.getGalleryPhotoUrl(item);
+  }
+
   // ─── Parents ─────────────────────────────────────────────────────────
 
   getBrideParentLine(): string {

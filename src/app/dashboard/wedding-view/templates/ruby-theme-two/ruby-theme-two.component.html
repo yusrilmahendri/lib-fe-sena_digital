@@ -133,7 +133,7 @@
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
           <article class="ruby-two-gallery-featured">
-            <img [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)">
+            <img [src]="getRubyTwoGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)">
             <div class="ruby-two-gallery-featured__play" *ngIf="featured.url_video">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
@@ -141,7 +141,7 @@
 
           <div class="ruby-two-gallery-grid">
             <article class="ruby-two-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)">
+              <img [src]="getRubyTwoGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)">
             </article>
           </div>
         </ng-container>
