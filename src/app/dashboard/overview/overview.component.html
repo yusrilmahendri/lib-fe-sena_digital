@@ -15,6 +15,9 @@
       <small *ngIf="errorMessage && !publicWeddingUrl" class="text-danger mt-2 d-block">
         {{ errorMessage }}
       </small>
+      <small class="debug-url">
+        {{ publicWeddingUrl || 'NO_DOMAIN_URL' }}
+      </small>
     </div>
     <div class="row g-3 mb-4">
       <div class="col-12 col-sm-6 col-md-3" *ngFor="let card of dashboardCards">

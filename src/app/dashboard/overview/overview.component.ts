@@ -114,13 +114,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe(
       (res) => {
-        const profile = res?.data || res;
+        this.updatePublicWeddingUrlFromProfileResponse(res);
+        const profile = this.extractProfilePayload(res);
         this.userData = profile;
         this.profile = profile;
         this.profileData = profile;
         this.userProfile = profile;
         console.log('User profile data:', this.userData);
-        this.updatePublicWeddingUrl(profile);
 
         if (this.userData && this.userData.id) {
           // Load dashboard data after getting user profile
@@ -137,7 +137,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
               }
               if (!this.publicWeddingUrl && this.weddingDataFromIndex?.settings?.domain) {
-                this.updatePublicWeddingUrl(this.weddingDataFromIndex);
+                this.updatePublicWeddingUrlFromProfileResponse(this.weddingDataFromIndex);
               }
             },
             (error) => {
@@ -581,28 +581,55 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.toastService.showToast(message, 'info');
   }
 
+  private extractProfilePayload(response: any): any {
+    return response?.data || response?.body?.data || response?.result?.data || response;
+  }
+
   private resolveDomainFromProfile(profile: any): string {
-    return (
+    const rawDomain =
       profile?.domain_info?.domain ||
       profile?.data?.domain_info?.domain ||
       profile?.domain ||
       profile?.data?.domain ||
       profile?.settings?.domain ||
       profile?.data?.settings?.domain ||
-      ''
-    );
+      '';
+
+    return this.normalizeWeddingDomain(rawDomain);
   }
 
-  private updatePublicWeddingUrl(profile: any): void {
-    const domain = String(this.resolveDomainFromProfile(profile) || '').trim();
+  private normalizeWeddingDomain(value: any): string {
+    if (!value) return '';
 
-    this.publicWeddingUrl = domain
-      ? `/wedding/${encodeURIComponent(domain)}`
-      : '';
+    return String(value)
+      .trim()
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\/wedding\//i, '')
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\//i, '')
+      .replace(/^sena-digital\.com\/wedding\//i, '')
+      .replace(/^sena-digital\.com\//i, '')
+      .replace(/^\/wedding\//i, '')
+      .replace(/^\//, '')
+      .split('?')[0]
+      .split('#')[0];
+  }
+
+  private updatePublicWeddingUrlFromProfileResponse(response: any): void {
+    const profile = this.extractProfilePayload(response);
+    const domain = this.resolveDomainFromProfile(profile);
+
+    if (domain) {
+      this.publicWeddingUrl = `/wedding/${encodeURIComponent(domain)}`;
+      localStorage.setItem('wedding_domain', domain);
+    } else {
+      const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+      this.publicWeddingUrl = storedDomain ? `/wedding/${encodeURIComponent(storedDomain)}` : '';
+    }
 
     console.log('[OverviewProfileDomain]', {
-      rawProfile: profile,
-      domain,
+      rawResponse: response,
+      extractedProfile: profile,
+      resolvedDomain: domain,
+      storedDomain: localStorage.getItem('wedding_domain'),
       publicWeddingUrl: this.publicWeddingUrl
     });
   }
