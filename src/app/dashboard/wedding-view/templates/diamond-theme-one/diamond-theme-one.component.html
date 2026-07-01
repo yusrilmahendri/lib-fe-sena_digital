@@ -46,8 +46,9 @@
 
       <!-- 3. MEMPELAI WANITA -->
       <section class="diamond-person" *ngIf="isCoupleVisible()">
-        <div class="diamond-person__photo">
-          <img [src]="getBridePortrait()" [alt]="getBrideFullName()">
+        <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getBridePortrait()">
+          <img *ngIf="getBridePortrait()" [src]="getBridePortrait()" [alt]="getBrideFullName()" (error)="onImageError($event)">
+          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
         </div>
         <div class="diamond-person__body">
           <p class="diamond-eyebrow">Mempelai Wanita</p>
@@ -58,8 +59,9 @@
 
       <!-- 4. MEMPELAI PRIA -->
       <section class="diamond-person diamond-person--reverse" *ngIf="isCoupleVisible()">
-        <div class="diamond-person__photo">
-          <img [src]="getGroomPortrait()" [alt]="getGroomFullName()">
+        <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getGroomPortrait()">
+          <img *ngIf="getGroomPortrait()" [src]="getGroomPortrait()" [alt]="getGroomFullName()" (error)="onImageError($event)">
+          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
         </div>
         <div class="diamond-person__body">
           <p class="diamond-eyebrow">Mempelai Pria</p>
@@ -228,11 +230,13 @@
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
           <div class="diamond-gallery-grid">
-            <figure class="diamond-gallery-item diamond-gallery-item--wide">
-              <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+            <figure class="diamond-gallery-item diamond-gallery-item--wide gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
+              <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </figure>
-            <figure class="diamond-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+            <figure class="diamond-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </figure>
           </div>
         </ng-container>

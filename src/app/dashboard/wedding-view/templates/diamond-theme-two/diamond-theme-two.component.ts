@@ -4,7 +4,7 @@ import { GalleryItem, WeddingEvent } from '../../../../services/wedding-data.ser
 import { DiamondThemeOneComponent } from '../diamond-theme-one/diamond-theme-one.component';
 
 interface DiamondGardenGalleryItem {
-  photo: string;
+  photoUrl: string;
   alt: string;
 }
 
@@ -46,20 +46,20 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     const items = this.getSafeGalleryPhotos()
       .slice(0, 4)
       .map((item, index) => ({
-        photo: item.photo,
+        photoUrl: this.getGalleryPhotoUrl(item),
         alt: this.getGalleryAlt(item, index),
       }))
-      .filter((item) => !!item.photo);
+      .filter((item) => !!item.photoUrl);
 
     if (items.length) {
       return items;
     }
 
     return [
-      { photo: this.getCoverPhoto(), alt: `${this.getPrimaryDisplayName()} & ${this.getSecondaryDisplayName()}` },
-      { photo: this.getBridePortrait(), alt: this.getBrideFullName() },
-      { photo: this.getGroomPortrait(), alt: this.getGroomFullName() },
-      { photo: this.getCoverPhoto(), alt: 'Momen bahagia mempelai' },
+      { photoUrl: this.getCoverPhoto(), alt: `${this.getPrimaryDisplayName()} & ${this.getSecondaryDisplayName()}` },
+      { photoUrl: this.getBridePortrait(), alt: this.getBrideFullName() },
+      { photoUrl: this.getGroomPortrait(), alt: this.getGroomFullName() },
+      { photoUrl: this.getCoverPhoto(), alt: 'Momen bahagia mempelai' },
     ];
   }
 

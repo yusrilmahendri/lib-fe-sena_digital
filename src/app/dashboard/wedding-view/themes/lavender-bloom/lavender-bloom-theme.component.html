@@ -42,7 +42,10 @@
 
       <ng-container *ngIf="getFirstPerson() as firstPerson">
         <article class="person-card">
-          <img class="person-photo" [src]="firstPerson.photo || getCoverPhoto()" [alt]="getDisplayName(firstPerson, 'Mempelai')">
+          <div class="person-photo gallery-card" [class.is-image-missing]="!getPersonPhotoUrl(firstPerson)">
+            <img *ngIf="getPersonPhotoUrl(firstPerson)" [src]="getPersonPhotoUrl(firstPerson)" [alt]="getDisplayName(firstPerson, 'Mempelai')" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+          </div>
           <h4 class="person-name">{{ getDisplayName(firstPerson, 'Mempelai') }}</h4>
           <p class="person-copy">{{ getParentsText(firstPerson, getPersonGender(firstPerson)) }}</p>
         </article>
@@ -52,7 +55,10 @@
 
       <ng-container *ngIf="getSecondPerson() as secondPerson">
         <article class="person-card">
-          <img class="person-photo" [src]="secondPerson.photo || getCoverPhoto()" [alt]="getDisplayName(secondPerson, 'Mempelai')">
+          <div class="person-photo gallery-card" [class.is-image-missing]="!getPersonPhotoUrl(secondPerson)">
+            <img *ngIf="getPersonPhotoUrl(secondPerson)" [src]="getPersonPhotoUrl(secondPerson)" [alt]="getDisplayName(secondPerson, 'Mempelai')" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+          </div>
           <h4 class="person-name">{{ getDisplayName(secondPerson, 'Mempelai') }}</h4>
           <p class="person-copy">{{ getParentsText(secondPerson, getPersonGender(secondPerson)) }}</p>
         </article>
@@ -121,16 +127,18 @@
       <h3 class="section-title">Galeri Foto</h3>
 
       <ng-container *ngIf="hasGallery(); else emptyGallery">
-        <div class="gallery-featured" *ngIf="getFeaturedGalleryItem() as featured">
-          <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+        <div class="gallery-featured gallery-card" *ngIf="getFeaturedGalleryItem() as featured" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
+          <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           <div class="gallery-play" *ngIf="featured.url_video">
             <i class="fas fa-play"></i>
           </div>
         </div>
 
         <div class="gallery-grid">
-          <div class="gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-            <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+          <div class="gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             <div class="gallery-play gallery-play--small" *ngIf="item.url_video">
               <i class="fas fa-play"></i>
             </div>

@@ -6,10 +6,10 @@
       </p>
       <a
         class="btn btn-outline-pink"
-        [href]="publicWebsiteUrl || null"
-        target="_blank"
-        rel="noopener noreferrer"
-        (click)="onViewWebsite($event)">
+        [href]="getPublicWeddingUrl() || null"
+        [class.disabled]="!getPublicWeddingUrl()"
+        [attr.aria-disabled]="!getPublicWeddingUrl()"
+        (click)="handleViewWebsiteClick($event)">
         Lihat Website
       </a>
     </div>

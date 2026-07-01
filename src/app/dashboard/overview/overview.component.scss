@@ -44,6 +44,12 @@ body {
   background-color: #f9a8d4;
   color: #d9468f;
 }
+.btn-outline-pink.disabled,
+.btn-outline-pink[aria-disabled="true"] {
+  pointer-events: auto;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .card .icon-small {
   width: 20px;
   height: 20px;

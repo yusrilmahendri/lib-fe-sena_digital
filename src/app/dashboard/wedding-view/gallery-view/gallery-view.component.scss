@@ -37,16 +37,44 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
-  object-fit: cover;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   filter: brightness(1.02) contrast(1.05);
+  overflow: hidden;
+  background: #f5f2f0;
 }
 
 .img-1:hover, .img-2:hover, .img-3:hover, .img-4:hover {
   transform: scale(1.03) translateY(-4px);
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
   filter: brightness(1.08) contrast(1.1);
+}
+
+.gallery-card img,
+.gallery-card .image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.gallery-card .image-placeholder {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 180px;
+  padding: 18px;
+  background: #f6f1ee;
+  color: #8d7e77;
+  font-family: Arial, sans-serif;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.gallery-card.is-image-missing .image-placeholder {
+  display: flex;
 }
 
 /* Desktop Layout (1200px and up) */

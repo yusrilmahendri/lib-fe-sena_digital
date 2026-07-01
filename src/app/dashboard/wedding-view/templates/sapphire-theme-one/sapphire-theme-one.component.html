@@ -50,9 +50,9 @@
         <h2 class="sapphire-title">Kedua Mempelai</h2>
 
         <article class="sapphire-person">
-          <div class="sapphire-person__frame">
-            <img [src]="getGroomPhoto()" [alt]="getGroomFullName()" *ngIf="getGroomPhoto(); else groomPlaceholder">
-            <ng-template #groomPlaceholder><div class="sapphire-person__placeholder"><i class="fas fa-user"></i></div></ng-template>
+          <div class="sapphire-person__frame gallery-card" [class.is-image-missing]="!getGroomPhoto()">
+            <img [src]="getGroomPhoto()" [alt]="getGroomFullName()" *ngIf="getGroomPhoto()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getGroomFullName() }}</h3>
           <p>{{ getGroomParentLine() }}</p>
@@ -61,9 +61,9 @@
         <div class="sapphire-separator"><span>&amp;</span></div>
 
         <article class="sapphire-person">
-          <div class="sapphire-person__frame">
-            <img [src]="getBridePhoto()" [alt]="getBrideFullName()" *ngIf="getBridePhoto(); else bridePlaceholder">
-            <ng-template #bridePlaceholder><div class="sapphire-person__placeholder"><i class="fas fa-user"></i></div></ng-template>
+          <div class="sapphire-person__frame gallery-card" [class.is-image-missing]="!getBridePhoto()">
+            <img [src]="getBridePhoto()" [alt]="getBrideFullName()" *ngIf="getBridePhoto()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getBrideFullName() }}</h3>
           <p>{{ getBrideParentLine() }}</p>
@@ -77,11 +77,13 @@
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
           <div class="sapphire-gallery-grid">
-            <figure class="sapphire-gallery-item sapphire-gallery-item--wide">
-              <img [src]="featured.photo" [alt]="getGalleryAlt(featured, 0)">
+            <figure class="sapphire-gallery-item sapphire-gallery-item--wide gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
+              <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </figure>
-            <figure class="sapphire-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="item.photo" [alt]="getGalleryAlt(item, i + 1)">
+            <figure class="sapphire-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </figure>
           </div>
         </ng-container>

@@ -162,23 +162,27 @@
                   {{ (currentPage - 1) * pageSize + i + 1 }}
                 </td>
                 <td class="text-center">
-                  <div class="preview-container">
-                    <img *ngIf="item.photo_url" [src]="item.photo_url" class="preview-image" [alt]="'Foto ' + (i + 1)"
-                      (click)="onPreviewGallery(item)">
-                    <div *ngIf="!item.photo_url && item.url_video" class="video-preview"
+                  <div class="preview-container gallery-card">
+                    <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" class="preview-image" [alt]="'Foto ' + (i + 1)"
+                      (click)="onPreviewGallery(item)" (error)="onImageError($event)">
+                    <div class="image-placeholder">
+                      <i class="fas fa-image text-muted"></i>
+                      <span>Foto belum tersedia</span>
+                    </div>
+                    <div *ngIf="!getGalleryPhotoUrl(item) && item.url_video" class="video-preview"
                       (click)="onPreviewGallery(item)">
                       <i class="fab fa-youtube text-danger"></i>
                     </div>
-                    <div *ngIf="!item.photo_url && !item.url_video" class="no-preview">
+                    <div *ngIf="!getGalleryPhotoUrl(item) && !item.url_video" class="no-preview">
                       <i class="fas fa-image text-muted"></i>
                     </div>
                   </div>
                 </td>
                 <td>
-                  <span *ngIf="item.photo_url" class="text-truncate d-inline-block" style="max-width: 200px;">
+                  <span *ngIf="getGalleryPhotoUrl(item)" class="text-truncate d-inline-block" style="max-width: 200px;">
                     {{ item.photo_name || 'Foto ' + (i + 1) }}
                   </span>
-                  <span *ngIf="!item.photo_url" class="text-muted">
+                  <span *ngIf="!getGalleryPhotoUrl(item)" class="text-muted">
                     <i class="fas fa-minus"></i>
                   </span>
                 </td>

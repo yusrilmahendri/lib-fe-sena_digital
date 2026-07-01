@@ -18,6 +18,7 @@ import {
   ThemeRenderKey,
   ThemeSlug,
 } from '../../theme-render.registry';
+import { environment } from '../../../environments/environment';
 
 // Attendance interface for type safety
 interface AttendanceRequest {
@@ -668,7 +669,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * @returns string - Wedding URL with domain
    */
   getWeddingUrl(): string {
-    const baseUrl = window.location.origin;
+    const baseUrl = globalThis.location?.origin || '';
     return this.domain ? `${baseUrl}/wedding/${this.domain}` : `${baseUrl}/wedding`;
   }
 
@@ -677,7 +678,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * @returns string - Cover photo URL or default
    */
   getCoverPhotoUrl(): string {
-    return this.weddingData?.mempelai?.cover_photo || 'assets/default-cover.jpg';
+    return this.normalizeMediaUrl(
+      (this.weddingData as any)?.cover_photo_url ||
+      (this.weddingData as any)?.mempelai?.cover_photo_url ||
+      this.weddingData?.mempelai?.cover_photo ||
+      (this.weddingData as any)?.cover_photo
+    ) || 'assets/default-cover.jpg';
   }
 
   /**
@@ -685,7 +691,14 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * @returns string - Groom photo URL or default
    */
   getGroomPhotoUrl(): string {
-    return this.weddingData?.mempelai?.pria?.photo || 'assets/default-groom.jpg';
+    return this.normalizeMediaUrl(
+      (this.weddingData as any)?.photo_pria_url ||
+      (this.weddingData as any)?.mempelai?.photo_pria_url ||
+      (this.weddingData as any)?.mempelai?.pria?.photo_url ||
+      (this.weddingData as any)?.photo_pria ||
+      (this.weddingData as any)?.mempelai?.photo_pria ||
+      this.weddingData?.mempelai?.pria?.photo
+    ) || 'assets/default-groom.jpg';
   }
 
   /**
@@ -693,7 +706,87 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * @returns string - Bride photo URL or default
    */
   getBridePhotoUrl(): string {
-    return this.weddingData?.mempelai?.wanita?.photo || 'assets/default-bride.jpg';
+    return this.normalizeMediaUrl(
+      (this.weddingData as any)?.photo_wanita_url ||
+      (this.weddingData as any)?.mempelai?.photo_wanita_url ||
+      (this.weddingData as any)?.mempelai?.wanita?.photo_url ||
+      (this.weddingData as any)?.photo_wanita ||
+      (this.weddingData as any)?.mempelai?.photo_wanita ||
+      this.weddingData?.mempelai?.wanita?.photo
+    ) || 'assets/default-bride.jpg';
+  }
+
+  private getApiOrigin(): string {
+    const env = environment as any;
+    const apiUrl =
+      env.apiUrl ||
+      env.baseUrl ||
+      'https://cloud-api.sena-digital.com';
+
+    return String(apiUrl)
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+  }
+
+  normalizeMediaUrl(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const raw = String(value).trim();
+
+    if (!raw || raw === 'null' || raw === 'undefined') {
+      return '';
+    }
+
+    if (raw.startsWith('data:')) {
+      return raw;
+    }
+
+    const origin = this.getApiOrigin();
+
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const url = new URL(raw);
+        if (url.pathname.startsWith('/api/photos/')) {
+          const filename = url.pathname.replace('/api/photos/', '').replace(/^\/+/, '');
+          return `${origin}/storage/${filename}`;
+        }
+
+        if (url.hostname === 'sena-digital.com' && url.pathname.startsWith('/storage/')) {
+          return `${origin}${url.pathname}`;
+        }
+      } catch {
+        return raw;
+      }
+
+      return raw;
+    }
+
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
+    }
+
+    if (raw.startsWith('/api/photos/')) {
+      const filename = raw.replace('/api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('api/photos/')) {
+      const filename = raw.replace('api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+
+    return `${origin}/storage/${raw}`;
   }
 
   /**

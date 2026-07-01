@@ -158,7 +158,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   override getCoverPhoto(): string {
     const coverPhoto = this.getSafeImageUrl([
+      (this.weddingData as any)?.cover_photo_url,
+      (this.weddingData as any)?.mempelai?.cover_photo_url,
       this.weddingData?.mempelai?.cover_photo,
+      (this.weddingData as any)?.cover_photo,
     ], '');
     console.log('[RubyCoverPhoto]', coverPhoto);
     return coverPhoto;
@@ -166,20 +169,30 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   getBridePhoto(): string {
     return this.getSafeImageUrl([
+      (this.weddingData as any)?.photo_wanita_url,
+      (this.weddingData as any)?.mempelai?.photo_wanita_url,
+      (this.weddingData as any)?.mempelai?.wanita?.photo_url,
+      (this.weddingData as any)?.photo_wanita,
+      (this.weddingData as any)?.mempelai?.photo_wanita,
       this.getBride()?.photo,
     ], '');
   }
 
   getGroomPhoto(): string {
     return this.getSafeImageUrl([
+      (this.weddingData as any)?.photo_pria_url,
+      (this.weddingData as any)?.mempelai?.photo_pria_url,
+      (this.weddingData as any)?.mempelai?.pria?.photo_url,
+      (this.weddingData as any)?.photo_pria,
+      (this.weddingData as any)?.mempelai?.photo_pria,
       this.getGroom()?.photo,
     ], '');
   }
 
   getSafeGalleryPhotos(): GalleryItem[] {
     const photos = this.getGalleryItems().filter((item) => {
-      const photo = item?.photo;
-      return !!photo && !this.isUnsafeThemeImage(photo);
+      const photoUrl = this.getGalleryPhotoUrl(item);
+      return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
     console.log('[RubyGalleryPhotos]', photos);
     return photos;
@@ -191,7 +204,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   get galleryPhotos(): GalleryItem[] {
     const photos = ((this as any)?.data?.gallery || this.weddingData?.gallery || []) as GalleryItem[];
-    return photos.filter((item) => !this.isUnsafeThemeImage(item?.photo) && !!this.getGalleryPhotoUrl(item));
+    return photos.filter((item) => {
+      const photoUrl = this.getGalleryPhotoUrl(item);
+      return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
+    });
   }
 
   get mainGalleryPhoto(): GalleryItem | null {
@@ -224,29 +240,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return !!(item && item.url_video && item.url_video.toString().trim());
   }
 
-  getGalleryPhotoUrl(item: any): string {
-    if (!item) {
-      return '';
-    }
+  override getGalleryPhotoUrl(item: any): string {
+    const resolved = this.normalizeMediaUrl(
+      item?.photo_url ||
+      item?.image_url ||
+      item?.preview_url ||
+      item?.url ||
+      item?.file_url ||
+      item?.path_url ||
+      item?.image ||
+      item?.photo ||
+      item?.file_path ||
+      item?.path ||
+      item?.foto ||
+      item
+    );
 
-    const directUrl = item.photo_url || item.url_photo;
-    if (directUrl) {
-      return directUrl;
-    }
+    console.log('[ImageUrlDebug]', {
+      raw: item,
+      resolved
+    });
 
-    const photo = String(item.photo || '').trim();
-    if (!photo) {
-      return '';
-    }
-
-    if (photo.startsWith('http://') || photo.startsWith('https://')) {
-      return photo;
-    }
-
-    const cleanPhoto = photo.replace(/^\/+/, '');
-    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
-
-    return `${apiBaseUrl}/storage/${cleanPhoto}`;
+    return resolved;
   }
 
   openGalleryVideo(item: any): void {
@@ -258,8 +273,13 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   onGalleryImageError(event: Event): void {
+    this.onImageError(event);
+  }
+
+  override onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
+    img.closest('.gallery-card')?.classList.add('is-image-missing');
   }
 
   getOpeningHeading(): string {
@@ -534,34 +554,91 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   private getSafeImageUrl(candidates: Array<string | null | undefined>, fallback: string): string {
     for (const candidate of candidates) {
       if (!this.isUnsafeThemeImage(candidate)) {
-        return this.resolveMediaUrl(candidate);
+        return this.normalizeMediaUrl(candidate);
       }
     }
     return fallback;
   }
 
-  private resolveMediaUrl(value: string | null | undefined): string {
-    const rawValue = String(value || '').trim();
-    if (!rawValue) {
+  private getApiOrigin(): string {
+    const env = environment as any;
+    const apiUrl =
+      env.apiUrl ||
+      env.baseUrl ||
+      'https://cloud-api.sena-digital.com';
+
+    return String(apiUrl)
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+  }
+
+  override normalizeMediaUrl(value: any): string {
+    if (!value) {
       return '';
     }
 
-    if (/^(https?:)?\/\//i.test(rawValue) || rawValue.startsWith('data:')) {
-      return rawValue;
+    const raw = String(value).trim();
+
+    if (!raw || raw === 'null' || raw === 'undefined') {
+      return '';
     }
 
-    const cleanValue = rawValue.replace(/^\/+/, '');
-    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
-
-    if (!apiBaseUrl) {
-      return `/${cleanValue}`;
+    if (raw.startsWith('data:')) {
+      return raw;
     }
 
-    return `${apiBaseUrl}/${cleanValue}`;
+    const origin = this.getApiOrigin();
+
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const url = new URL(raw);
+        if (url.pathname.startsWith('/api/photos/')) {
+          const filename = url.pathname.replace('/api/photos/', '').replace(/^\/+/, '');
+          return `${origin}/storage/${filename}`;
+        }
+
+        if (url.hostname === 'sena-digital.com' && url.pathname.startsWith('/storage/')) {
+          return `${origin}${url.pathname}`;
+        }
+      } catch {
+        return raw;
+      }
+
+      return raw;
+    }
+
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
+    }
+
+    if (raw.startsWith('/api/photos/')) {
+      const filename = raw.replace('/api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('api/photos/')) {
+      const filename = raw.replace('api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+
+    return `${origin}/storage/${raw}`;
   }
 
   private isUnsafeThemeImage(url: any): boolean {
     const value = String(url || '').toLowerCase().trim();
+    if (/storage|gallery|uploads|photo_pria|photo_wanita|cover_photo/i.test(value)) {
+      return false;
+    }
+
     return !value ||
       value.includes('dashboard') ||
       value.includes('website/tampilan') ||

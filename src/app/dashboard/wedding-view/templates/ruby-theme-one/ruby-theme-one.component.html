@@ -85,7 +85,10 @@
 
           <div class="ruby-couple-card ruby-couple-card--bride">
             <ng-container *ngIf="getBridePhoto() as bridePhoto; else bridePlaceholder">
-              <img class="ruby-couple-photo" [src]="bridePhoto" [alt]="getBrideName()">
+              <div class="ruby-couple-photo gallery-card">
+                <img [src]="bridePhoto" [alt]="getBrideName()" (error)="onImageError($event)">
+                <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+              </div>
             </ng-container>
             <ng-template #bridePlaceholder>
               <div class="ruby-couple-photo ruby-couple-photo--placeholder" aria-hidden="true">
@@ -101,7 +104,10 @@
 
           <div class="ruby-couple-card ruby-couple-card--groom">
             <ng-container *ngIf="getGroomPhoto() as groomPhoto; else groomPlaceholder">
-              <img class="ruby-couple-photo" [src]="groomPhoto" [alt]="getGroomName()">
+              <div class="ruby-couple-photo gallery-card">
+                <img [src]="groomPhoto" [alt]="getGroomName()" (error)="onImageError($event)">
+                <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+              </div>
             </ng-container>
             <ng-template #groomPlaceholder>
               <div class="ruby-couple-photo ruby-couple-photo--placeholder" aria-hidden="true">
@@ -215,16 +221,19 @@
           <div class="ruby-gallery-line"></div>
 
           <button
-            class="ruby-gallery-feature"
+            class="ruby-gallery-feature gallery-card"
             type="button"
             [class.ruby-gallery-feature--video]="hasVideo(mainGalleryPhoto)"
+            [class.is-image-missing]="!getGalleryPhotoUrl(mainGalleryPhoto)"
             (click)="openGalleryVideo(mainGalleryPhoto)"
           >
             <img
+              *ngIf="getGalleryPhotoUrl(mainGalleryPhoto)"
               [src]="getGalleryPhotoUrl(mainGalleryPhoto)"
               [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
               (error)="onGalleryImageError($event)"
             />
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
 
             <span class="ruby-gallery-play" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true">
               ▶
@@ -238,29 +247,35 @@
           >
             <div class="ruby-gallery-track">
               <button
-                class="ruby-gallery-thumb"
+                class="ruby-gallery-thumb gallery-card"
                 type="button"
                 *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+                [class.is-image-missing]="!getGalleryPhotoUrl(item)"
               >
                 <img
+                  *ngIf="getGalleryPhotoUrl(item)"
                   [src]="getGalleryPhotoUrl(item)"
                   [alt]="item.nama_foto || 'Galeri foto'"
                   (error)="onGalleryImageError($event)"
                 />
+                <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
               </button>
 
               <ng-container *ngIf="galleryThumbs.length > 2">
                 <button
-                  class="ruby-gallery-thumb"
+                  class="ruby-gallery-thumb gallery-card"
                   type="button"
                   *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+                  [class.is-image-missing]="!getGalleryPhotoUrl(item)"
                   aria-hidden="true"
                 >
                   <img
+                    *ngIf="getGalleryPhotoUrl(item)"
                     [src]="getGalleryPhotoUrl(item)"
                     alt=""
                     (error)="onGalleryImageError($event)"
                   />
+                  <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
                 </button>
               </ng-container>
             </div>

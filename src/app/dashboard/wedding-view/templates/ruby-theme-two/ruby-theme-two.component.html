@@ -67,8 +67,9 @@
         <h2 class="ruby-two-title">Kedua Mempelai</h2>
 
         <article class="ruby-two-person-card">
-          <div class="ruby-two-person-card__frame">
-            <img [src]="getBridePhoto()" [alt]="getBrideName()">
+          <div class="ruby-two-person-card__frame gallery-card" [class.is-image-missing]="!getBridePhoto()">
+            <img *ngIf="getBridePhoto()" [src]="getBridePhoto()" [alt]="getBrideName()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getBrideName() }}</h3>
           <p>{{ getBrideParentLine() }}</p>
@@ -78,8 +79,9 @@
         <div class="ruby-two-separator">&amp;</div>
 
         <article class="ruby-two-person-card">
-          <div class="ruby-two-person-card__frame">
-            <img [src]="getGroomPhoto()" [alt]="getGroomName()">
+          <div class="ruby-two-person-card__frame gallery-card" [class.is-image-missing]="!getGroomPhoto()">
+            <img *ngIf="getGroomPhoto()" [src]="getGroomPhoto()" [alt]="getGroomName()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getGroomName() }}</h3>
           <p>{{ getGroomParentLine() }}</p>
@@ -174,16 +176,18 @@
         <h2 class="ruby-two-title">Galeri Foto</h2>
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
-          <article class="ruby-two-gallery-featured">
-            <img [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)">
+          <article class="ruby-two-gallery-featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
+            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             <div class="ruby-two-gallery-featured__play" *ngIf="featured.url_video">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
           </article>
 
           <div class="ruby-two-gallery-grid">
-            <article class="ruby-two-gallery-item" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index">
-              <img [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)">
+            <article class="ruby-two-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </article>
           </div>
         </ng-container>

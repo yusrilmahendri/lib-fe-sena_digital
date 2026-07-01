@@ -55,8 +55,9 @@
         <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Kedua Mempelai</h2>
 
         <article class="diamond-garden-polaroid">
-          <div class="diamond-garden-polaroid__frame">
-            <img [src]="getBridePortrait()" [alt]="getBrideFullName()">
+          <div class="diamond-garden-polaroid__frame gallery-card" [class.is-image-missing]="!getBridePortrait()">
+            <img *ngIf="getBridePortrait()" [src]="getBridePortrait()" [alt]="getBrideFullName()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getBrideFullName() }}</h3>
           <p>{{ getBrideParentLine() }}</p>
@@ -70,8 +71,9 @@
         </div>
 
         <article class="diamond-garden-polaroid diamond-garden-polaroid--alt">
-          <div class="diamond-garden-polaroid__frame">
-            <img [src]="getGroomPortrait()" [alt]="getGroomFullName()">
+          <div class="diamond-garden-polaroid__frame gallery-card" [class.is-image-missing]="!getGroomPortrait()">
+            <img *ngIf="getGroomPortrait()" [src]="getGroomPortrait()" [alt]="getGroomFullName()" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </div>
           <h3>{{ getGroomFullName() }}</h3>
           <p>{{ getGroomParentLine() }}</p>
@@ -130,8 +132,9 @@
         </div>
 
         <div class="diamond-garden-gallery">
-          <figure class="diamond-garden-gallery__item" *ngFor="let item of getMomentGalleryItems()">
-            <img [src]="item.photo" [alt]="item.alt">
+          <figure class="diamond-garden-gallery__item gallery-card" *ngFor="let item of getMomentGalleryItems()" [class.is-image-missing]="!item.photoUrl">
+            <img *ngIf="item.photoUrl" [src]="item.photoUrl" [alt]="item.alt" (error)="onImageError($event)">
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
           </figure>
         </div>
       </section>

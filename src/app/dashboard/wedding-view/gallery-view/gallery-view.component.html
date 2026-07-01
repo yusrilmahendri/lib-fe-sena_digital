@@ -1,12 +1,23 @@
 <div class="gallery-container">
   <div class="container-custom" *ngIf="hasImages(); else noGalleryTemplate">
-    <img
+    <div
       *ngFor="let item of getGalleryImages(); let i = index; trackBy: trackByGalleryId"
-      [src]="getImageUrl(item)"
-      [alt]="getImageAlt(item, i)"
-      [class]="'img-' + (i + 1)"
-      loading="lazy"
-    />
+      class="gallery-card"
+      [class.is-image-missing]="!getImageUrl(item)"
+      [ngClass]="'img-' + (i + 1)"
+    >
+      <img
+        *ngIf="getImageUrl(item)"
+        [src]="getImageUrl(item)"
+        [alt]="getImageAlt(item, i)"
+        loading="lazy"
+        (error)="onImageError($event)"
+      />
+      <div class="image-placeholder">
+        <i class="fas fa-image" aria-hidden="true"></i>
+        <span>Foto belum tersedia</span>
+      </div>
+    </div>
   </div>
 
   <ng-template #noGalleryTemplate>

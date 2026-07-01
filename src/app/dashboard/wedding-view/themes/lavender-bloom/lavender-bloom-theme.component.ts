@@ -8,6 +8,7 @@ import {
   WeddingQuote,
   WeddingStory,
 } from '../../../../services/wedding-data.service';
+import { environment } from '../../../../../environments/environment';
 
 type FilterKey =
   | 'halaman_sampul'
@@ -90,10 +91,20 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
   }
 
   getCoverPhoto(): string {
-    return this.weddingData?.mempelai?.cover_photo
-      || this.getBride()?.photo
-      || this.getGroom()?.photo
-      || 'assets/landing/template-1.png';
+    return this.normalizeMediaUrl(
+      (this.weddingData as any)?.cover_photo_url ||
+      (this.weddingData as any)?.mempelai?.cover_photo_url ||
+      this.weddingData?.mempelai?.cover_photo ||
+      (this.weddingData as any)?.cover_photo ||
+      (this.weddingData as any)?.photo_pria_url ||
+      (this.weddingData as any)?.mempelai?.photo_pria_url ||
+      (this.weddingData as any)?.mempelai?.pria?.photo_url ||
+      this.getGroom()?.photo ||
+      (this.weddingData as any)?.photo_wanita_url ||
+      (this.weddingData as any)?.mempelai?.photo_wanita_url ||
+      (this.weddingData as any)?.mempelai?.wanita?.photo_url ||
+      this.getBride()?.photo
+    ) || 'assets/landing/template-1.png';
   }
 
   getOpeningDate(): string {
@@ -306,6 +317,55 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     return item.nama_foto || `Galeri ${index + 1}`;
   }
 
+  getPersonPhotoUrl(person: MempelaiPerson | null): string {
+    const gender = this.getPersonGender(person);
+    return this.normalizeMediaUrl(
+      gender === 'pria'
+        ? ((this.weddingData as any)?.photo_pria_url ||
+          (this.weddingData as any)?.mempelai?.photo_pria_url ||
+          (this.weddingData as any)?.mempelai?.pria?.photo_url ||
+          (this.weddingData as any)?.photo_pria ||
+          (this.weddingData as any)?.mempelai?.photo_pria ||
+          person?.photo)
+        : ((this.weddingData as any)?.photo_wanita_url ||
+          (this.weddingData as any)?.mempelai?.photo_wanita_url ||
+          (this.weddingData as any)?.mempelai?.wanita?.photo_url ||
+          (this.weddingData as any)?.photo_wanita ||
+          (this.weddingData as any)?.mempelai?.photo_wanita ||
+          person?.photo)
+    );
+  }
+
+  getGalleryPhotoUrl(item: any): string {
+    const resolved = this.normalizeMediaUrl(
+      item?.photo_url ||
+      item?.image_url ||
+      item?.preview_url ||
+      item?.url ||
+      item?.file_url ||
+      item?.path_url ||
+      item?.photo ||
+      item?.image ||
+      item?.file_path ||
+      item?.path ||
+      item?.foto ||
+      item
+    );
+
+    console.log('[ImageUrlDebug]', {
+      raw: item,
+      resolved
+    });
+
+    return resolved;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    img.closest('.gallery-card')?.classList.add('is-image-missing');
+  }
+
   getGuestWishDate(dateValue: string): string {
     return this.formatDate(dateValue, 'long');
   }
@@ -332,6 +392,79 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
 
   private getNickname(person: MempelaiPerson | null, fallback: string): string {
     return person?.nama_panggilan || person?.nama_lengkap || fallback;
+  }
+
+  private getLavenderApiOrigin(): string {
+    const env = environment as any;
+    const apiUrl =
+      env.apiUrl ||
+      env.baseUrl ||
+      'https://cloud-api.sena-digital.com';
+
+    return String(apiUrl)
+      .replace(/\/api\/v1\/?$/, '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+  }
+
+  normalizeMediaUrl(value: any): string {
+    if (!value) {
+      return '';
+    }
+
+    const raw = String(value).trim();
+
+    if (!raw || raw === 'null' || raw === 'undefined') {
+      return '';
+    }
+
+    if (raw.startsWith('data:')) {
+      return raw;
+    }
+
+    const origin = this.getLavenderApiOrigin();
+
+    if (/^https?:\/\//i.test(raw)) {
+      try {
+        const url = new URL(raw);
+        if (url.pathname.startsWith('/api/photos/')) {
+          const filename = url.pathname.replace('/api/photos/', '').replace(/^\/+/, '');
+          return `${origin}/storage/${filename}`;
+        }
+
+        if (url.hostname === 'sena-digital.com' && url.pathname.startsWith('/storage/')) {
+          return `${origin}${url.pathname}`;
+        }
+      } catch {
+        return raw;
+      }
+
+      return raw;
+    }
+
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
+    }
+
+    if (raw.startsWith('/api/photos/')) {
+      const filename = raw.replace('/api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('api/photos/')) {
+      const filename = raw.replace('api/photos/', '').replace(/^\/+/, '');
+      return `${origin}/storage/${filename}`;
+    }
+
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+
+    return `${origin}/storage/${raw}`;
   }
 
   private isFilterVisible(key: FilterKey): boolean {

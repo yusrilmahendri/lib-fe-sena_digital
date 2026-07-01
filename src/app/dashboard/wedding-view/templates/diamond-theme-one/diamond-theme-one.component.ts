@@ -30,11 +30,11 @@ export class DiamondThemeOneComponent extends RubyThemeTwoComponent {
   }
 
   getGroomPortrait(): string {
-    return this.getGroom()?.photo || this.getCoverPhoto();
+    return this.getGroomPhoto() || this.getCoverPhoto();
   }
 
   getBridePortrait(): string {
-    return this.getBride()?.photo || this.getCoverPhoto();
+    return this.getBridePhoto() || this.getCoverPhoto();
   }
 
   getInvitingFamilies(): string[] {
