@@ -80,7 +80,7 @@
 
   <!-- Navigation Buttons -->
   <div class="rp-button-group">
-    <button type="button" class="rp-btn rp-btn-secondary" (click)="onBack()">
+    <button type="button" class="rp-btn rp-btn-secondary btn-back" (click)="goToPreviousStep()">
       Kembali
     </button>
     <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="!selectedMethod || isStartingPayment">

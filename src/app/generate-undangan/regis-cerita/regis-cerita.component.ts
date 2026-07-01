@@ -150,6 +150,11 @@ export class RegisCeritaComponent implements OnInit {
     this.stories.removeAt(index);
   }
 
+  goToPreviousStep(): void {
+    this.saveFormToLocalStorage();
+    this.prev.emit();
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.notyf.error('Harap isi semua bidang')

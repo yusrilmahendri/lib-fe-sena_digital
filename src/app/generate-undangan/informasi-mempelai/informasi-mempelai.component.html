@@ -141,7 +141,7 @@
 
     <!-- Button Group -->
     <div class="im-button-group">
-      <button type="button" class="im-btn im-btn-secondary" (click)="onBack()" [disabled]="isSubmitting">
+      <button type="button" class="im-btn im-btn-secondary btn-back" (click)="goToPreviousStep()">
         Kembali
       </button>
       <button type="button" class="im-btn im-btn-primary" [disabled]="formGroup.invalid || isSubmitting" (click)="onNextClicked()">

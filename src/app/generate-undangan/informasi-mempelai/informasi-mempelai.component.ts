@@ -125,8 +125,25 @@ export class InformasiMempelaiComponent implements OnInit {
 
 
 
-  onBack() {
+  goToPreviousStep(): void {
+    this.persistCurrentStepData();
     this.prev.emit();
+  }
+
+  private persistCurrentStepData(): void {
+    const existingFormData = JSON.parse(localStorage.getItem('formData') || '{}');
+    const updatedFormData = {
+      ...existingFormData,
+      informasiMempelai: {
+        ...existingFormData.informasiMempelai,
+        updatedData: {
+          ...existingFormData.informasiMempelai?.updatedData,
+          ...this.formGroup.value,
+        },
+      },
+    };
+
+    localStorage.setItem('formData', JSON.stringify(updatedFormData));
   }
 
   onNextClicked() {

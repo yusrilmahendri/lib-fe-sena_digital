@@ -200,8 +200,8 @@ export class RegisPembayaranComponent implements OnInit {
     this.getDetailMethod();
   }
 
-  onBack() {
-    this.prev.emit()
+  goToPreviousStep(): void {
+    this.prev.emit();
   }
 
   onNextClicked() {

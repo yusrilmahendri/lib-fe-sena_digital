@@ -65,6 +65,8 @@ export class GenerateUndanganComponent implements OnInit {
     // Handle Midtrans callback
     this.handleMidtransCallback();
 
+    this.formData.step = this.normalizeStep(this.formData.step);
+
     console.log('all formdata:', this.formData);
   }
 
@@ -82,7 +84,7 @@ export class GenerateUndanganComponent implements OnInit {
       ...this.formData,
       registrasi: data?.formData || this.formData?.registrasi,
     };
-    const step = this.formData.step;
+    const step = this.normalizeStep(this.formData.step);
 
     if (step === 1) {
       this.formData.registrasi = data;
@@ -92,23 +94,44 @@ export class GenerateUndanganComponent implements OnInit {
       this.formData.cerita = data;
     }
 
-    // Naikkan step
     this.formData.step = step + 1;
     this.persistFormData();
   }
 
+  goToPreviousStep(): void {
+    const beforeStep = this.normalizeStep(this.formData.step);
+    console.log('[CreateInvitationBack]', { beforeStep });
 
-  prevStep(): void {
-    if (this.formData.step > 1) {
-      this.formData.step--;
+    if (beforeStep > 1) {
+      this.formData = {
+        ...this.formData,
+        step: beforeStep - 1,
+      };
       this.persistFormData();
-
+      this.scrollToTop();
     }
+
+    console.log('[CreateInvitationBackDone]', {
+      afterStep: this.normalizeStep(this.formData.step),
+    });
+  }
+
+  private normalizeStep(step: unknown): number {
+    const numeric = Number(step);
+    if (!Number.isFinite(numeric) || numeric < 1) {
+      return 1;
+    }
+    return Math.floor(numeric);
+  }
+
+  private scrollToTop(): void {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   /** Persist resumable fields while keeping password only in component state. */
   private persistFormData(): void {
     const persisted = JSON.parse(JSON.stringify(this.formData));
+    persisted.step = this.normalizeStep(persisted.step);
     if (persisted?.registrasi?.password) {
       delete persisted.registrasi.password;
     }

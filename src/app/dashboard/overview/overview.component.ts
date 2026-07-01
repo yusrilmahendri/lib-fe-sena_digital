@@ -10,7 +10,6 @@ import {
 } from 'src/app/dashboard.service';
 import { WeddingDataService } from 'src/app/services/wedding-data.service';
 import { forkJoin, catchError, of } from 'rxjs';
-import { ToastService } from 'src/app/toast.service';
 
 
 Chart.register(...registerables);
@@ -51,7 +50,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   userData: any;
   weddingDataFromIndex: any;
   public publicWeddingUrl = '';
-  errorMessage = '';
+  public domainErrorMessage = '';
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -100,11 +99,11 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private DashBoardSvc: DashboardService,
-    private weddingDataService: WeddingDataService,
-    private toastService: ToastService
+    private weddingDataService: WeddingDataService
   ) { }
 
   ngOnInit(): void {
+    console.log('[OverviewInit]');
     this.initDataProfile();
   }
 
@@ -112,10 +111,10 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.apiError = null;
 
-    this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe(
-      (res) => {
-        this.updatePublicWeddingUrlFromProfileResponse(res);
-        const profile = this.extractProfilePayload(res);
+    this.DashBoardSvc.getProfile().subscribe({
+      next: (response: any) => {
+        this.updatePublicWeddingUrlFromProfileResponse(response);
+        const profile = this.extractProfilePayload(response);
         this.userData = profile;
         this.profile = profile;
         this.profileData = profile;
@@ -123,33 +122,27 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('User profile data:', this.userData);
 
         if (this.userData && this.userData.id) {
-          // Load dashboard data after getting user profile
           this.loadDashboardData();
 
-          // Load wedding data using domain (public profile is keyed by domain, not user_id)
           const domain =
-            this.resolveDomainFromProfile(profile) ||
+            this.resolveDomainFromAnyProfile(response) ||
             this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
 
           if (domain) {
             const params = { domain };
-            this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe(
-              (res) => {
+            this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe({
+              next: (res) => {
                 this.weddingDataFromIndex = res.data;
                 this.settings = res?.data?.settings || this.settings;
                 console.log('Wedding data loaded:', this.weddingDataFromIndex);
                 if (this.weddingDataFromIndex) {
                   this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
                 }
-                if (!this.publicWeddingUrl && this.weddingDataFromIndex?.settings?.domain) {
-                  this.updatePublicWeddingUrlFromProfileResponse(this.weddingDataFromIndex);
-                }
               },
-              (error) => {
+              error: (error) => {
                 console.error('Error fetching wedding data:', error);
-                // Keep the existing publicWeddingUrl (from the profile response) untouched.
-              }
-            );
+              },
+            });
           } else {
             console.warn('No domain available, skipping public wedding profile request');
           }
@@ -158,12 +151,18 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
           this.isLoading = false;
         }
       },
-      (error) => {
-        console.error('Error fetching user profile:', error);
+      error: (error) => {
+        console.error('[OverviewProfileError]', error);
         this.apiError = 'Failed to load user profile';
+
+        const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+        if (storedDomain && !this.publicWeddingUrl) {
+          this.setPublicWeddingUrl(storedDomain);
+        }
+
         this.isLoading = false;
-      }
-    );
+      },
+    });
   }
 
   private loadDashboardData(): void {
@@ -570,15 +569,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   handleViewWebsiteClick(event: Event): void {
     console.log('[ViewWebsiteClick]', {
-      publicWeddingUrl: this.publicWeddingUrl
+      publicWeddingUrl: this.publicWeddingUrl,
     });
 
     if (!this.publicWeddingUrl) {
       event.preventDefault();
       event.stopPropagation();
-      this.errorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
-      this.showError?.(this.errorMessage);
-      return;
+      this.domainErrorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
     }
 
     if (this.weddingDataFromIndex) {
@@ -586,15 +583,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  showError(message: string): void {
-    this.toastService.showToast(message, 'info');
-  }
-
   private extractProfilePayload(response: any): any {
     return response?.data || response?.body?.data || response?.result?.data || response;
   }
 
-  private resolveDomainFromProfile(profile: any): string {
+  private resolveDomainFromAnyProfile(response: any): string {
+    const profile = this.extractProfilePayload(response);
+
     const rawDomain =
       profile?.domain_info?.domain ||
       profile?.data?.domain_info?.domain ||
@@ -602,6 +597,8 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       profile?.data?.domain ||
       profile?.settings?.domain ||
       profile?.data?.settings?.domain ||
+      profile?.invitation?.domain ||
+      profile?.data?.invitation?.domain ||
       '';
 
     return this.normalizeWeddingDomain(rawDomain);
@@ -622,24 +619,41 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       .split('#')[0];
   }
 
-  private updatePublicWeddingUrlFromProfileResponse(response: any): void {
-    const profile = this.extractProfilePayload(response);
-    const domain = this.resolveDomainFromProfile(profile);
+  private setPublicWeddingUrl(domain: string): void {
+    const normalizedDomain = this.normalizeWeddingDomain(domain);
 
-    if (domain) {
-      this.publicWeddingUrl = `/wedding/${encodeURIComponent(domain)}`;
-      localStorage.setItem('wedding_domain', domain);
-    } else {
-      const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
-      this.publicWeddingUrl = storedDomain ? `/wedding/${encodeURIComponent(storedDomain)}` : '';
+    if (!normalizedDomain) {
+      return;
     }
 
-    console.log('[OverviewProfileDomain]', {
-      rawResponse: response,
-      extractedProfile: profile,
-      resolvedDomain: domain,
-      storedDomain: localStorage.getItem('wedding_domain'),
-      publicWeddingUrl: this.publicWeddingUrl
+    this.publicWeddingUrl = `/wedding/${encodeURIComponent(normalizedDomain)}`;
+    this.domainErrorMessage = '';
+    localStorage.setItem('wedding_domain', normalizedDomain);
+
+    console.log('[OverviewPublicWeddingUrlSet]', {
+      domain: normalizedDomain,
+      publicWeddingUrl: this.publicWeddingUrl,
+    });
+  }
+
+  private updatePublicWeddingUrlFromProfileResponse(response: any): void {
+    const domain = this.resolveDomainFromAnyProfile(response);
+
+    if (domain) {
+      this.setPublicWeddingUrl(domain);
+      return;
+    }
+
+    const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+
+    if (storedDomain) {
+      this.setPublicWeddingUrl(storedDomain);
+      return;
+    }
+
+    console.warn('[OverviewDomainMissing]', {
+      response,
+      publicWeddingUrl: this.publicWeddingUrl,
     });
   }
 
