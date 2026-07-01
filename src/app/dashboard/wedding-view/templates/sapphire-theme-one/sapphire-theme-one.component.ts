@@ -220,32 +220,49 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     return this.extractInstagram(this.getGroom());
   }
 
-  getEventDayPart(event: WeddingEvent): string {
-    const date = this.parseEventDate(event);
-    return date ? String(date.getDate()).padStart(2, '0') : this.getWeddingDayPart();
+  getCountdownBackground(): string {
+    const gallery = this.getGalleryPhotos();
+    const second = gallery[1] ? this.getGalleryPhotoUrl(gallery[1]) : '';
+    return second || this.getCoverPhoto();
   }
 
-  getEventMonthLabel(event: WeddingEvent): string {
+  getWishesBackground(): string {
+    const gallery = this.getGalleryPhotos();
+    const third = gallery[2] ? this.getGalleryPhotoUrl(gallery[2]) : '';
+    return third || this.getCoverPhoto();
+  }
+
+  hasGalleryVideo(item: any): boolean {
+    return !!(item?.url_video || item?.video_url || item?.video);
+  }
+
+  getEventWeekday(event: WeddingEvent): string {
     const date = this.parseEventDate(event);
     if (!date) {
-      return 'DESEMBER';
+      return 'Minggu';
     }
-
-    return date
-      .toLocaleDateString('id-ID', { month: 'long' })
-      .toUpperCase();
+    return date.toLocaleDateString('id-ID', { weekday: 'long' });
   }
 
-  getEventYearPart(event: WeddingEvent): string {
+  getEventDayNumber(event: WeddingEvent): string {
     const date = this.parseEventDate(event);
-    return date ? String(date.getFullYear()) : this.getWeddingYearPart();
+    return date ? String(date.getDate()) : '12';
   }
 
-  getGiftAddress(bank?: any): string {
-    if (bank) {
-      return String(bank.alamat_kado || bank.gift_address || bank.alamat || '').trim();
+  getEventMonthYear(event: WeddingEvent): string {
+    const date = this.parseEventDate(event);
+    if (!date) {
+      return 'Desember 2026';
     }
+    const month = date.toLocaleDateString('id-ID', { month: 'long' });
+    return `${month} ${date.getFullYear()}`;
+  }
 
+  getWeddingGiftIntro(): string {
+    return 'Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:';
+  }
+
+  getGiftAddress(): string {
     const data = this.weddingData as any;
     const candidates = [
       data?.alamat_kado,
@@ -263,10 +280,6 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   copyGiftAddress(): void {
     this.copyText(this.getGiftAddress());
-  }
-
-  getWeddingGiftIntro(): string {
-    return 'Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:';
   }
 
   getInvitedNames(): string[] {
@@ -337,22 +350,8 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getMapEmbedUrl(event: any): string {
     const data = event as any;
-    const linkMaps = String(data?.link_maps || '').trim();
-
-    if (linkMaps) {
-      if (linkMaps.includes('output=embed') || linkMaps.includes('/embed')) {
-        return linkMaps;
-      }
-
-      if (linkMaps.includes('google.com/maps')) {
-        const separator = linkMaps.includes('?') ? '&' : '?';
-        return `${linkMaps}${separator}output=embed`;
-      }
-
-      return linkMaps;
-    }
-
     const directEmbed = [
+      data?.link_maps,
       data?.maps_embed,
       data?.map_embed,
       data?.embed_maps,
@@ -461,7 +460,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getGalleryPhotos(): GalleryItem[] {
-    return this.getGalleryItems().filter((item) => !!this.getGalleryPhotoUrl(item));
+    return this.getGalleryItems();
   }
 
   override getFeaturedGalleryItem(): GalleryItem | null {
@@ -524,26 +523,6 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     ].map((value) => String(value || '').trim())
       .filter((value) => !!value && !/menyusul|diumumkan/i.test(value))
       .join(', ');
-  }
-
-  private parseEventDate(event: WeddingEvent): Date | null {
-    const raw = event?.tanggal_acara;
-    if (!raw) {
-      return this.getOpeningDateSource();
-    }
-
-    const date = new Date(raw);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  private extractInstagram(person: any): string | null {
-    const rawValue = person?.instagram || person?.ig || person?.username || '';
-    const normalized = String(rawValue || '').trim();
-    if (!normalized) {
-      return null;
-    }
-
-    return normalized.startsWith('@') ? normalized : `@${normalized}`;
   }
 
   private copyText(value: string): void {
@@ -653,6 +632,26 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
 
     return `${origin}/storage/${raw}`;
+  }
+
+  private parseEventDate(event: WeddingEvent): Date | null {
+    const raw = event?.tanggal_acara;
+    if (!raw) {
+      return this.getOpeningDateSource();
+    }
+
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private extractInstagram(person: any): string | null {
+    const rawValue = person?.instagram || person?.ig || person?.username || '';
+    const normalized = String(rawValue || '').trim();
+    if (!normalized) {
+      return null;
+    }
+
+    return normalized.startsWith('@') ? normalized : `@${normalized}`;
   }
 
   private isRealGuestWish(item: GuestWish): boolean {

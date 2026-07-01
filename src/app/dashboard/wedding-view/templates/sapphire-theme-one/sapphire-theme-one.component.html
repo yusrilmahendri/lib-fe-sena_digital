@@ -41,73 +41,74 @@
 
     <!-- Kedua Mempelai -->
     <section class="sapphire-couple" *ngIf="isCoupleVisible()">
-      <header class="sapphire-section-head">
+      <div class="sapphire-section-head">
         <p class="sapphire-kicker">Mempelai</p>
         <h2 class="sapphire-title">Kedua Mempelai</h2>
-      </header>
+      </div>
 
       <div class="sapphire-couple-grid">
-        <article class="sapphire-couple-card gallery-card" [class.is-image-missing]="!getGroomPhoto()">
-          <div class="sapphire-couple-photo-wrap">
+        <article class="sapphire-couple-card">
+          <div class="sapphire-couple-photo-wrap gallery-card" [class.is-image-missing]="!getGroomPhoto()">
             <img *ngIf="getGroomPhoto()" class="sapphire-couple-photo" [src]="getGroomPhoto()" [alt]="getGroomName()" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>
+            <div class="image-placeholder"><span>Foto belum tersedia</span></div>
           </div>
-          <h3>{{ getGroomName() }}</h3>
+          <h3 class="sapphire-couple-name">{{ getGroomName() }}</h3>
           <p class="sapphire-couple-parent">{{ getGroomParentLine() }}</p>
           <small *ngIf="getGroomInstagram() as ig" class="sapphire-couple-ig">{{ ig }}</small>
         </article>
 
-        <div class="sapphire-couple-divider" aria-hidden="true">
-          <span class="sapphire-couple-divider__line"></span>
-          <span class="sapphire-couple-divider__icon">◆</span>
-          <span class="sapphire-couple-divider__line"></span>
-        </div>
-
-        <article class="sapphire-couple-card gallery-card" [class.is-image-missing]="!getBridePhoto()">
-          <div class="sapphire-couple-photo-wrap">
+        <article class="sapphire-couple-card">
+          <div class="sapphire-couple-photo-wrap gallery-card" [class.is-image-missing]="!getBridePhoto()">
             <img *ngIf="getBridePhoto()" class="sapphire-couple-photo" [src]="getBridePhoto()" [alt]="getBrideName()" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>
+            <div class="image-placeholder"><span>Foto belum tersedia</span></div>
           </div>
-          <h3>{{ getBrideName() }}</h3>
+          <h3 class="sapphire-couple-name">{{ getBrideName() }}</h3>
           <p class="sapphire-couple-parent">{{ getBrideParentLine() }}</p>
           <small *ngIf="getBrideInstagram() as ig" class="sapphire-couple-ig">{{ ig }}</small>
         </article>
+      </div>
+
+      <div class="sapphire-divider" aria-hidden="true">
+        <span class="sapphire-divider__line"></span>
+        <span class="sapphire-divider__icon">◊</span>
+        <span class="sapphire-divider__line"></span>
       </div>
     </section>
 
     <!-- Gallery -->
     <section class="sapphire-gallery" *ngIf="isGalleryVisible()">
-      <header class="sapphire-section-head">
+      <div class="sapphire-section-head">
         <p class="sapphire-kicker">Moments</p>
         <h2 class="sapphire-title">Galeri Foto</h2>
-      </header>
+      </div>
 
       <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
         <div class="sapphire-gallery-grid">
           <figure class="sapphire-gallery-item sapphire-gallery-item--featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
             <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>
-            <div class="sapphire-gallery-play" *ngIf="featured.url_video"><i class="fas fa-play" aria-hidden="true"></i></div>
+            <div class="image-placeholder"><span>Foto belum tersedia</span></div>
+            <div class="sapphire-gallery-play" *ngIf="hasGalleryVideo(featured)">
+              <i class="fas fa-play" aria-hidden="true"></i>
+            </div>
           </figure>
           <figure class="sapphire-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
             <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i></div>
+            <div class="image-placeholder"><span>Foto belum tersedia</span></div>
           </figure>
         </div>
       </ng-container>
+
       <ng-template #emptyGallery>
-        <p class="sapphire-empty">Galeri foto akan segera diperbarui.</p>
+        <div class="sapphire-empty sapphire-empty--light">Galeri foto akan segera diperbarui.</div>
       </ng-template>
     </section>
 
     <!-- Countdown -->
-    <section class="sapphire-countdown" [style.background-image]="'url(' + getCoverPhoto() + ')'">
+    <section class="sapphire-countdown" [style.background-image]="'url(' + getCountdownBackground() + ')'">
       <div class="sapphire-countdown__overlay"></div>
       <div class="sapphire-countdown__content">
-        <header class="sapphire-section-head sapphire-section-head--light">
-          <p class="sapphire-kicker sapphire-kicker--light">Menuju Hari Bahagia</p>
-          <h2 class="sapphire-title sapphire-title--light">Hitung Mundur</h2>
-        </header>
+        <p class="sapphire-kicker sapphire-kicker--light">Menuju Hari Bahagia</p>
+        <h2 class="sapphire-title sapphire-title--light">Hitung Mundur</h2>
         <div class="sapphire-countdown__grid">
           <div class="sapphire-countdown__box" *ngFor="let part of getCountdownParts()">
             <strong>{{ part.value }}</strong>
@@ -119,111 +120,124 @@
 
     <!-- Save The Date -->
     <section class="sapphire-events" *ngIf="isEventVisible()">
-      <header class="sapphire-section-head">
+      <div class="sapphire-section-head">
         <p class="sapphire-kicker">Save The Date</p>
-      </header>
+      </div>
 
       <article class="sapphire-event-block">
-        <h3 class="sapphire-event-block__label">Akad</h3>
-        <div class="sapphire-event-date">
-          <span class="sapphire-event-date__side">{{ getEventMonthLabel(getAkadCard()) }}</span>
-          <span class="sapphire-event-date__divider"></span>
-          <span class="sapphire-event-date__day">{{ getEventDayPart(getAkadCard()) }}</span>
-          <span class="sapphire-event-date__divider"></span>
-          <span class="sapphire-event-date__side">{{ getEventYearPart(getAkadCard()) }}</span>
+        <h3 class="sapphire-event-block__title">Akad</h3>
+        <div class="sapphire-event-date-row">
+          <span class="sapphire-event-date-side">{{ getEventWeekday(getAkadCard()) }}</span>
+          <strong class="sapphire-event-date-day">{{ getEventDayNumber(getAkadCard()) }}</strong>
+          <span class="sapphire-event-date-side">{{ getEventMonthYear(getAkadCard()) }}</span>
         </div>
-        <p class="sapphire-event-block__time">{{ formatTimeRange(getAkadCard()) }}</p>
-        <strong class="sapphire-event-block__venue">{{ getDetailEventVenue(getAkadCard()) }}</strong>
-        <p class="sapphire-event-block__addr">{{ getEventAddress(getAkadCard()) }}</p>
-      </article>
-
-      <article class="sapphire-event-block">
-        <h3 class="sapphire-event-block__label">Resepsi</h3>
-        <div class="sapphire-event-date">
-          <span class="sapphire-event-date__side">{{ getEventMonthLabel(getReceptionCard()) }}</span>
-          <span class="sapphire-event-date__divider"></span>
-          <span class="sapphire-event-date__day">{{ getEventDayPart(getReceptionCard()) }}</span>
-          <span class="sapphire-event-date__divider"></span>
-          <span class="sapphire-event-date__side">{{ getEventYearPart(getReceptionCard()) }}</span>
-        </div>
-        <p class="sapphire-event-block__time">{{ formatTimeRange(getReceptionCard()) }}</p>
-        <strong class="sapphire-event-block__venue">{{ getDetailEventVenue(getReceptionCard()) }}</strong>
-        <p class="sapphire-event-block__addr">{{ getEventAddress(getReceptionCard()) }}</p>
-      </article>
-
-      <div class="sapphire-map-wrap">
-        <div class="sapphire-map-preview" *ngIf="getSafeMapUrl(getReceptionCard() || getAkadCard()) as mapEmbed; else mapPlaceholder">
+        <p class="sapphire-event-time">{{ formatTimeRange(getAkadCard()) }}</p>
+        <strong class="sapphire-event-venue">{{ getDetailEventVenue(getAkadCard()) }}</strong>
+        <p class="sapphire-event-address">{{ getEventAddress(getAkadCard()) }}</p>
+        <div class="sapphire-map-preview" *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder">
           <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
         </div>
-        <ng-template #mapPlaceholder>
+        <ng-template #akadMapPlaceholder>
           <div class="sapphire-map-preview sapphire-map-preview--placeholder">
             <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
           </div>
         </ng-template>
-        <a *ngIf="getEventMapLink(getReceptionCard() || getAkadCard()) as mapsLink" class="sapphire-btn sapphire-btn--maps" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+        <a *ngIf="getEventMapLink(getAkadCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
           Gunakan Google Maps
         </a>
-      </div>
+      </article>
+
+      <article class="sapphire-event-block">
+        <h3 class="sapphire-event-block__title">Resepsi</h3>
+        <div class="sapphire-event-date-row">
+          <span class="sapphire-event-date-side">{{ getEventWeekday(getReceptionCard()) }}</span>
+          <strong class="sapphire-event-date-day">{{ getEventDayNumber(getReceptionCard()) }}</strong>
+          <span class="sapphire-event-date-side">{{ getEventMonthYear(getReceptionCard()) }}</span>
+        </div>
+        <p class="sapphire-event-time">{{ formatTimeRange(getReceptionCard()) }}</p>
+        <strong class="sapphire-event-venue">{{ getDetailEventVenue(getReceptionCard()) }}</strong>
+        <p class="sapphire-event-address">{{ getEventAddress(getReceptionCard()) }}</p>
+        <div class="sapphire-map-preview" *ngIf="getSafeMapUrl(getReceptionCard()) as mapEmbed; else receptionMapPlaceholder">
+          <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
+        <ng-template #receptionMapPlaceholder>
+          <div class="sapphire-map-preview sapphire-map-preview--placeholder">
+            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+          </div>
+        </ng-template>
+        <a *ngIf="getEventMapLink(getReceptionCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+          Gunakan Google Maps
+        </a>
+      </article>
     </section>
 
     <!-- Ucapan & Doa -->
-    <section class="sapphire-wishes" *ngIf="isWishVisible()" [style.background-image]="'url(' + getCoverPhoto() + ')'">
+    <section class="sapphire-wishes" *ngIf="isWishVisible()" [style.background-image]="'url(' + getWishesBackground() + ')'">
       <div class="sapphire-wishes__overlay"></div>
       <div class="sapphire-wishes__content">
-        <header class="sapphire-section-head sapphire-section-head--light">
+        <div class="sapphire-section-head">
           <p class="sapphire-kicker sapphire-kicker--light">Doa &amp; Harapan</p>
           <h2 class="sapphire-title sapphire-title--light">Ucapan &amp; Doa</h2>
-        </header>
+        </div>
 
         <div class="sapphire-wish-form">
           <label class="sapphire-wish-label" for="sapphire-name">Nama Lengkap</label>
           <input id="sapphire-name" class="sapphire-wish-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama kamu">
+
           <label class="sapphire-wish-label" for="sapphire-message">Ucapan &amp; Doa</label>
           <textarea id="sapphire-message" class="sapphire-wish-textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan di sini..."></textarea>
+
           <div class="sapphire-wish-attendance">
             <button type="button" class="sapphire-wish-chip" [class.is-active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
             <button type="button" class="sapphire-wish-chip" [class.is-active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
             <button type="button" class="sapphire-wish-chip" [class.is-active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
           </div>
+
           <button type="button" class="sapphire-btn sapphire-btn--primary sapphire-btn--full" [disabled]="isSubmittingWish" (click)="submitWish()">
             {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
           </button>
         </div>
 
-        <div class="sapphire-wish-list" *ngIf="getDisplayedWishes().length">
-          <article class="sapphire-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
-            <div class="sapphire-wish-card__head">
+        <div class="sapphire-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
+          <article class="sapphire-wish-item" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+            <div class="sapphire-wish-item__top">
               <strong>{{ wish.nama }}</strong>
-              <span class="sapphire-wish-badge">{{ getAttendanceLabel(wish.kehadiran) }}</span>
+              <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
             </div>
             <p>{{ wish.pesan }}</p>
           </article>
         </div>
+
+        <ng-template #emptyWishes>
+          <div class="sapphire-empty sapphire-empty--on-dark">Belum ada ucapan. Jadilah yang pertama mengirim doa terbaik.</div>
+        </ng-template>
       </div>
     </section>
 
     <!-- Tanda Kasih -->
     <section class="sapphire-gift" *ngIf="isGiftVisible()">
-      <header class="sapphire-section-head">
+      <div class="sapphire-section-head">
         <p class="sapphire-kicker">Wedding Gift</p>
         <h2 class="sapphire-title">Tanda Kasih</h2>
-      </header>
-      <p class="sapphire-gift-intro">{{ getWeddingGiftIntro() }}</p>
+      </div>
+      <p class="sapphire-gift-desc">{{ getWeddingGiftIntro() }}</p>
 
       <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
         <article class="sapphire-gift-card" *ngFor="let bank of getVisibleBankAccounts()">
-          <div class="sapphire-gift-card__head">
-            <span class="sapphire-gift-card__bank">{{ bank.nama_bank || bank.bank?.name || 'Bank' }}</span>
+          <div class="sapphire-gift-card__top">
+            <span class="sapphire-gift-card__bank">{{ bank.nama_bank || 'Bank' }}</span>
             <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
           </div>
           <strong class="sapphire-gift-card__number">{{ bank.nomor_rekening }}</strong>
           <p class="sapphire-gift-card__owner">a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
-          <button type="button" class="sapphire-btn sapphire-btn--outline" (click)="copyAccountNumber(bank.nomor_rekening)">Salin No. Rekening</button>
+          <button type="button" class="sapphire-btn sapphire-btn--outline" (click)="copyAccountNumber(bank.nomor_rekening)">
+            Salin No. Rekening
+          </button>
         </article>
       </ng-container>
 
       <article class="sapphire-gift-card" *ngIf="getGiftAddress() as giftAddress">
-        <div class="sapphire-gift-card__head">
+        <div class="sapphire-gift-card__top">
           <span class="sapphire-gift-card__bank">Kirim Kado</span>
         </div>
         <p class="sapphire-gift-card__owner">{{ giftAddress }}</p>
@@ -233,7 +247,7 @@
       <ng-template #emptyBanks>
         <article class="sapphire-gift-card">
           <strong class="sapphire-gift-card__number">Informasi menyusul</strong>
-          <p class="sapphire-gift-card__owner">Detail rekening akan diperbarui.</p>
+          <p class="sapphire-gift-card__owner">Detail rekening akan diperbarui</p>
         </article>
       </ng-template>
     </section>
@@ -243,9 +257,9 @@
       <div class="sapphire-footer__overlay"></div>
       <div class="sapphire-footer__content">
         <p class="sapphire-footer__thanks">Terima kasih atas doa dan restu yang diberikan.</p>
-        <p class="sapphire-footer__kicker">KAMI YANG BERBAHAGIA</p>
+        <span class="sapphire-footer__label">KAMI YANG BERBAHAGIA</span>
         <h2 class="sapphire-footer__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h2>
-        <p class="sapphire-footer__date">{{ getWeddingDate() }}</p>
+        <time class="sapphire-footer__date">{{ getWeddingDate() }}</time>
         <small class="sapphire-footer__package">{{ getPackageLabelText() }}</small>
         <div class="sapphire-footer__credit">
           <span>Crafted with love by</span>
