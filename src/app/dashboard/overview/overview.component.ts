@@ -126,24 +126,33 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
           // Load dashboard data after getting user profile
           this.loadDashboardData();
 
-          // Load wedding data
-          const params = { user_id: this.userData.id };
-          this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe(
-            (res) => {
-              this.weddingDataFromIndex = res.data;
-              this.settings = res?.data?.settings || this.settings;
-              console.log('Wedding data loaded:', this.weddingDataFromIndex);
-              if (this.weddingDataFromIndex) {
-                this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+          // Load wedding data using domain (public profile is keyed by domain, not user_id)
+          const domain =
+            this.resolveDomainFromProfile(profile) ||
+            this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+
+          if (domain) {
+            const params = { domain };
+            this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe(
+              (res) => {
+                this.weddingDataFromIndex = res.data;
+                this.settings = res?.data?.settings || this.settings;
+                console.log('Wedding data loaded:', this.weddingDataFromIndex);
+                if (this.weddingDataFromIndex) {
+                  this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+                }
+                if (!this.publicWeddingUrl && this.weddingDataFromIndex?.settings?.domain) {
+                  this.updatePublicWeddingUrlFromProfileResponse(this.weddingDataFromIndex);
+                }
+              },
+              (error) => {
+                console.error('Error fetching wedding data:', error);
+                // Keep the existing publicWeddingUrl (from the profile response) untouched.
               }
-              if (!this.publicWeddingUrl && this.weddingDataFromIndex?.settings?.domain) {
-                this.updatePublicWeddingUrlFromProfileResponse(this.weddingDataFromIndex);
-              }
-            },
-            (error) => {
-              console.error('Error fetching wedding data:', error);
-            }
-          );
+            );
+          } else {
+            console.warn('No domain available, skipping public wedding profile request');
+          }
         } else {
           console.warn('No user data available');
           this.isLoading = false;

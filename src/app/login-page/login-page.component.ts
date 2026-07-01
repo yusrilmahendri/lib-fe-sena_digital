@@ -20,7 +20,9 @@ export class LoginPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.activatedRoute.queryParams.subscribe(params => {
-      if (params['error']) {
+      if (params['reason'] === 'session_expired') {
+        this.errorMessage = 'Sesi Anda berakhir karena tidak ada aktivitas selama 30 menit. Silakan login kembali.';
+      } else if (params['error']) {
         this.errorMessage = params['error'];
       }
     });

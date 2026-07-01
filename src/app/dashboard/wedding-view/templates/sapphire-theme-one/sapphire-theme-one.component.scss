@@ -2,181 +2,247 @@
   display: block;
 }
 
-.sapphire-theme {
-  --sapphire-accent: #c2418f;
-  --sapphire-accent-soft: #f4d7e8;
-  --sapphire-purple: #6f4bb0;
-  --sapphire-ink: #2a2530;
-  --sapphire-muted: #8b8590;
-  --sapphire-line: rgba(42, 37, 48, 0.08);
-  --sapphire-surface: #ffffff;
-  --sapphire-soft: #f6f4f7;
-  --sapphire-shadow: 0 18px 38px rgba(60, 40, 80, 0.1);
+@keyframes sapphireCurtainReveal {
+  from {
+    opacity: 0;
+    transform: translateY(44px);
+    filter: blur(10px);
+    clip-path: inset(18% 0 0 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes sapphireCoverExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.08);
+    filter: blur(10px);
+  }
+}
+
+.sapphire-theme-one {
+  --sapphire-green: #142318;
+  --sapphire-green-soft: #243b2b;
+  --sapphire-brown: #9f4e3f;
+  --sapphire-brown-dark: #7e392f;
+  --sapphire-cream: #f7f0e7;
+  --sapphire-white: #ffffff;
 
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
+  background: var(--sapphire-green);
+  color: var(--sapphire-white);
   overflow-x: hidden;
-  color: var(--sapphire-ink);
-  background: var(--sapphire-surface);
+  position: relative;
   font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
 }
 
-.sapphire-shell {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #ffffff 0%, #f9f6fa 100%);
-}
-
-/* ── Cover / Hero / Countdown / Closing media ─────────────────── */
-.sapphire-cover,
-.sapphire-hero,
-.sapphire-countdown,
-.sapphire-closing {
+/* ── Opening ──────────────────────────────────────────────────── */
+.sapphire-opening {
   position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
   overflow: hidden;
 }
 
-.sapphire-cover__media,
-.sapphire-hero__media,
-.sapphire-countdown__media,
-.sapphire-closing__media {
+.sapphire-opening--exiting {
+  animation: sapphireCoverExit 1050ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.sapphire-opening__media {
   position: absolute;
   inset: 0;
   background-position: center;
   background-size: cover;
+  transform: scale(1);
+  transition: transform 1200ms ease;
 }
 
-.sapphire-cover__overlay,
-.sapphire-hero__overlay,
-.sapphire-countdown__overlay,
-.sapphire-closing__overlay {
+.sapphire-opening--exiting .sapphire-opening__media {
+  transform: scale(1.08);
+}
+
+.sapphire-opening__overlay {
   position: absolute;
   inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 35, 24, 0.35) 0%,
+    rgba(20, 35, 24, 0.62) 55%,
+    rgba(20, 35, 24, 0.88) 100%
+  );
 }
 
-.sapphire-cover__overlay {
-  background: linear-gradient(180deg, rgba(20, 14, 28, 0.18) 0%, rgba(40, 24, 56, 0.42) 58%, rgba(26, 16, 38, 0.72) 100%);
-}
-
-.sapphire-hero__overlay {
-  background: linear-gradient(180deg, rgba(20, 14, 28, 0.1) 0%, rgba(40, 24, 56, 0.45) 100%);
-}
-
-.sapphire-countdown__overlay {
-  background: linear-gradient(180deg, rgba(40, 24, 56, 0.62), rgba(111, 75, 176, 0.55));
-}
-
-.sapphire-closing__overlay {
-  background: linear-gradient(180deg, rgba(15, 12, 20, 0.55), rgba(15, 12, 20, 0.82));
-}
-
-.sapphire-cover {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 30px 22px 46px;
-}
-
-.sapphire-cover__content,
-.sapphire-hero__content,
-.sapphire-countdown__content,
-.sapphire-closing__content {
+.sapphire-opening__content {
   position: relative;
   z-index: 1;
   text-align: center;
+  width: 100%;
+  max-width: 340px;
 }
 
-.sapphire-cover__content,
-.sapphire-hero__content,
-.sapphire-closing__content {
-  color: #fff;
+.sapphire-opening__eyebrow {
+  margin: 0 0 12px;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.sapphire-opening__names {
+  margin: 0 0 10px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 9vw, 3rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--sapphire-white);
+}
+
+.sapphire-opening__names em {
+  display: block;
+  margin: 4px 0;
+  font-style: italic;
+  font-size: 0.55em;
+  color: var(--sapphire-cream);
+}
+
+.sapphire-opening__date {
+  margin: 0 0 20px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.sapphire-opening__guest {
+  margin: 0 auto 22px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sapphire-opening__guest span {
+  display: block;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sapphire-opening__guest strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+/* ── Content reveal ───────────────────────────────────────────── */
+.sapphire-content--reveal {
+  animation: sapphireCurtainReveal 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Sections ─────────────────────────────────────────────────── */
+.sapphire-section {
+  position: relative;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.sapphire-section__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 35, 24, 0.55) 0%,
+    rgba(20, 35, 24, 0.72) 100%
+  );
+}
+
+.sapphire-section__overlay--deep {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 35, 24, 0.68) 0%,
+    rgba(20, 35, 24, 0.85) 100%
+  );
+}
+
+.sapphire-section__overlay--closing {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 35, 24, 0.62) 0%,
+    rgba(20, 35, 24, 0.92) 100%
+  );
+}
+
+.sapphire-section__inner {
+  position: relative;
+  z-index: 1;
+  padding: 48px 22px;
+  color: var(--sapphire-white);
+}
+
+.sapphire-section__inner--center {
+  text-align: center;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sapphire-section--intro {
+  min-height: 360px;
 }
 
 /* ── Typography ───────────────────────────────────────────────── */
 .sapphire-eyebrow {
-  margin: 0;
-  font-size: 0.6rem;
+  margin: 0 0 6px;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.34em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--sapphire-accent);
-}
-
-.sapphire-eyebrow--light {
-  color: rgba(255, 255, 255, 0.86);
-}
-
-.sapphire-cover__names,
-.sapphire-closing__content h2 {
-  margin: 12px 0 10px;
-  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
-  font-size: clamp(2.4rem, 10vw, 3.6rem);
-  font-weight: 600;
-  line-height: 1.05;
-}
-
-.sapphire-cover__names span {
-  display: block;
-  font-size: 0.6em;
-  color: var(--sapphire-accent-soft);
-}
-
-.sapphire-cover__date {
-  margin: 0;
-  font-size: 0.82rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.sapphire-cover__guest {
-  width: min(100%, 230px);
-  margin: 18px auto 16px;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(6px);
-}
-
-.sapphire-cover__guest span {
-  display: block;
-  font-size: 0.74rem;
-  opacity: 0.85;
-}
-
-.sapphire-cover__guest strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.96rem;
-}
-
-.sapphire-script {
-  margin: 0 0 14px;
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: 1.5rem;
-  font-style: italic;
-  color: var(--sapphire-purple);
-  text-align: center;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .sapphire-title {
-  margin: 6px 0 18px;
+  margin: 0 0 24px;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 1.9rem;
+  font-size: 1.85rem;
   font-weight: 600;
   text-align: center;
-  color: var(--sapphire-ink);
+  color: var(--sapphire-white);
 }
 
-.sapphire-title--light {
-  color: #fff;
+.sapphire-script {
+  margin: 0 0 16px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.45rem;
+  font-style: italic;
+  text-align: center;
+  color: var(--sapphire-cream);
 }
 
 .sapphire-copy {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 0.92rem;
-  line-height: 1.7;
-  color: var(--sapphire-muted);
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .sapphire-copy--center {
@@ -184,22 +250,22 @@
 }
 
 .sapphire-quote {
-  margin: 16px auto;
+  margin: 18px auto 10px;
   max-width: 320px;
   font-family: "Playfair Display", Georgia, serif;
   font-style: italic;
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   line-height: 1.7;
-  color: var(--sapphire-ink);
   text-align: center;
+  color: var(--sapphire-cream);
 }
 
 .sapphire-quote__source {
   margin: 0;
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   letter-spacing: 0.12em;
-  color: var(--sapphire-accent);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────── */
@@ -207,73 +273,63 @@
   min-height: 44px;
   border: 0;
   border-radius: 999px;
-  padding: 0 20px;
+  padding: 0 22px;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  transition: transform 160ms ease, opacity 160ms ease;
+  gap: 8px;
+  transition: transform 160ms ease, opacity 160ms ease, background 160ms ease;
   text-decoration: none;
 }
 
-.sapphire-btn:hover { transform: translateY(-1px); }
-.sapphire-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.sapphire-btn:hover {
+  transform: translateY(-1px);
+}
+
+.sapphire-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
 
 .sapphire-btn--primary {
-  background: linear-gradient(135deg, var(--sapphire-accent) 0%, var(--sapphire-purple) 100%);
-  color: #fff;
-  box-shadow: 0 14px 26px rgba(194, 65, 143, 0.28);
+  background: var(--sapphire-brown);
+  color: var(--sapphire-white);
+  box-shadow: 0 12px 24px rgba(159, 78, 63, 0.35);
+}
+
+.sapphire-btn--primary:hover {
+  background: var(--sapphire-brown-dark);
 }
 
 .sapphire-btn--ghost {
-  background: var(--sapphire-soft);
-  color: var(--sapphire-purple);
-  border: 1px solid var(--sapphire-line);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sapphire-brown-dark);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.sapphire-btn--full { width: 100%; }
-
-/* ── Sections ─────────────────────────────────────────────────── */
-.sapphire-hero {
-  min-height: 280px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 24px 20px 30px;
-}
-
-.sapphire-section {
-  padding: 38px 22px;
-}
-
-.sapphire-section--intro {
-  background: var(--sapphire-surface);
-}
-
-.sapphire-section--couple,
-.sapphire-section--gift {
-  background: linear-gradient(180deg, #faf6fb 0%, #f3ecf6 100%);
+.sapphire-btn--full {
+  width: 100%;
 }
 
 /* ── Couple ───────────────────────────────────────────────────── */
 .sapphire-person {
   text-align: center;
-  margin: 0 auto;
+  margin: 0 auto 8px;
   max-width: 280px;
 }
 
 .sapphire-person__frame {
-  width: 150px;
-  height: 190px;
-  margin: 0 auto 14px;
-  border-radius: 18px;
+  width: 160px;
+  height: 210px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 4px solid #fff;
-  box-shadow: var(--sapphire-shadow);
-  background: var(--sapphire-soft);
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  background: var(--sapphire-green-soft);
 }
 
 .sapphire-person__frame img {
@@ -283,42 +339,288 @@
   display: block;
 }
 
-.sapphire-person__placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.6rem;
-  color: var(--sapphire-accent-soft);
-}
-
 .sapphire-person h3 {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 1.3rem;
-  color: var(--sapphire-ink);
+  font-size: 1.35rem;
+  color: var(--sapphire-white);
 }
 
 .sapphire-person p {
   margin: 0;
   font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--sapphire-muted);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .sapphire-separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 22px 0;
+  margin: 24px 0;
 }
 
 .sapphire-separator span {
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-style: italic;
-  color: var(--sapphire-accent);
+  color: var(--sapphire-cream);
+}
+
+/* ── Events ───────────────────────────────────────────────────── */
+.sapphire-event-card {
+  margin-bottom: 18px;
+  padding: 22px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sapphire-green);
+  text-align: center;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
+}
+
+.sapphire-event-card__badge {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sapphire-white);
+  background: var(--sapphire-brown);
+}
+
+.sapphire-event-card h3 {
+  margin: 0 0 6px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.15rem;
+  color: var(--sapphire-green);
+}
+
+.sapphire-event-card p {
+  margin: 0 0 4px;
+  font-size: 0.86rem;
+  color: rgba(20, 35, 24, 0.72);
+}
+
+.sapphire-event-card strong {
+  display: block;
+  margin: 8px 0 2px;
+  font-size: 0.94rem;
+  color: var(--sapphire-green);
+}
+
+.sapphire-event-card__addr {
+  margin-bottom: 14px !important;
+}
+
+.sapphire-event-card .sapphire-btn {
+  margin-top: 8px;
+}
+
+.sapphire-map-preview {
+  height: 160px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 35, 24, 0.1);
+}
+
+.sapphire-map-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ── Invited ──────────────────────────────────────────────────── */
+.sapphire-invited-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.sapphire-invited-list li {
+  padding: 10px 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.05rem;
+  color: var(--sapphire-cream);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sapphire-invited-list li:last-child {
+  border-bottom: 0;
+}
+
+/* ── Countdown ────────────────────────────────────────────────── */
+.sapphire-countdown__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.sapphire-countdown__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.sapphire-countdown__card strong {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: var(--sapphire-brown-dark);
+}
+
+.sapphire-countdown__card span {
+  margin-top: 4px;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: rgba(20, 35, 24, 0.65);
+}
+
+/* ── Wishes form ──────────────────────────────────────────────── */
+.sapphire-form {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sapphire-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.sapphire-input,
+.sapphire-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--sapphire-green);
+  font: inherit;
+  margin-bottom: 6px;
+}
+
+.sapphire-input::placeholder,
+.sapphire-textarea::placeholder {
+  color: rgba(20, 35, 24, 0.45);
+}
+
+.sapphire-textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.sapphire-attendance {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sapphire-chip {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.sapphire-chip--active {
+  background: var(--sapphire-brown);
+  border-color: var(--sapphire-brown);
+  color: var(--sapphire-white);
+}
+
+.sapphire-wishes-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sapphire-wish-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sapphire-wish-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sapphire-wish-card__top strong {
+  font-size: 0.92rem;
+}
+
+.sapphire-wish-card__top span {
+  font-size: 0.64rem;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(159, 78, 63, 0.45);
+}
+
+.sapphire-wish-card p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Bank ─────────────────────────────────────────────────────── */
+.sapphire-bank-card {
+  margin-bottom: 14px;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--sapphire-green);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.sapphire-bank-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.sapphire-bank-card__top span {
+  font-weight: 700;
+  color: var(--sapphire-brown-dark);
+}
+
+.sapphire-bank-card__top small {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: rgba(20, 35, 24, 0.55);
+}
+
+.sapphire-bank-card strong {
+  display: block;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+}
+
+.sapphire-bank-card p {
+  margin: 4px 0 14px;
+  font-size: 0.84rem;
+  color: rgba(20, 35, 24, 0.65);
 }
 
 /* ── Gallery ──────────────────────────────────────────────────── */
@@ -330,10 +632,10 @@
 
 .sapphire-gallery-item {
   margin: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background: var(--sapphire-soft);
+  background: var(--sapphire-green-soft);
 }
 
 .sapphire-gallery-item--wide {
@@ -359,8 +661,8 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-  background: var(--sapphire-soft);
-  color: var(--sapphire-muted);
+  background: var(--sapphire-green-soft);
+  color: rgba(255, 255, 255, 0.55);
   font-size: 0.78rem;
   text-align: center;
 }
@@ -370,317 +672,82 @@
   display: flex;
 }
 
-/* ── Countdown ────────────────────────────────────────────────── */
-.sapphire-countdown {
-  min-height: 320px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 46px 22px;
-}
-
-.sapphire-countdown__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.sapphire-countdown__card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 6px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 22px rgba(40, 24, 56, 0.22);
-}
-
-.sapphire-countdown__card strong {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--sapphire-purple);
-}
-
-.sapphire-countdown__card span {
-  margin-top: 4px;
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sapphire-muted);
-}
-
-/* ── Event cards ──────────────────────────────────────────────── */
-.sapphire-event-card {
-  margin-bottom: 18px;
-  padding: 22px 20px;
-  border-radius: 18px;
-  background: var(--sapphire-surface);
-  border: 1px solid var(--sapphire-line);
-  box-shadow: var(--sapphire-shadow);
-  text-align: center;
-}
-
-.sapphire-event-card__badge {
-  display: inline-block;
-  margin-bottom: 12px;
-  padding: 5px 16px;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #fff;
-  background: linear-gradient(135deg, var(--sapphire-accent), var(--sapphire-purple));
-}
-
-.sapphire-event-card h3 {
-  margin: 0 0 6px;
+/* ── Closing ──────────────────────────────────────────────────── */
+.sapphire-closing__names {
+  margin: 14px 0 10px;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 1.2rem;
-  color: var(--sapphire-ink);
-}
-
-.sapphire-event-card p {
-  margin: 0 0 4px;
-  font-size: 0.86rem;
-  color: var(--sapphire-muted);
-}
-
-.sapphire-event-card strong {
-  display: block;
-  margin: 8px 0 2px;
-  font-size: 0.96rem;
-  color: var(--sapphire-ink);
-}
-
-.sapphire-event-card__addr {
-  margin-bottom: 14px !important;
-}
-
-.sapphire-event-card .sapphire-btn {
-  margin-top: 6px;
-}
-
-/* ── Map ──────────────────────────────────────────────────────── */
-.sapphire-map {
-  margin-top: 6px;
-}
-
-.sapphire-map__preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 150px;
-  margin-bottom: 14px;
-  border-radius: 16px;
-  font-size: 2.6rem;
-  color: var(--sapphire-accent);
-  background:
-    linear-gradient(135deg, rgba(244, 215, 232, 0.6), rgba(238, 230, 246, 0.6)),
-    radial-gradient(circle at 25% 30%, rgba(194, 65, 143, 0.18), transparent 42%);
-  border: 1px solid var(--sapphire-line);
-}
-
-/* ── Wishes (dark) ────────────────────────────────────────────── */
-.sapphire-wishes {
-  background: linear-gradient(160deg, #3a2350 0%, #241634 100%);
-}
-
-.sapphire-wishes__inner {
-  padding: 40px 22px;
-}
-
-.sapphire-form {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sapphire-label {
-  font-size: 0.74rem;
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
   font-weight: 600;
-  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
+.sapphire-closing__names em {
+  display: block;
+  margin: 4px 0;
+  font-style: italic;
+  font-size: 0.55em;
+  color: var(--sapphire-cream);
+}
+
+.sapphire-section--closing time {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
   color: rgba(255, 255, 255, 0.78);
 }
 
-.sapphire-input,
-.sapphire-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-  font: inherit;
-  margin-bottom: 6px;
-}
-
-.sapphire-input::placeholder,
-.sapphire-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.sapphire-textarea {
-  min-height: 92px;
-  resize: vertical;
-}
-
-.sapphire-attendance {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.sapphire-chip {
-  flex: 1;
-  min-height: 38px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.8);
-  font: inherit;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.sapphire-chip--active {
-  background: linear-gradient(135deg, var(--sapphire-accent), var(--sapphire-purple));
-  border-color: transparent;
-  color: #fff;
-}
-
-.sapphire-wishes-list {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.sapphire-wish-card {
-  padding: 14px 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sapphire-wish-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.sapphire-wish-card__top strong {
-  color: #fff;
-  font-size: 0.92rem;
-}
-
-.sapphire-wish-card__top span {
-  font-size: 0.66rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: rgba(194, 65, 143, 0.3);
-  color: #fff;
-}
-
-.sapphire-wish-card p {
+.sapphire-section--closing > .sapphire-section__inner > p {
   margin: 0;
-  font-size: 0.86rem;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.82);
-}
-
-/* ── Bank ─────────────────────────────────────────────────────── */
-.sapphire-bank-card {
-  margin-bottom: 14px;
-  padding: 20px;
-  border-radius: 16px;
-  background: var(--sapphire-surface);
-  border: 1px solid var(--sapphire-line);
-  box-shadow: var(--sapphire-shadow);
-}
-
-.sapphire-bank-card__top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.sapphire-bank-card__top span {
-  font-weight: 700;
-  color: var(--sapphire-purple);
-}
-
-.sapphire-bank-card__top small {
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  color: var(--sapphire-muted);
-}
-
-.sapphire-bank-card strong {
-  display: block;
-  font-size: 1.2rem;
-  letter-spacing: 0.06em;
-  color: var(--sapphire-ink);
-}
-
-.sapphire-bank-card p {
-  margin: 4px 0 14px;
-  font-size: 0.84rem;
-  color: var(--sapphire-muted);
-}
-
-/* ── Closing ──────────────────────────────────────────────────── */
-.sapphire-closing {
-  min-height: 420px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 24px;
-}
-
-.sapphire-closing__media {
-  filter: grayscale(1);
-}
-
-.sapphire-closing__content p {
-  margin: 0 0 12px;
   font-size: 0.9rem;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 300px;
 }
 
-.sapphire-closing__content small {
+.sapphire-section--closing small {
   display: block;
-  margin-top: 14px;
-  font-size: 0.7rem;
+  margin-top: 8px;
+  font-size: 0.68rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sapphire-closing__credit {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sapphire-closing__credit strong {
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* ── Empty states ─────────────────────────────────────────────── */
 .sapphire-empty {
   padding: 22px;
-  border-radius: 14px;
+  border-radius: 12px;
   text-align: center;
   font-size: 0.86rem;
-  color: var(--sapphire-muted);
-  background: var(--sapphire-soft);
-  border: 1px dashed var(--sapphire-line);
-}
-
-.sapphire-empty--light {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
 }
 
 @media (max-width: 360px) {
-  .sapphire-countdown__card strong { font-size: 1.25rem; }
-  .sapphire-title { font-size: 1.7rem; }
+  .sapphire-countdown__card strong {
+    font-size: 1.2rem;
+  }
+
+  .sapphire-title {
+    font-size: 1.65rem;
+  }
 }

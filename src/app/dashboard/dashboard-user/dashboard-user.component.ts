@@ -8,6 +8,7 @@ import {
   ProfileResponse
 } from 'src/app/dashboard.service';
 import { filter } from 'rxjs/operators';
+import { IdleTimeoutService } from 'src/app/core/services/idle-timeout.service';
 
 @Component({
   selector: 'wc-dashboard-user',
@@ -65,7 +66,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private DashBoardSvc: DashboardService
+    private DashBoardSvc: DashboardService,
+    private idleTimeoutService: IdleTimeoutService
   ) {}
 
   ngOnInit(): void {
@@ -154,6 +156,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   logout(): void {
     this.DashBoardSvc.create(DashboardServiceType.USER_LOGOUT, '').subscribe(
       () => {
+        this.idleTimeoutService.stop();
         localStorage.removeItem('access_token')
         this.router.navigate(['']);
       },
