@@ -170,6 +170,46 @@ export function getThemePresetBySlug(
   return slug ? THEME_PRESET_BY_SLUG[slug] : null;
 }
 
+/**
+ * Cumulative package hierarchy. A higher tier includes access to every lower
+ * tier's themes (Diamond ⊇ Sapphire ⊇ Ruby ⊇ Trial).
+ */
+export const PACKAGE_TIER_ORDER: Record<string, number> = {
+  trial: 0,
+  ruby: 1,
+  sapphire: 2,
+  diamond: 3,
+};
+
+function normalizeTierKey(value: string | null | undefined): string {
+  return String(value || '').toLowerCase().trim();
+}
+
+/**
+ * Returns true when a user on `userTier` may access content that requires
+ * `themeTier` — i.e. the theme's tier is at or below the user's tier.
+ */
+export function isTierAllowed(
+  userTier: string | null | undefined,
+  themeTier: string | null | undefined
+): boolean {
+  const userLevel = PACKAGE_TIER_ORDER[normalizeTierKey(userTier)] ?? 0;
+  const themeLevel = PACKAGE_TIER_ORDER[normalizeTierKey(themeTier)] ?? 0;
+  return themeLevel <= userLevel;
+}
+
+/**
+ * Resolve a theme's own package tier from its slug (handles slug aliases such
+ * as `modern-vows` → sapphire, `champagne-rose`/`velvet-mauve` → diamond).
+ * Falls back to `ruby` when the slug is unknown so it stays accessible.
+ */
+export function getThemeTierForSlug(
+  slug: string | null | undefined
+): PaidThemePackageTier {
+  const preset = getThemePresetBySlug(slug);
+  return preset?.packageTier ?? 'ruby';
+}
+
 export function normalizeStableKey(value: string): string {
   return String(value || '')
     .toLowerCase()
