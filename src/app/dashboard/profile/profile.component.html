@@ -14,6 +14,30 @@
       <h1 class="text-pink-400 fw-semibold fs-4" style="color:#f472b6;">Data Profil</h1>
     </div>
 
+    <!-- Account Status Banner -->
+    <div
+      class="profile-status-banner"
+      [class.profile-status-banner--active]="isAccountActive"
+      [class.profile-status-banner--inactive]="!isAccountActive"
+    >
+      <div class="profile-status-banner__icon">
+        <i class="fa" [ngClass]="isAccountActive ? 'fa-check-circle' : 'fa-times-circle'"></i>
+      </div>
+
+      <div class="profile-status-banner__text">
+        <strong>
+          {{ isAccountActive ? 'Status akun aktif.' : 'Status akun nonaktif.' }}
+        </strong>
+        <span>
+          {{
+            isAccountActive
+              ? 'Pembayaran telah diterima dan terverifikasi oleh sistem.'
+              : 'Silakan lakukan aktivasi ulang untuk menggunakan undangan kembali.'
+          }}
+        </span>
+      </div>
+    </div>
+
     <!-- Photo Section -->
     <div class="d-flex flex-column flex-sm-row align-items-center gap-3 gap-sm-4 mb-4">
       <div class="profile-photo flex-shrink-0 position-relative">

@@ -24,6 +24,7 @@ export class ProfileComponent implements OnInit {
   selectedFile: File | null = null;
   photoPreview: string | null = null;
   isUploadingPhoto = false;
+  public isAccountActive = false;
 
   private notyf: Notyf;
 
@@ -66,6 +67,7 @@ export class ProfileComponent implements OnInit {
     this.dashboardService.getProfile().subscribe({
       next: (response: ProfileResponse) => {
         this.profileData = response.data;
+        this.updateAccountStatus(response);
         this.populateForm();
         this.isLoading = false;
         this.cdr.detectChanges(); // Force change detection
@@ -76,6 +78,30 @@ export class ProfileComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  /**
+   * Derive the account active/inactive status from the profile response.
+   * Purely presentational — does not mutate any data or call endpoints.
+   */
+  private updateAccountStatus(profile: any): void {
+    const data = profile?.data || profile;
+
+    const paymentStatus =
+      data?.package_info?.payment_status ||
+      data?.invitation_package?.payment_status ||
+      data?.payment_status ||
+      '';
+
+    const domainActive =
+      data?.domain_info?.is_active ??
+      data?.invitation_package?.is_domain_active ??
+      data?.is_domain_active ??
+      null;
+
+    this.isAccountActive =
+      domainActive === true ||
+      String(paymentStatus).toLowerCase() === 'paid';
   }
 
   /**

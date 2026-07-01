@@ -61,6 +61,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   isPengunjungSubmenuOpen: boolean = false;
   isDropdownOpen = false;
   isSidebarOpen = false;
+  // Temporarily hide the Bill menu item (billing route/logic kept intact).
+  showBillingMenu = false;
   userData: ProfileData | null = null;
 
   constructor(
