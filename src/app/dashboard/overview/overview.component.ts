@@ -50,7 +50,8 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   settings: any;
   userData: any;
   weddingDataFromIndex: any;
-  publicWebsiteUrl: string | null = null;
+  public publicWeddingUrl = '';
+  errorMessage = '';
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -113,17 +114,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe(
       (res) => {
-        this.userData = res.data;
-        this.profile = res.data;
-        this.profileData = res.data;
-        this.userProfile = res.data;
+        const profile = res?.data || res;
+        this.userData = profile;
+        this.profile = profile;
+        this.profileData = profile;
+        this.userProfile = profile;
         console.log('User profile data:', this.userData);
-        this.publicWebsiteUrl = this.getPublicWeddingUrl();
-        console.log('[OverviewProfileDomain]', {
-          domain_info: res?.data?.domain_info,
-          domain: res?.data?.domain_info?.domain,
-          publicUrl: this.getPublicWeddingUrl(),
-        });
+        this.updatePublicWeddingUrl(profile);
 
         if (this.userData && this.userData.id) {
           // Load dashboard data after getting user profile
@@ -139,11 +136,12 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
               if (this.weddingDataFromIndex) {
                 this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
               }
-              this.publicWebsiteUrl = this.getPublicWeddingUrl();
+              if (!this.publicWeddingUrl && this.weddingDataFromIndex?.settings?.domain) {
+                this.updatePublicWeddingUrl(this.weddingDataFromIndex);
+              }
             },
             (error) => {
               console.error('Error fetching wedding data:', error);
-              this.publicWebsiteUrl = this.getPublicWeddingUrl();
             }
           );
         } else {
@@ -562,17 +560,15 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
    * Uses a synchronous click flow so Safari iPhone does not block navigation.
    */
   handleViewWebsiteClick(event: Event): void {
-    const url = this.getPublicWeddingUrl();
-
     console.log('[ViewWebsiteClick]', {
-      url,
-      profile: this.profile || this.profileData || this.userProfile,
-      domain_info: this.profile?.domain_info || this.profileData?.domain_info || this.userProfile?.domain_info,
+      publicWeddingUrl: this.publicWeddingUrl
     });
 
-    if (!url) {
+    if (!this.publicWeddingUrl) {
       event.preventDefault();
-      this.showError?.('Domain undangan belum tersedia. Silakan muat ulang halaman.');
+      event.stopPropagation();
+      this.errorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
+      this.showError?.(this.errorMessage);
       return;
     }
 
@@ -585,31 +581,38 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.toastService.showToast(message, 'info');
   }
 
+  private resolveDomainFromProfile(profile: any): string {
+    return (
+      profile?.domain_info?.domain ||
+      profile?.data?.domain_info?.domain ||
+      profile?.domain ||
+      profile?.data?.domain ||
+      profile?.settings?.domain ||
+      profile?.data?.settings?.domain ||
+      ''
+    );
+  }
+
+  private updatePublicWeddingUrl(profile: any): void {
+    const domain = String(this.resolveDomainFromProfile(profile) || '').trim();
+
+    this.publicWeddingUrl = domain
+      ? `/wedding/${encodeURIComponent(domain)}`
+      : '';
+
+    console.log('[OverviewProfileDomain]', {
+      rawProfile: profile,
+      domain,
+      publicWeddingUrl: this.publicWeddingUrl
+    });
+  }
+
   getPublicWeddingUrl(): string {
-    const domain =
-      this.profile?.domain_info?.domain ||
-      this.profileData?.domain_info?.domain ||
-      this.userProfile?.domain_info?.domain ||
-      this.profile?.domain ||
-      this.profileData?.domain ||
-      this.userProfile?.domain ||
-      this.settings?.domain ||
-      this.weddingDataFromIndex?.settings?.domain ||
-      this.weddingDataFromIndex?.domain ||
-      this.userData?.domain_info?.domain ||
-      this.userData?.invitation?.domain ||
-      this.userData?.domain ||
-      '';
-
-    if (!domain) {
-      return '';
-    }
-
-    return `/wedding/${encodeURIComponent(String(domain).trim())}`;
+    return this.publicWeddingUrl;
   }
 
   getPublicWeddingAbsoluteUrl(): string {
-    const path = this.getPublicWeddingUrl();
+    const path = this.publicWeddingUrl;
 
     if (!path) {
       return '';
