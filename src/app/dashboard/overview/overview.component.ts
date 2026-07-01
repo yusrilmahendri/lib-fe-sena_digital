@@ -46,7 +46,11 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   activeFilter = 'totalPengunjung';
   userData: any;
   weddingDataFromIndex: any;
-  publicWebsiteUrl: string | null = null;
+
+  // Public wedding website URL derived from the profile response (domain_info.domain).
+  public publicWeddingUrl = '';
+  public overviewDomainDebug = 'NO_DOMAIN_URL';
+  errorMessage = '';
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -111,7 +115,9 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       (res) => {
         this.userData = res.data;
         console.log('User profile data:', this.userData);
-        this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
+
+        // Populate the public wedding URL straight from the profile response.
+        this.setPublicWeddingUrlFromProfileResponse(res);
 
         if (this.userData && this.userData.id) {
           // Load dashboard data after getting user profile
@@ -126,11 +132,11 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
               if (this.weddingDataFromIndex) {
                 this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
               }
-              this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
             },
             (error) => {
+              // The public wedding-data endpoint may return 422 (e.g. public?user_id=2);
+              // this must NOT clear the already-resolved publicWeddingUrl.
               console.error('Error fetching wedding data:', error);
-              this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
             }
           );
         } else {
@@ -139,11 +145,67 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       (error) => {
-        console.error('Error fetching user profile:', error);
+        console.error('[OverviewProfileError]', error);
         this.apiError = 'Failed to load user profile';
         this.isLoading = false;
+
+        const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+        if (storedDomain && !this.publicWeddingUrl) {
+          this.publicWeddingUrl = `/wedding/${encodeURIComponent(storedDomain)}`;
+          this.overviewDomainDebug = this.publicWeddingUrl;
+        }
       }
     );
+  }
+
+  private setPublicWeddingUrlFromProfileResponse(response: any): void {
+    const profile = response?.data || response;
+
+    const rawDomain =
+      profile?.domain_info?.domain ||
+      profile?.domain ||
+      profile?.settings?.domain ||
+      '';
+
+    const domain = this.normalizeWeddingDomain(rawDomain);
+
+    if (domain) {
+      this.publicWeddingUrl = `/wedding/${encodeURIComponent(domain)}`;
+      this.overviewDomainDebug = this.publicWeddingUrl;
+      localStorage.setItem('wedding_domain', domain);
+    } else {
+      const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+
+      this.publicWeddingUrl = storedDomain
+        ? `/wedding/${encodeURIComponent(storedDomain)}`
+        : '';
+
+      this.overviewDomainDebug = this.publicWeddingUrl || 'NO_DOMAIN_URL';
+    }
+
+    console.log('[OverviewProfileDomain]', {
+      response,
+      profile,
+      rawDomain,
+      domain,
+      publicWeddingUrl: this.publicWeddingUrl,
+      overviewDomainDebug: this.overviewDomainDebug
+    });
+  }
+
+  private normalizeWeddingDomain(value: any): string {
+    if (!value) return '';
+
+    return String(value)
+      .trim()
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\/wedding\//i, '')
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\//i, '')
+      .replace(/^sena-digital\.com\/wedding\//i, '')
+      .replace(/^sena-digital\.com\//i, '')
+      .replace(/^\/wedding\//i, '')
+      .replace(/^\//, '')
+      .split('?')[0]
+      .split('#')[0];
   }
 
   private loadDashboardData(): void {
@@ -545,41 +607,25 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Open the public wedding website using already-loaded API data.
-   * Uses a synchronous click flow so Safari iPhone does not block navigation.
+   * Handle the "Lihat Website" click. Navigation is driven by the anchor href
+   * (publicWeddingUrl); this only guards against navigating when no URL exists.
    */
-  onViewWebsite(event?: Event): void {
-    this.publicWebsiteUrl = this.resolvePublicWebsiteUrl();
+  handleViewWebsiteClick(event: Event): void {
+    console.log('[ViewWebsiteClick]', {
+      publicWeddingUrl: this.publicWeddingUrl
+    });
 
-    if (!this.publicWebsiteUrl) {
-      event?.preventDefault();
-      this.toastService.showToast('Website undangan belum tersedia.', 'info');
+    if (!this.publicWeddingUrl) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.errorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
       return;
     }
 
+    // Preserve existing behaviour: hand already-loaded wedding data to the viewer.
     if (this.weddingDataFromIndex) {
       this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
     }
-  }
-
-  private resolvePublicWebsiteUrl(): string | null {
-    const domainCandidates = [
-      this.weddingDataFromIndex?.settings?.domain,
-      this.weddingDataFromIndex?.domain,
-      this.userData?.domain_info?.domain,
-      this.userData?.invitation?.domain,
-      this.userData?.domain,
-    ];
-
-    const domain = domainCandidates
-      .map((value) => String(value || '').trim())
-      .find((value) => !!value);
-
-    if (!domain) {
-      return null;
-    }
-
-    return this.weddingDataService.generateWeddingUrlWithDomain(domain);
   }
 
 }
