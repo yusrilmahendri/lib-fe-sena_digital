@@ -8,6 +8,7 @@ import {
   WeddingQuote,
   WeddingStory,
 } from '../../../../services/wedding-data.service';
+import { environment } from '../../../../../environments/environment';
 
 type FilterKey =
   | 'halaman_sampul'
@@ -89,11 +90,61 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     return `${this.getGroomNickname()} & ${this.getBrideNickname()}`;
   }
 
+  /**
+   * Resolve a raw media path/URL from the API into a full absolute URL.
+   * Handles: already-absolute URLs, /storage/... paths, storage/... paths,
+   * and bare filenames (adds /storage/ prefix).
+   */
+  protected normalizeMediaUrl(value: string | null | undefined): string {
+    const raw = String(value || '').trim();
+    if (!raw || raw === 'null' || raw === 'undefined') {
+      return '';
+    }
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) {
+      return raw;
+    }
+    const origin = (environment.apiBaseUrl || '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+    const clean = raw.replace(/^\/+/, '');
+    if (clean.startsWith('storage/')) {
+      return `${origin}/${clean}`;
+    }
+    return `${origin}/storage/${clean}`;
+  }
+
+  /**
+   * Resolve a gallery item's photo to a full absolute URL.
+   * Tries multiple possible field names in priority order.
+   */
+  protected getGalleryPhotoUrl(item: any): string {
+    if (!item) {
+      return '';
+    }
+    const directUrl =
+      item.photo_url ||
+      item.url_photo ||
+      item.file_url ||
+      item.image_url ||
+      item.preview_url ||
+      item.path_url;
+    if (directUrl) {
+      return this.normalizeMediaUrl(String(directUrl));
+    }
+    const raw = item.photo || item.image || item.foto || item.file_path || item.path || '';
+    console.log('[GalleryImageDebug]', { item, resolvedUrl: this.normalizeMediaUrl(raw) });
+    return this.normalizeMediaUrl(raw);
+  }
+
   getCoverPhoto(): string {
-    return this.weddingData?.mempelai?.cover_photo
-      || this.getBride()?.photo
-      || this.getGroom()?.photo
-      || 'assets/landing/template-1.png';
+    return this.normalizeMediaUrl(
+      this.weddingData?.mempelai?.cover_photo ||
+      this.getBride()?.photo ||
+      this.getGroom()?.photo
+    ) || 'assets/landing/template-1.png';
   }
 
   getOpeningDate(): string {

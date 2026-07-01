@@ -68,11 +68,11 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent {
   // ─── Photos ──────────────────────────────────────────────────────────
 
   getBridePhoto(): string {
-    return this.getBride()?.photo || '';
+    return this.normalizeMediaUrl(this.getBride()?.photo) || '';
   }
 
   getGroomPhoto(): string {
-    return this.getGroom()?.photo || '';
+    return this.normalizeMediaUrl(this.getGroom()?.photo) || '';
   }
 
   getSafeGalleryPhotos(): GalleryItem[] {

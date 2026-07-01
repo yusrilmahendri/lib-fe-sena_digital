@@ -224,7 +224,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return !!(item && item.url_video && item.url_video.toString().trim());
   }
 
-  getGalleryPhotoUrl(item: any): string {
+  override getGalleryPhotoUrl(item: any): string {
     if (!item) {
       return '';
     }

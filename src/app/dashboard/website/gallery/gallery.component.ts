@@ -219,15 +219,33 @@ export class GalleryComponent implements OnInit {
 
     this.dashboardSvc.list(DashboardServiceType.GALERY_DATA, params).subscribe({
       next: (res) => {
-        const baseUrl = environment.apiBaseUrl || '';
-        this.galleryData = (res?.data || []).map((item: any) => ({
-          id: item.id,
-          photo_url: item.photo ? (item.photo.startsWith('http') ? item.photo : baseUrl + '/' + item.photo) : '',
-          photo_name: item.nama_foto || (item.photo ? item.photo.split('/').pop() : ''),
-          url_video: item.url_video,
-          created_at: item.created_at ? new Date(item.created_at) : null,
-          status: item.status === 1 ? 'active' : 'inactive',
-        }));
+        // Strip /api suffix so storage URLs resolve to the correct server origin
+        const baseUrl = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '').replace(/\/$/, '');
+        this.galleryData = (res?.data || []).map((item: any) => {
+          let photo_url = '';
+          if (item.photo) {
+            const raw = String(item.photo).trim();
+            if (/^https?:\/\//i.test(raw)) {
+              photo_url = raw;
+            } else if (raw.startsWith('/storage/')) {
+              photo_url = `${baseUrl}${raw}`;
+            } else {
+              const clean = raw.replace(/^\/+/, '');
+              photo_url = clean.startsWith('storage/')
+                ? `${baseUrl}/${clean}`
+                : `${baseUrl}/storage/${clean}`;
+            }
+          }
+          console.log('[GalleryImageDebug]', { item, resolvedUrl: photo_url });
+          return {
+            id: item.id,
+            photo_url,
+            photo_name: item.nama_foto || (item.photo ? item.photo.split('/').pop() : ''),
+            url_video: item.url_video,
+            created_at: item.created_at ? new Date(item.created_at) : null,
+            status: item.status === 1 ? 'active' : 'inactive',
+          };
+        });
         this.totalItems = res?.total || this.galleryData.length;
         this.pageSize = res?.per_page || this.pageSize;
         this.currentPage = res?.current_page || 1;

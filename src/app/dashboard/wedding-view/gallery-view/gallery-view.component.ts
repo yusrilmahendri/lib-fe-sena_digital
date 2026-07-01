@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { GalleryItem } from '../../../services/wedding-data.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'wc-gallery-view',
@@ -13,6 +14,10 @@ export class GalleryViewComponent implements OnInit {
 
   ngOnInit(): void {
     console.log('GalleryViewComponent initialized with gallery:', this.galleryItems);
+    if (this.galleryItems?.length) {
+      const sample = this.galleryItems[0];
+      console.log('[GalleryImageDebug]', { item: sample, resolvedUrl: this.getImageUrl(sample) });
+    }
   }
 
   getGalleryImages(): GalleryItem[] {
@@ -24,7 +29,24 @@ export class GalleryViewComponent implements OnInit {
   }
 
   getImageUrl(item: GalleryItem): string {
-    return item.photo || 'assets/default-gallery.jpg';
+    const raw = String(item?.photo || '').trim();
+    if (!raw) {
+      return 'assets/default-gallery.jpg';
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      return raw;
+    }
+    const origin = (environment.apiBaseUrl || '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+    const clean = raw.replace(/^\/+/, '');
+    if (clean.startsWith('storage/')) {
+      return `${origin}/${clean}`;
+    }
+    return `${origin}/storage/${clean}`;
   }
 
   getImageAlt(item: GalleryItem, index: number): string {

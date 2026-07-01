@@ -1,5 +1,6 @@
 import { Component, HostBinding, OnInit, AfterViewInit, ElementRef, Renderer2, OnDestroy, Type } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
@@ -673,27 +674,49 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
+   * Resolve a raw media path from the API into a full absolute URL.
+   * Strips /api suffix from apiBaseUrl, then handles /storage/, storage/, and bare filenames.
+   */
+  private normalizeMediaUrl(value: string | null | undefined): string {
+    const raw = String(value || '').trim();
+    if (!raw || raw === 'null' || raw === 'undefined') {
+      return '';
+    }
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) {
+      return raw;
+    }
+    const origin = (environment.apiBaseUrl || '')
+      .replace(/\/api\/?$/, '')
+      .replace(/\/$/, '');
+    if (raw.startsWith('/storage/')) {
+      return `${origin}${raw}`;
+    }
+    const clean = raw.replace(/^\/+/, '');
+    if (clean.startsWith('storage/')) {
+      return `${origin}/${clean}`;
+    }
+    return `${origin}/storage/${clean}`;
+  }
+
+  /**
    * Get cover photo URL
-   * @returns string - Cover photo URL or default
    */
   getCoverPhotoUrl(): string {
-    return this.weddingData?.mempelai?.cover_photo || 'assets/default-cover.jpg';
+    return this.normalizeMediaUrl(this.weddingData?.mempelai?.cover_photo) || 'assets/default-cover.jpg';
   }
 
   /**
    * Get groom photo URL
-   * @returns string - Groom photo URL or default
    */
   getGroomPhotoUrl(): string {
-    return this.weddingData?.mempelai?.pria?.photo || 'assets/default-groom.jpg';
+    return this.normalizeMediaUrl(this.weddingData?.mempelai?.pria?.photo) || 'assets/default-groom.jpg';
   }
 
   /**
    * Get bride photo URL
-   * @returns string - Bride photo URL or default
    */
   getBridePhotoUrl(): string {
-    return this.weddingData?.mempelai?.wanita?.photo || 'assets/default-bride.jpg';
+    return this.normalizeMediaUrl(this.weddingData?.mempelai?.wanita?.photo) || 'assets/default-bride.jpg';
   }
 
   /**
