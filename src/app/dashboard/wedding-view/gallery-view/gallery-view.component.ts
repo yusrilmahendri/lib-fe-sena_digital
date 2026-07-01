@@ -28,25 +28,35 @@ export class GalleryViewComponent implements OnInit {
     return !!(this.galleryItems && this.galleryItems.length > 0);
   }
 
-  getImageUrl(item: GalleryItem): string {
-    const raw = String(item?.photo || '').trim();
-    if (!raw) {
+  getImageUrl(item: any): string {
+    const origin = ((environment as any).apiUrl || (environment as any).baseUrl || environment.apiBaseUrl || '')
+      .replace(/\/api\/?$/, '').replace(/\/$/, '');
+
+    // Try all known field names in priority order
+    const value = item?.url || item?.photo_url || item?.file_url || item?.image_url ||
+      item?.preview_url || item?.path_url || item?.photo ||
+      item?.file_path || item?.path || item?.image || item?.foto;
+
+    if (!value) {
+      return 'assets/default-gallery.jpg';
+    }
+    const raw = String(value).trim();
+    if (!raw || raw === 'null' || raw === 'undefined') {
       return 'assets/default-gallery.jpg';
     }
     if (/^https?:\/\//i.test(raw)) {
       return raw;
     }
-    const origin = (environment.apiBaseUrl || '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
     if (raw.startsWith('/storage/')) {
       return `${origin}${raw}`;
     }
-    const clean = raw.replace(/^\/+/, '');
-    if (clean.startsWith('storage/')) {
-      return `${origin}/${clean}`;
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
     }
-    return `${origin}/storage/${clean}`;
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+    return `${origin}/storage/${raw}`;
   }
 
   getImageAlt(item: GalleryItem, index: number): string {

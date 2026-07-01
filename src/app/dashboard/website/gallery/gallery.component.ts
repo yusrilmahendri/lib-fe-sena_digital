@@ -220,22 +220,26 @@ export class GalleryComponent implements OnInit {
     this.dashboardSvc.list(DashboardServiceType.GALERY_DATA, params).subscribe({
       next: (res) => {
         // Strip /api suffix so storage URLs resolve to the correct server origin
-        const baseUrl = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '').replace(/\/$/, '');
+        const origin = ((environment as any).apiUrl || (environment as any).baseUrl || environment.apiBaseUrl || '')
+          .replace(/\/api\/?$/, '').replace(/\/$/, '');
+
+        const resolveUrl = (raw: any): string => {
+          if (!raw) return '';
+          const s = String(raw).trim();
+          if (!s || s === 'null' || s === 'undefined') return '';
+          if (/^https?:\/\//i.test(s)) return s;
+          if (s.startsWith('/storage/')) return `${origin}${s}`;
+          if (s.startsWith('storage/')) return `${origin}/${s}`;
+          if (s.startsWith('/')) return `${origin}${s}`;
+          return `${origin}/storage/${s}`;
+        };
+
         this.galleryData = (res?.data || []).map((item: any) => {
-          let photo_url = '';
-          if (item.photo) {
-            const raw = String(item.photo).trim();
-            if (/^https?:\/\//i.test(raw)) {
-              photo_url = raw;
-            } else if (raw.startsWith('/storage/')) {
-              photo_url = `${baseUrl}${raw}`;
-            } else {
-              const clean = raw.replace(/^\/+/, '');
-              photo_url = clean.startsWith('storage/')
-                ? `${baseUrl}/${clean}`
-                : `${baseUrl}/storage/${clean}`;
-            }
-          }
+          // Try all known field names in priority order
+          const photo_url = resolveUrl(
+            item.url || item.photo_url || item.file_url || item.image_url ||
+            item.preview_url || item.photo || item.file_path || item.path || item.image || item.foto
+          );
           console.log('[GalleryImageDebug]', { item, resolvedUrl: photo_url });
           return {
             id: item.id,

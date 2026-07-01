@@ -90,60 +90,80 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     return `${this.getGroomNickname()} & ${this.getBrideNickname()}`;
   }
 
+  /** Return server origin (strips /api suffix from apiBaseUrl). */
+  protected getApiOrigin(): string {
+    const apiUrl = (environment as any).apiUrl
+      || (environment as any).baseUrl
+      || environment.apiBaseUrl
+      || 'https://cloud-api.sena-digital.com/api';
+    return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  }
+
   /**
    * Resolve a raw media path/URL from the API into a full absolute URL.
    * Handles: already-absolute URLs, /storage/... paths, storage/... paths,
-   * and bare filenames (adds /storage/ prefix).
+   * bare paths starting with / , and bare filenames (adds /storage/ prefix).
    */
-  protected normalizeMediaUrl(value: string | null | undefined): string {
-    const raw = String(value || '').trim();
+  protected normalizeMediaUrl(value: any): string {
+    if (!value) {
+      return '';
+    }
+    const raw = String(value).trim();
     if (!raw || raw === 'null' || raw === 'undefined') {
       return '';
     }
-    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) {
+    if (/^https?:\/\//i.test(raw)) {
       return raw;
     }
-    const origin = (environment.apiBaseUrl || '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
+    const origin = this.getApiOrigin();
     if (raw.startsWith('/storage/')) {
       return `${origin}${raw}`;
     }
-    const clean = raw.replace(/^\/+/, '');
-    if (clean.startsWith('storage/')) {
-      return `${origin}/${clean}`;
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
     }
-    return `${origin}/storage/${clean}`;
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+    return `${origin}/storage/${raw}`;
   }
 
   /**
    * Resolve a gallery item's photo to a full absolute URL.
-   * Tries multiple possible field names in priority order.
+   * Tries all known field names in priority order.
    */
   protected getGalleryPhotoUrl(item: any): string {
     if (!item) {
       return '';
     }
-    const directUrl =
+    const raw =
+      item.url ||
       item.photo_url ||
-      item.url_photo ||
       item.file_url ||
       item.image_url ||
       item.preview_url ||
-      item.path_url;
-    if (directUrl) {
-      return this.normalizeMediaUrl(String(directUrl));
-    }
-    const raw = item.photo || item.image || item.foto || item.file_path || item.path || '';
-    console.log('[GalleryImageDebug]', { item, resolvedUrl: this.normalizeMediaUrl(raw) });
-    return this.normalizeMediaUrl(raw);
+      item.path_url ||
+      item.photo ||
+      item.file_path ||
+      item.path ||
+      item.image ||
+      item.foto;
+    const resolvedUrl = this.normalizeMediaUrl(raw);
+    console.log('[GalleryImageDebug]', { item, resolvedUrl });
+    return resolvedUrl;
   }
 
   getCoverPhoto(): string {
+    const mp = this.weddingData?.mempelai as any;
+    const bride = this.getBride() as any;
+    const groom = this.getGroom() as any;
     return this.normalizeMediaUrl(
-      this.weddingData?.mempelai?.cover_photo ||
-      this.getBride()?.photo ||
-      this.getGroom()?.photo
+      mp?.cover_photo_url ||
+      mp?.cover_photo ||
+      bride?.photo_url ||
+      bride?.photo ||
+      groom?.photo_url ||
+      groom?.photo
     ) || 'assets/landing/template-1.png';
   }
 

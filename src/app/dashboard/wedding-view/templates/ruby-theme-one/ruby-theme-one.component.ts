@@ -157,22 +157,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override getCoverPhoto(): string {
+    const mp = this.weddingData?.mempelai as any;
     const coverPhoto = this.getSafeImageUrl([
-      this.weddingData?.mempelai?.cover_photo,
+      mp?.cover_photo_url,
+      mp?.cover_photo,
     ], '');
     console.log('[RubyCoverPhoto]', coverPhoto);
     return coverPhoto;
   }
 
   getBridePhoto(): string {
+    const bride = this.getBride() as any;
     return this.getSafeImageUrl([
-      this.getBride()?.photo,
+      bride?.photo_url,
+      bride?.photo,
     ], '');
   }
 
   getGroomPhoto(): string {
+    const groom = this.getGroom() as any;
     return this.getSafeImageUrl([
-      this.getGroom()?.photo,
+      groom?.photo_url,
+      groom?.photo,
     ], '');
   }
 
@@ -228,25 +234,23 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     if (!item) {
       return '';
     }
-
-    const directUrl = item.photo_url || item.url_photo;
-    if (directUrl) {
-      return directUrl;
-    }
-
-    const photo = String(item.photo || '').trim();
-    if (!photo) {
-      return '';
-    }
-
-    if (photo.startsWith('http://') || photo.startsWith('https://')) {
-      return photo;
-    }
-
-    const cleanPhoto = photo.replace(/^\/+/, '');
-    const apiBaseUrl = String(environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
-
-    return `${apiBaseUrl}/storage/${cleanPhoto}`;
+    // Try all known field names in priority order, then fall back to base normalizeMediaUrl
+    const raw =
+      item.url ||
+      item.photo_url ||
+      item.url_photo ||
+      item.file_url ||
+      item.image_url ||
+      item.preview_url ||
+      item.path_url ||
+      item.photo ||
+      item.file_path ||
+      item.path ||
+      item.image ||
+      item.foto;
+    const resolvedUrl = this.normalizeMediaUrl(raw);
+    console.log('[GalleryImageDebug]', { item, resolvedUrl });
+    return resolvedUrl;
   }
 
   openGalleryVideo(item: any): void {
@@ -562,21 +566,25 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   private isUnsafeThemeImage(url: any): boolean {
     const value = String(url || '').toLowerCase().trim();
-    return !value ||
-      value.includes('dashboard') ||
-      value.includes('website/tampilan') ||
-      value.includes('theme') ||
-      value.includes('/themes/') ||
-      value.includes('preview') ||
-      value.includes('thumbnail') ||
-      value.includes('soft-ivory') ||
-      value.includes('lavender-bloom') ||
-      value.includes('garden-whisper') ||
-      value.includes('modern-vows') ||
-      value.includes('diamond-garden') ||
-      value.includes('diamond') ||
-      value.includes('champagne-rose') ||
-      value.includes('velvet-mauve');
+    if (!value) {
+      return true;
+    }
+    // Only block specific theme-preview/admin paths — NOT user-uploaded media paths.
+    // User paths (storage/, gallery/, upload/, photo_pria/, cover_photo/) must NEVER be blocked.
+    if (value.includes('website/tampilan')) return true;
+    if (value.includes('/themes/')) return true;
+    if (value.includes('dashboard/website')) return true;
+    // Block by exact theme slug patterns only (not broad single words like "theme" or "diamond")
+    const themeSlugPatterns = [
+      'soft-ivory',
+      'lavender-bloom',
+      'garden-whisper',
+      'modern-vows',
+      'diamond-garden',
+      'champagne-rose',
+      'velvet-mauve',
+    ];
+    return themeSlugPatterns.some((slug) => value.includes(slug));
   }
 
   private createCouplePlaceholder(): string {

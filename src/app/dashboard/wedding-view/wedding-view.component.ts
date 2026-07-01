@@ -673,50 +673,65 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.domain ? `${baseUrl}/wedding/${this.domain}` : `${baseUrl}/wedding`;
   }
 
+  /** Return server origin (strips /api suffix from apiBaseUrl). */
+  private getApiOrigin(): string {
+    const apiUrl = (environment as any).apiUrl
+      || (environment as any).baseUrl
+      || environment.apiBaseUrl
+      || 'https://cloud-api.sena-digital.com/api';
+    return apiUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  }
+
   /**
    * Resolve a raw media path from the API into a full absolute URL.
-   * Strips /api suffix from apiBaseUrl, then handles /storage/, storage/, and bare filenames.
+   * Handles: absolute URLs, /storage/... , storage/... , /path, bare filename.
    */
-  private normalizeMediaUrl(value: string | null | undefined): string {
-    const raw = String(value || '').trim();
+  private normalizeMediaUrl(value: any): string {
+    if (!value) {
+      return '';
+    }
+    const raw = String(value).trim();
     if (!raw || raw === 'null' || raw === 'undefined') {
       return '';
     }
-    if (/^https?:\/\//i.test(raw) || raw.startsWith('data:')) {
+    if (/^https?:\/\//i.test(raw)) {
       return raw;
     }
-    const origin = (environment.apiBaseUrl || '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
+    const origin = this.getApiOrigin();
     if (raw.startsWith('/storage/')) {
       return `${origin}${raw}`;
     }
-    const clean = raw.replace(/^\/+/, '');
-    if (clean.startsWith('storage/')) {
-      return `${origin}/${clean}`;
+    if (raw.startsWith('storage/')) {
+      return `${origin}/${raw}`;
     }
-    return `${origin}/storage/${clean}`;
+    if (raw.startsWith('/')) {
+      return `${origin}${raw}`;
+    }
+    return `${origin}/storage/${raw}`;
   }
 
   /**
-   * Get cover photo URL
+   * Get cover photo URL — tries _url suffixed field first, then raw field.
    */
   getCoverPhotoUrl(): string {
-    return this.normalizeMediaUrl(this.weddingData?.mempelai?.cover_photo) || 'assets/default-cover.jpg';
+    const mp = this.weddingData?.mempelai as any;
+    return this.normalizeMediaUrl(mp?.cover_photo_url || mp?.cover_photo) || 'assets/default-cover.jpg';
   }
 
   /**
-   * Get groom photo URL
+   * Get groom photo URL — tries _url suffixed field first, then raw field.
    */
   getGroomPhotoUrl(): string {
-    return this.normalizeMediaUrl(this.weddingData?.mempelai?.pria?.photo) || 'assets/default-groom.jpg';
+    const pria = this.weddingData?.mempelai?.pria as any;
+    return this.normalizeMediaUrl(pria?.photo_url || pria?.photo) || 'assets/default-groom.jpg';
   }
 
   /**
-   * Get bride photo URL
+   * Get bride photo URL — tries _url suffixed field first, then raw field.
    */
   getBridePhotoUrl(): string {
-    return this.normalizeMediaUrl(this.weddingData?.mempelai?.wanita?.photo) || 'assets/default-bride.jpg';
+    const wanita = this.weddingData?.mempelai?.wanita as any;
+    return this.normalizeMediaUrl(wanita?.photo_url || wanita?.photo) || 'assets/default-bride.jpg';
   }
 
   /**
