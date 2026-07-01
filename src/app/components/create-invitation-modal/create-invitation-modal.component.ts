@@ -351,32 +351,58 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         .map((theme) => ({
           id: theme.id,
           slug: theme.slug,
-          name: theme.name,
+          name: this.getRegistrationThemeName(theme),
           tier,
           image: theme.image,
           fallbackImage: theme.fallbackImage,
         }));
 
       if (filtered.length) {
-        return filtered;
+        return this.uniqueThemesBySlug(filtered);
       }
 
-      return this.defaultThemeCatalog
+      const fallbackThemes = this.defaultThemeCatalog
         .filter((theme) => isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap))
         .map((theme) => ({
           slug: theme.slug,
-          name: theme.name,
+          name: this.getRegistrationThemeName(theme),
           tier,
           fallbackImage: theme.fallbackImage,
         }));
+
+      return this.uniqueThemesBySlug(fallbackThemes);
     };
 
     return {
-      trial: [...this.legacyTrialThemes],
+      trial: this.uniqueThemesBySlug([...this.legacyTrialThemes]),
       ruby: buildTierThemes('ruby'),
       sapphire: buildTierThemes('sapphire'),
       diamond: buildTierThemes('diamond'),
     };
+  }
+
+  private uniqueThemesBySlug(themes: any[]): any[] {
+    const map = new Map<string, any>();
+
+    (themes || []).forEach((theme) => {
+      const key = String(
+        theme?.slug ||
+        theme?.key ||
+        theme?.code ||
+        theme?.id ||
+        ''
+      ).trim().toLowerCase();
+
+      if (!key) {
+        return;
+      }
+
+      if (!map.has(key)) {
+        map.set(key, theme);
+      }
+    });
+
+    return Array.from(map.values());
   }
 
   private buildThemeCatalogFromApi(categories: PublicCategoryWithThemes[]): ThemeCatalogSeed[] {
@@ -393,7 +419,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         result.push({
           id: theme.id,
           slug: preset.slug,
-          name: preset.name,
+          name: this.getRegistrationThemeName(preset),
           category: preset.category,
           packageTier: preset.packageTier,
           image:
@@ -408,7 +434,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       }, []);
     });
 
-    return catalog.length ? catalog : [...this.defaultThemeCatalog];
+    return catalog.length
+      ? this.uniqueThemesBySlug(catalog) as ThemeCatalogSeed[]
+      : [...this.defaultThemeCatalog];
   }
 
   private slugifyThemeName(value: string): string {
@@ -419,6 +447,14 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+  }
+
+  private getRegistrationThemeName(theme: { slug?: string; name?: string }): string {
+    if (theme?.slug === 'diamond-garden') {
+      return 'Velvet Mauve';
+    }
+
+    return theme?.name || '';
   }
 
   /* ------------------------------ step navigation ---------------------------- */
@@ -751,7 +787,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return {
       id: prefill.id,
       slug: preset?.slug || prefill.slug,
-      name: preset?.name || prefill.name || prefill.slug,
+      name: this.getRegistrationThemeName({
+        slug: preset?.slug || prefill.slug,
+        name: preset?.name || prefill.name || prefill.slug,
+      }),
       tier: resolvedTier,
       image: prefill.image,
       fallbackImage:
@@ -764,12 +803,17 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const prefilledTheme = this.buildPrefilledTheme(this.themePrefill);
+    if (!prefilledTheme) {
+      return;
+    }
+
     const tier =
       getThemePresetBySlug(this.themePrefill.slug)?.packageTier ||
       this.resolvePrefillTier(this.themePrefill.tier);
     const prefills = this.themesByCategory[tier];
     const matchedTheme =
-      prefills.find((theme) => theme.slug === this.themePrefill?.slug) ||
+      prefills.find((theme) => theme.slug === prefilledTheme.slug) ||
       prefills.find((theme) => theme.id === this.themePrefill?.id);
 
     this.activeCategory = tier;
@@ -779,12 +823,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const prefilledTheme = this.buildPrefilledTheme(this.themePrefill);
-    if (!prefilledTheme) {
-      return;
-    }
-
-    this.themesByCategory[tier] = [prefilledTheme, ...prefills];
+    this.themesByCategory[tier] = this.uniqueThemesBySlug([prefilledTheme, ...prefills]);
     this.selectedTheme = prefilledTheme;
   }
 
