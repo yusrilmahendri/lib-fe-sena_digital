@@ -59,9 +59,9 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       this.isOpening = false;
 
       this.scrollTimer = setTimeout(() => {
-        document.querySelector('.sapphire-section--intro')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('.sapphire-post-hero')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 120);
-    }, 1050);
+    }, 1000);
   }
 
   getCoupleNames(): string {
@@ -79,7 +79,42 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getWeddingDate(): string {
-    return this.formatOpeningDate(this.getPrimaryEvent()?.tanggal_acara);
+    return `${this.getWeddingDayPart()} · ${this.getWeddingMonthPart()} · ${this.getWeddingYearPart()}`;
+  }
+
+  getWeddingDayPart(): string {
+    const date = this.getOpeningDateSource();
+    return date ? String(date.getDate()).padStart(2, '0') : '12';
+  }
+
+  getWeddingMonthPart(): string {
+    const date = this.getOpeningDateSource();
+    return date ? String(date.getMonth() + 1).padStart(2, '0') : '12';
+  }
+
+  getWeddingYearPart(): string {
+    const date = this.getOpeningDateSource();
+    return date ? String(date.getFullYear()) : '2026';
+  }
+
+  private getOpeningDateSource(): Date | null {
+    const raw = this.getPrimaryEvent()?.tanggal_acara;
+    if (!raw) {
+      return null;
+    }
+
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private isThemePreviewMode(): boolean {
+    return Number((this.weddingData as any)?.user_info?.id) === 0;
+  }
+
+  private getOpeningFallbackCover(): string {
+    return this.isThemePreviewMode()
+      ? 'assets/landing/template-5.png'
+      : 'assets/landing/template-5.png';
   }
 
   getGuestName(): string {
@@ -124,11 +159,18 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   override getCoverPhoto(): string {
+    const galleryItem = this.getGalleryPhotos()[0] as any;
+    const galleryUrl = galleryItem ? this.getGalleryPhotoUrl(galleryItem) : '';
+
     return this.getSafeImageUrl([
       (this.weddingData as any)?.cover_photo_url,
       (this.weddingData as any)?.mempelai?.cover_photo_url,
       this.weddingData?.mempelai?.cover_photo,
       (this.weddingData as any)?.cover_photo,
+      galleryItem?.photo_url,
+      galleryItem?.image_url,
+      galleryItem?.photo,
+      galleryUrl,
       (this.weddingData as any)?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.pria?.photo_url,
@@ -137,8 +179,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       (this.weddingData as any)?.mempelai?.photo_wanita_url,
       (this.weddingData as any)?.mempelai?.wanita?.photo_url,
       this.getBride()?.photo,
-      this.getGalleryPhotos()[0] ? this.getGalleryPhotoUrl(this.getGalleryPhotos()[0]) : '',
-    ], 'assets/landing/template-1.png');
+    ], this.getOpeningFallbackCover());
   }
 
   getBridePhoto(): string {
@@ -169,6 +210,63 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getGroomParentLine(): string {
     return this.getParentsText(this.getGroom(), 'pria');
+  }
+
+  getBrideInstagram(): string | null {
+    return this.extractInstagram(this.getBride());
+  }
+
+  getGroomInstagram(): string | null {
+    return this.extractInstagram(this.getGroom());
+  }
+
+  getEventDayPart(event: WeddingEvent): string {
+    const date = this.parseEventDate(event);
+    return date ? String(date.getDate()).padStart(2, '0') : this.getWeddingDayPart();
+  }
+
+  getEventMonthLabel(event: WeddingEvent): string {
+    const date = this.parseEventDate(event);
+    if (!date) {
+      return 'DESEMBER';
+    }
+
+    return date
+      .toLocaleDateString('id-ID', { month: 'long' })
+      .toUpperCase();
+  }
+
+  getEventYearPart(event: WeddingEvent): string {
+    const date = this.parseEventDate(event);
+    return date ? String(date.getFullYear()) : this.getWeddingYearPart();
+  }
+
+  getGiftAddress(bank?: any): string {
+    if (bank) {
+      return String(bank.alamat_kado || bank.gift_address || bank.alamat || '').trim();
+    }
+
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.alamat_kado,
+      data?.gift_address,
+      data?.send_gift_address,
+      data?.settings?.alamat_kado,
+      data?.settings?.gift_address,
+      data?.mempelai?.alamat_kado,
+    ];
+
+    return candidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value) || '';
+  }
+
+  copyGiftAddress(): void {
+    this.copyText(this.getGiftAddress());
+  }
+
+  getWeddingGiftIntro(): string {
+    return 'Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:';
   }
 
   getInvitedNames(): string[] {
@@ -239,6 +337,21 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getMapEmbedUrl(event: any): string {
     const data = event as any;
+    const linkMaps = String(data?.link_maps || '').trim();
+
+    if (linkMaps) {
+      if (linkMaps.includes('output=embed') || linkMaps.includes('/embed')) {
+        return linkMaps;
+      }
+
+      if (linkMaps.includes('google.com/maps')) {
+        const separator = linkMaps.includes('?') ? '&' : '?';
+        return `${linkMaps}${separator}output=embed`;
+      }
+
+      return linkMaps;
+    }
+
     const directEmbed = [
       data?.maps_embed,
       data?.map_embed,
@@ -411,6 +524,26 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     ].map((value) => String(value || '').trim())
       .filter((value) => !!value && !/menyusul|diumumkan/i.test(value))
       .join(', ');
+  }
+
+  private parseEventDate(event: WeddingEvent): Date | null {
+    const raw = event?.tanggal_acara;
+    if (!raw) {
+      return this.getOpeningDateSource();
+    }
+
+    const date = new Date(raw);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private extractInstagram(person: any): string | null {
+    const rawValue = person?.instagram || person?.ig || person?.username || '';
+    const normalized = String(rawValue || '').trim();
+    if (!normalized) {
+      return null;
+    }
+
+    return normalized.startsWith('@') ? normalized : `@${normalized}`;
   }
 
   private copyText(value: string): void {
