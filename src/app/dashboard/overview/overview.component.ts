@@ -10,6 +10,7 @@ import {
 } from 'src/app/dashboard.service';
 import { WeddingDataService } from 'src/app/services/wedding-data.service';
 import { forkJoin, catchError, of } from 'rxjs';
+import { ToastService } from 'src/app/toast.service';
 
 
 Chart.register(...registerables);
@@ -43,14 +44,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   chart: Chart | null = null;
   isLoading = false;
   activeFilter = 'totalPengunjung';
-  profile: any;
-  profileData: any;
-  userProfile: any;
-  settings: any;
   userData: any;
   weddingDataFromIndex: any;
+
+  // Public wedding website URL derived from the profile response (domain_info.domain).
   public publicWeddingUrl = '';
-  public domainErrorMessage = '';
+  public overviewDomainDebug = 'NO_DOMAIN_URL';
+  errorMessage = '';
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -99,11 +99,11 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private DashBoardSvc: DashboardService,
-    private weddingDataService: WeddingDataService
+    private weddingDataService: WeddingDataService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
-    console.log('[OverviewInit]');
     this.initDataProfile();
   }
 
@@ -111,58 +111,101 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.apiError = null;
 
-    this.DashBoardSvc.getProfile().subscribe({
-      next: (response: any) => {
-        this.updatePublicWeddingUrlFromProfileResponse(response);
-        const profile = this.extractProfilePayload(response);
-        this.userData = profile;
-        this.profile = profile;
-        this.profileData = profile;
-        this.userProfile = profile;
+    this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe(
+      (res) => {
+        this.userData = res.data;
         console.log('User profile data:', this.userData);
 
+        // Populate the public wedding URL straight from the profile response.
+        this.setPublicWeddingUrlFromProfileResponse(res);
+
         if (this.userData && this.userData.id) {
+          // Load dashboard data after getting user profile
           this.loadDashboardData();
 
-          const domain =
-            this.resolveDomainFromAnyProfile(response) ||
-            this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
-
-          if (domain) {
-            const params = { domain };
-            this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe({
-              next: (res) => {
-                this.weddingDataFromIndex = res.data;
-                this.settings = res?.data?.settings || this.settings;
-                console.log('Wedding data loaded:', this.weddingDataFromIndex);
-                if (this.weddingDataFromIndex) {
-                  this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
-                }
-              },
-              error: (error) => {
-                console.error('Error fetching wedding data:', error);
-              },
-            });
-          } else {
-            console.warn('No domain available, skipping public wedding profile request');
-          }
+          // Load wedding data
+          const params = { user_id: this.userData.id };
+          this.DashBoardSvc.list(DashboardServiceType.WEDDING_VIEW_CORE, params).subscribe(
+            (res) => {
+              this.weddingDataFromIndex = res.data;
+              console.log('Wedding data loaded:', this.weddingDataFromIndex);
+              if (this.weddingDataFromIndex) {
+                this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
+              }
+            },
+            (error) => {
+              // The public wedding-data endpoint may return 422 (e.g. public?user_id=2);
+              // this must NOT clear the already-resolved publicWeddingUrl.
+              console.error('Error fetching wedding data:', error);
+            }
+          );
         } else {
           console.warn('No user data available');
           this.isLoading = false;
         }
       },
-      error: (error) => {
+      (error) => {
         console.error('[OverviewProfileError]', error);
         this.apiError = 'Failed to load user profile';
+        this.isLoading = false;
 
         const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
         if (storedDomain && !this.publicWeddingUrl) {
-          this.setPublicWeddingUrl(storedDomain);
+          this.publicWeddingUrl = `/wedding/${encodeURIComponent(storedDomain)}`;
+          this.overviewDomainDebug = this.publicWeddingUrl;
         }
+      }
+    );
+  }
 
-        this.isLoading = false;
-      },
+  private setPublicWeddingUrlFromProfileResponse(response: any): void {
+    const profile = response?.data || response;
+
+    const rawDomain =
+      profile?.domain_info?.domain ||
+      profile?.domain ||
+      profile?.settings?.domain ||
+      '';
+
+    const domain = this.normalizeWeddingDomain(rawDomain);
+
+    if (domain) {
+      this.publicWeddingUrl = `/wedding/${encodeURIComponent(domain)}`;
+      this.overviewDomainDebug = this.publicWeddingUrl;
+      localStorage.setItem('wedding_domain', domain);
+    } else {
+      const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
+
+      this.publicWeddingUrl = storedDomain
+        ? `/wedding/${encodeURIComponent(storedDomain)}`
+        : '';
+
+      this.overviewDomainDebug = this.publicWeddingUrl || 'NO_DOMAIN_URL';
+    }
+
+    console.log('[OverviewProfileDomain]', {
+      response,
+      profile,
+      rawDomain,
+      domain,
+      publicWeddingUrl: this.publicWeddingUrl,
+      overviewDomainDebug: this.overviewDomainDebug
     });
+  }
+
+  private normalizeWeddingDomain(value: any): string {
+    if (!value) return '';
+
+    return String(value)
+      .trim()
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\/wedding\//i, '')
+      .replace(/^https?:\/\/(www\.)?sena-digital\.com\//i, '')
+      .replace(/^sena-digital\.com\/wedding\//i, '')
+      .replace(/^sena-digital\.com\//i, '')
+      .replace(/^\/wedding\//i, '')
+      .replace(/^\//, '')
+      .split('?')[0]
+      .split('#')[0];
   }
 
   private loadDashboardData(): void {
@@ -564,111 +607,25 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Open the public wedding website using already-loaded API data.
-   * Uses a synchronous click flow so Safari iPhone does not block navigation.
+   * Handle the "Lihat Website" click. Navigation is driven by the anchor href
+   * (publicWeddingUrl); this only guards against navigating when no URL exists.
    */
   handleViewWebsiteClick(event: Event): void {
     console.log('[ViewWebsiteClick]', {
-      publicWeddingUrl: this.publicWeddingUrl,
+      publicWeddingUrl: this.publicWeddingUrl
     });
 
     if (!this.publicWeddingUrl) {
       event.preventDefault();
       event.stopPropagation();
-      this.domainErrorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
+      this.errorMessage = 'Domain undangan belum tersedia. Silakan muat ulang halaman.';
+      return;
     }
 
+    // Preserve existing behaviour: hand already-loaded wedding data to the viewer.
     if (this.weddingDataFromIndex) {
       this.weddingDataService.setWeddingData(this.weddingDataFromIndex);
     }
-  }
-
-  private extractProfilePayload(response: any): any {
-    return response?.data || response?.body?.data || response?.result?.data || response;
-  }
-
-  private resolveDomainFromAnyProfile(response: any): string {
-    const profile = this.extractProfilePayload(response);
-
-    const rawDomain =
-      profile?.domain_info?.domain ||
-      profile?.data?.domain_info?.domain ||
-      profile?.domain ||
-      profile?.data?.domain ||
-      profile?.settings?.domain ||
-      profile?.data?.settings?.domain ||
-      profile?.invitation?.domain ||
-      profile?.data?.invitation?.domain ||
-      '';
-
-    return this.normalizeWeddingDomain(rawDomain);
-  }
-
-  private normalizeWeddingDomain(value: any): string {
-    if (!value) return '';
-
-    return String(value)
-      .trim()
-      .replace(/^https?:\/\/(www\.)?sena-digital\.com\/wedding\//i, '')
-      .replace(/^https?:\/\/(www\.)?sena-digital\.com\//i, '')
-      .replace(/^sena-digital\.com\/wedding\//i, '')
-      .replace(/^sena-digital\.com\//i, '')
-      .replace(/^\/wedding\//i, '')
-      .replace(/^\//, '')
-      .split('?')[0]
-      .split('#')[0];
-  }
-
-  private setPublicWeddingUrl(domain: string): void {
-    const normalizedDomain = this.normalizeWeddingDomain(domain);
-
-    if (!normalizedDomain) {
-      return;
-    }
-
-    this.publicWeddingUrl = `/wedding/${encodeURIComponent(normalizedDomain)}`;
-    this.domainErrorMessage = '';
-    localStorage.setItem('wedding_domain', normalizedDomain);
-
-    console.log('[OverviewPublicWeddingUrlSet]', {
-      domain: normalizedDomain,
-      publicWeddingUrl: this.publicWeddingUrl,
-    });
-  }
-
-  private updatePublicWeddingUrlFromProfileResponse(response: any): void {
-    const domain = this.resolveDomainFromAnyProfile(response);
-
-    if (domain) {
-      this.setPublicWeddingUrl(domain);
-      return;
-    }
-
-    const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
-
-    if (storedDomain) {
-      this.setPublicWeddingUrl(storedDomain);
-      return;
-    }
-
-    console.warn('[OverviewDomainMissing]', {
-      response,
-      publicWeddingUrl: this.publicWeddingUrl,
-    });
-  }
-
-  getPublicWeddingUrl(): string {
-    return this.publicWeddingUrl;
-  }
-
-  getPublicWeddingAbsoluteUrl(): string {
-    const path = this.publicWeddingUrl;
-
-    if (!path) {
-      return '';
-    }
-
-    return `${window.location.origin}${path}`;
   }
 
 }
