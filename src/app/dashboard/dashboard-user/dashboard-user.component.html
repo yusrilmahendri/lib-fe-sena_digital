@@ -222,7 +222,8 @@
 
         <!-- Dropdown Menu -->
         <div class="dropdown-menu" *ngIf="isDropdownOpen" role="menu">
-          <a class="dropdown-item"
+          <a *ngIf="showBillingMenu"
+             class="dropdown-item"
              (click)="onClickBill()"
              role="menuitem"
              tabindex="0">Bill</a>
