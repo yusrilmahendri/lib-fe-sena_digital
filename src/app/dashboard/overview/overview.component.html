@@ -10,12 +10,14 @@
           [attr.href]="publicWeddingUrl || null"
           [class.disabled]="!publicWeddingUrl"
           [attr.aria-disabled]="!publicWeddingUrl"
+          target="_blank"
+          rel="noopener"
           (click)="handleViewWebsiteClick($event)"
         >
           Lihat Website
         </a>
-        <small class="debug-url">
-          {{ overviewDomainDebug }}
+        <small *ngIf="publicWeddingUrl" class="overview-public-url">
+          {{ publicWeddingUrl }}
         </small>
       </div>
     </div>

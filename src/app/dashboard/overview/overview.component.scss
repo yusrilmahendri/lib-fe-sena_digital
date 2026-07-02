@@ -61,10 +61,9 @@ body {
 }
 .btn-lihat-website.disabled {
   opacity: 0.55;
-  pointer-events: none;
   cursor: not-allowed;
 }
-.debug-url {
+.overview-public-url {
   margin-top: 0.25rem;
   font-size: 0.7rem;
   color: #9ca3af;
