@@ -565,7 +565,93 @@
   }
 }
 
+.theme-picker__footer--desktop {
+  display: flex;
+}
+
+.theme-mobile {
+  display: none;
+}
+
+.theme-mobile__picker {
+  margin-top: 20px;
+}
+
+.theme-mobile__picker-label {
+  color: var(--theme-muted);
+  display: block;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.theme-mobile__select {
+  appearance: none;
+  background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238c8091' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 16px center;
+  border: 1px solid var(--theme-border);
+  border-radius: 16px;
+  color: var(--theme-text);
+  font-size: 1rem;
+  padding: 14px 44px 14px 16px;
+  width: 100%;
+}
+
+.theme-mobile__footer {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.btn-pilih-tema {
+  align-items: center;
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.05rem;
+  font-weight: 700;
+  justify-content: center;
+  min-width: 184px;
+  padding: 16px 28px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  width: 100%;
+}
+
+.btn-pilih-tema:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-pilih-tema:disabled,
+.btn-pilih-tema.is-disabled {
+  background: #cbc7cb;
+  cursor: not-allowed;
+}
+
+.theme-card--mobile-preview {
+  cursor: default;
+}
+
+.theme-card--mobile-preview:hover {
+  border-color: var(--theme-border);
+  box-shadow: none;
+  transform: none;
+}
+
 @media (max-width: 767.98px) {
+  .theme-grid--desktop,
+  .theme-picker__footer--desktop {
+    display: none;
+  }
+
+  .theme-mobile {
+    display: block;
+  }
+
   .theme-picker {
     padding: 0 0 16px;
   }
@@ -577,15 +663,6 @@
 
   .theme-picker__header h1 {
     font-size: 1.9rem;
-  }
-
-  .theme-picker__footer {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .theme-picker__submit {
-    width: 100%;
   }
 }
 

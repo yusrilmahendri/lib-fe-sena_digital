@@ -23,11 +23,12 @@ import {
   PaidThemePackageTier,
   PUBLIC_THEME_PRESETS,
   resolvePackageTier,
+  resolvePublicThemeSlug,
   ThemeAccessMap,
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../../theme-package-access.util';
-import { normalizeThemeSlug } from '../../../theme-render.registry';
+import { normalizeThemeSlug as normalizeRenderThemeSlug } from '../../../theme-render.registry';
 
 type PaidPackageTier = PaidThemePackageTier;
 
@@ -99,6 +100,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
   showThemeFeedbackModal = false;
   themeFeedbackType: 'success' | 'error' = 'success';
   themeFeedbackMessage = '';
+  public selectedThemeSlugForSubmit = '';
+  public selectedThemeForSubmit: ThemeCard | null = null;
 
   private subscriptions = new Subscription();
   private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
@@ -244,7 +247,54 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get hasThemeForConfirmation(): boolean {
-    return !!(this.pendingThemeForConfirmation || this.selectedTheme);
+    return !!(this.pendingThemeForConfirmation || this.selectedThemeForSubmit || this.selectedTheme);
+  }
+
+  get fixedThemes(): any[] {
+    return FIXED_THEME_PRESETS;
+  }
+
+  get themes(): any[] {
+    return Array.isArray(this.themeCards) ? this.themeCards : [];
+  }
+
+  get backendThemes(): any[] {
+    return this.themes.filter((theme) => theme?.isConnectedToBackend);
+  }
+
+  get accessibleThemes(): any[] {
+    return this.visibleThemeCards.filter((theme) => this.canUseTheme(theme));
+  }
+
+  get mobileThemeOptions(): ThemeCard[] {
+    if (this.userPackageTier === 'trial') {
+      return this.visibleThemeCards;
+    }
+
+    return this.visibleThemeCards.filter(
+      (theme) => !theme.isLegacy && theme.category !== 'Legacy' && !!this.normalizeThemeSlug(theme.slug)
+    );
+  }
+
+  get mobilePreviewTheme(): ThemeCard | null {
+    return (
+      this.selectedThemeForSubmit ||
+      this.resolveThemeBySlugOrName(this.selectedThemeSlugForSubmit) ||
+      this.currentTheme
+    );
+  }
+
+  get canSubmitSelectedTheme(): boolean {
+    const theme =
+      this.selectedThemeForSubmit ||
+      this.pendingThemeForConfirmation ||
+      this.resolveThemeBySlugOrName(this.selectedThemeSlugForSubmit);
+
+    if (!theme) {
+      return false;
+    }
+
+    return this.canUseTheme(theme);
   }
 
   get isPrimaryButtonDisabled(): boolean {
@@ -319,7 +369,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get focusedThemeSubtitle(): string {
-    const theme = this.selectedTheme;
+    const theme = this.selectedThemeForSubmit || this.selectedTheme;
 
     if (!theme) {
       return 'Pilih salah satu tema untuk melanjutkan.';
@@ -428,6 +478,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.selectedThemeId = resolvedThemeId;
     this.updateCurrentThemeStatus();
     this.syncSelectedThemeForVisibleTab();
+    this.syncSubmitThemeStateFromCurrent();
   }
 
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
@@ -442,7 +493,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     );
 
     flattenedThemes.forEach((entry: any) => {
-      const normalizedSlug = normalizeThemeSlug(entry?.slug);
+      const normalizedSlug = normalizeRenderThemeSlug(entry?.slug);
       const preset = getThemePresetBySlug(normalizedSlug);
       if (!preset) {
         return;
@@ -545,6 +596,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     this.themeCards = nextCards;
     this.updateCurrentThemeStatus();
+    this.syncSubmitThemeStateFromCurrent();
   }
 
   /**
@@ -599,6 +651,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   onThemeCardClick(theme: ThemeCard): void {
     this.selectedThemeId = theme.id;
+    this.onMobileThemeOptionChange(theme.slug);
   }
 
   onPreviewClick(theme: ThemeCard, event: Event): void {
@@ -684,6 +737,146 @@ export class TampilanComponent implements OnInit, OnDestroy {
       .trim()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '');
+  }
+
+  public onMobileThemeOptionChange(value: any): void {
+    const theme = this.resolveThemeBySlugOrName(value);
+
+    this.selectedThemeSlugForSubmit = this.normalizeThemeSlug(theme?.slug || value);
+    this.selectedThemeForSubmit = theme;
+    this.pendingThemeForConfirmation = theme;
+
+    if (theme) {
+      this.selectedThemeId = theme.id;
+    }
+
+    console.log('[MobileThemeOptionChange]', {
+      value,
+      selectedThemeSlugForSubmit: this.selectedThemeSlugForSubmit,
+      selectedThemeForSubmit: this.selectedThemeForSubmit,
+      pendingThemeForConfirmation: this.pendingThemeForConfirmation,
+      canUseTheme: theme ? this.canUseTheme(theme) : false,
+      canSubmitSelectedTheme: this.canSubmitSelectedTheme
+    });
+
+    this.logThemeButtonState();
+    this.cdr.detectChanges();
+  }
+
+  public confirmSelectedTheme(): void {
+    const theme =
+      this.selectedThemeForSubmit ||
+      this.pendingThemeForConfirmation ||
+      this.resolveThemeBySlugOrName(this.selectedThemeSlugForSubmit);
+
+    console.log('[ConfirmSelectedTheme]', {
+      theme,
+      selectedThemeSlugForSubmit: this.selectedThemeSlugForSubmit,
+      canUseTheme: theme ? this.canUseTheme(theme) : false
+    });
+
+    if (!theme) {
+      return;
+    }
+
+    if (!this.canUseTheme(theme)) {
+      this.openUpgradeModalForTheme(theme);
+      return;
+    }
+
+    this.selectedThemeForSubmit = theme;
+    this.pendingThemeForConfirmation = theme;
+    this.selectedThemeId = theme.id;
+
+    this.openThemeConfirmationModal();
+  }
+
+  private openThemeConfirmationModal(): void {
+    this.showSelectConfirmationModal = true;
+    this.showUpgradeModal = false;
+    this.logThemeButtonState();
+  }
+
+  private openUpgradeModalForTheme(theme: ThemeCard): void {
+    this.pendingThemeForUpgrade = theme;
+    this.showUpgradeModal = true;
+    this.showSelectConfirmationModal = false;
+  }
+
+  private logThemeButtonState(): void {
+    console.log('[ThemeButtonState]', {
+      selectedThemeSlugForSubmit: this.selectedThemeSlugForSubmit,
+      selectedThemeForSubmit: this.selectedThemeForSubmit,
+      pendingThemeForConfirmation: this.pendingThemeForConfirmation,
+      canSubmitSelectedTheme: this.canSubmitSelectedTheme
+    });
+  }
+
+  private getAllThemeItems(): any[] {
+    const fixed = Array.isArray(this.fixedThemes) ? this.fixedThemes : [];
+    const themes = Array.isArray(this.themes) ? this.themes : [];
+    const backend = Array.isArray(this.backendThemes) ? this.backendThemes : [];
+    const accessible = Array.isArray(this.accessibleThemes) ? this.accessibleThemes : [];
+
+    return [...fixed, ...themes, ...backend, ...accessible].filter(Boolean);
+  }
+
+  private normalizeThemeSlug(value: any): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-');
+  }
+
+  private resolveThemeBySlugOrName(value: any): ThemeCard | null {
+    const key = this.normalizeThemeSlug(value);
+    if (!key) {
+      return null;
+    }
+
+    const canonicalKey = resolvePublicThemeSlug(key) || key;
+    const pools = [
+      this.themeCards,
+      this.backendThemes,
+      this.accessibleThemes,
+      this.fixedThemes,
+    ];
+
+    for (const pool of pools) {
+      if (!Array.isArray(pool)) {
+        continue;
+      }
+
+      const matched = pool.find((theme: any) => {
+        const slug = this.normalizeThemeSlug(theme?.slug);
+        const resolvedSlug = resolvePublicThemeSlug(slug) || slug;
+        const name = this.normalizeThemeSlug(theme?.name || theme?.title || theme?.nama);
+        const code = this.normalizeThemeSlug(theme?.code);
+
+        return (
+          slug === key ||
+          resolvedSlug === canonicalKey ||
+          name === key ||
+          code === key
+        );
+      });
+
+      if (matched) {
+        return matched as ThemeCard;
+      }
+    }
+
+    return null;
+  }
+
+  private syncSubmitThemeStateFromCurrent(): void {
+    const theme = this.selectedTheme || this.currentTheme;
+    if (!theme?.slug) {
+      return;
+    }
+
+    this.selectedThemeSlugForSubmit = this.normalizeThemeSlug(theme.slug);
+    this.selectedThemeForSubmit = theme;
   }
 
   onPrimaryAction(): void {
@@ -914,7 +1107,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    return !!getThemePresetBySlug(normalizeThemeSlug(theme.slug));
+    return !!getThemePresetBySlug(normalizeRenderThemeSlug(theme.slug));
   }
 
   private resolveRequiredPackageTier(theme: ThemeCard): PaidPackageTier {
@@ -1053,6 +1246,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
     const selectedVisibleTheme = visibleThemes.find((theme) => theme.id === this.selectedThemeId);
     if (!selectedVisibleTheme) {
       this.selectedThemeId = null;
+    } else if (!this.selectedThemeSlugForSubmit) {
+      this.syncSubmitThemeStateFromCurrent();
     }
   }
 
