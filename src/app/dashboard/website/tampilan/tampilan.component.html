@@ -52,7 +52,7 @@
           <div class="theme-card__media">
             <img
               [src]="theme.image"
-              [alt]="'Preview tema ' + theme.name"
+              [alt]="'Preview tema ' + getThemeDisplayName(theme)"
               loading="lazy"
               (error)="onImageError($event, theme)" />
 
@@ -74,7 +74,7 @@
           </div>
 
           <div class="theme-card__body">
-            <h3>{{ theme.name }}</h3>
+            <h3>{{ getThemeDisplayName(theme) }}</h3>
             <p>{{ getCardSubtitle(theme) }}</p>
             <small *ngIf="!theme.isConnectedToBackend" class="text-muted">Theme belum terhubung</small>
           </div>
@@ -93,7 +93,7 @@
           <span class="theme-picker__selection-label">
             {{ selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
           </span>
-          <strong>{{ selectedTheme?.name || currentTheme?.name || 'Pilih salah satu tema' }}</strong>
+          <strong>{{ selectedTheme ? getThemeDisplayName(selectedTheme) : (currentTheme ? getThemeDisplayName(currentTheme) : 'Pilih salah satu tema') }}</strong>
           <small>{{ focusedThemeSubtitle }}</small>
         </div>
 
