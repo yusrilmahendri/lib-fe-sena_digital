@@ -40,7 +40,10 @@
     </div>
 
     <ng-container *ngIf="!isLoading && !errorMessage">
-      <div *ngIf="visibleThemeCards.length; else emptyState" class="theme-grid">
+      <div
+        *ngIf="visibleThemeCards.length; else emptyState"
+        class="theme-grid"
+        [class.theme-grid--desktop]="userPackageTier !== 'trial'">
         <article
           *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
           class="theme-card"
@@ -88,7 +91,84 @@
         </div>
       </ng-template>
 
-      <footer class="theme-picker__footer">
+      <div
+        *ngIf="userPackageTier !== 'trial' && visibleThemeCards.length"
+        class="theme-mobile">
+        <article
+          *ngIf="mobilePreviewTheme as previewTheme"
+          class="theme-card theme-card--mobile-preview"
+          [class.theme-card--used]="isCurrentTheme(previewTheme)"
+          [class.theme-card--locked]="isCardLocked(previewTheme)">
+          <div class="theme-card__media">
+            <img
+              [src]="previewTheme.image"
+              [alt]="'Preview tema ' + previewTheme.name"
+              loading="lazy"
+              (error)="onImageError($event, previewTheme)" />
+
+            <span class="theme-card__badge">
+              {{ getPackageLabel(previewTheme.requiredPackageTier || activeTab) }}
+            </span>
+
+            <span *ngIf="isCurrentTheme(previewTheme)" class="theme-card__ribbon">PAKET DIGUNAKAN</span>
+
+            <button
+              type="button"
+              class="theme-card__preview"
+              (click)="onPreviewClick(previewTheme, $event)">
+              <i class="far fa-eye" aria-hidden="true"></i>
+              Preview
+            </button>
+
+            <div *ngIf="isCardLocked(previewTheme)" class="theme-card__lock">
+              <i class="fas fa-lock" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <div class="theme-card__body">
+            <h3>{{ previewTheme.name }}</h3>
+            <p>{{ getCardSubtitle(previewTheme) }}</p>
+          </div>
+        </article>
+
+        <div class="theme-mobile__picker">
+          <label class="theme-mobile__picker-label" for="mobile-theme-select">Pilih tema</label>
+          <select
+            id="mobile-theme-select"
+            class="theme-mobile__select"
+            [ngModel]="selectedThemeSlugForSubmit"
+            (ngModelChange)="onMobileThemeOptionChange($event)">
+            <option
+              *ngFor="let theme of mobileThemeOptions"
+              [ngValue]="theme.slug">
+              {{ theme.name || theme.title || theme.nama }}
+            </option>
+          </select>
+        </div>
+
+        <footer class="theme-mobile__footer">
+          <div class="theme-picker__selection">
+            <span class="theme-picker__selection-label">
+              {{ selectedThemeForSubmit ? 'Tema dipilih' : 'Belum memilih tema' }}
+            </span>
+            <strong>{{ selectedThemeForSubmit?.name || mobilePreviewTheme?.name || 'Pilih salah satu tema' }}</strong>
+            <small>{{ focusedThemeSubtitle }}</small>
+          </div>
+
+          <button
+            type="button"
+            class="btn-pilih-tema"
+            [disabled]="!canSubmitSelectedTheme"
+            [class.is-disabled]="!canSubmitSelectedTheme"
+            (click)="confirmSelectedTheme()">
+            Pilih tema
+          </button>
+        </footer>
+      </div>
+
+      <footer
+        class="theme-picker__footer"
+        [class.theme-picker__footer--desktop]="userPackageTier !== 'trial'">
         <div class="theme-picker__selection">
           <span class="theme-picker__selection-label">
             {{ selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}

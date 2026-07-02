@@ -85,6 +85,20 @@ const THEME_SLUG_ALIASES: Record<string, PublicThemeSlug> = {
   'velvet-mauve': 'diamond-garden',
 };
 
+/** Cumulative theme slugs accessible per paid tier (includes all lower tiers). */
+export const CUMULATIVE_THEME_ACCESS: Record<PaidThemePackageTier, readonly string[]> = {
+  ruby: ['soft-ivory', 'lavender-bloom'],
+  sapphire: ['soft-ivory', 'lavender-bloom', 'garden-whisper', 'modern-vows'],
+  diamond: [
+    'soft-ivory',
+    'lavender-bloom',
+    'garden-whisper',
+    'modern-vows',
+    'champagne-rose',
+    'velvet-mauve',
+  ],
+};
+
 const THEME_SLUG_ORDER: PublicThemeSlug[] = PUBLIC_THEME_PRESETS.map(
   (preset) => preset.slug
 );
@@ -207,7 +221,36 @@ export function getThemeTierForSlug(
   slug: string | null | undefined
 ): PaidThemePackageTier {
   const preset = getThemePresetBySlug(slug);
-  return preset?.packageTier ?? 'ruby';
+  if (preset) {
+    return preset.packageTier;
+  }
+
+  const normalized = normalizeStableKey(slug || '');
+  if (Object.prototype.hasOwnProperty.call(THEME_SLUG_ALIASES, normalized)) {
+    return getThemeTierForSlug(THEME_SLUG_ALIASES[normalized]);
+  }
+
+  return 'ruby';
+}
+
+/**
+ * Returns true when `userTier` may select `themeSlug`, using cumulative tier
+ * hierarchy and public slug aliases (e.g. modern-vows → garden-whisper).
+ */
+export function isThemeSlugAllowedForTier(
+  userTier: ThemePackageTier,
+  themeSlug: string | null | undefined
+): boolean {
+  if (!themeSlug || userTier === 'trial') {
+    return false;
+  }
+
+  const resolved = resolvePublicThemeSlug(themeSlug);
+  if (!resolved) {
+    return false;
+  }
+
+  return isTierAllowed(userTier, getThemeTierForSlug(resolved));
 }
 
 export function normalizeStableKey(value: string): string {
