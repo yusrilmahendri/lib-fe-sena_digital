@@ -92,8 +92,8 @@ const THEME_SLUG_ORDER: PublicThemeSlug[] = PUBLIC_THEME_PRESETS.map(
 export const FALLBACK_THEME_ACCESS_MAP: ThemeAccessMap = {
   trial: [],
   ruby: ['soft-ivory', 'lavender-bloom'],
-  sapphire: ['garden-whisper'],
-  diamond: ['diamond', 'diamond-garden'],
+  sapphire: ['soft-ivory', 'lavender-bloom', 'garden-whisper'],
+  diamond: ['soft-ivory', 'lavender-bloom', 'garden-whisper', 'diamond', 'diamond-garden'],
 };
 
 export function resolvePackageTier(

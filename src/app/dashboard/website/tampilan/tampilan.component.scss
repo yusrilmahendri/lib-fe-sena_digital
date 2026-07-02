@@ -98,6 +98,23 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.theme-picker__mobile-select {
+  display: none;
+  margin-bottom: 16px;
+}
+
+.theme-picker__mobile-select select {
+  appearance: none;
+  background: #ffffff;
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+  color: var(--theme-text);
+  font-size: 1rem;
+  min-height: 46px;
+  padding: 0 14px;
+  width: 100%;
+}
+
 .theme-card {
   background: var(--theme-surface);
   border: 1px solid var(--theme-border);
@@ -338,6 +355,17 @@
   cursor: not-allowed;
 }
 
+.btn-pilih-tema:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.btn-pilih-tema:not(:disabled) {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 .theme-picker__submit--upgrade:not(:disabled) {
   background: linear-gradient(135deg, #ff8a57 0%, #ff5c7a 100%);
 }
@@ -454,6 +482,54 @@
   letter-spacing: 0.08em;
   margin-top: 10px;
   text-transform: uppercase;
+}
+
+.theme-confirm-actions {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.theme-confirm-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.theme-confirm-btn:active {
+  transform: scale(0.98);
+}
+
+.theme-confirm-btn--secondary {
+  color: #9b174f;
+  background: #ffffff;
+  border: 1.5px solid rgba(155, 23, 79, 0.35);
+  box-shadow: 0 8px 18px rgba(155, 23, 79, 0.08);
+}
+
+.theme-confirm-btn--primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #ff4f9a 0%, #a31361 100%);
+  border: 1.5px solid transparent;
+  box-shadow: 0 12px 24px rgba(163, 19, 97, 0.28);
+}
+
+.theme-confirm-btn:disabled {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .confirm-actions {
@@ -584,8 +660,30 @@
     flex-direction: column;
   }
 
+  .theme-picker__mobile-select {
+    display: block;
+  }
+
   .theme-picker__submit {
     width: 100%;
+  }
+
+  .theme-confirm-modal {
+    width: calc(100vw - 40px);
+    max-width: 360px;
+    padding: 28px 24px;
+    border-radius: 28px;
+  }
+
+  .theme-confirm-actions {
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .theme-confirm-btn {
+    height: 46px;
+    font-size: 14px;
+    padding: 0 14px;
   }
 }
 
@@ -618,5 +716,15 @@
 
   .theme-modal p {
     font-size: 1rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .theme-confirm-actions {
+    flex-direction: column;
+  }
+
+  .theme-confirm-btn {
+    width: 100%;
   }
 }

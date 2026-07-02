@@ -40,6 +40,20 @@
     </div>
 
     <ng-container *ngIf="!isLoading && !errorMessage">
+      <div *ngIf="visibleThemeCards.length" class="theme-picker__mobile-select">
+        <select
+          [value]="selectedThemeSlug"
+          (change)="onThemeOptionChange($any($event.target).value)"
+          aria-label="Pilih tema">
+          <option value="">Pilih salah satu tema</option>
+          <option
+            *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
+            [value]="theme.slug">
+            {{ theme.name }}
+          </option>
+        </select>
+      </div>
+
       <div *ngIf="visibleThemeCards.length; else emptyState" class="theme-grid">
         <article
           *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
@@ -91,18 +105,18 @@
       <footer class="theme-picker__footer">
         <div class="theme-picker__selection">
           <span class="theme-picker__selection-label">
-            {{ selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
+            {{ selectedThemeForSubmit || selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
           </span>
-          <strong>{{ selectedTheme?.name || currentTheme?.name || 'Pilih salah satu tema' }}</strong>
+          <strong>{{ selectedThemeForSubmit?.name || selectedTheme?.name || currentTheme?.name || 'Pilih salah satu tema' }}</strong>
           <small>{{ focusedThemeSubtitle }}</small>
         </div>
 
         <button
           type="button"
-          class="theme-picker__submit"
-          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitFocusedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme) && selectedTheme.is_active && selectedTheme.category_is_active"
-          [disabled]="isPrimaryButtonDisabled"
-          (click)="onPrimaryAction()">
+          class="theme-picker__submit btn-pilih-tema"
+          [class.theme-picker__submit--upgrade]="selectedThemeForSubmit && !canSubmitFocusedTheme && !selectedThemeForSubmit.isLegacy && !isCurrentTheme(selectedThemeForSubmit) && selectedThemeForSubmit.is_active && selectedThemeForSubmit.category_is_active"
+          [disabled]="!canSubmitSelectedTheme"
+          (click)="confirmSelectedTheme()">
           <i class="far fa-window-restore" aria-hidden="true"></i>
           {{ primaryButtonLabel }}
         </button>
@@ -116,7 +130,7 @@
   class="theme-modal-backdrop"
   (click)="closeSelectConfirmationModal()">
   <section
-    class="theme-modal"
+    class="theme-modal theme-confirm-modal"
     role="dialog"
     aria-modal="true"
     aria-labelledby="select-theme-title"
@@ -129,16 +143,16 @@
     <p>Silakan klik konfirmasi jika Anda ingin menggunakan tema tersebut.</p>
     <span class="debug-modal-marker">Theme ini akan menjadi tampilan aktif website Anda.</span>
 
-    <div class="theme-modal__actions confirm-actions">
+    <div class="theme-confirm-actions">
       <button
         type="button"
-        class="btn-back"
+        class="theme-confirm-btn theme-confirm-btn--secondary"
         (click)="closeSelectConfirmationModal()">
         Kembali
       </button>
       <button
         type="button"
-        class="btn-confirm-theme"
+        class="theme-confirm-btn theme-confirm-btn--primary"
         [disabled]="processingPrimaryAction || !canConfirmPendingTheme"
         (click)="confirmThemeSelection()">
         {{ confirmThemeButtonLabel }}
