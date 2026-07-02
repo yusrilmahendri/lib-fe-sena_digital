@@ -89,6 +89,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
   errorMessage = '';
   currentThemeId: number | null = null;
   selectedThemeId: number | null = null;
+  selectedThemeSlug = '';
+  selectedThemeForSubmit: ThemeCard | null = null;
   userPackageTier: ThemePackageTier = 'trial';
   activeTab: ThemeFilterTier = 'ruby';
   showSelectConfirmationModal = false;
@@ -102,7 +104,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   private subscriptions = new Subscription();
   private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
-  private pendingThemeForConfirmation: ThemeCard | null = null;
+  pendingThemeForConfirmation: ThemeCard | null = null;
   private pendingThemeForUpgrade: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
     { id: -1, backendThemeId: null, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial' },
@@ -202,12 +204,42 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return this.themeCards.find((theme) => theme.id === this.currentThemeId) ?? null;
   }
 
+  get allThemes(): ThemeCard[] {
+    if (this.userPackageTier === 'trial') {
+      return this.themeCards;
+    }
+
+    return this.themeCards.filter(
+      (theme) => !theme.isLegacy && theme.category !== 'Legacy'
+    );
+  }
+
+  get dropdownThemeOptions(): ThemeCard[] {
+    return this.allThemes;
+  }
+
+  get currentPackageTier(): ThemePackageTier {
+    return this.userPackageTier;
+  }
+
+  get selectedThemeOption(): ThemeCard | null {
+    return this.selectedThemeForSubmit;
+  }
+
   get selectedTheme(): ThemeCard | null {
+    if (this.selectedThemeForSubmit) {
+      return this.selectedThemeForSubmit;
+    }
+
     if (this.selectedThemeId === null) {
       return null;
     }
 
-    return this.visibleThemeCards.find((theme) => theme.id === this.selectedThemeId) ?? null;
+    return (
+      this.allThemes.find((theme) => theme.id === this.selectedThemeId) ??
+      this.themeCards.find((theme) => theme.id === this.selectedThemeId) ??
+      null
+    );
   }
 
   get isPreviewOnlyTab(): boolean {
@@ -221,9 +253,48 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return order.indexOf(activeTabNorm) > order.indexOf(userTier);
   }
 
+  get canSubmitSelectedTheme(): boolean {
+    const theme = this.selectedThemeForSubmit || this.pendingThemeForConfirmation;
+
+    if (!theme) {
+      return false;
+    }
+
+    if (theme.isLoading || this.processingPrimaryAction) {
+      return false;
+    }
+
+    if (this.isCurrentTheme(theme)) {
+      return false;
+    }
+
+    if (theme.isLegacy) {
+      return false;
+    }
+
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      return false;
+    }
+
+    if (theme.is_active === false) {
+      return false;
+    }
+
+    if (theme.category_is_active === false) {
+      return false;
+    }
+
+    return this.canUseTheme(theme);
+  }
+
+  get isSelectedThemeAllowed(): boolean {
+    const theme = this.selectedThemeForSubmit || this.pendingThemeForConfirmation || this.selectedTheme;
+    return !!theme && this.canUseTheme(theme);
+  }
+
+  /** @deprecated Use canSubmitSelectedTheme — kept for template upgrade styling */
   get canSubmitFocusedTheme(): boolean {
-    const theme = this.selectedTheme;
-    return !!theme && !this.isCurrentTheme(theme) && this.canUseTheme(theme);
+    return this.canSubmitSelectedTheme;
   }
 
   /**
@@ -244,40 +315,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get hasThemeForConfirmation(): boolean {
-    return !!(this.pendingThemeForConfirmation || this.selectedTheme);
+    return !!(this.pendingThemeForConfirmation || this.selectedThemeForSubmit || this.selectedTheme);
   }
 
+  /** @deprecated Use !canSubmitSelectedTheme */
   get isPrimaryButtonDisabled(): boolean {
-    const theme = this.selectedTheme;
-    if (!theme) {
-      return true;
-    }
-
-    if (theme.isLoading || this.processingPrimaryAction) {
-      return true;
-    }
-
-    if (this.isCurrentTheme(theme)) {
-      return true;
-    }
-
-    if (theme.isLegacy) {
-      return true;
-    }
-
-    if (!this.hasValidBackendThemeConnection(theme)) {
-      return true;
-    }
-
-    if (theme.is_active === false) {
-      return true;
-    }
-
-    if (theme.category_is_active === false) {
-      return true;
-    }
-
-    return false;
+    return !this.canSubmitSelectedTheme;
   }
 
   get primaryButtonLabel(): string {
@@ -426,8 +469,26 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     this.currentThemeId = resolvedThemeId;
     this.selectedThemeId = resolvedThemeId;
+    this.syncSelectedThemeFromId(resolvedThemeId);
     this.updateCurrentThemeStatus();
     this.syncSelectedThemeForVisibleTab();
+  }
+
+  private syncSelectedThemeFromId(themeId: number | null): void {
+    if (themeId === null) {
+      return;
+    }
+
+    const matchedTheme =
+      this.allThemes.find((theme) => theme.id === themeId) ??
+      this.themeCards.find((theme) => theme.id === themeId) ??
+      null;
+
+    if (matchedTheme) {
+      this.selectedThemeForSubmit = matchedTheme;
+      this.selectedThemeSlug = matchedTheme.slug;
+      this.logThemeSubmitState();
+    }
   }
 
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
@@ -598,12 +659,65 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onThemeCardClick(theme: ThemeCard): void {
+    this.applyThemeSelection(theme);
+  }
+
+  onThemeOptionChange(themeSlug: string): void {
+    this.selectedThemeSlug = themeSlug;
+
+    if (!themeSlug) {
+      this.selectedThemeForSubmit = null;
+      this.pendingThemeForConfirmation = null;
+      this.selectedThemeId = null;
+      this.logThemeSubmitState();
+      return;
+    }
+
+    const normalizedSlug = normalizeThemeSlug(themeSlug);
+    const theme =
+      this.allThemes.find(
+        (item) =>
+          item.slug === themeSlug ||
+          normalizeThemeSlug(item.slug) === normalizedSlug
+      ) ?? null;
+
+    if (!theme) {
+      this.selectedThemeForSubmit = null;
+      this.pendingThemeForConfirmation = null;
+      this.selectedThemeId = null;
+      this.logThemeSubmitState();
+      return;
+    }
+
+    this.applyThemeSelection(theme);
+    this.pendingThemeForConfirmation = theme;
+
+    console.log('[ThemeOptionChange]', {
+      themeSlug,
+      theme,
+      canUse: this.canUseTheme(theme),
+    });
+  }
+
+  private applyThemeSelection(theme: ThemeCard): void {
     this.selectedThemeId = theme.id;
+    this.selectedThemeSlug = theme.slug;
+    this.selectedThemeForSubmit = theme;
+    this.logThemeSubmitState();
+  }
+
+  private logThemeSubmitState(): void {
+    console.log('[ThemeSubmitState]', {
+      userTier: this.currentPackageTier,
+      selectedThemeForSubmit: this.selectedThemeForSubmit,
+      pendingThemeForConfirmation: this.pendingThemeForConfirmation,
+      canSubmitSelectedTheme: this.canSubmitSelectedTheme,
+    });
   }
 
   onPreviewClick(theme: ThemeCard, event: Event): void {
     event.stopPropagation();
-    this.selectedThemeId = theme.id;
+    this.applyThemeSelection(theme);
 
     const previewUrl = this.resolvePreviewUrl(theme);
     if (!previewUrl) {
@@ -687,7 +801,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onPrimaryAction(): void {
-    const theme = this.selectedTheme;
+    this.confirmSelectedTheme();
+  }
+
+  confirmSelectedTheme(): void {
+    const theme = this.selectedThemeForSubmit || this.pendingThemeForConfirmation;
 
     if (!theme || theme.isLoading || this.processingPrimaryAction) {
       return;
@@ -707,11 +825,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Use === false so that undefined/null/missing is_active never blocks a valid theme
     if (theme.is_active === false) {
       this.toastService.showToast('Tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
     }
+
     if (theme.category_is_active === false) {
       this.toastService.showToast('Kategori tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
@@ -725,6 +843,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     this.pendingThemeForConfirmation = theme;
+    this.openThemeConfirmationModal();
+  }
+
+  private openThemeConfirmationModal(): void {
     this.showSelectConfirmationModal = true;
     this.showUpgradeModal = false;
 
@@ -740,7 +862,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   confirmThemeSelection(): void {
-    const theme = this.pendingThemeForConfirmation || this.selectedTheme;
+    const theme = this.pendingThemeForConfirmation || this.selectedThemeForSubmit || this.selectedTheme;
 
     console.log('[ConfirmThemeClick]', theme);
 
@@ -1046,13 +1168,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private syncSelectedThemeForVisibleTab(): void {
     const visibleThemes = this.visibleThemeCards;
     if (!visibleThemes.length) {
-      this.selectedThemeId = null;
+      if (!this.selectedThemeForSubmit) {
+        this.selectedThemeId = null;
+        this.selectedThemeSlug = '';
+      }
       return;
     }
 
     const selectedVisibleTheme = visibleThemes.find((theme) => theme.id === this.selectedThemeId);
-    if (!selectedVisibleTheme) {
+    if (!selectedVisibleTheme && !this.selectedThemeForSubmit) {
       this.selectedThemeId = null;
+      this.selectedThemeSlug = '';
     }
   }
 

@@ -287,7 +287,26 @@ export function isThemeAccessibleForTier(
     return false;
   }
 
-  return getThemeSlugsForTier(tier, accessMap).includes(normalizedSlug);
+  if (tier === 'trial') {
+    return getThemeSlugsForTier(tier, accessMap).includes(normalizedSlug);
+  }
+
+  // Cumulative access: higher tiers include every theme from lower tiers.
+  const themeTier = getThemeTierForSlug(normalizedSlug);
+  return isTierAllowed(tier, themeTier);
+}
+
+/**
+ * All theme slugs a user on `userTier` may select (cumulative hierarchy).
+ */
+export function getCumulativeAccessibleThemeSlugs(
+  userTier: ThemePackageTier
+): PublicThemeSlug[] {
+  const userLevel = PACKAGE_TIER_ORDER[normalizeTierKey(userTier)] ?? 0;
+
+  return PUBLIC_THEME_PRESETS
+    .filter((preset) => (PACKAGE_TIER_ORDER[preset.packageTier] ?? 0) <= userLevel)
+    .map((preset) => preset.slug);
 }
 
 export function getLowestPackageTierForTheme(
