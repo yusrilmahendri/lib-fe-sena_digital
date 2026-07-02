@@ -88,7 +88,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
   currentThemeId: number | null = null;
+  currentActiveThemeSlug: string | null = null;
   selectedThemeId: number | null = null;
+  currentPreviewTheme: ThemeCard | null = null;
   userPackageTier: ThemePackageTier = 'trial';
   activeTab: ThemeFilterTier = 'ruby';
   showSelectConfirmationModal = false;
@@ -203,11 +205,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   get selectedTheme(): ThemeCard | null {
+    if (this.currentPreviewTheme) {
+      return this.currentPreviewTheme;
+    }
+
     if (this.selectedThemeId === null) {
       return null;
     }
 
-    return this.visibleThemeCards.find((theme) => theme.id === this.selectedThemeId) ?? null;
+    return this.findThemeCardById(this.selectedThemeId);
   }
 
   get isPreviewOnlyTab(): boolean {
@@ -223,7 +229,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   get canSubmitFocusedTheme(): boolean {
     const theme = this.selectedTheme;
-    return !!theme && !this.isCurrentTheme(theme) && this.canUseTheme(theme);
+    return !!theme && !this.isCurrentActiveTheme(theme) && this.canUseTheme(theme);
   }
 
   /**
@@ -253,31 +259,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    if (theme.isLoading || this.processingPrimaryAction) {
-      return true;
-    }
-
-    if (this.isCurrentTheme(theme)) {
-      return true;
-    }
-
-    if (theme.isLegacy) {
-      return true;
-    }
-
-    if (!this.hasValidBackendThemeConnection(theme)) {
-      return true;
-    }
-
-    if (theme.is_active === false) {
-      return true;
-    }
-
-    if (theme.category_is_active === false) {
-      return true;
-    }
-
-    return false;
+    return !this.canChooseTheme(theme);
   }
 
   get primaryButtonLabel(): string {
@@ -288,10 +270,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (!theme) {
-      return 'Pilih tema';
+      return 'Pilih Tema';
     }
 
-    if (this.isCurrentTheme(theme)) {
+    if (this.isCurrentActiveTheme(theme)) {
       return 'Tema Dipilih';
     }
 
@@ -311,7 +293,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Kategori belum aktif';
     }
 
-    return this.canUseTheme(theme) ? 'Pilih tema' : 'Upgrade Paket';
+    return this.canUseTheme(theme) ? 'Pilih Tema' : 'Upgrade Paket';
   }
 
   get confirmThemeButtonLabel(): string {
@@ -416,7 +398,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private applySelectedThemeResponse(response: UserSelectedThemeResponse): void {
     const t = response.data.theme as any;
     const resolvedThemeId = Number(t?.id) || null;
-    const resolvedThemeSlug = t?.slug ?? t?.theme_slug ?? 'TIDAK ADA SLUG';
+    const resolvedThemeSlug = this.resolveThemeSlugFromSource(t);
 
     console.log('[LoadSelectedTheme] selected_theme dari backend:', {
       id: resolvedThemeId,
@@ -425,9 +407,20 @@ export class TampilanComponent implements OnInit, OnDestroy {
     });
 
     this.currentThemeId = resolvedThemeId;
-    this.selectedThemeId = resolvedThemeId;
+    this.currentActiveThemeSlug = resolvedThemeSlug || null;
+
+    const activeCard = this.findThemeCardByActiveIdentity(resolvedThemeId, resolvedThemeSlug);
+    const previewMatchesActive = !this.currentPreviewTheme
+      || this.isCurrentActiveTheme(this.currentPreviewTheme);
+
+    if (previewMatchesActive) {
+      this.selectedThemeId = activeCard?.id ?? resolvedThemeId;
+      this.currentPreviewTheme = activeCard;
+    }
+
     this.updateCurrentThemeStatus();
     this.syncSelectedThemeForVisibleTab();
+    this.cdr.markForCheck();
   }
 
   private processThemeData(categories: PublicCategoryWithThemes[]): void {
@@ -552,7 +545,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
    */
   private updateCurrentThemeStatus(): void {
     this.themeCards.forEach((card) => {
-      card.isCurrentTheme = card.id === this.currentThemeId;
+      card.isCurrentTheme = this.isCurrentActiveTheme(card);
     });
   }
 
@@ -598,12 +591,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onThemeCardClick(theme: ThemeCard): void {
-    this.selectedThemeId = theme.id;
+    this.selectPreviewTheme(theme);
   }
 
   onPreviewClick(theme: ThemeCard, event: Event): void {
     event.stopPropagation();
-    this.selectedThemeId = theme.id;
+    this.selectPreviewTheme(theme);
 
     const previewUrl = this.resolvePreviewUrl(theme);
     if (!previewUrl) {
@@ -703,7 +696,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.isCurrentTheme(theme)) {
+    if (this.isCurrentActiveTheme(theme)) {
       return;
     }
 
@@ -796,11 +789,63 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   isSelectedTheme(theme: ThemeCard): boolean {
-    return this.selectedTheme?.id === theme.id;
+    const previewTheme = this.currentPreviewTheme ?? this.selectedTheme;
+    return !!previewTheme && this.themesShareIdentity(previewTheme, theme);
+  }
+
+  isCurrentActiveTheme(theme: ThemeCard | null | undefined): boolean {
+    if (!theme) {
+      return false;
+    }
+
+    const themeId = this.resolveThemeCardId(theme);
+    const themeSlug = this.resolveThemeSlug(theme);
+
+    if (this.currentThemeId && themeId) {
+      return this.currentThemeId === themeId;
+    }
+
+    if (this.currentActiveThemeSlug && themeSlug) {
+      return this.currentActiveThemeSlug === themeSlug;
+    }
+
+    return false;
+  }
+
+  canChooseTheme(theme: ThemeCard | null | undefined): boolean {
+    if (!theme) {
+      return false;
+    }
+
+    if (theme.isLoading || this.processingPrimaryAction) {
+      return false;
+    }
+
+    if (this.isCurrentActiveTheme(theme)) {
+      return false;
+    }
+
+    if (theme.isLegacy) {
+      return false;
+    }
+
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      return false;
+    }
+
+    if (theme.is_active === false) {
+      return false;
+    }
+
+    if (theme.category_is_active === false) {
+      return false;
+    }
+
+    return true;
   }
 
   isCurrentTheme(theme: ThemeCard): boolean {
-    return this.currentThemeId === theme.id || theme.isCurrentTheme;
+    return this.isCurrentActiveTheme(theme);
   }
 
   isThemeLoading(theme: ThemeCard): boolean {
@@ -930,7 +975,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.isCurrentTheme(theme)) {
+    if (this.isCurrentActiveTheme(theme)) {
       this.toastService.showToast('Tema ini sudah sedang digunakan.', 'info');
       this.closeSelectConfirmationModal();
       return;
@@ -971,7 +1016,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
           // --- Optimistic update state di cards ---
           this.currentThemeId = theme.backendThemeId;
-          this.selectedThemeId = theme.backendThemeId;
+          this.currentActiveThemeSlug = this.resolveThemeSlug(theme) || null;
+          this.selectedThemeId = theme.id;
+          this.currentPreviewTheme = theme;
           this.updateCurrentThemeStatus();
 
           // --- Background refetch untuk sinkronisasi data dari server ---
@@ -1044,6 +1091,18 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   private syncSelectedThemeForVisibleTab(): void {
+    if (this.currentPreviewTheme) {
+      const previewStillExists = this.themeCards.some(
+        (theme) => this.themesShareIdentity(theme, this.currentPreviewTheme)
+      );
+
+      if (previewStillExists) {
+        return;
+      }
+
+      this.currentPreviewTheme = null;
+    }
+
     const visibleThemes = this.visibleThemeCards;
     if (!visibleThemes.length) {
       this.selectedThemeId = null;
@@ -1054,6 +1113,87 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (!selectedVisibleTheme) {
       this.selectedThemeId = null;
     }
+  }
+
+  private selectPreviewTheme(theme: ThemeCard): void {
+    this.selectedThemeId = theme.id;
+    this.currentPreviewTheme = theme;
+    this.cdr.detectChanges();
+  }
+
+  private findThemeCardById(themeId: number | null): ThemeCard | null {
+    if (themeId === null) {
+      return null;
+    }
+
+    return this.themeCards.find((theme) => theme.id === themeId)
+      ?? this.visibleThemeCards.find((theme) => theme.id === themeId)
+      ?? null;
+  }
+
+  private findThemeCardByActiveIdentity(themeId: number | null, themeSlug: string): ThemeCard | null {
+    if (themeId) {
+      const byId = this.themeCards.find((theme) => this.resolveThemeCardId(theme) === themeId);
+      if (byId) {
+        return byId;
+      }
+    }
+
+    if (themeSlug) {
+      return this.themeCards.find((theme) => this.resolveThemeSlug(theme) === themeSlug) ?? null;
+    }
+
+    return null;
+  }
+
+  private resolveThemeCardId(theme: ThemeCard | null | undefined): number | null {
+    if (!theme) {
+      return null;
+    }
+
+    const backendThemeId = theme.backendThemeId;
+    if (Number.isInteger(backendThemeId) && (backendThemeId as number) > 0) {
+      return backendThemeId as number;
+    }
+
+    const cardId = theme.id;
+    if (Number.isInteger(cardId) && cardId > 0) {
+      return cardId;
+    }
+
+    return null;
+  }
+
+  private resolveThemeSlug(theme: ThemeCard | null | undefined): string {
+    if (!theme?.slug) {
+      return '';
+    }
+
+    return normalizeThemeSlug(theme.slug);
+  }
+
+  private resolveThemeSlugFromSource(source: { slug?: string; theme_slug?: string } | null | undefined): string {
+    const rawSlug = source?.slug ?? source?.theme_slug ?? '';
+    return rawSlug ? normalizeThemeSlug(rawSlug) : '';
+  }
+
+  private themesShareIdentity(
+    left: ThemeCard | null | undefined,
+    right: ThemeCard | null | undefined
+  ): boolean {
+    if (!left || !right) {
+      return false;
+    }
+
+    const leftId = this.resolveThemeCardId(left);
+    const rightId = this.resolveThemeCardId(right);
+    if (leftId && rightId) {
+      return leftId === rightId;
+    }
+
+    const leftSlug = this.resolveThemeSlug(left);
+    const rightSlug = this.resolveThemeSlug(right);
+    return !!leftSlug && !!rightSlug && leftSlug === rightSlug;
   }
 
   private getThemeFallbackImage(name: string, category: ThemeCategoryName): string {
