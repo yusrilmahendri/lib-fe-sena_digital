@@ -40,7 +40,24 @@
     </div>
 
     <ng-container *ngIf="!isLoading && !errorMessage">
-      <div *ngIf="visibleThemeCards.length; else emptyState" class="theme-grid">
+      <ng-container *ngIf="dropdownThemeOptions.length || visibleThemeCards.length; else emptyState">
+      <div class="theme-picker__mobile-only" *ngIf="dropdownThemeOptions.length">
+        <label class="theme-picker__mobile-label" for="theme-mobile-select">Pilih tema</label>
+        <select
+          id="theme-mobile-select"
+          class="theme-picker__mobile-select"
+          [ngModel]="selectedThemeSlug"
+          (ngModelChange)="onThemeOptionChange($event)">
+          <option value="">-- Pilih salah satu tema --</option>
+          <option
+            *ngFor="let theme of dropdownThemeOptions; trackBy: trackByThemeId"
+            [value]="theme.slug">
+            {{ theme.name }}<ng-container *ngIf="isCurrentTheme(theme)"> (Aktif)</ng-container>
+          </option>
+        </select>
+      </div>
+
+      <div *ngIf="visibleThemeCards.length" class="theme-grid theme-picker__desktop-only">
         <article
           *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
           class="theme-card"
@@ -81,13 +98,6 @@
         </article>
       </div>
 
-      <ng-template #emptyState>
-        <div class="theme-state theme-state--empty">
-          <h2>Belum ada tema untuk ditampilkan</h2>
-          <p>{{ getEmptyStateMessage() }}</p>
-        </div>
-      </ng-template>
-
       <footer class="theme-picker__footer">
         <div class="theme-picker__selection">
           <span class="theme-picker__selection-label">
@@ -99,14 +109,22 @@
 
         <button
           type="button"
-          class="theme-picker__submit"
-          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitFocusedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme) && selectedTheme.is_active && selectedTheme.category_is_active"
-          [disabled]="isPrimaryButtonDisabled"
-          (click)="onPrimaryAction()">
+          class="theme-picker__submit btn-pilih-tema"
+          [class.theme-picker__submit--upgrade]="selectedTheme && !canSubmitSelectedTheme && !selectedTheme.isLegacy && !isCurrentTheme(selectedTheme) && selectedTheme.is_active && selectedTheme.category_is_active"
+          [disabled]="!canSubmitSelectedTheme"
+          (click)="confirmSelectedTheme()">
           <i class="far fa-window-restore" aria-hidden="true"></i>
           {{ primaryButtonLabel }}
         </button>
       </footer>
+      </ng-container>
+
+      <ng-template #emptyState>
+        <div class="theme-state theme-state--empty">
+          <h2>Belum ada tema untuk ditampilkan</h2>
+          <p>{{ getEmptyStateMessage() }}</p>
+        </div>
+      </ng-template>
     </ng-container>
   </div>
 </section>
