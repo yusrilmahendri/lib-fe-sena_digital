@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { LandingModalService } from '../../landing-modal.service';
 
 interface NavMenuItem {
@@ -25,27 +25,11 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute,
     public modal: LandingModalService
   ) {}
 
   ngOnInit(): void {
     this.isMobileMenuOpen = false;
-
-    // Open the login modal when arriving with ?auth=login (e.g. AuthGuard or
-    // a redirect from another route). Strip the query param right after so the
-    // modal can't reopen on the next navigation (prevents an infinite loop).
-    this.route.queryParams.subscribe((params) => {
-      if (params['auth'] === 'login') {
-        this.modal.openLogin();
-        this.router.navigate([], {
-          relativeTo: this.route,
-          queryParams: { auth: null },
-          queryParamsHandling: 'merge',
-          replaceUrl: true,
-        });
-      }
-    });
   }
 
   toggleMobileMenu(): void {

@@ -57,8 +57,18 @@ export class IdleTimeoutService implements OnDestroy {
     this.stop();
     this.clearAuthStorage();
 
-    this.router.navigate(['/login'], {
-      queryParams: { reason: 'session_expired' }
+    console.log('[SessionExpiredRedirect]', {
+      target: '/',
+      auth: 'login',
+      reason: 'session_expired',
+    });
+
+    this.router.navigate(['/'], {
+      queryParams: {
+        auth: 'login',
+        reason: 'session_expired',
+      },
+      replaceUrl: true,
     });
   }
 
