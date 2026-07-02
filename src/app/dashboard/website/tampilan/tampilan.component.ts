@@ -18,7 +18,8 @@ import {
   FALLBACK_THEME_ACCESS_MAP,
   getLowestPackageTierForTheme,
   getThemePresetBySlug,
-  isThemeAccessibleForTier,
+  getThemeTierForSlug,
+  isTierAllowed,
   PaidThemePackageTier,
   PUBLIC_THEME_PRESETS,
   resolvePackageTier,
@@ -29,6 +30,9 @@ import {
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 
 type PaidPackageTier = PaidThemePackageTier;
+
+/** Tab/filter selection: a specific tier, or "all" (Semua) for every accessible tier. */
+type ThemeFilterTier = 'all' | PaidPackageTier;
 
 interface ThemeCard {
   id: number;
@@ -55,7 +59,7 @@ interface ThemeCard {
 }
 
 interface PackageTab {
-  tier: PaidPackageTier;
+  tier: ThemeFilterTier;
   label: string;
 }
 
@@ -86,7 +90,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   currentThemeId: number | null = null;
   selectedThemeId: number | null = null;
   userPackageTier: ThemePackageTier = 'trial';
-  activeTab: PaidPackageTier = 'ruby';
+  activeTab: ThemeFilterTier = 'ruby';
   showSelectConfirmationModal = false;
   showUpgradeModal = false;
   processingPrimaryAction = false;
@@ -149,23 +153,49 @@ export class TampilanComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Tabs are cumulative: a paid user can browse every tier at or below their own.
+   * Ruby users see only "Ruby"; higher tiers also get a "Semua" (all) tab so they
+   * can view every accessible tier at once (e.g. Sapphire → Semua/Ruby/Sapphire).
+   */
   get availablePackageTabs(): PackageTab[] {
     if (this.userPackageTier === 'trial') {
       return [];
     }
 
-    return this.packageTabs.filter((tab) => tab.tier === this.userPackageTier);
+    const orderedPaidTiers: PaidPackageTier[] = ['ruby', 'sapphire', 'diamond'];
+    const accessibleTiers = orderedPaidTiers.filter((tier) =>
+      isTierAllowed(this.userPackageTier, tier)
+    );
+
+    const tierTabs: PackageTab[] = accessibleTiers.map((tier) => ({
+      tier,
+      label: this.getPackageLabel(tier),
+    }));
+
+    if (tierTabs.length > 1) {
+      return [{ tier: 'all', label: 'Semua' }, ...tierTabs];
+    }
+
+    return tierTabs;
   }
 
-  private isThemeVisibleInTab(tier: PaidPackageTier, theme: ThemeCard): boolean {
+  /**
+   * A theme is visible in a tab when the user's (cumulative) tier grants access
+   * to the theme's own tier AND it matches the active tab filter ("all" = any
+   * accessible tier).
+   */
+  private isThemeVisibleInTab(tab: ThemeFilterTier, theme: ThemeCard): boolean {
     if (theme.category === 'Legacy') {
       return false;
     }
 
-    return (
-      isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap) ||
-      isThemeAccessibleForTier(tier, theme.slug, FALLBACK_THEME_ACCESS_MAP)
-    );
+    const themeTier = getThemeTierForSlug(theme.slug);
+    if (!isTierAllowed(this.userPackageTier, themeTier)) {
+      return false;
+    }
+
+    return tab === 'all' || themeTier === tab;
   }
 
   get currentTheme(): ThemeCard | null {
@@ -329,7 +359,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         themes: PublicCategoriesResponse;
       }) => {
         this.userPackageTier = resolvePackageTier(profile?.data?.package_info) || 'trial';
-        this.activeTab = this.userPackageTier === 'trial' ? 'ruby' : this.userPackageTier;
+        this.activeTab = this.getInitialActiveTab();
         this.themeAccessMap = buildThemeAccessMap(Array.isArray(packages?.data) ? packages.data : []);
 
         if (this.userPackageTier === 'trial') {
@@ -551,9 +581,20 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return this.getThemeFallbackImage(theme.name, category);
   }
 
-  setActiveTab(tab: PaidPackageTier): void {
+  setActiveTab(tab: ThemeFilterTier): void {
     this.activeTab = tab;
     this.syncSelectedThemeForVisibleTab();
+  }
+
+  /**
+   * Initial tab after load: paid tiers with more than one accessible tier start
+   * on "Semua" so every accessible theme is shown; Ruby (and trial) start on Ruby.
+   */
+  private getInitialActiveTab(): ThemeFilterTier {
+    if (this.userPackageTier === 'trial' || this.userPackageTier === 'ruby') {
+      return 'ruby';
+    }
+    return 'all';
   }
 
   onThemeCardClick(theme: ThemeCard): void {
@@ -766,8 +807,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return theme.isLoading || false;
   }
 
-  getPackageLabel(tier: PaidPackageTier | null | undefined): string {
+  getPackageLabel(tier: string | null | undefined): string {
     switch (tier) {
+      case 'all':
+        return 'Semua';
       case 'ruby':
         return 'Ruby';
       case 'sapphire':
@@ -843,15 +886,23 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     const userTier = ((this.userPackageTier as string) || '').toLowerCase().trim() as ThemePackageTier;
-    if (userTier === 'trial' || this.isPreviewOnlyTab) {
+    if (userTier === 'trial') {
       return false;
     }
 
-    const tier = userTier as PaidPackageTier;
-    return (
-      isThemeAccessibleForTier(tier, theme.slug, this.themeAccessMap) ||
-      isThemeAccessibleForTier(tier, theme.slug, FALLBACK_THEME_ACCESS_MAP)
-    );
+    // Cumulative access: a theme is usable when its tier is at/below the user's
+    // tier (Sapphire may use Ruby themes; Diamond may use Ruby + Sapphire, etc.).
+    const themeTier = getThemeTierForSlug(theme.slug);
+    const allowed = isTierAllowed(userTier, themeTier);
+
+    console.log('[ThemeAccessCumulative]', {
+      userTier,
+      themeSlug: theme.slug,
+      themeTier,
+      allowed,
+    });
+
+    return allowed;
   }
 
   private hasValidBackendThemeConnection(theme: ThemeCard | null | undefined): boolean {
