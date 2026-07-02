@@ -9,7 +9,6 @@ import {
   DashboardMessage
 } from 'src/app/dashboard.service';
 import { forkJoin, catchError, of } from 'rxjs';
-import { ToastService } from 'src/app/toast.service';
 
 
 Chart.register(...registerables);
@@ -45,9 +44,9 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   activeFilter = 'totalPengunjung';
   userData: any;
 
-  // Public wedding website URL derived from the profile/dashboard domain.
+  // Public wedding website URL derived from the profile response domain.
   public publicWeddingUrl = '';
-  errorMessage = '';
+  public publicWeddingDomain = '';
 
   // API data properties
   dashboardOverview: DashboardOverviewResponse['data'] | null = null;
@@ -95,8 +94,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   chartData: ChartDataPoint[] = [];
 
   constructor(
-    private DashBoardSvc: DashboardService,
-    private toastService: ToastService
+    private DashBoardSvc: DashboardService
   ) { }
 
   ngOnInit(): void {
@@ -106,33 +104,38 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   initDataProfile(): void {
     this.isLoading = true;
     this.apiError = null;
+    this.publicWeddingUrl = '';
+    this.publicWeddingDomain = '';
 
-    this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe(
-      (res) => {
+    this.DashBoardSvc.getProfile().subscribe({
+      next: (response) => {
+        this.updatePublicWeddingUrlFromProfile(response);
+      },
+      error: (error) => {
+        console.error('[OverviewProfileError]', error);
+      }
+    });
+
+    this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe({
+      next: (res) => {
         this.userData = res.data;
         console.log('User profile data:', this.userData);
 
-        this.updatePublicWeddingUrlFromResponse(res);
+        this.updatePublicWeddingUrlFromProfile(res);
 
         if (this.userData && this.userData.id) {
-          // Load dashboard data after getting user profile
           this.loadDashboardData();
         } else {
           console.warn('No user data available');
           this.isLoading = false;
         }
       },
-      (error) => {
-        console.error('[OverviewProfileError]', error);
+      error: (error) => {
+        console.error('[OverviewUserProfileError]', error);
         this.apiError = 'Failed to load user profile';
         this.isLoading = false;
-
-        const storedDomain = this.normalizeWeddingDomain(localStorage.getItem('wedding_domain'));
-        if (storedDomain && !this.publicWeddingUrl) {
-          this.setPublicWeddingUrlFromDomain(storedDomain);
-        }
       }
-    );
+    });
   }
 
   private normalizeWeddingDomain(value: any): string {
@@ -153,66 +156,61 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       .replace(/\/$/, '');
   }
 
-  private resolveDomainFromAnyProfile(response: any): string {
+  private resolveDomainFromProfileResponse(response: any): string {
     const data = response?.data || response || {};
 
     const candidates = [
       data?.domain_info?.domain,
+      data?.domain_info?.domain_url,
       data?.domain,
-      data?.setting?.domain,
       data?.settings?.domain,
+      data?.setting?.domain,
       data?.invitation?.domain,
       data?.wedding_profile?.domain,
-      data?.user?.domain,
-
+      response?.data?.domain_info?.domain,
       response?.domain_info?.domain,
-      response?.domain,
-      response?.setting?.domain,
-      response?.settings?.domain,
-      response?.invitation?.domain,
-      response?.wedding_profile?.domain,
-      response?.user?.domain
+      response?.domain
     ];
 
     console.log('[OverviewDomainCandidates]', candidates);
 
     for (const candidate of candidates) {
-      const normalized = this.normalizeWeddingDomain(candidate);
-      if (normalized && normalized !== 'no_domain_url') {
-        return normalized;
+      const domain = this.normalizeWeddingDomain(candidate);
+
+      if (
+        domain &&
+        domain !== 'no_domain_url' &&
+        domain !== 'undefined' &&
+        domain !== 'null'
+      ) {
+        return domain;
       }
     }
 
     return '';
   }
 
-  private setPublicWeddingUrlFromDomain(domain: string): void {
+  private setPublicWeddingUrl(domain: string): void {
     const normalizedDomain = this.normalizeWeddingDomain(domain);
 
-    if (!normalizedDomain || normalizedDomain === 'no_domain_url') {
-      if (!this.publicWeddingUrl) {
-        this.publicWeddingUrl = '';
-      }
-      console.log('[OverviewPublicWeddingUrl]', this.publicWeddingUrl);
+    if (!normalizedDomain) {
       return;
     }
 
+    this.publicWeddingDomain = normalizedDomain;
     this.publicWeddingUrl = `/wedding/${encodeURIComponent(normalizedDomain)}`;
-    localStorage.setItem('wedding_domain', normalizedDomain);
-    console.log('[OverviewPublicWeddingUrl]', this.publicWeddingUrl);
+
+    console.log('[OverviewPublicWeddingUrlSet]', {
+      publicWeddingDomain: this.publicWeddingDomain,
+      publicWeddingUrl: this.publicWeddingUrl
+    });
   }
 
-  private updatePublicWeddingUrlFromResponse(response: any): void {
-    console.log('[OverviewRawProfileResponse]', response);
+  private updatePublicWeddingUrlFromProfile(response: any): void {
+    console.log('[OverviewProfileRawResponse]', response);
 
-    const domain = this.resolveDomainFromAnyProfile(response);
-    this.setPublicWeddingUrlFromDomain(domain);
-
-    console.log('[OverviewDomainResolved]', {
-      domain,
-      publicWeddingUrl: this.publicWeddingUrl,
-      response
-    });
+    const domain = this.resolveDomainFromProfileResponse(response);
+    this.setPublicWeddingUrl(domain);
   }
 
   private loadDashboardData(): void {
@@ -266,7 +264,6 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       (results) => {
         if (results.overview) {
           this.dashboardOverview = results.overview.data;
-          this.updatePublicWeddingUrlFromResponse(results.overview);
           this.updateDashboardCards();
         }
 
@@ -614,20 +611,10 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  /**
-   * Handle the "Lihat Website" click. Navigation is driven by the anchor href
-   * (publicWeddingUrl); this only guards against navigating when no URL exists.
-   */
   handleViewWebsiteClick(event: Event): void {
-    console.log('[ViewWebsiteClick]', {
-      publicWeddingUrl: this.publicWeddingUrl
-    });
-
     if (!this.publicWeddingUrl) {
       event.preventDefault();
-      event.stopPropagation();
-      this.errorMessage = 'Domain undangan belum tersedia. Silakan lengkapi data website terlebih dahulu.';
-      this.toastService.showToast(this.errorMessage, 'warning');
+      alert('Domain undangan belum tersedia. Silakan lengkapi data website terlebih dahulu.');
       return;
     }
   }
