@@ -35,11 +35,13 @@
   z-index: 998;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.active {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
   }
 
   @media screen and (min-width: 1025px) {
@@ -59,7 +61,7 @@
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  z-index: 1100;
+  z-index: 1120;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -341,6 +343,10 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 30px;
+    position: relative;
+    z-index: 1101;
+    background-color: var(--header-bg);
+    flex-shrink: 0;
 
     .breadcrumbs {
       display: flex;
@@ -367,10 +373,12 @@
       align-items: center;
       cursor: pointer;
       position: relative;
+      z-index: 2;
       padding: 8px 16px;
       border-radius: 12px;
       transition: all 0.3s ease;
       outline: none;
+      pointer-events: auto;
 
       &:focus-visible {
         box-shadow: 0 0 0 2px rgba(255, 107, 157, 0.5);
@@ -424,8 +432,9 @@
         border-radius: 4px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         display: block;
-        z-index: 10;
+        z-index: 1125;
         min-width: 160px;
+        pointer-events: auto;
 
         .dropdown-item {
           padding: 10px 15px;
@@ -450,6 +459,8 @@
     padding: 30px;
     overflow-y: auto;
     overflow-x: hidden;
+    position: relative;
+    z-index: 1;
 
     &::-webkit-scrollbar {
       width: 6px;
