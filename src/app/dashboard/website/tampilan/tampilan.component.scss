@@ -1,5 +1,7 @@
 :host {
   display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .theme-picker {
@@ -145,6 +147,7 @@
   background: rgba(35, 27, 34, 0.2);
   content: '';
   inset: 0;
+  pointer-events: none;
   position: absolute;
 }
 
