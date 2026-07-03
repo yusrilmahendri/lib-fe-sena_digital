@@ -38,9 +38,10 @@ type ThemeFilterTier = 'all' | PaidPackageTier;
 interface ThemeCard {
   id: number;
   backendThemeId: number | null;
-  label: string;
-  title: string;
-  name: string;
+  label?: string;
+  title?: string;
+  name?: string;
+  nama?: string;
   slug: string;
   image: string;
   url_thema: string;
@@ -1013,6 +1014,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
       default:
         return 'Trial';
     }
+  }
+
+  public getThemeDisplayName(theme: ThemeCard | any): string {
+    return (
+      theme?.name ||
+      theme?.title ||
+      theme?.nama ||
+      theme?.label ||
+      theme?.slug ||
+      'Tema'
+    );
   }
 
   getCardSubtitle(theme: ThemeCard): string {

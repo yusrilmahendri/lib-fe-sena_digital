@@ -141,7 +141,7 @@
             <option
               *ngFor="let theme of mobileThemeOptions"
               [ngValue]="theme.slug">
-              {{ theme.name || theme.title || theme.nama }}
+              {{ getThemeDisplayName(theme) }}
             </option>
           </select>
         </div>
