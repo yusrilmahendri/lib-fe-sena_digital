@@ -1,9 +1,10 @@
 <div class="dashboard-container">
-  <!-- Overlay for mobile -->
-  <div class="sidebar-overlay"
-       [class.active]="isSidebarOpen"
-       (click)="closeSidebar()"
-       [@sidebarSlide]="isSidebarOpen ? 'open' : 'closed'"></div>
+  <!-- Overlay for mobile: only mount when sidebar is open to avoid blocking touches -->
+  <div
+    *ngIf="isSidebarOpen && isMobileSidebarLayout"
+    class="sidebar-overlay active"
+    (click)="closeSidebar()"
+    aria-hidden="false"></div>
 
   <!-- Enhanced Toggle Button for Mobile -->
   <button class="menu-toggle"

@@ -61,6 +61,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   isPengunjungSubmenuOpen: boolean = false;
   isDropdownOpen = false;
   isSidebarOpen = false;
+  isMobileSidebarLayout = false;
   // Temporarily hide the Bill menu item (billing route/logic kept intact).
   showBillingMenu = false;
   userData: ProfileData | null = null;
@@ -97,8 +98,13 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   private initializeSidebarState(): void {
-    // Sidebar should be open by default on desktop (>1024px)
-    this.isSidebarOpen = window.innerWidth > 1024;
+    this.isMobileSidebarLayout = this.isMobileViewport();
+    // Sidebar should be open by default on desktop (>1024px) only
+    this.isSidebarOpen = !this.isMobileSidebarLayout;
+  }
+
+  private isMobileViewport(): boolean {
+    return window.innerWidth <= 1024;
   }
 
   getUserProfile(): void {
@@ -198,15 +204,20 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   @HostListener('window:resize', ['$event'])
   onWindowResize(event: any): void {
     const windowWidth = event.target.innerWidth;
+    const wasMobileLayout = this.isMobileSidebarLayout;
+
+    this.isMobileSidebarLayout = windowWidth <= 1024;
 
     if (windowWidth > 1024) {
       // Desktop: sidebar should be open
       this.isSidebarOpen = true;
-    } else if (windowWidth <= 768) {
-      // Mobile: sidebar should be closed
+      return;
+    }
+
+    // Mobile/tablet: keep sidebar closed unless user explicitly opened it
+    if (!wasMobileLayout && this.isMobileSidebarLayout) {
       this.isSidebarOpen = false;
     }
-    // Tablet (769-1024): keep current state
   }
 
   selectMenu(): void {
