@@ -1,7 +1,7 @@
 <div class="ci-modal" *ngIf="isOpen" (click)="onBackdropClick()">
   <div
     class="ci-modal__card"
-    [class.ci-modal__card--wide]="step === 'theme-selection' || step === 'account' || step === 'continue-wizard'"
+    [class.ci-modal__card--wide]="step === 'theme-selection' || step === 'account' || step === 'continue-wizard' || step === 'invitation-detail'"
     (click)="$event.stopPropagation()"
   >
     <button
@@ -58,11 +58,14 @@
           Nama mempelai pria wajib diisi.
         </p>
 
-        <div class="ci-field">
-          <span class="ci-field__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </span>
-          <input class="ci-input" type="date" placeholder="DD/MM/YYYY" formControlName="weddingDate" />
+        <div class="auth-date-field">
+          <i class="fa fa-calendar auth-date-field__icon" aria-hidden="true"></i>
+          <input
+            type="date"
+            class="auth-date-field__input"
+            placeholder="DD/MM/YYYY"
+            formControlName="weddingDate"
+          />
         </div>
         <p class="ci-field__error" *ngIf="coupleDetailForm.get('weddingDate')?.touched && coupleDetailForm.get('weddingDate')?.invalid">
           Tanggal pernikahan wajib diisi.
@@ -269,10 +272,94 @@
         </div>
       </div>
 
-      <button type="button" class="ci-btn ci-btn--primary" (click)="continueToBuatUndangan()">
+      <button type="button" class="ci-btn ci-btn--primary" (click)="openInvitationDetailWizard()">
         Lengkapi Data Undangan
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
+    </ng-container>
+
+    <!-- ===================== LENGKAPI DATA UNDANGAN WIZARD ===================== -->
+    <ng-container *ngIf="step === 'invitation-detail'">
+      <ng-container *ngIf="detailStepIndex === 0">
+        <h2 class="ci-modal__title">Isi detail pasangan</h2>
+        <p class="ci-modal__subtitle">Tenang, kamu masih bisa mengubahnya kapan saja.</p>
+
+        <form class="ci-form" [formGroup]="coupleDetailForm" novalidate>
+          <div class="ci-field">
+            <span class="ci-field__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <input class="ci-input" type="text" placeholder="Nama mempelai wanita" formControlName="brideName" />
+          </div>
+          <p class="ci-field__error" *ngIf="coupleDetailForm.get('brideName')?.touched && coupleDetailForm.get('brideName')?.invalid">
+            Nama mempelai wanita wajib diisi.
+          </p>
+
+          <div class="ci-field">
+            <span class="ci-field__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <input class="ci-input" type="text" placeholder="Nama mempelai pria" formControlName="groomName" />
+          </div>
+          <p class="ci-field__error" *ngIf="coupleDetailForm.get('groomName')?.touched && coupleDetailForm.get('groomName')?.invalid">
+            Nama mempelai pria wajib diisi.
+          </p>
+
+          <div class="auth-date-field">
+            <i class="fa fa-calendar auth-date-field__icon" aria-hidden="true"></i>
+            <input
+              type="date"
+              class="auth-date-field__input"
+              placeholder="DD/MM/YYYY"
+              formControlName="weddingDate"
+            />
+          </div>
+          <p class="ci-field__error" *ngIf="coupleDetailForm.get('weddingDate')?.touched && coupleDetailForm.get('weddingDate')?.invalid">
+            Tanggal pernikahan wajib diisi.
+          </p>
+        </form>
+      </ng-container>
+
+      <ng-container *ngIf="detailStepIndex === 1">
+        <h2 class="ci-modal__title">Lengkapi Data Undangan</h2>
+        <p class="ci-modal__subtitle">
+          Periksa detail pasangan sebelum melanjutkan ke form undangan.
+        </p>
+
+        <div class="ci-pay-summary">
+          <div class="ci-pay-summary__row">
+            <span>Mempelai wanita</span>
+            <strong>{{ coupleDetailForm.get('brideName')?.value }}</strong>
+          </div>
+          <div class="ci-pay-summary__row">
+            <span>Mempelai pria</span>
+            <strong>{{ coupleDetailForm.get('groomName')?.value }}</strong>
+          </div>
+          <div class="ci-pay-summary__row">
+            <span>Tanggal pernikahan</span>
+            <strong>{{ coupleDetailForm.get('weddingDate')?.value }}</strong>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="ci-actions">
+        <button
+          type="button"
+          class="auth-wizard-btn auth-wizard-btn--secondary"
+          [disabled]="!canGoBackDetailStep"
+          (click)="goBackDetailStep()"
+        >
+          Kembali
+        </button>
+        <button
+          type="button"
+          class="auth-wizard-btn auth-wizard-btn--primary"
+          (click)="goForwardDetailStep()"
+        >
+          Lanjut
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
     </ng-container>
   </div>
 </div>
