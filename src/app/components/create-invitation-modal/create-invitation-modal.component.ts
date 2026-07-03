@@ -28,7 +28,8 @@ export type CreateInvitationStep =
   | 'couple-detail'
   | 'theme-selection'
   | 'account'
-  | 'continue-wizard';
+  | 'continue-wizard'
+  | 'invitation-detail';
 
 type ThemeTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
 
@@ -89,6 +90,7 @@ interface PaketByTier {
 export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   isOpen = false;
   step: CreateInvitationStep = 'couple-detail';
+  detailStepIndex = 0;
 
   isSubmitting = false;
   errorMessage = '';
@@ -224,10 +226,26 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.modal.openLogin();
   }
 
+  public get isDetailFirstStep(): boolean {
+    return this.detailStepIndex === 0;
+  }
+
+  public get canGoBackDetailStep(): boolean {
+    return this.detailStepIndex > 0;
+  }
+
+  private logInvitationDetailStep(): void {
+    console.log('[InvitationDetailStep]', {
+      detailStepIndex: this.detailStepIndex,
+      canGoBackDetailStep: this.canGoBackDetailStep,
+    });
+  }
+
   private resetWizard(prefill?: CreateInvitationThemePrefill | null): void {
     const prefilledTheme = this.buildPrefilledTheme(prefill);
 
     this.step = 'couple-detail';
+    this.detailStepIndex = 0;
     this.isSubmitting = false;
     this.errorMessage = '';
     this.showPassword = false;
@@ -637,8 +655,40 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   }
 
 
+  public openInvitationDetailWizard(): void {
+    this.detailStepIndex = 0;
+    this.step = 'invitation-detail';
+    this.errorMessage = '';
+    this.logInvitationDetailStep();
+  }
+
+  public goBackDetailStep(): void {
+    if (!this.canGoBackDetailStep) {
+      return;
+    }
+
+    this.detailStepIndex -= 1;
+    this.logInvitationDetailStep();
+  }
+
+  public goForwardDetailStep(): void {
+    if (this.detailStepIndex === 0) {
+      if (this.coupleDetailForm.invalid) {
+        this.coupleDetailForm.markAllAsTouched();
+        return;
+      }
+
+      this.detailStepIndex = 1;
+      this.logInvitationDetailStep();
+      return;
+    }
+
+    this.continueToBuatUndangan();
+  }
+
   /** Resume legacy wizard at step 2 (informasi mempelai). */
   continueToBuatUndangan(): void {
+    this.updatePersistedCoupleDetail();
     try {
       sessionStorage.setItem(
         'landingOnboardingNotice',
@@ -655,6 +705,35 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         },
       },
     });
+  }
+
+  private updatePersistedCoupleDetail(): void {
+    const brideName = String(this.coupleDetailForm.value.brideName || '').trim();
+    const groomName = String(this.coupleDetailForm.value.groomName || '').trim();
+    const weddingDate = this.coupleDetailForm.value.weddingDate;
+
+    try {
+      const saved = localStorage.getItem('formData');
+      if (!saved) {
+        return;
+      }
+
+      const formData = JSON.parse(saved);
+      formData.informasiMempelai = {
+        ...(formData.informasiMempelai || {}),
+        updatedData: {
+          ...(formData.informasiMempelai?.updatedData || {}),
+          name_lengkap_wanita: brideName,
+          name_panggilan_wanita: brideName,
+          name_lengkap_pria: groomName,
+          name_panggilan_pria: groomName,
+        },
+        tanggal: weddingDate,
+      };
+      localStorage.setItem('formData', JSON.stringify(formData));
+    } catch {
+      /* non-critical */
+    }
   }
 
   /* ------------------------------- helpers ---------------------------------- */
