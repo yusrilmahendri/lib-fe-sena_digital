@@ -358,6 +358,7 @@
 .btn-pilih-tema:disabled {
   opacity: 0.55;
   pointer-events: none;
+  cursor: not-allowed;
 }
 
 .btn-pilih-tema:not(:disabled) {

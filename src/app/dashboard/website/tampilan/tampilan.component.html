@@ -42,10 +42,11 @@
     <ng-container *ngIf="!isLoading && !errorMessage">
       <div *ngIf="visibleThemeCards.length" class="theme-picker__mobile-select">
         <select
-          [value]="selectedThemeSlug"
-          (change)="onThemeOptionChange($any($event.target).value)"
+          class="theme-mobile-select"
+          [value]="selectedThemeSlugForSubmit"
+          (change)="selectThemeForSubmit($any($event.target).value)"
           aria-label="Pilih tema">
-          <option value="">Pilih salah satu tema</option>
+          <option value="" disabled>Pilih tema</option>
           <option
             *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
             [value]="theme.slug">
@@ -58,11 +59,11 @@
         <article
           *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
           class="theme-card"
-          [class.theme-card--selected]="isSelectedTheme(theme)"
+          [class.theme-card--selected]="selectedThemeSlugForSubmit === theme.slug"
           [class.theme-card--used]="isCurrentTheme(theme)"
           [class.theme-card--locked]="isCardLocked(theme)"
           [attr.aria-disabled]="isCardLocked(theme)"
-          (click)="onThemeCardClick(theme)">
+          (click)="selectThemeForSubmit(theme)">
           <div class="theme-card__media">
             <img
               [src]="theme.image"
