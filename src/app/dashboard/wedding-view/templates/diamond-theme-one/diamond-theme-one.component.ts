@@ -521,43 +521,70 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getCountdownPhotoUrl(): string {
-    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
-    const item = gallery[0] || gallery[1];
-    const galleryItem: any = item || {};
+    const gallery: any[] = this.weddingData?.gallery || [];
 
-    return this.normalizePhotoUrl(galleryItem.photo_url || galleryItem.photo || galleryItem.url) || this.getCoverPhotoUrl();
+    const item: any =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return (
+          name.includes('countdown') ||
+          name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('berdua') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding')
+        );
+      }) ||
+      gallery[2] ||
+      gallery[1] ||
+      gallery[0] ||
+      null;
+
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   private startDiamondCountdown(): void {
-    this.updateDiamondCountdown();
+    this.updateCountdown();
 
     if (this.diamondCountdownTimer) {
       clearInterval(this.diamondCountdownTimer);
     }
 
     this.diamondCountdownTimer = setInterval(() => {
-      this.updateDiamondCountdown();
+      this.updateCountdown();
     }, 1000);
   }
 
-  private getDiamondCountdownTargetDate(): Date | null {
-    const event = this.getAkadEvent() || this.getResepsiEvent();
+  getCountdownTargetDate(): Date | null {
+    const event = this.getAkadEvent() || this.getResepsiEvent() || this.getMainEvent();
 
-    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
-    const rawTime = event?.start_acara || event?.jam_mulai || event?.start_time || '00:00';
+    const rawDate =
+      event?.tanggal_acara ||
+      event?.tanggal ||
+      event?.date ||
+      event?.event_date ||
+      '';
+
+    const rawTime =
+      event?.start_acara ||
+      event?.jam_mulai ||
+      event?.start_time ||
+      '00:00';
 
     if (!rawDate) return null;
 
     const datePart = String(rawDate).split('T')[0];
     const timePart = String(rawTime).slice(0, 5);
 
-    const date = new Date(`${datePart}T${timePart}:00`);
+    const target = new Date(`${datePart}T${timePart}:00`);
 
-    return isNaN(date.getTime()) ? null : date;
+    return isNaN(target.getTime()) ? null : target;
   }
 
-  private updateDiamondCountdown(): void {
-    const target = this.getDiamondCountdownTargetDate();
+  updateCountdown(): void {
+    const target = this.getCountdownTargetDate();
 
     if (!target) {
       this.countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };

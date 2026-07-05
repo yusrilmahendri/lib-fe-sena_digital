@@ -119,6 +119,44 @@
         </div>
       </section>
 
+      <!-- COUNTDOWN -->
+      <section class="diamond-countdown">
+        <img
+          class="diamond-countdown__bg"
+          [src]="getCountdownPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-countdown__overlay"></div>
+
+        <div class="diamond-countdown__content">
+          <p class="diamond-countdown__label">MENUJU HARI BAHAGIA</p>
+          <h2>HITUNG MUNDUR</h2>
+
+          <div class="diamond-countdown__grid">
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.days }}</strong>
+              <span>HARI</span>
+            </div>
+
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.hours }}</strong>
+              <span>JAM</span>
+            </div>
+
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.minutes }}</strong>
+              <span>MENIT</span>
+            </div>
+
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.seconds }}</strong>
+              <span>DETIK</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ACARA -->
       <section class="diamond-event">
         <img
@@ -191,48 +229,13 @@
         </div>
       </section>
 
-      <!-- TURUT MENGUNDANG -->
-      <section class="diamond-section diamond-section--inviting" *ngIf="getInvitingFamilies().length">
+      <!-- Tamu spesial sementara disembunyikan -->
+      <section class="diamond-section diamond-section--inviting" *ngIf="false">
         <p class="diamond-eyebrow">Turut Mengundang</p>
         <h2 class="diamond-title">Keluarga Besar</h2>
         <ul class="diamond-inviting-list">
           <li *ngFor="let family of getInvitingFamilies()">{{ family }}</li>
         </ul>
-      </section>
-
-      <!-- COUNTDOWN -->
-      <section class="diamond-countdown">
-        <img
-          class="diamond-countdown__bg"
-          [src]="getCountdownPhotoUrl()"
-          alt=""
-          (error)="onCoverImageError($event)" />
-
-        <div class="diamond-countdown__overlay"></div>
-
-        <div class="diamond-countdown__content">
-          <p class="diamond-countdown__label">MENUJU HARI BAHAGIA</p>
-          <h2>Hitung Mundur</h2>
-
-          <div class="diamond-countdown__grid">
-            <div class="diamond-countdown__box">
-              <strong>{{ countdown.days }}</strong>
-              <span>HARI</span>
-            </div>
-            <div class="diamond-countdown__box">
-              <strong>{{ countdown.hours }}</strong>
-              <span>JAM</span>
-            </div>
-            <div class="diamond-countdown__box">
-              <strong>{{ countdown.minutes }}</strong>
-              <span>MENIT</span>
-            </div>
-            <div class="diamond-countdown__box">
-              <strong>{{ countdown.seconds }}</strong>
-              <span>DETIK</span>
-            </div>
-          </div>
-        </div>
       </section>
 
       <!-- GALERI -->
