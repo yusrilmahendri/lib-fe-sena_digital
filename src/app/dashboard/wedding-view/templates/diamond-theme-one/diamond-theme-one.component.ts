@@ -20,7 +20,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     minutes: '00',
     seconds: '00',
   };
-  private diamondCountdownTimer?: any;
+  private countdownInterval: any = null;
 
   constructor(
     sanitizer: DomSanitizer,
@@ -34,6 +34,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     super.ngOnInit();
     this.syncInvitationState();
     this.startDiamondCountdown();
+    if (!this.wishForm.kehadiran) {
+      this.wishForm.kehadiran = 'hadir';
+    }
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -50,10 +53,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override ngOnDestroy(): void {
-    if (this.diamondCountdownTimer) {
-      clearInterval(this.diamondCountdownTimer);
-      this.diamondCountdownTimer = undefined;
-    }
+    this.clearDiamondCountdownInterval();
     super.ngOnDestroy();
   }
 
@@ -546,18 +546,22 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private startDiamondCountdown(): void {
-    this.updateCountdown();
+    this.clearDiamondCountdownInterval();
+    this.updateDiamondCountdown();
 
-    if (this.diamondCountdownTimer) {
-      clearInterval(this.diamondCountdownTimer);
-    }
-
-    this.diamondCountdownTimer = setInterval(() => {
-      this.updateCountdown();
+    this.countdownInterval = setInterval(() => {
+      this.updateDiamondCountdown();
     }, 1000);
   }
 
-  getCountdownTargetDate(): Date | null {
+  private clearDiamondCountdownInterval(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+  }
+
+  private getDiamondCountdownTargetDate(): Date | null {
     const event = this.getAkadEvent() || this.getResepsiEvent() || this.getMainEvent();
 
     const rawDate =
@@ -583,8 +587,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return isNaN(target.getTime()) ? null : target;
   }
 
-  updateCountdown(): void {
-    const target = this.getCountdownTargetDate();
+  private updateDiamondCountdown(): void {
+    const target = this.getDiamondCountdownTargetDate();
 
     if (!target) {
       this.countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };
@@ -609,6 +613,61 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       minutes: String(minutes).padStart(2, '0'),
       seconds: String(seconds).padStart(2, '0'),
     };
+  }
+
+  setWishAttendance(status: 'hadir' | 'mungkin' | 'tidak_hadir'): void {
+    this.wishForm.kehadiran = status;
+  }
+
+  override get visibleGuestWishes(): any[] {
+    const wishes = (this as any).guestWishes || this.weddingData?.guest_wishes || this.getGuestWishes() || [];
+
+    return wishes.filter((item: any) => this.isRealGuestWish(item));
+  }
+
+  getWishAttendanceLabel(status: string): string {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'hadir') return 'Hadir';
+    if (value === 'mungkin') return 'Mungkin';
+    if (value === 'tidak_hadir') return 'Tidak Hadir';
+
+    return 'Hadir';
+  }
+
+  getWishAttendanceClass(status: string): string {
+    const value = String(status || '').toLowerCase();
+
+    if (value === 'tidak_hadir') return 'status status--danger';
+    if (value === 'mungkin') return 'status status--warning';
+
+    return 'status status--success';
+  }
+
+  getWishesPhotoUrl(): string {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    const item: any =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return (
+          name.includes('wish') ||
+          name.includes('ucapan') ||
+          name.includes('doa') ||
+          name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('outdoor')
+        );
+      }) ||
+      gallery[3] ||
+      gallery[2] ||
+      gallery[1] ||
+      gallery[0] ||
+      null;
+
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   getGroomPortrait(): string {
@@ -1048,6 +1107,246 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return candidates
       .map((value) => String(value || '').trim())
       .find((value) => !!value) || '';
+  }
+
+  getBankAccounts(): any[] {
+    const data: any = this.weddingData || {};
+
+    if (Array.isArray(data.bank_accounts)) return data.bank_accounts;
+    if (Array.isArray(data.rekenings)) return data.rekenings;
+    if (Array.isArray(data.rekening)) return data.rekening;
+    if (Array.isArray(data.gifts)) return data.gifts;
+
+    return [];
+  }
+
+  getGiftPhotoUrl(): string {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    const item: any =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return (
+          name.includes('gift') ||
+          name.includes('hadiah') ||
+          name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding')
+        );
+      }) ||
+      gallery[2] ||
+      gallery[1] ||
+      gallery[0] ||
+      null;
+
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  copyGiftNumber(account: any): void {
+    const number = String(
+      account?.nomor_rekening ||
+      account?.account_number ||
+      account?.no_rekening ||
+      ''
+    ).trim();
+
+    if (!number) return;
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(number);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = number;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+  }
+
+  getMomentGallery(): any[] {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    return gallery.filter((item: any) => {
+      const url = item?.photo_url || item?.photo || item?.url || item?.image || '';
+      return Boolean(url);
+    });
+  }
+
+  getMomentFeaturedItem(): any {
+    const gallery = this.getMomentGallery();
+
+    return (
+      gallery.find((item: any) => item?.url_video || item?.video_url || item?.link_video) ||
+      gallery[0] ||
+      null
+    );
+  }
+
+  getMomentPhotosPartOne(): any[] {
+    const gallery = this.getMomentGallery();
+
+    if (!gallery.length) return [];
+
+    const withoutFeatured = gallery.filter((item: any) => item !== this.getMomentFeaturedItem());
+
+    return withoutFeatured.slice(0, 4);
+  }
+
+  getMomentPhotosPartTwo(): any[] {
+    const gallery = this.getMomentGallery();
+
+    if (!gallery.length) return [];
+
+    return gallery.slice(4, 10);
+  }
+
+  getMomentPhotoUrl(item: any): string {
+    const rawUrl =
+      item?.photo_url ||
+      item?.photo ||
+      item?.url ||
+      item?.image ||
+      item?.foto ||
+      '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  getMomentAlt(item: any, index: number): string {
+    return String(
+      item?.nama_foto ||
+      item?.name ||
+      item?.title ||
+      `Moment ${index + 1}`
+    );
+  }
+
+  hasMomentVideo(item: any): boolean {
+    return Boolean(
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video
+    );
+  }
+
+  openMomentVideo(item: any): void {
+    const videoUrl = String(
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video ||
+      ''
+    ).trim();
+
+    if (!videoUrl) return;
+
+    window.open(videoUrl, '_blank');
+  }
+
+  getMomentsBackgroundUrl(index: number): string {
+    const gallery = this.getMomentGallery();
+    const item = gallery[index + 1] || gallery[index] || gallery[0];
+
+    return this.getMomentPhotoUrl(item) || this.getCoverPhotoUrl();
+  }
+
+  onMomentImageError(event: Event): void {
+    const target = event.target as HTMLImageElement | null;
+    if (!target) return;
+
+    const fallback = this.getCoverPhotoUrl();
+
+    if (fallback && target.src !== fallback) {
+      target.src = fallback;
+    }
+  }
+
+  getLiveStreamingData(): any {
+    const data: any = this.weddingData || {};
+
+    return (
+      data.live_streaming ||
+      data.livestreaming ||
+      data.liveStreaming ||
+      data.streaming ||
+      data.filter_undangan?.live_streaming ||
+      data.filter_undangan?.livestreaming ||
+      null
+    );
+  }
+
+  getLiveStreamingUrl(): string {
+    const live = this.getLiveStreamingData();
+    const data: any = this.weddingData || {};
+
+    return String(
+      live?.url ||
+      live?.link ||
+      live?.link_live ||
+      live?.url_live ||
+      live?.youtube_url ||
+      live?.link_youtube ||
+      data?.link_live_streaming ||
+      data?.live_streaming_url ||
+      ''
+    ).trim();
+  }
+
+  hasLiveStreaming(): boolean {
+    return Boolean(this.getLiveStreamingUrl());
+  }
+
+  getLiveStreamingPhotoUrl(): string {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    const item: any =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return (
+          name.includes('live') ||
+          name.includes('stream') ||
+          name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding')
+        );
+      }) ||
+      gallery[1] ||
+      gallery[0] ||
+      null;
+
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  getFooterPhotoUrl(): string {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    const item: any =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return (
+          name.includes('footer') ||
+          name.includes('closing') ||
+          name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding')
+        );
+      }) ||
+      gallery[0] ||
+      null;
+
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   override getVisibleBankAccounts(): BankAccount[] {

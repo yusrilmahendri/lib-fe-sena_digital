@@ -157,8 +157,235 @@
         </div>
       </section>
 
-      <!-- ACARA -->
-      <section class="diamond-event">
+      <!-- UCAPAN & DOA -->
+      <section class="diamond-wishes">
+        <img
+          class="diamond-wishes__bg"
+          [src]="getWishesPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-wishes__overlay"></div>
+
+        <div class="diamond-wishes__content">
+          <p class="diamond-wishes__label">DOA & HARAPAN</p>
+          <h2>UCAPAN & DOA</h2>
+
+          <form class="diamond-wishes__form" (ngSubmit)="submitWish()">
+            <label>
+              <span>Nama Lengkap</span>
+              <input
+                type="text"
+                name="wishName"
+                [(ngModel)]="wishForm.nama"
+                placeholder="Nama kamu" />
+            </label>
+
+            <label>
+              <span>Ucapan & Doa</span>
+              <textarea
+                name="wishMessage"
+                [(ngModel)]="wishForm.pesan"
+                placeholder="Tulis ucapan & doa terbaikmu..."></textarea>
+            </label>
+
+            <div class="diamond-wishes__attendance">
+              <span>Kehadiran</span>
+
+              <div class="diamond-wishes__attendance-buttons">
+                <button
+                  type="button"
+                  [class.active]="wishForm.kehadiran === 'hadir'"
+                  (click)="setWishAttendance('hadir')">
+                  Hadir
+                </button>
+
+                <button
+                  type="button"
+                  [class.active]="wishForm.kehadiran === 'mungkin'"
+                  (click)="setWishAttendance('mungkin')">
+                  Mungkin
+                </button>
+
+                <button
+                  type="button"
+                  [class.active]="wishForm.kehadiran === 'tidak_hadir'"
+                  (click)="setWishAttendance('tidak_hadir')">
+                  Tidak Hadir
+                </button>
+              </div>
+            </div>
+
+            <button class="diamond-wishes__submit" type="submit" [disabled]="isSubmittingWish">
+              {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
+            </button>
+          </form>
+
+          <div class="diamond-wishes__list">
+            <article
+              class="diamond-wishes__card"
+              *ngFor="let wish of visibleGuestWishes; trackBy: trackByWish">
+              <div class="diamond-wishes__card-header">
+                <strong>{{ wish.nama || wish.name }}</strong>
+                <span [class]="getWishAttendanceClass(wish.kehadiran)">
+                  {{ getWishAttendanceLabel(wish.kehadiran) }}
+                </span>
+              </div>
+
+              <p>{{ wish.pesan || wish.message }}</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- WEDDING GIFT -->
+      <section class="diamond-gift">
+        <img
+          class="diamond-gift__bg"
+          [src]="getGiftPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-gift__overlay"></div>
+
+        <div class="diamond-gift__content">
+          <p class="diamond-gift__label">WEDDING GIFT</p>
+          <h2>TANDA KASIH</h2>
+
+          <div class="diamond-gift__list" *ngIf="getBankAccounts().length; else noGiftData">
+            <article class="diamond-gift__card" *ngFor="let account of getBankAccounts()">
+              <div class="diamond-gift__icon">
+                <i class="fas fa-gift"></i>
+              </div>
+
+              <div class="diamond-gift__body">
+                <h3>
+                  {{ account.nomor_rekening || account.account_number }}
+                  <span *ngIf="account.nama_bank || account.bank_name">
+                    / {{ account.nama_bank || account.bank_name }}
+                  </span>
+                </h3>
+
+                <p>a.n. {{ account.nama_pemilik || account.account_name || account.atas_nama }}</p>
+              </div>
+
+              <button
+                type="button"
+                class="diamond-gift__copy"
+                (click)="copyGiftNumber(account)">
+                Salin
+              </button>
+            </article>
+          </div>
+
+          <ng-template #noGiftData>
+            <div class="diamond-gift__empty">
+              Data rekening belum tersedia.
+            </div>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- MOMENTS -->
+      <section class="diamond-moments">
+        <div class="diamond-moments__section diamond-moments__section--one">
+          <img
+            class="diamond-moments__bg"
+            [src]="getMomentsBackgroundUrl(0)"
+            alt=""
+            (error)="onCoverImageError($event)" />
+
+          <div class="diamond-moments__overlay"></div>
+
+          <div class="diamond-moments__content">
+            <p class="diamond-moments__label">MOMENTS</p>
+            <h2>CERITA DALAM<br />LENSA #1</h2>
+
+            <div
+              class="diamond-moments__featured"
+              *ngIf="getMomentFeaturedItem() as featured"
+              (click)="openMomentVideo(featured)">
+              <img
+                [src]="getMomentPhotoUrl(featured)"
+                [alt]="getMomentAlt(featured, 0)"
+                (error)="onMomentImageError($event)" />
+
+              <button
+                type="button"
+                class="diamond-moments__play"
+                *ngIf="hasMomentVideo(featured)"
+                aria-label="Putar video">
+                <i class="fas fa-play"></i>
+              </button>
+            </div>
+
+            <div class="diamond-moments__grid diamond-moments__grid--one">
+              <div
+                class="diamond-moments__item"
+                *ngFor="let item of getMomentPhotosPartOne(); let i = index">
+                <img
+                  [src]="getMomentPhotoUrl(item)"
+                  [alt]="getMomentAlt(item, i)"
+                  (error)="onMomentImageError($event)" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diamond-moments__section diamond-moments__section--two">
+          <img
+            class="diamond-moments__bg"
+            [src]="getMomentsBackgroundUrl(1)"
+            alt=""
+            (error)="onCoverImageError($event)" />
+
+          <div class="diamond-moments__overlay"></div>
+
+          <div class="diamond-moments__content">
+            <p class="diamond-moments__label">MOMENTS</p>
+            <h2>CERITA DALAM<br />LENSA #2</h2>
+
+            <div class="diamond-moments__grid diamond-moments__grid--two">
+              <div
+                class="diamond-moments__item"
+                *ngFor="let item of getMomentPhotosPartTwo(); let i = index">
+                <img
+                  [src]="getMomentPhotoUrl(item)"
+                  [alt]="getMomentAlt(item, i)"
+                  (error)="onMomentImageError($event)" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LIVE STREAMING -->
+      <section class="diamond-live" *ngIf="hasLiveStreaming()">
+        <img
+          class="diamond-live__bg"
+          [src]="getLiveStreamingPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-live__overlay"></div>
+
+        <div class="diamond-live__content">
+          <p class="diamond-live__label">HADIRI SECARA ONLINE</p>
+          <h2>LIVE STREAMING</h2>
+
+          <a
+            class="diamond-live__button"
+            [href]="getLiveStreamingUrl()"
+            target="_blank"
+            rel="noopener">
+            <i class="fab fa-youtube"></i>
+            Gabung Live Streaming
+          </a>
+        </div>
+      </section>
+
+      <!-- ACARA sementara disembunyikan -->
+      <section class="diamond-event" *ngIf="false">
         <img
           class="diamond-event__bg"
           [src]="getEventPhotoUrl()"
@@ -238,8 +465,8 @@
         </ul>
       </section>
 
-      <!-- GALERI -->
-      <section class="diamond-section diamond-section--gallery" *ngIf="isGalleryVisible() && mainGalleryPhoto">
+      <!-- Galeri Foto sementara disembunyikan -->
+      <section class="diamond-section diamond-section--gallery" *ngIf="false && isGalleryVisible() && mainGalleryPhoto">
         <p class="diamond-eyebrow">Moments</p>
         <h2 class="diamond-title">Galeri Foto</h2>
 
@@ -295,78 +522,8 @@
         </div>
       </section>
 
-      <!-- UCAPAN -->
-      <section class="diamond-wishes" *ngIf="isWishVisible()">
-        <div class="diamond-wishes__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
-        <div class="diamond-wishes__overlay"></div>
-        <div class="diamond-wishes__content">
-          <p class="diamond-eyebrow diamond-eyebrow--light">Doa &amp; Harapan</p>
-          <h2 class="diamond-title diamond-title--light">Ucapan &amp; Doa</h2>
-
-          <div class="diamond-form">
-            <input class="diamond-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama Lengkap">
-            <textarea class="diamond-textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan & doa di sini..."></textarea>
-            <div class="diamond-attendance">
-              <button type="button" class="diamond-chip" [class.diamond-chip--active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
-              <button type="button" class="diamond-chip" [class.diamond-chip--active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
-              <button type="button" class="diamond-chip" [class.diamond-chip--active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
-            </div>
-            <button class="diamond-btn diamond-btn--primary diamond-btn--full" type="button" [disabled]="isSubmittingWish" (click)="submitWish()">
-              {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
-            </button>
-          </div>
-
-          <div class="diamond-wishes-list" *ngIf="visibleGuestWishes.length; else emptyWishes">
-            <article class="diamond-wish-card" *ngFor="let wish of visibleGuestWishes; trackBy: trackByWish">
-              <div class="diamond-wish-card__top">
-                <strong>{{ wish.nama }}</strong>
-                <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
-              </div>
-              <p>{{ wish.pesan }}</p>
-            </article>
-          </div>
-          <ng-template #emptyWishes>
-            <div class="diamond-empty diamond-empty--light">Belum ada ucapan. Jadilah yang pertama mengirim doa terbaik.</div>
-          </ng-template>
-        </div>
-      </section>
-
-      <!-- WEDDING GIFT -->
-      <section class="diamond-gift" *ngIf="isGiftVisible()">
-        <div class="diamond-gift__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
-        <div class="diamond-gift__overlay"></div>
-        <div class="diamond-gift__content">
-          <p class="diamond-eyebrow diamond-eyebrow--light">Wedding Gift</p>
-          <h2 class="diamond-title diamond-title--light">Tanda Kasih</h2>
-          <p class="diamond-copy diamond-copy--light diamond-copy--center">{{ getWeddingGiftIntro() }}</p>
-
-          <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
-            <article class="diamond-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
-              <img
-                *ngIf="getBankPhotoUrl(bank) as bankPhoto"
-                class="diamond-bank-card__photo"
-                [src]="bankPhoto"
-                [alt]="bank.nama_bank || 'Logo bank'"
-                (error)="onImageError($event)">
-              <div class="diamond-bank-card__top">
-                <span>{{ bank.nama_bank || bank.bank?.name || 'Bank' }}</span>
-                <small>{{ bank.bank?.kode_bank || bank.kode_bank || '' }}</small>
-              </div>
-              <strong>{{ bank.nomor_rekening }}</strong>
-              <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
-              <button class="diamond-btn diamond-btn--ghost diamond-btn--full" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
-                <i class="far fa-copy" aria-hidden="true"></i> Salin No. Rekening
-              </button>
-            </article>
-          </ng-container>
-          <ng-template #emptyBanks>
-            <div class="diamond-empty diamond-empty--light">Informasi rekening belum tersedia.</div>
-          </ng-template>
-        </div>
-      </section>
-
-      <!-- CERITA -->
-      <section class="diamond-section diamond-section--story" *ngIf="isStoryVisible() && getLoveStoryItems().length">
+      <!-- Cerita sementara disembunyikan -->
+      <section class="diamond-section diamond-section--story" *ngIf="false && isStoryVisible() && getLoveStoryItems().length">
         <p class="diamond-eyebrow">Our Journey</p>
         <h2 class="diamond-title">Cerita Dalam Kisah</h2>
         <div class="diamond-story-list">
@@ -381,16 +538,41 @@
       </section>
 
       <!-- FOOTER -->
-      <section class="diamond-closing">
-        <div class="diamond-closing__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
-        <div class="diamond-closing__overlay"></div>
-        <div class="diamond-closing__content">
-          <p>Terima kasih atas doa dan restu yang diberikan untuk pernikahan kami.</p>
-          <h2 class="diamond-names">{{ getCoupleNames() }}</h2>
-          <p class="diamond-closing__date" *ngIf="getClosingDateLabel()">{{ getClosingDateLabel() }}</p>
-          <small>crafted by Sena Digital</small>
+      <footer class="diamond-footer">
+        <img
+          class="diamond-footer__bg"
+          [src]="getFooterPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-footer__overlay"></div>
+
+        <div class="diamond-footer__content">
+          <p class="diamond-footer__intro">
+            Merupakan suatu kehormatan dan kebahagiaan<br />
+            bagi kami apabila Bapak/Ibu/Saudara/i berkenan<br />
+            hadir dan memberikan doa restu.
+          </p>
+
+          <p class="diamond-footer__label">KAMI YANG BERBAHAGIA</p>
+
+          <h2>
+            {{ getGroomName() }}<br />
+            <span>&amp;</span><br />
+            {{ getBrideName() }}
+          </h2>
+
+          <p class="diamond-footer__date">
+            {{ getHeroDateLabel() }}
+          </p>
+
+          <div class="diamond-footer__credit">
+            <p>{{ getPackageLabelText() }}</p>
+            <small>Crafted with <span>♥</span> by</small>
+            <strong>SENA DIGITAL</strong>
+          </div>
         </div>
-      </section>
+      </footer>
     </main>
   </article>
 </section>
