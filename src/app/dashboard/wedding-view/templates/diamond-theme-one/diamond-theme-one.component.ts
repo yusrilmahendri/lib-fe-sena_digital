@@ -45,14 +45,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       this.startDiamondCountdown();
     }
     if (changes['weddingData']) {
-      console.log('[DiamondThemeOne] event data:', this.getEvents());
-      console.log('[DiamondThemeOne] akad:', this.getAkadEvent());
-      console.log('[DiamondThemeOne] resepsi:', this.getResepsiEvent());
-      console.log('[DiamondThemeOne] day:', this.getMainEventDayName());
-      console.log('[DiamondThemeOne] long date:', this.getMainEventLongDate());
-      console.log('[DiamondThemeOne] venue:', this.getEventVenueName());
-      console.log('[DiamondThemeOne] address:', this.getEventAddress());
-      console.log('[DiamondThemeOne] maps:', this.getEventMapLink());
+      this.debugDiamondEvents();
     }
   }
 
@@ -256,17 +249,29 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override getEvents(): any[] {
     const data: any = this.weddingData || {};
 
-    if (Array.isArray(data.events)) return data.events;
-    if (Array.isArray(data.acaras)) return data.acaras;
-    if (Array.isArray(data.event)) return data.event;
-    if (Array.isArray(data.detail_acara)) return data.detail_acara;
-    if (Array.isArray(data.detail_acaras)) return data.detail_acaras;
+    if (Array.isArray(data.events)) {
+      return data.events;
+    }
+
+    if (Array.isArray(data?.data?.events)) {
+      return data.data.events;
+    }
 
     if (data.events && typeof data.events === 'object') {
       return Object.values(data.events);
     }
 
     return [];
+  }
+
+  private normalizeEventType(event: any): string {
+    return String(
+      event?.jenis_acara ||
+      event?.type ||
+      event?.nama_acara ||
+      event?.name ||
+      ''
+    ).toLowerCase();
   }
 
   getMainEvent(): any {
@@ -276,14 +281,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
     return (
       events.find((event: any) => {
-        const type = String(
-          event?.jenis_acara ||
-          event?.nama_acara ||
-          event?.type ||
-          event?.name ||
-          ''
-        ).toLowerCase();
-
+        const type = this.normalizeEventType(event);
         return type.includes('akad');
       }) ||
       events.find((event: any) => {
@@ -305,14 +303,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
     return (
       events.find((event: any) => {
-        const type = String(
-          event?.jenis_acara ||
-          event?.nama_acara ||
-          event?.type ||
-          event?.name ||
-          ''
-        ).toLowerCase();
-
+        const type = this.normalizeEventType(event);
         return type.includes('akad');
       }) ||
       events[0] ||
@@ -325,18 +316,12 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
     return (
       events.find((event: any) => {
-        const type = String(
-          event?.jenis_acara ||
-          event?.nama_acara ||
-          event?.type ||
-          event?.name ||
-          ''
-        ).toLowerCase();
-
+        const type = this.normalizeEventType(event);
         return type.includes('resepsi') ||
           type.includes('reception') ||
-          type.includes('walimatul');
+          type.includes('walimah');
       }) ||
+      events.find((event: any) => event !== this.getAkadEvent()) ||
       events[1] ||
       null
     );
@@ -346,26 +331,26 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return this.getResepsiEvent() || this.getAkadEvent();
   }
 
-  getMainEventDateValue(): string {
-    const event = this.getAkadEvent() || this.getResepsiEvent();
+  getEventDateValue(event?: any): string {
+    const selectedEvent = event || this.getAkadEvent() || this.getResepsiEvent();
 
     return String(
-      event?.tanggal_acara ||
-      event?.tanggal ||
-      event?.date ||
-      event?.event_date ||
-      event?.start_date ||
-      event?.wedding_date ||
+      selectedEvent?.tanggal_acara ||
+      selectedEvent?.tanggal ||
+      selectedEvent?.date ||
+      selectedEvent?.event_date ||
+      selectedEvent?.start_date ||
       ''
     ).trim();
   }
 
   getMainEventDayName(): string {
-    const rawDate = this.getMainEventDateValue();
+    const rawDate = this.getEventDateValue(this.getAkadEvent());
 
     if (!rawDate) return '';
 
-    const date = new Date(rawDate);
+    const dateOnly = rawDate.split('T')[0];
+    const date = new Date(`${dateOnly}T00:00:00`);
 
     if (isNaN(date.getTime())) return '';
 
@@ -373,41 +358,39 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMainEventLongDate(): string {
-    const rawDate = this.getMainEventDateValue();
+    const rawDate = this.getEventDateValue(this.getAkadEvent());
 
     if (!rawDate) return '';
 
-    const value = String(rawDate).trim();
+    const value = rawDate.split('T')[0];
 
-    const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (ymd) {
       const date = new Date(`${ymd[1]}-${ymd[2]}-${ymd[3]}T00:00:00`);
       const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
       return `${ymd[3]} ${month} ${ymd[1]}`;
     }
 
-    const date = new Date(value);
+    const parsed = new Date(value);
 
-    if (isNaN(date.getTime())) return value;
+    if (isNaN(parsed.getTime())) return value;
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
-    const year = date.getFullYear();
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = parsed.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+    const year = parsed.getFullYear();
 
     return `${day} ${month} ${year}`;
   }
 
   formatEventTime(start?: string, end?: string): string {
-    const startValue = String(start || '').trim();
-    const endValue = String(end || '').trim();
-
-    const clean = (value: string): string => {
-      if (!value) return '';
-      return value.slice(0, 5).replace(':', '.');
+    const clean = (value?: string): string => {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      return raw.slice(0, 5).replace(':', '.');
     };
 
-    const startTime = clean(startValue);
-    const endTime = clean(endValue);
+    const startTime = clean(start);
+    const endTime = clean(end);
 
     if (startTime && endTime) return `${startTime} - ${endTime} WIB`;
     if (startTime) return `${startTime} WIB`;
@@ -417,41 +400,26 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getAkadTimeLabel(): string {
     const event = this.getAkadEvent();
-
     if (!event) return '';
 
     return this.formatEventTime(
-      event?.start_acara ||
-      event?.jam_mulai ||
-      event?.start_time ||
-      event?.mulai,
-      event?.end_acara ||
-      event?.jam_selesai ||
-      event?.end_time ||
-      event?.selesai
+      event?.start_acara || event?.jam_mulai || event?.start_time || event?.mulai,
+      event?.end_acara || event?.jam_selesai || event?.end_time || event?.selesai
     );
   }
 
   getResepsiTimeLabel(): string {
     const event = this.getResepsiEvent();
-
     if (!event) return '';
 
     return this.formatEventTime(
-      event?.start_acara ||
-      event?.jam_mulai ||
-      event?.start_time ||
-      event?.mulai,
-      event?.end_acara ||
-      event?.jam_selesai ||
-      event?.end_time ||
-      event?.selesai
+      event?.start_acara || event?.jam_mulai || event?.start_time || event?.mulai,
+      event?.end_acara || event?.jam_selesai || event?.end_time || event?.selesai
     );
   }
 
   getEventVenueName(): string {
     const event = this.getEventForLocation();
-
     if (!event) return '';
 
     return String(
@@ -469,7 +437,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   override getEventAddress(event?: WeddingEvent | any): string {
     const selectedEvent = event || this.getEventForLocation();
-
     if (!selectedEvent) return '';
 
     return String(
@@ -484,7 +451,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getEventMapLink(): string {
     const event = this.getEventForLocation();
-
     if (!event) return '';
 
     return String(
@@ -500,7 +466,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getMapPreviewUrl(): string {
     const event = this.getEventForLocation();
-
     if (!event) return '';
 
     const rawUrl =
@@ -512,15 +477,13 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       event?.gambar_maps ||
       '';
 
-    const normalized = this.normalizePhotoUrl(rawUrl);
-
-    return normalized;
+    return this.normalizePhotoUrl(rawUrl);
   }
 
   getEventPhotoUrl(): string {
-    const gallery = this.weddingData?.gallery || [];
+    const gallery: any[] = this.weddingData?.gallery || [];
 
-    const item =
+    const item: any =
       gallery.find((photo: any) => {
         const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
         return (
@@ -535,12 +498,26 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       }) ||
       gallery[2] ||
       gallery[1] ||
-      gallery[0];
+      gallery[0] ||
+      null;
 
-    const galleryItem: any = item || {};
-    const rawUrl = galleryItem.photo_url || galleryItem.photo || galleryItem.url || '';
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  private debugDiamondEvents(): void {
+    console.log('[DiamondThemeOne] weddingData raw:', this.weddingData);
+    console.log('[DiamondThemeOne] events raw:', this.weddingData?.events);
+    console.log('[DiamondThemeOne] akad event:', this.getAkadEvent());
+    console.log('[DiamondThemeOne] resepsi event:', this.getResepsiEvent());
+    console.log('[DiamondThemeOne] day:', this.getMainEventDayName());
+    console.log('[DiamondThemeOne] long date:', this.getMainEventLongDate());
+    console.log('[DiamondThemeOne] akad time:', this.getAkadTimeLabel());
+    console.log('[DiamondThemeOne] resepsi time:', this.getResepsiTimeLabel());
+    console.log('[DiamondThemeOne] venue:', this.getEventVenueName());
+    console.log('[DiamondThemeOne] address:', this.getEventAddress());
+    console.log('[DiamondThemeOne] maps:', this.getEventMapLink());
   }
 
   getCountdownPhotoUrl(): string {
@@ -933,17 +910,24 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const value = String(rawDate).trim();
     if (!value) return '';
 
+    // Format YYYY-MM-DD atau YYYY-MM-DDTHH:mm:ss
     const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (ymd) return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
+    if (ymd) {
+      return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
+    }
 
+    // Format DD-MM-YYYY atau DD/MM/YYYY
     const dmy = value.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/);
-    if (dmy) return `${dmy[1]} · ${dmy[2]} · ${dmy[3]}`;
+    if (dmy) {
+      return `${dmy[1]} · ${dmy[2]} · ${dmy[3]}`;
+    }
 
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      const day = String(parsed.getDate()).padStart(2, '0');
+      const month = String(parsed.getMonth() + 1).padStart(2, '0');
+      const year = parsed.getFullYear();
+
       return `${day} · ${month} · ${year}`;
     }
 
