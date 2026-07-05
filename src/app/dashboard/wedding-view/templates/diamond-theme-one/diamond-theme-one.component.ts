@@ -193,22 +193,26 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getPrayerPhotoUrl(): string {
     const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
 
-    const prayerPhoto =
+    const preferred =
       gallery.find((item: any) => {
         const name = String(item?.nama_foto || item?.name || item?.title || '').toLowerCase();
-        return name.includes('couple') ||
+        return (
+          name.includes('couple') ||
           name.includes('pasangan') ||
+          name.includes('berdua') ||
           name.includes('outdoor') ||
-          name.includes('prewedding');
+          name.includes('prewedding') ||
+          name.includes('sampul') ||
+          name.includes('cover')
+        );
       }) ||
+      gallery.find((item: any) => item?.url_video) ||
       gallery[1] ||
       gallery[0];
 
-    return this.normalizePhotoUrl(
-      (prayerPhoto as any)?.photo_url ||
-      (prayerPhoto as any)?.photo ||
-      (prayerPhoto as any)?.url
-    ) || this.getCoverPhotoUrl();
+    const rawUrl = (preferred as any)?.photo_url || (preferred as any)?.photo || (preferred as any)?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   override getGuestName(): string {
@@ -336,50 +340,104 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getBridePhotoUrl(): string {
     const bride = this.getBrideData();
-    return this.normalizePhotoUrl(
+    const rawUrl =
       bride?.photo_url ||
+      bride?.foto_url ||
+      bride?.foto_mempelai_url ||
+      bride?.foto_mempelai ||
       bride?.foto ||
       bride?.photo ||
       bride?.image ||
       bride?.avatar ||
-      this.getBridePhoto()
-    ) || this.getCoverPhotoUrl();
+      bride?.photo_profile ||
+      this.getBridePhoto() ||
+      '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   getGroomPhotoUrl(): string {
     const groom = this.getGroomData();
-    return this.normalizePhotoUrl(
+    const rawUrl =
       groom?.photo_url ||
+      groom?.foto_url ||
+      groom?.foto_mempelai_url ||
+      groom?.foto_mempelai ||
       groom?.foto ||
       groom?.photo ||
       groom?.image ||
       groom?.avatar ||
-      this.getGroomPhoto()
-    ) || this.getCoverPhotoUrl();
+      groom?.photo_profile ||
+      this.getGroomPhoto() ||
+      '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   override getBrideParents(): string {
     const bride = this.getBrideData();
-    return String(
+
+    const father =
+      bride?.nama_ayah ||
+      bride?.ayah ||
+      bride?.father ||
+      bride?.bapak ||
+      '';
+
+    const mother =
+      bride?.nama_ibu ||
+      bride?.ibu ||
+      bride?.mother ||
+      '';
+
+    const custom =
       bride?.orang_tua ||
       bride?.nama_orang_tua ||
       bride?.parents ||
       bride?.putri_dari ||
-      this.getBrideParentLine() ||
-      ''
-    ).trim();
+      bride?.anak_dari ||
+      '';
+
+    if (custom) return String(custom).trim();
+
+    if (father && mother) return `Putri pertama dari Bapak ${father} dan Ibu ${mother}`;
+    if (father) return `Putri pertama dari Bapak ${father}`;
+    if (mother) return `Putri pertama dari Ibu ${mother}`;
+
+    return this.getBrideParentLine() || '';
   }
 
   override getGroomParents(): string {
     const groom = this.getGroomData();
-    return String(
+
+    const father =
+      groom?.nama_ayah ||
+      groom?.ayah ||
+      groom?.father ||
+      groom?.bapak ||
+      '';
+
+    const mother =
+      groom?.nama_ibu ||
+      groom?.ibu ||
+      groom?.mother ||
+      '';
+
+    const custom =
       groom?.orang_tua ||
       groom?.nama_orang_tua ||
       groom?.parents ||
       groom?.putra_dari ||
-      this.getGroomParentLine() ||
-      ''
-    ).trim();
+      groom?.anak_dari ||
+      '';
+
+    if (custom) return String(custom).trim();
+
+    if (father && mother) return `Putra pertama dari Bapak ${father} dan Ibu ${mother}`;
+    if (father) return `Putra pertama dari Bapak ${father}`;
+    if (mother) return `Putra pertama dari Ibu ${mother}`;
+
+    return this.getGroomParentLine() || '';
   }
 
   override getBrideInstagram(): string {
@@ -407,8 +465,12 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   onPersonImageError(event: Event): void {
     const target = event.target as HTMLImageElement | null;
     if (!target) return;
-    target.onerror = null;
-    target.src = this.getCoverPhotoUrl();
+
+    const fallback = this.getCoverPhotoUrl();
+
+    if (fallback && target.getAttribute('src') !== fallback) {
+      target.src = fallback;
+    }
   }
 
   getDiamondQuoteText(): string {
@@ -505,7 +567,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getHeroDateLabel(): string {
-    const event = this.getMainEvent();
+    const event = this.getMainEvent?.() || null;
     const data: any = this.weddingData || {};
 
     const rawDate =
@@ -515,17 +577,15 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       event?.event_date ||
       event?.start_date ||
       event?.wedding_date ||
-      event?.countdown?.tanggal_acara ||
-      event?.countdown?.tanggal ||
-      event?.countdown?.date ||
+      data?.events?.[0]?.tanggal_acara ||
+      data?.events?.[0]?.tanggal ||
+      data?.acaras?.[0]?.tanggal_acara ||
+      data?.acaras?.[0]?.tanggal ||
       data?.countdown?.tanggal_acara ||
       data?.countdown?.tanggal ||
       data?.countdown?.date ||
-      data?.countdown?.tanggal_countdown ||
       data?.filter_undangan?.tanggal_acara ||
       data?.filter_undangan?.tanggal ||
-      data?.website?.tanggal_acara ||
-      data?.website?.tanggal ||
       '';
 
     return this.formatDiamondDate(rawDate);
@@ -534,27 +594,21 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   formatDiamondDate(rawDate: any): string {
     if (!rawDate) return '';
 
-    if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
-      return this.formatDateParts(rawDate);
-    }
-
     const value = String(rawDate).trim();
-
     if (!value) return '';
 
-    const ymdMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (ymdMatch) {
-      return `${ymdMatch[3]} · ${ymdMatch[2]} · ${ymdMatch[1]}`;
-    }
+    const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
 
-    const dmyMatch = value.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/);
-    if (dmyMatch) {
-      return `${dmyMatch[1]} · ${dmyMatch[2]} · ${dmyMatch[3]}`;
-    }
+    const dmy = value.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/);
+    if (dmy) return `${dmy[1]} · ${dmy[2]} · ${dmy[3]}`;
 
-    const parsed = new Date(value);
-    if (!isNaN(parsed.getTime())) {
-      return this.formatDateParts(parsed);
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day} · ${month} · ${year}`;
     }
 
     return value;

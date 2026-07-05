@@ -1,5 +1,6 @@
 :host {
   display: block;
+  width: 100%;
 }
 
 .diamond-theme {
@@ -15,27 +16,27 @@
   --diamond-shadow: 0 18px 38px rgba(29, 37, 31, 0.14);
 
   width: 100%;
-  max-width: 430px;
+  max-width: 410px;
   margin: 0 auto;
   min-height: 100vh;
   overflow-x: hidden;
   color: var(--diamond-ink);
-  background: #f6eee8;
+  background: #162719;
   font-family: "Inter", "Poppins", system-ui, sans-serif;
 }
 
 .diamond-shell {
   width: 100%;
-  max-width: 430px;
+  max-width: 410px;
   margin: 0 auto;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f7efe9 0%, #efe4dc 100%);
+  background: #162719;
   overflow: hidden;
 }
 
 .diamond-main {
   width: 100%;
-  max-width: 430px;
+  max-width: 410px;
   margin: 0 auto;
   animation: diamondContentFadeIn 680ms ease forwards;
 }
@@ -49,6 +50,67 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes diamondFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes diamondSlowZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+.diamond-theme-one,
+.diamond-shell,
+.diamond-main,
+.diamond-opening,
+.diamond-hero,
+.diamond-prayer,
+.diamond-person-full {
+  width: 100% !important;
+  max-width: 410px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.diamond-opening,
+.diamond-hero,
+.diamond-prayer,
+.diamond-person-full {
+  border-left: 0 !important;
+  border-right: 0 !important;
+}
+
+.diamond-opening__bg,
+.diamond-hero__bg,
+.diamond-prayer__bg,
+.diamond-person-full__bg {
+  animation: diamondSlowZoom 12s ease-in-out forwards;
+  will-change: transform;
+}
+
+.diamond-opening__content,
+.diamond-hero__content,
+.diamond-prayer__content,
+.diamond-person-full__content {
+  animation: diamondFadeUp .9s ease both;
+}
+
+.diamond-person-full__content {
+  animation-delay: .12s;
 }
 
 /* ── Full-image sections ──────────────────────────────────────── */
@@ -170,7 +232,7 @@
 .diamond-opening__date,
 .diamond-hero__date {
   display: block;
-  margin: 16px 0 0;
+  margin: 14px 0 0;
   font-size: 14px;
   line-height: 1;
   letter-spacing: 6px;
@@ -415,7 +477,7 @@
   position: relative;
   width: 100%;
   max-width: 410px;
-  min-height: 650px;
+  min-height: 620px;
   margin: 0 auto;
   overflow: hidden;
   background: #162719;
@@ -444,11 +506,11 @@
 .diamond-prayer__content {
   position: relative;
   z-index: 3;
-  min-height: 650px;
-  padding: 70px 30px 76px;
+  min-height: 620px;
+  padding: 86px 30px 76px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
 }
 
@@ -604,10 +666,13 @@
 }
 
 @media (max-width: 430px) {
+  .diamond-theme-one,
+  .diamond-shell,
+  .diamond-main,
   .diamond-prayer,
   .diamond-person-full {
-    width: 100%;
-    max-width: none;
+    max-width: none !important;
+    width: 100% !important;
   }
 
   .diamond-prayer__content {
@@ -1145,10 +1210,15 @@
 }
 
 @media (max-width: 430px) {
+  .diamond-theme-one,
+  .diamond-shell,
   .diamond-opening,
+  .diamond-hero,
+  .diamond-prayer,
+  .diamond-person-full,
   .diamond-main {
-    width: 100%;
-    max-width: none;
+    width: 100% !important;
+    max-width: none !important;
   }
 }
 
@@ -1166,6 +1236,14 @@
     animation: none !important;
   }
 
+  .diamond-opening__bg,
+  .diamond-hero__bg,
+  .diamond-prayer__bg,
+  .diamond-person-full__bg,
+  .diamond-opening__content,
+  .diamond-hero__content,
+  .diamond-prayer__content,
+  .diamond-person-full__content,
   .diamond-main {
     animation: none !important;
   }
