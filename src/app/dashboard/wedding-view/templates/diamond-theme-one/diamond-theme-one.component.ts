@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -11,9 +11,16 @@ import { environment } from '../../../../../environments/environment';
   templateUrl: './diamond-theme-one.component.html',
   styleUrls: ['./diamond-theme-one.component.scss'],
 })
-export class DiamondThemeOneComponent extends RubyThemeOneComponent implements OnInit, OnChanges {
+export class DiamondThemeOneComponent extends RubyThemeOneComponent implements OnInit, OnChanges, OnDestroy {
   isInvitationOpened = false;
   readonly apiBaseUrl = (environment as any).apiBaseUrl || (environment as any).apiUrl || '';
+  countdown = {
+    days: '00',
+    hours: '00',
+    minutes: '00',
+    seconds: '00',
+  };
+  private diamondCountdownTimer?: any;
 
   constructor(
     sanitizer: DomSanitizer,
@@ -26,6 +33,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override ngOnInit(): void {
     super.ngOnInit();
     this.syncInvitationState();
+    this.startDiamondCountdown();
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -34,10 +42,21 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       this.syncInvitationState();
     }
     if (changes['weddingData']) {
-      console.log('[DiamondThemeOne] weddingData events:', this.weddingData?.events);
+      this.startDiamondCountdown();
+    }
+    if (changes['weddingData']) {
+      console.log('[DiamondThemeOne] events:', this.getEvents());
       console.log('[DiamondThemeOne] main event:', this.getMainEvent());
       console.log('[DiamondThemeOne] hero date:', this.getHeroDateLabel());
     }
+  }
+
+  override ngOnDestroy(): void {
+    if (this.diamondCountdownTimer) {
+      clearInterval(this.diamondCountdownTimer);
+      this.diamondCountdownTimer = undefined;
+    }
+    super.ngOnDestroy();
   }
 
   override openInvitation(): void {
@@ -252,8 +271,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       events.find((event: any) => {
         const type = String(
           event?.jenis_acara ||
-          event?.type ||
           event?.nama_acara ||
+          event?.type ||
           event?.name ||
           ''
         ).toLowerCase();
@@ -272,6 +291,214 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       }) ||
       events[0]
     );
+  }
+
+  override getAkadEvent(): any {
+    const events = this.getEvents();
+
+    return events.find((event: any) => {
+      const type = String(event?.jenis_acara || event?.nama_acara || event?.name || '').toLowerCase();
+      return type.includes('akad');
+    }) || events[0] || null;
+  }
+
+  getResepsiEvent(): any {
+    const events = this.getEvents();
+
+    return events.find((event: any) => {
+      const type = String(event?.jenis_acara || event?.nama_acara || event?.name || '').toLowerCase();
+      return type.includes('resepsi') || type.includes('reception');
+    }) || events[1] || null;
+  }
+
+  getEventForLocation(): any {
+    return this.getResepsiEvent() || this.getAkadEvent();
+  }
+
+  getMainEventDayName(): string {
+    const event = this.getAkadEvent() || this.getMainEvent();
+    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
+    const date = new Date(rawDate);
+
+    if (isNaN(date.getTime())) return '';
+
+    return date.toLocaleDateString('id-ID', { weekday: 'long' }).toUpperCase();
+  }
+
+  getMainEventLongDate(): string {
+    const event = this.getAkadEvent() || this.getMainEvent();
+    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
+    const date = new Date(rawDate);
+
+    if (isNaN(date.getTime())) return String(rawDate || '').trim();
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+    const year = date.getFullYear();
+
+    return `${day} ${month} ${year}`;
+  }
+
+  formatEventTime(start?: string, end?: string): string {
+    const startValue = String(start || '').trim();
+    const endValue = String(end || '').trim();
+
+    if (!startValue && !endValue) return '';
+
+    const clean = (value: string) => value.slice(0, 5).replace(':', '.');
+
+    if (startValue && endValue) return `${clean(startValue)} - ${clean(endValue)} WIB`;
+    if (startValue) return `${clean(startValue)} WIB`;
+
+    return '';
+  }
+
+  getAkadTimeLabel(): string {
+    const event = this.getAkadEvent();
+
+    return this.formatEventTime(
+      event?.start_acara || event?.jam_mulai || event?.start_time,
+      event?.end_acara || event?.jam_selesai || event?.end_time
+    );
+  }
+
+  getResepsiTimeLabel(): string {
+    const event = this.getResepsiEvent();
+
+    return this.formatEventTime(
+      event?.start_acara || event?.jam_mulai || event?.start_time,
+      event?.end_acara || event?.jam_selesai || event?.end_time
+    );
+  }
+
+  getEventVenueName(): string {
+    const event = this.getEventForLocation();
+
+    return String(
+      event?.nama_tempat ||
+      event?.tempat ||
+      event?.venue ||
+      event?.lokasi ||
+      event?.nama_acara ||
+      ''
+    ).trim();
+  }
+
+  override getEventAddress(event?: WeddingEvent | any): string {
+    const selectedEvent = event || this.getEventForLocation();
+
+    return String(
+      selectedEvent?.alamat ||
+      selectedEvent?.address ||
+      selectedEvent?.lokasi_detail ||
+      ''
+    ).trim();
+  }
+
+  getEventMapLink(): string {
+    const event = this.getEventForLocation();
+
+    return String(
+      event?.link_maps ||
+      event?.maps ||
+      event?.map_url ||
+      event?.google_maps ||
+      ''
+    ).trim();
+  }
+
+  getMapPreviewUrl(): string {
+    const event = this.getEventForLocation();
+
+    const raw =
+      event?.map_image_url ||
+      event?.maps_image ||
+      event?.photo_maps ||
+      event?.map_preview ||
+      '';
+
+    const normalized = this.normalizePhotoUrl(raw);
+
+    if (normalized) return normalized;
+
+    return '';
+  }
+
+  getEventPhotoUrl(): string {
+    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+
+    const item =
+      gallery.find((photo: any) => {
+        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+        return name.includes('venue') || name.includes('lokasi') || name.includes('tempat') || name.includes('outdoor');
+      }) ||
+      gallery[2] ||
+      gallery[0];
+
+    return this.normalizePhotoUrl((item as any)?.photo_url || (item as any)?.photo || (item as any)?.url) || this.getCoverPhotoUrl();
+  }
+
+  getCountdownPhotoUrl(): string {
+    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    const item = gallery[0] || gallery[1];
+
+    return this.normalizePhotoUrl((item as any)?.photo_url || (item as any)?.photo || (item as any)?.url) || this.getCoverPhotoUrl();
+  }
+
+  private startDiamondCountdown(): void {
+    this.updateDiamondCountdown();
+
+    if (this.diamondCountdownTimer) {
+      clearInterval(this.diamondCountdownTimer);
+    }
+
+    this.diamondCountdownTimer = setInterval(() => {
+      this.updateDiamondCountdown();
+    }, 1000);
+  }
+
+  private getDiamondCountdownTargetDate(): Date | null {
+    const event = this.getAkadEvent() || this.getResepsiEvent();
+
+    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
+    const rawTime = event?.start_acara || event?.jam_mulai || event?.start_time || '00:00';
+
+    if (!rawDate) return null;
+
+    const datePart = String(rawDate).split('T')[0];
+    const timePart = String(rawTime).slice(0, 5);
+
+    const date = new Date(`${datePart}T${timePart}:00`);
+
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  private updateDiamondCountdown(): void {
+    const target = this.getDiamondCountdownTargetDate();
+
+    if (!target) {
+      this.countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };
+      return;
+    }
+
+    const diff = target.getTime() - Date.now();
+
+    if (diff <= 0) {
+      this.countdown = { days: '00', hours: '00', minutes: '00', seconds: '00' };
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    this.countdown = {
+      days: String(days).padStart(2, '0'),
+      hours: String(hours).padStart(2, '0'),
+      minutes: String(minutes).padStart(2, '0'),
+      seconds: String(seconds).padStart(2, '0'),
+    };
   }
 
   getGroomPortrait(): string {
@@ -567,8 +794,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getHeroDateLabel(): string {
-    const event = this.getMainEvent?.() || null;
+    const event = this.getMainEvent();
     const data: any = this.weddingData || {};
+    const events = this.getEvents();
 
     const rawDate =
       event?.tanggal_acara ||
@@ -577,15 +805,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       event?.event_date ||
       event?.start_date ||
       event?.wedding_date ||
-      data?.events?.[0]?.tanggal_acara ||
-      data?.events?.[0]?.tanggal ||
-      data?.acaras?.[0]?.tanggal_acara ||
-      data?.acaras?.[0]?.tanggal ||
+      events?.[0]?.tanggal_acara ||
+      events?.[0]?.tanggal ||
+      events?.[0]?.date ||
+      events?.[0]?.event_date ||
       data?.countdown?.tanggal_acara ||
       data?.countdown?.tanggal ||
       data?.countdown?.date ||
       data?.filter_undangan?.tanggal_acara ||
       data?.filter_undangan?.tanggal ||
+      data?.invitation_package?.tanggal_acara ||
+      data?.invitation_package?.tanggal ||
       '';
 
     return this.formatDiamondDate(rawDate);

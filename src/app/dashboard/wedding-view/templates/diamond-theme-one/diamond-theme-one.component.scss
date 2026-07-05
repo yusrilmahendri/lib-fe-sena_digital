@@ -78,7 +78,9 @@
 .diamond-opening,
 .diamond-hero,
 .diamond-prayer,
-.diamond-person-full {
+.diamond-person-full,
+.diamond-event,
+.diamond-countdown {
   width: 100% !important;
   max-width: 410px;
   margin-left: auto;
@@ -89,7 +91,9 @@
 .diamond-opening,
 .diamond-hero,
 .diamond-prayer,
-.diamond-person-full {
+.diamond-person-full,
+.diamond-event,
+.diamond-countdown {
   border-left: 0 !important;
   border-right: 0 !important;
 }
@@ -97,7 +101,9 @@
 .diamond-opening__bg,
 .diamond-hero__bg,
 .diamond-prayer__bg,
-.diamond-person-full__bg {
+.diamond-person-full__bg,
+.diamond-event__bg,
+.diamond-countdown__bg {
   animation: diamondSlowZoom 12s ease-in-out forwards;
   will-change: transform;
 }
@@ -105,7 +111,9 @@
 .diamond-opening__content,
 .diamond-hero__content,
 .diamond-prayer__content,
-.diamond-person-full__content {
+.diamond-person-full__content,
+.diamond-event__content,
+.diamond-countdown__content {
   animation: diamondFadeUp .9s ease both;
 }
 
@@ -118,7 +126,6 @@
 .diamond-cover,
 .diamond-hero,
 .diamond-quote-block,
-.diamond-savedate,
 .diamond-countdown,
 .diamond-wishes,
 .diamond-gift,
@@ -130,8 +137,6 @@
 .diamond-cover__media,
 .diamond-hero__media,
 .diamond-quote-block__media,
-.diamond-savedate__media,
-.diamond-countdown__media,
 .diamond-wishes__media,
 .diamond-gift__media,
 .diamond-closing__media {
@@ -144,7 +149,6 @@
 .diamond-cover__overlay,
 .diamond-hero__overlay,
 .diamond-quote-block__overlay,
-.diamond-savedate__overlay,
 .diamond-countdown__overlay,
 .diamond-wishes__overlay,
 .diamond-gift__overlay,
@@ -231,13 +235,13 @@
 
 .diamond-opening__date,
 .diamond-hero__date {
-  display: block;
-  margin: 14px 0 0;
-  font-size: 14px;
-  line-height: 1;
-  letter-spacing: 6px;
-  font-weight: 700;
-  color: #fff;
+  display: block !important;
+  margin: 14px 0 0 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  letter-spacing: 6px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
   text-transform: uppercase;
 }
 
@@ -269,7 +273,6 @@
 .diamond-cover__content,
 .diamond-hero__content,
 .diamond-quote-block__content,
-.diamond-savedate__content,
 .diamond-countdown__content,
 .diamond-wishes__content,
 .diamond-gift__content,
@@ -403,10 +406,11 @@
 }
 
 .diamond-hero__date {
-  margin-bottom: 54px;
+  margin-bottom: 0 !important;
 }
 
 .diamond-hero__scroll {
+  margin-top: 54px;
   align-self: center;
   display: flex;
   flex-direction: column;
@@ -670,7 +674,9 @@
   .diamond-shell,
   .diamond-main,
   .diamond-prayer,
-  .diamond-person-full {
+  .diamond-person-full,
+  .diamond-event,
+  .diamond-countdown {
     max-width: none !important;
     width: 100% !important;
   }
@@ -686,68 +692,134 @@
   }
 }
 
-/* ── Save the Date ────────────────────────────────────────────── */
-.diamond-savedate {
-  padding: 48px 22px;
+/* ── Event / Location ─────────────────────────────────────────── */
+.diamond-event {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 760px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #142418;
+  color: #fff;
 }
 
-.diamond-event-card {
-  margin: 0 auto 18px;
-  max-width: 340px;
-  padding: 22px 20px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: var(--diamond-shadow);
-  text-align: center;
-  color: var(--diamond-ink);
+.diamond-event__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
 }
 
-.diamond-event-card__badge {
-  display: inline-block;
-  margin-bottom: 12px;
-  padding: 5px 16px;
-  border-radius: 6px;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.66rem;
+.diamond-event__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(12, 22, 15, .42) 0%, rgba(12, 22, 15, .54) 42%, rgba(12, 22, 15, .9) 100%);
+}
+
+.diamond-event__content {
+  position: relative;
+  z-index: 3;
+  min-height: 760px;
+  padding: 70px 28px 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.diamond-event__label {
+  margin: 0 0 12px;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  color: rgba(255,255,255,.82);
+}
+
+.diamond-event__time h2 {
+  margin: 0 0 14px;
+  font-size: 27px;
+  line-height: 1.15;
+  font-weight: 800;
   text-transform: uppercase;
   color: #fff;
-  background: var(--diamond-forest);
 }
 
-.diamond-event-card h3 {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
-}
-
-.diamond-event-card p {
+.diamond-event__schedule {
   margin: 0 0 4px;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.84rem;
-  color: var(--diamond-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(255,255,255,.86);
 }
 
-.diamond-event-card strong {
-  display: block;
-  margin: 8px 0 2px;
-  font-size: 1rem;
+.diamond-event__place {
+  margin-top: auto;
+  padding-bottom: 18px;
 }
 
-.diamond-event-card__addr {
-  margin-bottom: 14px !important;
+.diamond-event__place h3 {
+  margin: 0 0 8px;
+  max-width: 330px;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #fff;
 }
 
-.diamond-event-card__actions {
-  display: flex;
-  gap: 8px;
+.diamond-event__place p {
+  margin: 0;
+  max-width: 320px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: rgba(255,255,255,.82);
+}
+
+.diamond-event__map {
+  width: 100%;
+  height: 178px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(255,255,255,.85);
+  margin: 0 0 18px;
+}
+
+.diamond-event__map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.diamond-event__maps-button {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: 8px;
+  min-width: 220px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #9f453f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 12px 24px rgba(0,0,0,.22);
 }
 
-.diamond-event-card__actions .diamond-btn--ghost {
-  background: var(--diamond-soft);
-  color: var(--diamond-forest);
-  border-color: var(--diamond-line);
+.diamond-event__note {
+  margin: 16px auto 0;
+  max-width: 310px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.5;
+  color: rgba(255,255,255,.72);
 }
 
 /* ── Turut Mengundang ─────────────────────────────────────────── */
@@ -772,43 +844,102 @@
 
 /* ── Countdown ────────────────────────────────────────────────── */
 .diamond-countdown {
-  min-height: 320px;
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 330px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #213b28;
+  color: #fff;
+}
+
+.diamond-countdown__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.diamond-countdown__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(25, 48, 31, .72), rgba(25, 48, 31, .86)),
+    rgba(0,0,0,.16);
+}
+
+.diamond-countdown__content {
+  position: relative;
+  z-index: 3;
+  min-height: 330px;
+  padding: 58px 28px 52px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 48px 22px;
+  text-align: center;
+}
+
+.diamond-countdown__label {
+  margin: 0 0 10px;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 4px;
+  font-weight: 700;
+  color: rgba(255,255,255,.78);
+}
+
+.diamond-countdown h2 {
+  margin: 0 0 28px;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  color: #fff;
 }
 
 .diamond-countdown__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  margin-top: 20px;
+  width: 100%;
+  max-width: 295px;
 }
 
-.diamond-countdown__card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 6px;
+.diamond-countdown__box {
+  min-height: 82px;
+  padding: 14px 6px 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 22px rgba(15, 19, 16, 0.25);
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 10px 20px rgba(0,0,0,.18);
 }
 
-.diamond-countdown__card strong {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--diamond-accent);
+.diamond-countdown__box strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 800;
+  color: #9f453f;
 }
 
-.diamond-countdown__card span {
-  margin-top: 4px;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--diamond-muted);
+.diamond-countdown__box span {
+  display: block;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #666;
+}
+
+@media (max-width: 430px) {
+  .diamond-event,
+  .diamond-countdown {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 /* ── Wishes ───────────────────────────────────────────────────── */
@@ -1203,7 +1334,6 @@
 }
 
 @media (max-width: 360px) {
-  .diamond-countdown__card strong { font-size: 1.25rem; }
   .diamond-title { font-size: 1.75rem; }
   .diamond-person__photo { width: 170px; height: 220px; }
   .diamond-gallery-thumb { flex-basis: 128px; width: 128px; height: 170px; }
@@ -1216,6 +1346,8 @@
   .diamond-hero,
   .diamond-prayer,
   .diamond-person-full,
+  .diamond-event,
+  .diamond-countdown,
   .diamond-main {
     width: 100% !important;
     max-width: none !important;
@@ -1224,7 +1356,6 @@
 
 @media (max-width: 294px) {
   .diamond-section,
-  .diamond-savedate,
   .diamond-countdown,
   .diamond-wishes,
   .diamond-gift { padding-left: 16px; padding-right: 16px; }
@@ -1240,10 +1371,14 @@
   .diamond-hero__bg,
   .diamond-prayer__bg,
   .diamond-person-full__bg,
+  .diamond-event__bg,
+  .diamond-countdown__bg,
   .diamond-opening__content,
   .diamond-hero__content,
   .diamond-prayer__content,
   .diamond-person-full__content,
+  .diamond-event__content,
+  .diamond-countdown__content,
   .diamond-main {
     animation: none !important;
   }

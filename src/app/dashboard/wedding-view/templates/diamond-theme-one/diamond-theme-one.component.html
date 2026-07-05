@@ -120,28 +120,52 @@
       </section>
 
       <!-- ACARA -->
-      <section class="diamond-savedate" *ngIf="isEventVisible() && getOrderedEvents().length">
-        <div class="diamond-savedate__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
-        <div class="diamond-savedate__overlay"></div>
-        <div class="diamond-savedate__content">
-          <p class="diamond-eyebrow diamond-eyebrow--light">Save The Date</p>
-          <h2 class="diamond-title diamond-title--light">Detail Acara</h2>
+      <section class="diamond-event">
+        <img
+          class="diamond-event__bg"
+          [src]="getEventPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
 
-          <article class="diamond-event-card" *ngFor="let event of getOrderedEvents(); trackBy: trackByEvent">
-            <span class="diamond-event-card__badge">{{ getEventTypeLabel(event) }}</span>
-            <h3>{{ formatDate(event.tanggal_acara, 'long') }}</h3>
-            <p>{{ formatTimeRange(event) }}</p>
-            <strong>{{ event.nama_acara }}</strong>
-            <p class="diamond-event-card__addr" *ngIf="getEventAddress(event)">{{ getEventAddress(event) }}</p>
-            <div class="diamond-event-card__actions">
-              <a *ngIf="getCalendarLink(event) as cal" class="diamond-btn diamond-btn--ghost" [href]="cal" target="_blank" rel="noopener noreferrer">
-                <i class="far fa-calendar-plus" aria-hidden="true"></i> Kalender
-              </a>
-              <a *ngIf="getEventMapsLink(event) as mapsLink" class="diamond-btn diamond-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Google Maps
-              </a>
-            </div>
-          </article>
+        <div class="diamond-event__overlay"></div>
+
+        <div class="diamond-event__content">
+          <div class="diamond-event__time">
+            <p class="diamond-event__label">WAKTU</p>
+            <h2>{{ getMainEventDayName() }},<br />{{ getMainEventLongDate() }}</h2>
+
+            <p class="diamond-event__schedule" *ngIf="getAkadTimeLabel()">
+              Akad: {{ getAkadTimeLabel() }}
+            </p>
+
+            <p class="diamond-event__schedule" *ngIf="getResepsiTimeLabel()">
+              Resepsi: {{ getResepsiTimeLabel() }}
+            </p>
+          </div>
+
+          <div class="diamond-event__place">
+            <p class="diamond-event__label">TEMPAT</p>
+            <h3>{{ getEventVenueName() }}</h3>
+            <p>{{ getEventAddress() }}</p>
+          </div>
+
+          <div class="diamond-event__map" *ngIf="getMapPreviewUrl()">
+            <img [src]="getMapPreviewUrl()" alt="Lokasi acara" />
+          </div>
+
+          <a
+            class="diamond-event__maps-button"
+            *ngIf="getEventMapLink()"
+            [href]="getEventMapLink()"
+            target="_blank"
+            rel="noopener">
+            <i class="fas fa-map-marker-alt"></i>
+            Gunakan Google Maps
+          </a>
+
+          <p class="diamond-event__note">
+            Demi kenyamanan mohon gunakan akses utama atau alternatif yang tersedia.
+          </p>
         </div>
       </section>
 
@@ -155,28 +179,35 @@
       </section>
 
       <!-- COUNTDOWN -->
-      <section class="diamond-countdown" *ngIf="isEventVisible()">
-        <div class="diamond-countdown__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
+      <section class="diamond-countdown">
+        <img
+          class="diamond-countdown__bg"
+          [src]="getCountdownPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
         <div class="diamond-countdown__overlay"></div>
+
         <div class="diamond-countdown__content">
-          <p class="diamond-eyebrow diamond-eyebrow--light">Menuju Hari Bahagia</p>
-          <h2 class="diamond-title diamond-title--light">Hitung Mundur</h2>
+          <p class="diamond-countdown__label">MENUJU HARI BAHAGIA</p>
+          <h2>Hitung Mundur</h2>
+
           <div class="diamond-countdown__grid">
-            <div class="diamond-countdown__card">
-              <strong>{{ countdownDays }}</strong>
-              <span>Hari</span>
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.days }}</strong>
+              <span>HARI</span>
             </div>
-            <div class="diamond-countdown__card">
-              <strong>{{ countdownHours }}</strong>
-              <span>Jam</span>
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.hours }}</strong>
+              <span>JAM</span>
             </div>
-            <div class="diamond-countdown__card">
-              <strong>{{ countdownMinutes }}</strong>
-              <span>Menit</span>
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.minutes }}</strong>
+              <span>MENIT</span>
             </div>
-            <div class="diamond-countdown__card">
-              <strong>{{ countdownSeconds }}</strong>
-              <span>Detik</span>
+            <div class="diamond-countdown__box">
+              <strong>{{ countdown.seconds }}</strong>
+              <span>DETIK</span>
             </div>
           </div>
         </div>
