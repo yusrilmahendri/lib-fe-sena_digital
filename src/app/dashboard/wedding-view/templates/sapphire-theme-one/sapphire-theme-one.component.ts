@@ -117,7 +117,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       : 'assets/landing/template-5.png';
   }
 
-  getGuestName(): string {
+  override getGuestName(): string {
     const data = this.weddingData as any;
     const candidates = [
       data?.guest_name,

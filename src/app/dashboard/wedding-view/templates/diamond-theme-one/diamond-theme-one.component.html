@@ -1,50 +1,51 @@
-<section class="diamond-theme" *ngIf="weddingData">
+<section class="diamond-theme diamond-theme-one" *ngIf="weddingData">
   <article class="diamond-shell">
 
-    <!-- 1. HERO / COVER -->
-    <section class="diamond-cover" *ngIf="!invitationOpened">
-      <div class="diamond-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
-      <div class="diamond-cover__overlay"></div>
-      <div class="diamond-cover__content">
-        <p class="diamond-eyebrow diamond-eyebrow--light">The Wedding Of</p>
-        <h1 class="diamond-names">{{ getPrimaryDisplayName() }} <span>&amp;</span> {{ getSecondaryDisplayName() }}</h1>
-        <p class="diamond-cover__date">{{ getHeroDateLabel() }}</p>
-        <div class="diamond-cover__guest">
-          <span>Kepada Yth.</span>
+    <section class="diamond-opening" *ngIf="!isInvitationOpened">
+      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="" />
+      <div class="diamond-opening__overlay"></div>
+
+      <div class="diamond-opening__content">
+        <p class="diamond-opening__eyebrow">THE WEDDING OF</p>
+        <h1 class="diamond-opening__names">{{ getCoupleNames() }}</h1>
+        <p class="diamond-opening__date" *ngIf="getHeroDateLabel()">{{ getHeroDateLabel() }}</p>
+
+        <div class="diamond-opening__guest">
+          <p>KEPADA YTH. BAPAK/IBU/SAUDARA/I</p>
           <strong>{{ getGuestName() }}</strong>
         </div>
-        <button class="diamond-btn diamond-btn--primary" type="button" (click)="openInvitation()">
-          <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+
+        <button type="button" class="diamond-opening__button" (click)="openInvitation()">
           Buka Undangan
         </button>
       </div>
     </section>
 
-    <ng-container *ngIf="invitationOpened">
-      <!-- HERO BANNER -->
+    <main class="diamond-main" *ngIf="isInvitationOpened">
+      <!-- HERO -->
       <section class="diamond-hero">
-        <div class="diamond-hero__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-hero__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-hero__overlay"></div>
         <div class="diamond-hero__content">
           <p class="diamond-eyebrow diamond-eyebrow--light">The Wedding Of</p>
-          <h1 class="diamond-names">{{ getPrimaryDisplayName() }} <span>&amp;</span> {{ getSecondaryDisplayName() }}</h1>
-          <p class="diamond-cover__date">{{ getHeroDateLabel() }}</p>
+          <h1 class="diamond-names">{{ getCoupleNames() }}</h1>
+          <p class="diamond-cover__date" *ngIf="getWeddingDateText()">{{ getWeddingDateText() }}</p>
         </div>
       </section>
 
-      <!-- 2. AYAT / QUOTE PEMBUKA -->
+      <!-- BISMILLAH / QUOTE -->
       <section class="diamond-quote-block">
-        <div class="diamond-quote-block__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-quote-block__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-quote-block__overlay"></div>
         <div class="diamond-quote-block__content">
           <p class="diamond-script">Bismillahirrahmanirrahim</p>
           <p class="diamond-copy diamond-copy--light">{{ getInvitationIntro() }}</p>
-          <blockquote class="diamond-quote">{{ getQuranQuote() }}</blockquote>
-          <p class="diamond-quote__source">{{ getQuranSource() }}</p>
+          <blockquote class="diamond-quote" *ngIf="getDiamondQuoteText() as quoteText">"{{ getShortQuote(quoteText) }}"</blockquote>
+          <p class="diamond-quote__source" *ngIf="getDiamondQuoteSource() as quoteSource">{{ quoteSource }}</p>
         </div>
       </section>
 
-      <!-- 3. MEMPELAI WANITA -->
+      <!-- MEMPELAI WANITA -->
       <section class="diamond-person" *ngIf="isCoupleVisible()">
         <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getBridePortrait()">
           <img *ngIf="getBridePortrait()" [src]="getBridePortrait()" [alt]="getBrideFullName()" (error)="onImageError($event)">
@@ -53,11 +54,12 @@
         <div class="diamond-person__body">
           <p class="diamond-eyebrow">Mempelai Wanita</p>
           <h2 class="diamond-person__name">{{ getBrideFullName() }}</h2>
-          <p class="diamond-copy">{{ getBrideParentLine() }}</p>
+          <p class="diamond-copy" *ngIf="getBrideParentLine()">{{ getBrideParentLine() }}</p>
+          <p class="diamond-person__instagram" *ngIf="getBrideInstagram() as instagram">{{ instagram }}</p>
         </div>
       </section>
 
-      <!-- 4. MEMPELAI PRIA -->
+      <!-- MEMPELAI PRIA -->
       <section class="diamond-person diamond-person--reverse" *ngIf="isCoupleVisible()">
         <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getGroomPortrait()">
           <img *ngIf="getGroomPortrait()" [src]="getGroomPortrait()" [alt]="getGroomFullName()" (error)="onImageError($event)">
@@ -66,54 +68,39 @@
         <div class="diamond-person__body">
           <p class="diamond-eyebrow">Mempelai Pria</p>
           <h2 class="diamond-person__name">{{ getGroomFullName() }}</h2>
-          <p class="diamond-copy">{{ getGroomParentLine() }}</p>
+          <p class="diamond-copy" *ngIf="getGroomParentLine()">{{ getGroomParentLine() }}</p>
+          <p class="diamond-person__instagram" *ngIf="getGroomInstagram() as instagram">{{ instagram }}</p>
         </div>
       </section>
 
-      <!-- 5. SAVE THE DATE -->
-      <section class="diamond-savedate" *ngIf="isEventVisible()">
-        <div class="diamond-savedate__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <!-- ACARA -->
+      <section class="diamond-savedate" *ngIf="isEventVisible() && getOrderedEvents().length">
+        <div class="diamond-savedate__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-savedate__overlay"></div>
         <div class="diamond-savedate__content">
           <p class="diamond-eyebrow diamond-eyebrow--light">Save The Date</p>
           <h2 class="diamond-title diamond-title--light">Detail Acara</h2>
 
-          <article class="diamond-event-card">
-            <span class="diamond-event-card__badge">Akad Nikah</span>
-            <h3>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</h3>
-            <p>{{ formatTimeRange(getAkadCard()) }}</p>
-            <strong>{{ getDetailEventVenue(getAkadCard()) }}</strong>
-            <p class="diamond-event-card__addr">{{ getEventAddress(getAkadCard()) }}</p>
+          <article class="diamond-event-card" *ngFor="let event of getOrderedEvents(); trackBy: trackByEvent">
+            <span class="diamond-event-card__badge">{{ getEventTypeLabel(event) }}</span>
+            <h3>{{ formatDate(event.tanggal_acara, 'long') }}</h3>
+            <p>{{ formatTimeRange(event) }}</p>
+            <strong>{{ event.nama_acara }}</strong>
+            <p class="diamond-event-card__addr" *ngIf="getEventAddress(event)">{{ getEventAddress(event) }}</p>
             <div class="diamond-event-card__actions">
-              <a *ngIf="getCalendarLink(getAkadCard()) as cal" class="diamond-btn diamond-btn--ghost" [href]="cal" target="_blank" rel="noopener noreferrer">
+              <a *ngIf="getCalendarLink(event) as cal" class="diamond-btn diamond-btn--ghost" [href]="cal" target="_blank" rel="noopener noreferrer">
                 <i class="far fa-calendar-plus" aria-hidden="true"></i> Kalender
               </a>
-              <a *ngIf="getAkadMapLink() as mapsLink" class="diamond-btn diamond-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Lokasi
-              </a>
-            </div>
-          </article>
-
-          <article class="diamond-event-card">
-            <span class="diamond-event-card__badge">Resepsi</span>
-            <h3>{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</h3>
-            <p>{{ formatTimeRange(getReceptionCard()) }}</p>
-            <strong>{{ getDetailEventVenue(getReceptionCard()) }}</strong>
-            <p class="diamond-event-card__addr">{{ getEventAddress(getReceptionCard()) }}</p>
-            <div class="diamond-event-card__actions">
-              <a *ngIf="getCalendarLink(getReceptionCard()) as cal" class="diamond-btn diamond-btn--ghost" [href]="cal" target="_blank" rel="noopener noreferrer">
-                <i class="far fa-calendar-plus" aria-hidden="true"></i> Kalender
-              </a>
-              <a *ngIf="getReceptionMapLink() as mapsLink" class="diamond-btn diamond-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Lokasi
+              <a *ngIf="getEventMapsLink(event) as mapsLink" class="diamond-btn diamond-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-map-marker-alt" aria-hidden="true"></i> Google Maps
               </a>
             </div>
           </article>
         </div>
       </section>
 
-      <!-- 6. TURUT MENGUNDANG -->
-      <section class="diamond-section diamond-section--inviting">
+      <!-- TURUT MENGUNDANG -->
+      <section class="diamond-section diamond-section--inviting" *ngIf="getInvitingFamilies().length">
         <p class="diamond-eyebrow">Turut Mengundang</p>
         <h2 class="diamond-title">Keluarga Besar</h2>
         <ul class="diamond-inviting-list">
@@ -121,25 +108,94 @@
         </ul>
       </section>
 
-      <!-- 7. COUNTDOWN -->
-      <section class="diamond-countdown">
-        <div class="diamond-countdown__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <!-- COUNTDOWN -->
+      <section class="diamond-countdown" *ngIf="isEventVisible()">
+        <div class="diamond-countdown__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-countdown__overlay"></div>
         <div class="diamond-countdown__content">
           <p class="diamond-eyebrow diamond-eyebrow--light">Menuju Hari Bahagia</p>
           <h2 class="diamond-title diamond-title--light">Hitung Mundur</h2>
           <div class="diamond-countdown__grid">
-            <div class="diamond-countdown__card" *ngFor="let part of getCountdownParts()">
-              <strong>{{ part.value }}</strong>
-              <span>{{ part.label }}</span>
+            <div class="diamond-countdown__card">
+              <strong>{{ countdownDays }}</strong>
+              <span>Hari</span>
+            </div>
+            <div class="diamond-countdown__card">
+              <strong>{{ countdownHours }}</strong>
+              <span>Jam</span>
+            </div>
+            <div class="diamond-countdown__card">
+              <strong>{{ countdownMinutes }}</strong>
+              <span>Menit</span>
+            </div>
+            <div class="diamond-countdown__card">
+              <strong>{{ countdownSeconds }}</strong>
+              <span>Detik</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- 8. UCAPAN & DOA -->
+      <!-- GALERI -->
+      <section class="diamond-section diamond-section--gallery" *ngIf="isGalleryVisible() && mainGalleryPhoto">
+        <p class="diamond-eyebrow">Moments</p>
+        <h2 class="diamond-title">Galeri Foto</h2>
+
+        <button
+          class="diamond-gallery-feature gallery-card"
+          type="button"
+          [class.diamond-gallery-feature--video]="hasVideo(mainGalleryPhoto)"
+          [class.is-image-missing]="!getGalleryPhotoUrl(mainGalleryPhoto)"
+          (click)="openGalleryVideo(mainGalleryPhoto)">
+          <img
+            *ngIf="getGalleryPhotoUrl(mainGalleryPhoto)"
+            [src]="getGalleryPhotoUrl(mainGalleryPhoto)"
+            [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
+            (error)="onGalleryImageError($event)">
+          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+          <span class="diamond-gallery-play" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true">▶</span>
+        </button>
+
+        <div
+          class="diamond-gallery-slider"
+          *ngIf="galleryThumbs.length"
+          [class.diamond-gallery-slider--animate]="galleryThumbs.length > 2">
+          <div class="diamond-gallery-track">
+            <button
+              class="diamond-gallery-thumb gallery-card"
+              type="button"
+              *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+              [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+              <img
+                *ngIf="getGalleryPhotoUrl(item)"
+                [src]="getGalleryPhotoUrl(item)"
+                [alt]="item.nama_foto || 'Galeri foto'"
+                (error)="onGalleryImageError($event)">
+              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+            </button>
+
+            <ng-container *ngIf="galleryThumbs.length > 2">
+              <button
+                class="diamond-gallery-thumb gallery-card"
+                type="button"
+                *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
+                [class.is-image-missing]="!getGalleryPhotoUrl(item)"
+                aria-hidden="true">
+                <img
+                  *ngIf="getGalleryPhotoUrl(item)"
+                  [src]="getGalleryPhotoUrl(item)"
+                  alt=""
+                  (error)="onGalleryImageError($event)">
+                <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+              </button>
+            </ng-container>
+          </div>
+        </div>
+      </section>
+
+      <!-- UCAPAN -->
       <section class="diamond-wishes" *ngIf="isWishVisible()">
-        <div class="diamond-wishes__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-wishes__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-wishes__overlay"></div>
         <div class="diamond-wishes__content">
           <p class="diamond-eyebrow diamond-eyebrow--light">Doa &amp; Harapan</p>
@@ -158,8 +214,8 @@
             </button>
           </div>
 
-          <div class="diamond-wishes-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
-            <article class="diamond-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+          <div class="diamond-wishes-list" *ngIf="visibleGuestWishes.length; else emptyWishes">
+            <article class="diamond-wish-card" *ngFor="let wish of visibleGuestWishes; trackBy: trackByWish">
               <div class="diamond-wish-card__top">
                 <strong>{{ wish.nama }}</strong>
                 <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
@@ -173,20 +229,26 @@
         </div>
       </section>
 
-      <!-- 9. TANDA KASIH -->
+      <!-- WEDDING GIFT -->
       <section class="diamond-gift" *ngIf="isGiftVisible()">
-        <div class="diamond-gift__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-gift__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-gift__overlay"></div>
         <div class="diamond-gift__content">
           <p class="diamond-eyebrow diamond-eyebrow--light">Wedding Gift</p>
           <h2 class="diamond-title diamond-title--light">Tanda Kasih</h2>
-          <p class="diamond-copy diamond-copy--light diamond-copy--center">Doa restu Anda adalah hadiah terindah. Jika berkenan memberi tanda kasih:</p>
+          <p class="diamond-copy diamond-copy--light diamond-copy--center">{{ getWeddingGiftIntro() }}</p>
 
           <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
             <article class="diamond-bank-card" *ngFor="let bank of getVisibleBankAccounts()">
+              <img
+                *ngIf="getBankPhotoUrl(bank) as bankPhoto"
+                class="diamond-bank-card__photo"
+                [src]="bankPhoto"
+                [alt]="bank.nama_bank || 'Logo bank'"
+                (error)="onImageError($event)">
               <div class="diamond-bank-card__top">
-                <span>{{ bank.nama_bank || 'Bank' }}</span>
-                <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
+                <span>{{ bank.nama_bank || bank.bank?.name || 'Bank' }}</span>
+                <small>{{ bank.bank?.kode_bank || bank.kode_bank || '' }}</small>
               </div>
               <strong>{{ bank.nomor_rekening }}</strong>
               <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
@@ -196,25 +258,18 @@
             </article>
           </ng-container>
           <ng-template #emptyBanks>
-            <article class="diamond-bank-card">
-              <div class="diamond-bank-card__top">
-                <span>Bank</span>
-                <small>INFO</small>
-              </div>
-              <strong>Informasi menyusul</strong>
-              <p>Detail rekening akan diperbarui</p>
-            </article>
+            <div class="diamond-empty diamond-empty--light">Informasi rekening belum tersedia.</div>
           </ng-template>
         </div>
       </section>
 
-      <!-- 10. CERITA DALAM KISAH -->
-      <section class="diamond-section diamond-section--story">
+      <!-- CERITA -->
+      <section class="diamond-section diamond-section--story" *ngIf="isStoryVisible() && getLoveStoryItems().length">
         <p class="diamond-eyebrow">Our Journey</p>
         <h2 class="diamond-title">Cerita Dalam Kisah</h2>
         <div class="diamond-story-list">
           <article class="diamond-story-item" *ngFor="let item of getLoveStoryItems(); trackBy: getStoryTrackBy">
-            <span class="diamond-story-item__year">{{ item.date }}</span>
+            <span class="diamond-story-item__year" *ngIf="item.date">{{ item.date }}</span>
             <div class="diamond-story-item__body">
               <h3>{{ item.title }}</h3>
               <p>{{ item.description }}</p>
@@ -223,38 +278,17 @@
         </div>
       </section>
 
-      <!-- 11. GALERI FOTO -->
-      <section class="diamond-section diamond-section--gallery" *ngIf="isGalleryVisible()">
-        <p class="diamond-eyebrow">Moments</p>
-        <h2 class="diamond-title">Galeri Foto</h2>
-
-        <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
-          <div class="diamond-gallery-grid">
-            <figure class="diamond-gallery-item diamond-gallery-item--wide gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
-              <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
-              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-            </figure>
-            <figure class="diamond-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
-              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-            </figure>
-          </div>
-        </ng-container>
-        <ng-template #emptyGallery>
-          <div class="diamond-empty">Galeri foto akan segera diperbarui.</div>
-        </ng-template>
-      </section>
-
-      <!-- 12. CLOSING -->
+      <!-- FOOTER -->
       <section class="diamond-closing">
-        <div class="diamond-closing__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-closing__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
         <div class="diamond-closing__overlay"></div>
         <div class="diamond-closing__content">
           <p>Terima kasih atas doa dan restu yang diberikan untuk pernikahan kami.</p>
-          <h2 class="diamond-names">{{ getPrimaryDisplayName() }} <span>&amp;</span> {{ getSecondaryDisplayName() }}</h2>
+          <h2 class="diamond-names">{{ getCoupleNames() }}</h2>
+          <p class="diamond-closing__date" *ngIf="getClosingDateLabel()">{{ getClosingDateLabel() }}</p>
           <small>crafted by Sena Digital</small>
         </div>
       </section>
-    </ng-container>
+    </main>
   </article>
 </section>

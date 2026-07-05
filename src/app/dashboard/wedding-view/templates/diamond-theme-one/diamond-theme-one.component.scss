@@ -5,30 +5,54 @@
 .diamond-theme {
   --diamond-forest: #2f3a31;
   --diamond-forest-deep: #1d251f;
-  --diamond-accent: #c0552f;
-  --diamond-accent-soft: #e08a5f;
+  --diamond-accent: #b96b55;
+  --diamond-accent-soft: #ead1bf;
   --diamond-ink: #25291f;
   --diamond-muted: #7d8275;
   --diamond-line: rgba(47, 58, 49, 0.12);
   --diamond-surface: #ffffff;
-  --diamond-soft: #f3f1eb;
+  --diamond-soft: #f6eee8;
   --diamond-shadow: 0 18px 38px rgba(29, 37, 31, 0.14);
 
+  width: 100%;
   max-width: 430px;
   margin: 0 auto;
   min-height: 100vh;
   overflow-x: hidden;
   color: var(--diamond-ink);
-  background: var(--diamond-surface);
-  font-family: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
+  background: #f6eee8;
+  font-family: "Inter", "Poppins", system-ui, sans-serif;
 }
 
 .diamond-shell {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
   min-height: 100vh;
-  background: linear-gradient(180deg, #ffffff 0%, #f5f3ee 100%);
+  background: linear-gradient(180deg, #f7efe9 0%, #efe4dc 100%);
+  overflow: hidden;
+}
+
+.diamond-main {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  animation: diamondContentFadeIn 680ms ease forwards;
+}
+
+@keyframes diamondContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Full-image sections ──────────────────────────────────────── */
+.diamond-opening,
 .diamond-cover,
 .diamond-hero,
 .diamond-quote-block,
@@ -77,6 +101,98 @@
 }
 
 /* ── Cover / Hero ─────────────────────────────────────────────── */
+.diamond-opening {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #101b14;
+  color: #fff;
+}
+
+.diamond-opening__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.diamond-opening__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 18, 12, .35) 0%, rgba(8, 18, 12, .55) 48%, rgba(8, 18, 12, .88) 100%);
+}
+
+.diamond-opening__content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  padding: 80px 28px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+}
+
+.diamond-opening__eyebrow {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.85);
+}
+
+.diamond-opening__names {
+  margin: 0;
+  font-family: Georgia, "Playfair Display", serif;
+  font-size: clamp(44px, 14vw, 68px);
+  line-height: .92;
+  font-weight: 800;
+  color: #f4efe7;
+}
+
+.diamond-opening__date {
+  margin: 18px 0 34px;
+  font-size: 13px;
+  letter-spacing: 5px;
+}
+
+.diamond-opening__guest {
+  margin-bottom: 24px;
+}
+
+.diamond-opening__guest p {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  color: rgba(255,255,255,.78);
+}
+
+.diamond-opening__guest strong {
+  font-size: 18px;
+  color: #fff;
+}
+
+.diamond-opening__button {
+  width: 190px;
+  height: 44px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .diamond-cover {
   min-height: 100vh;
   display: flex;
@@ -116,6 +232,7 @@
 .diamond-names,
 .diamond-closing__content h2 {
   margin: 12px 0 10px;
+  font-family: Georgia, "Playfair Display", serif;
   font-size: clamp(2.6rem, 11vw, 4rem);
   font-weight: 600;
   line-height: 1.0;
@@ -159,18 +276,19 @@
 }
 
 .diamond-hero {
-  min-height: 300px;
+  min-height: 520px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 24px 20px 32px;
+  padding: 32px 24px 58px;
+  background-color: var(--diamond-forest-deep);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────── */
 .diamond-btn {
   min-height: 44px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 999px;
   padding: 0 18px;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 0.84rem;
@@ -308,6 +426,13 @@
   font-size: 1.8rem;
   font-weight: 600;
   color: var(--diamond-ink);
+}
+
+.diamond-person__instagram {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.82rem;
+  color: var(--diamond-accent);
 }
 
 /* ── Save the Date ────────────────────────────────────────────── */
@@ -550,6 +675,14 @@
   color: var(--diamond-ink);
 }
 
+.diamond-bank-card__photo {
+  display: block;
+  max-width: 120px;
+  max-height: 40px;
+  margin: 0 auto 12px;
+  object-fit: contain;
+}
+
 .diamond-bank-card__top {
   display: flex;
   justify-content: space-between;
@@ -638,36 +771,92 @@
 /* ── Gallery ──────────────────────────────────────────────────── */
 .diamond-section--gallery {
   background: var(--diamond-surface);
-}
-
-.diamond-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-.diamond-gallery-item {
-  margin: 0;
-  border-radius: 8px;
   overflow: hidden;
-  aspect-ratio: 1 / 1;
-  background: var(--diamond-soft);
 }
 
-.diamond-gallery-item--wide {
-  grid-column: 1 / -1;
+.diamond-gallery-feature {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
   aspect-ratio: 16 / 10;
+  background: var(--diamond-soft);
+  cursor: pointer;
 }
 
-.diamond-gallery-item img {
+.diamond-gallery-feature img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.diamond-person__photo .image-placeholder,
-.diamond-gallery-item .image-placeholder {
+.diamond-gallery-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+  background: rgba(15, 19, 16, 0.35);
+}
+
+.diamond-gallery-slider {
+  width: calc(100% + 44px);
+  margin: 12px -22px 0;
+  overflow: hidden;
+}
+
+.diamond-gallery-track {
+  display: flex;
+  gap: 10px;
+  padding: 0 22px;
+  width: max-content;
+}
+
+.diamond-gallery-slider--animate .diamond-gallery-track {
+  animation: diamondGalleryMarquee 18s linear infinite;
+}
+
+.diamond-gallery-slider--animate:hover .diamond-gallery-track {
+  animation-play-state: paused;
+}
+
+.diamond-gallery-thumb {
+  position: relative;
+  flex: 0 0 148px;
+  width: 148px;
+  height: 196px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--diamond-soft);
+}
+
+.diamond-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes diamondGalleryMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.diamond-gallery-feature .image-placeholder,
+.diamond-gallery-thumb .image-placeholder {
   display: none;
   width: 100%;
   height: 100%;
@@ -683,8 +872,8 @@
   text-align: center;
 }
 
-.diamond-person__photo.is-image-missing .image-placeholder,
-.diamond-gallery-item.is-image-missing .image-placeholder {
+.diamond-gallery-feature.is-image-missing .image-placeholder,
+.diamond-gallery-thumb.is-image-missing .image-placeholder {
   display: flex;
 }
 
@@ -715,6 +904,35 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+.diamond-closing__date {
+  margin: 0 0 8px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.diamond-person__photo .image-placeholder {
+  display: none;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--diamond-soft);
+  color: var(--diamond-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.diamond-person__photo.is-image-missing .image-placeholder {
+  display: flex;
+}
+
 /* ── Empty states ─────────────────────────────────────────────── */
 .diamond-empty {
   padding: 22px;
@@ -737,4 +955,33 @@
   .diamond-countdown__card strong { font-size: 1.25rem; }
   .diamond-title { font-size: 1.75rem; }
   .diamond-person__photo { width: 170px; height: 220px; }
+  .diamond-gallery-thumb { flex-basis: 128px; width: 128px; height: 170px; }
+}
+
+@media (max-width: 430px) {
+  .diamond-opening,
+  .diamond-main {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 294px) {
+  .diamond-section,
+  .diamond-person,
+  .diamond-savedate,
+  .diamond-countdown,
+  .diamond-wishes,
+  .diamond-gift { padding-left: 16px; padding-right: 16px; }
+  .diamond-countdown__grid { gap: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diamond-gallery-slider--animate .diamond-gallery-track {
+    animation: none !important;
+  }
+
+  .diamond-main {
+    animation: none !important;
+  }
 }

@@ -5,6 +5,7 @@ import { HomeComponent } from './home/home.component';
 import { LoginPageComponent } from './login-page/login-page.component';
 import { DashboardUserComponent } from './dashboard/dashboard-user/dashboard-user.component';
 import { OverviewComponent } from './dashboard/overview/overview.component';
+import { BagiUndanganComponent } from './dashboard/bagi-undangan/bagi-undangan.component';
 import { HubungiKamiComponent } from './dashboard/hubungi-kami/hubungi-kami.component';
 import { PengunjungComponent } from './dashboard/pengunjung/pengunjung.component';
 import { TestimoniComponent } from './dashboard/testimoni/testimoni.component';
@@ -58,6 +59,7 @@ const routes: Routes = [
       { path: 'profile', component: ProfileComponent },
       { path: 'bill', component: BillUserComponent },
       { path: 'overview', component: OverviewComponent },
+      { path: 'bagi-undangan', component: BagiUndanganComponent },
       {
         path: 'website',
         component: WebsiteUserComponent,

@@ -121,8 +121,20 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     super.ngOnDestroy();
   }
 
-  getGuestName(): string {
-    return 'Tamu Undangan';
+  override getGuestName(): string {
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.guest_name,
+      data?.nama_tamu,
+      data?.guest?.nama,
+      data?.guest?.name,
+      data?.guest_book?.[0]?.nama,
+      data?.guest_book?.[0]?.name,
+    ];
+
+    return candidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value) || 'Tamu Undangan';
   }
 
   getDisplayCoupleNames(): { first: string; second: string } {

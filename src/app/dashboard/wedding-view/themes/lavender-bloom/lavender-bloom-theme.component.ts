@@ -90,6 +90,22 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     return `${this.getGroomNickname()} & ${this.getBrideNickname()}`;
   }
 
+  getGuestName(): string {
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.guest_name,
+      data?.nama_tamu,
+      data?.guest?.nama,
+      data?.guest?.name,
+      data?.guest_book?.[0]?.nama,
+      data?.guest_book?.[0]?.name,
+    ];
+
+    return candidates
+      .map((value) => String(value || '').trim())
+      .find((value) => !!value) || 'Tamu Undangan';
+  }
+
   getCoverPhoto(): string {
     return this.normalizeMediaUrl(
       (this.weddingData as any)?.cover_photo_url ||

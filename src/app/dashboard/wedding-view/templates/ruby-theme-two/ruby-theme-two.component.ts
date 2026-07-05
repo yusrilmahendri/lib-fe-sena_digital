@@ -73,7 +73,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     return this.getBrideNickname() || 'Isabela';
   }
 
-  getGuestName(): string {
+  override getGuestName(): string {
     const data = this.weddingData as any;
     const candidates = [
       data?.guest_name,

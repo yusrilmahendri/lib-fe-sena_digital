@@ -49,7 +49,7 @@
           <option
             *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
             [value]="theme.slug">
-            {{ theme.name }}
+            {{ getThemeDisplayName(theme) }}
           </option>
         </select>
       </div>
@@ -66,7 +66,7 @@
           <div class="theme-card__media">
             <img
               [src]="theme.image"
-              [alt]="'Preview tema ' + theme.name"
+              [alt]="'Preview tema ' + getThemeDisplayName(theme)"
               loading="lazy"
               (error)="onImageError($event, theme)" />
 
@@ -88,7 +88,7 @@
           </div>
 
           <div class="theme-card__body">
-            <h3>{{ theme.name }}</h3>
+            <h3>{{ getThemeDisplayName(theme) }}</h3>
             <p>{{ getCardSubtitle(theme) }}</p>
             <small *ngIf="!theme.isConnectedToBackend" class="text-muted">Theme belum terhubung</small>
           </div>
@@ -107,7 +107,7 @@
           <span class="theme-picker__selection-label">
             {{ selectedThemeForSubmit || selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
           </span>
-          <strong>{{ selectedThemeForSubmit?.name || selectedTheme?.name || currentTheme?.name || 'Pilih salah satu tema' }}</strong>
+          <strong>{{ selectedThemeForSubmit || selectedTheme || currentTheme ? getThemeDisplayName(selectedThemeForSubmit || selectedTheme || currentTheme) : 'Pilih salah satu tema' }}</strong>
           <small>{{ focusedThemeSubtitle }}</small>
         </div>
 

@@ -331,6 +331,66 @@ $lp-input-bg: #fbf2f7;
   }
 }
 
+.auth-date-field {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.55rem;
+}
+
+.auth-date-field__icon {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  color: #9b3f83;
+  pointer-events: none;
+
+  svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.auth-date-field__input {
+  width: 100%;
+  min-width: 0;
+  height: 58px;
+  padding: 0 52px 0 58px;
+  border-radius: 16px;
+  border: 1px solid rgba(155, 63, 131, 0.18);
+  background: #fff6fb;
+  color: #2d2230;
+  font-family: $main-font;
+  font-size: 16px;
+  font-weight: 500;
+  box-sizing: border-box;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: rgba(107, 45, 87, 0.4);
+    box-shadow: 0 0 0 3px rgba(107, 45, 87, 0.1);
+  }
+}
+
+.auth-date-field__input::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+.auth-date-field__input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
 .ci-eye {
   position: absolute;
   right: 0.55rem;
@@ -607,6 +667,7 @@ $lp-input-bg: #fbf2f7;
   &:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+    pointer-events: none;
   }
 
   &--primary {
@@ -630,6 +691,18 @@ $lp-input-bg: #fbf2f7;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
     }
   }
+}
+
+.auth-wizard-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.auth-wizard-btn:not(:disabled) {
+  opacity: 1;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 /* ---------------- Success ---------------- */
@@ -677,6 +750,19 @@ $lp-input-bg: #fbf2f7;
     .ci-btn {
       width: 100%;
     }
+  }
+
+  .auth-date-field,
+  .auth-date-field__input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .auth-date-field__input {
+    height: 56px;
+    padding-left: 54px;
+    padding-right: 18px;
+    font-size: 16px;
   }
 }
 

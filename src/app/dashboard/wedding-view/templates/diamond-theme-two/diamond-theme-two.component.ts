@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
-import { GalleryItem, WeddingEvent } from '../../../../services/wedding-data.service';
+import { ToastService } from '../../../../toast.service';
+import { WeddingEvent } from '../../../../services/wedding-data.service';
 import { DiamondThemeOneComponent } from '../diamond-theme-one/diamond-theme-one.component';
 
 interface DiamondGardenGalleryItem {
@@ -14,8 +16,12 @@ interface DiamondGardenGalleryItem {
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
 export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
-  constructor(svc: DashboardService) {
-    super(svc);
+  constructor(
+    svc: DashboardService,
+    sanitizer: DomSanitizer,
+    toastService: ToastService
+  ) {
+    super(sanitizer, svc, toastService);
   }
 
   override getPrimaryDisplayName(): string {
@@ -97,14 +103,5 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
 
   getMapPreviewCaption(event: WeddingEvent): string {
     return this.getEventAddress(event);
-  }
-
-  private toValidDate(dateValue?: string | null): Date | null {
-    if (!dateValue) {
-      return null;
-    }
-
-    const date = new Date(dateValue);
-    return Number.isNaN(date.getTime()) ? null : date;
   }
 }

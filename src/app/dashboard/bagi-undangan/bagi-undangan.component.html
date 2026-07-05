@@ -1,0 +1,57 @@
+<section class="share-invitation">
+  <header class="share-invitation__header">
+    <h1>Bagi Undangan</h1>
+    <p>Buat link undangan personal untuk setiap tamu.</p>
+  </header>
+
+  <div class="share-invitation__card">
+    <div class="share-invitation__domain" *ngIf="publicWeddingDomain">
+      Domain undangan: <strong>{{ publicWeddingDomain }}</strong>
+    </div>
+
+    <label class="share-invitation__label" for="guest-name">Nama tamu</label>
+    <div class="share-invitation__form">
+      <input
+        id="guest-name"
+        type="text"
+        [(ngModel)]="guestName"
+        placeholder="Contoh: Bapak Andi"
+        (keyup.enter)="generateGuestInvitation()"
+      />
+      <button type="button" (click)="generateGuestInvitation()">
+        Generate Link
+      </button>
+    </div>
+
+    <p class="share-invitation__notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
+
+    <div class="share-invitation__result" *ngIf="generatedGuestUrl">
+      <span>Link undangan</span>
+      <a [href]="generatedGuestUrl" target="_blank" rel="noopener noreferrer">
+        {{ generatedGuestUrl }}
+      </a>
+      <div class="share-invitation__actions">
+        <button type="button" class="share-invitation__secondary" (click)="copyGuestInvitation()">
+          Copy Link
+        </button>
+        <button type="button" class="share-invitation__whatsapp" (click)="shareGuestInvitationWhatsapp()">
+          Share WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <section class="share-invitation__history" *ngIf="generatedGuests.length">
+    <h2>Link tamu yang sudah dibuat</h2>
+    <article class="share-invitation__guest" *ngFor="let guest of generatedGuests; trackBy: trackByGuest">
+      <div>
+        <strong>{{ guest.name }}</strong>
+        <a [href]="guest.url" target="_blank" rel="noopener noreferrer">{{ guest.url }}</a>
+      </div>
+      <div class="share-invitation__guest-actions">
+        <button type="button" (click)="copyGuestInvitation(guest.url)">Copy</button>
+        <button type="button" (click)="shareGuestInvitationWhatsapp(guest.url)">WhatsApp</button>
+      </div>
+    </article>
+  </section>
+</section>

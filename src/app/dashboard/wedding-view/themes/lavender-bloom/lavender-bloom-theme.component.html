@@ -8,7 +8,7 @@
         <p class="cover-kicker">The Wedding Of</p>
         <h1 class="cover-title">{{ getGroomNickname() }}<span>&amp;</span>{{ getBrideNickname() }}</h1>
         <p class="cover-date">{{ getOpeningDate() }}</p>
-        <p class="cover-guest">Tamu Undangan</p>
+        <p class="cover-guest">{{ getGuestName() }}</p>
         <button class="open-button" type="button" (click)="openInvitation()">
           <i class="fas fa-envelope-open-text"></i>
           Buka Undangan

@@ -89,6 +89,7 @@ interface PaketByTier {
 export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   isOpen = false;
   step: CreateInvitationStep = 'couple-detail';
+  detailStepIndex = 0;
 
   isSubmitting = false;
   errorMessage = '';
@@ -228,6 +229,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     const prefilledTheme = this.buildPrefilledTheme(prefill);
 
     this.step = 'couple-detail';
+    this.detailStepIndex = 0;
     this.isSubmitting = false;
     this.errorMessage = '';
     this.showPassword = false;
@@ -462,6 +464,14 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return this.themesByCategory[this.activeCategory] || [];
   }
 
+  public get isDetailFirstStep(): boolean {
+    return this.detailStepIndex === 0;
+  }
+
+  public get canGoBackDetailStep(): boolean {
+    return this.detailStepIndex > 0;
+  }
+
   /** Select package tab — determines price, themes, payment & dashboard access. */
   setCategory(tier: ThemeTier): void {
     this.activeCategory = tier;
@@ -509,7 +519,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   goToCoupleDetailStep(): void {
     this.errorMessage = '';
+    this.detailStepIndex = 0;
     this.step = 'couple-detail';
+    this.logInvitationDetailStep();
   }
 
   goToThemeSelectionStep(): void {
@@ -518,7 +530,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       this.coupleDetailForm.markAllAsTouched();
       return;
     }
+    this.detailStepIndex = 1;
     this.step = 'theme-selection';
+    this.logInvitationDetailStep();
   }
 
   goToAccountStep(): void {
@@ -551,7 +565,28 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       this.accountForm.patchValue({ password: this.accountPasswordDraft });
     }
 
+    this.detailStepIndex = 2;
     this.step = 'account';
+    this.logInvitationDetailStep();
+  }
+
+  public goBackDetailStep(): void {
+    if (!this.canGoBackDetailStep) {
+      this.logInvitationDetailStep();
+      return;
+    }
+
+    this.detailStepIndex -= 1;
+    if (this.detailStepIndex <= 0) {
+      this.detailStepIndex = 0;
+      this.step = 'couple-detail';
+    } else if (this.detailStepIndex === 1) {
+      this.step = 'theme-selection';
+    } else {
+      this.step = 'account';
+    }
+
+    this.logInvitationDetailStep();
   }
 
   togglePassword(): void {
@@ -623,6 +658,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
         this.persistLegacyFormState(res, account, paket);
 
         this.isSubmitting = false;
+        this.detailStepIndex = 0;
         this.step = 'continue-wizard';
       },
       error: (err: any) => {
@@ -639,6 +675,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   /** Resume legacy wizard at step 2 (informasi mempelai). */
   continueToBuatUndangan(): void {
+    this.detailStepIndex = 0;
+    this.logInvitationDetailStep();
     try {
       sessionStorage.setItem(
         'landingOnboardingNotice',
@@ -654,6 +692,13 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           password: this.accountPasswordDraft,
         },
       },
+    });
+  }
+
+  private logInvitationDetailStep(): void {
+    console.log('[InvitationDetailStep]', {
+      detailStepIndex: this.detailStepIndex,
+      canGoBackDetailStep: this.canGoBackDetailStep
     });
   }
 

@@ -100,6 +100,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Wedding data properties
   weddingData: WeddingData | null = null;
+  guestName = 'Tamu Undangan';
   activeThemeSlug: ThemeSlug | null = null;
   activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
 
@@ -153,7 +154,20 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.injectRippleStyles();
     this.loadStateFromLocalStorage();
+    this.listenForGuestName();
     this.initializeWeddingData();
+  }
+
+  private listenForGuestName(): void {
+    const querySubscription = this.route.queryParams.subscribe(params => {
+      this.guestName = String(params['to'] || '').trim() || 'Tamu Undangan';
+      if (this.weddingData) {
+        this.weddingData = this.applyGuestNameToWeddingData(this.weddingData);
+        this.weddingDataService.setWeddingData(this.weddingData);
+      }
+    });
+
+    this.subscriptions.add(querySubscription);
   }
 
   ngAfterViewInit() {
@@ -453,10 +467,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           console.log('[WeddingView] theme_slug from API:', raw.theme_slug ?? 'TIDAK ADA');
           console.log('[WeddingView] selected_theme_slug from API:', raw.selected_theme_slug ?? 'TIDAK ADA');
 
-          this.weddingData = response.data;
-          this.weddingDataService.setWeddingData(response.data);
+          this.weddingData = this.applyGuestNameToWeddingData(response.data);
+          this.weddingDataService.setWeddingData(this.weddingData);
 
-          this.updateWeddingContent(response.data);
+          this.updateWeddingContent(this.weddingData);
 
           // Save to localStorage after successful API call
           this.saveStateToLocalStorage();
@@ -497,8 +511,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadWeddingDataFromService(): void {
     const serviceSubscription = this.weddingDataService.getWeddingData().subscribe(data => {
       if (data) {
-        this.weddingData = data;
-        this.updateWeddingContent(data);
+        this.weddingData = this.applyGuestNameToWeddingData(data);
+        this.updateWeddingContent(this.weddingData);
         console.log('Wedding data loaded from service');
       } else {
         this.handleDataNotFound('No data available in service');
@@ -528,6 +542,20 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         this.router.navigate(['/']);
       }
     }, 5000);
+  }
+
+  private applyGuestNameToWeddingData(data: WeddingData): WeddingData {
+    const guestName = this.guestName || 'Tamu Undangan';
+    return {
+      ...(data as any),
+      guest_name: guestName,
+      nama_tamu: guestName,
+      guest: {
+        ...((data as any)?.guest || {}),
+        name: guestName,
+        nama: guestName
+      }
+    } as WeddingData;
   }
 
   /**

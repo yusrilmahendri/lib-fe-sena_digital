@@ -22,6 +22,7 @@ import { LoginPageComponent } from './login-page/login-page.component';
 import { DashboardUserComponent } from './dashboard/dashboard-user/dashboard-user.component';
 import { ProfileComponent } from './dashboard/profile/profile.component';
 import { OverviewComponent } from './dashboard/overview/overview.component';
+import { BagiUndanganComponent } from './dashboard/bagi-undangan/bagi-undangan.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
 import { WebsiteComponent } from './dashboard-admin/website/website.component';
 import { WebsiteUserComponent } from './dashboard/website/website.component';
@@ -119,6 +120,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     DashboardUserComponent,
     ProfileComponent,
     OverviewComponent,
+    BagiUndanganComponent,
     SettingsComponent,
     WebsiteComponent,
     PengunjungComponent,

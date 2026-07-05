@@ -40,6 +40,7 @@ interface ThemeCard {
   label: string;
   title: string;
   name: string;
+  nama?: string;
   slug: string;
   image: string;
   url_thema: string;
@@ -210,6 +211,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     return this.visibleThemeCards.find((theme) => theme.id === this.selectedThemeId) ?? null;
+  }
+
+  public getThemeDisplayName(theme: ThemeCard | any): string {
+    return (
+      theme?.name ||
+      theme?.title ||
+      theme?.nama ||
+      theme?.label ||
+      theme?.slug ||
+      'Tema'
+    );
   }
 
   public get canSubmitSelectedTheme(): boolean {
