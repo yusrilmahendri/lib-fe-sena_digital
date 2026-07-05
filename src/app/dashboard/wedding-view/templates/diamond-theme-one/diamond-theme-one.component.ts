@@ -45,9 +45,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       this.startDiamondCountdown();
     }
     if (changes['weddingData']) {
-      console.log('[DiamondThemeOne] events:', this.getEvents());
-      console.log('[DiamondThemeOne] main event:', this.getMainEvent());
-      console.log('[DiamondThemeOne] hero date:', this.getHeroDateLabel());
+      console.log('[DiamondThemeOne] event data:', this.getEvents());
+      console.log('[DiamondThemeOne] akad:', this.getAkadEvent());
+      console.log('[DiamondThemeOne] resepsi:', this.getResepsiEvent());
+      console.log('[DiamondThemeOne] day:', this.getMainEventDayName());
+      console.log('[DiamondThemeOne] long date:', this.getMainEventLongDate());
+      console.log('[DiamondThemeOne] venue:', this.getEventVenueName());
+      console.log('[DiamondThemeOne] address:', this.getEventAddress());
+      console.log('[DiamondThemeOne] maps:', this.getEventMapLink());
     }
   }
 
@@ -296,28 +301,68 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override getAkadEvent(): any {
     const events = this.getEvents();
 
-    return events.find((event: any) => {
-      const type = String(event?.jenis_acara || event?.nama_acara || event?.name || '').toLowerCase();
-      return type.includes('akad');
-    }) || events[0] || null;
+    return (
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara ||
+          event?.nama_acara ||
+          event?.type ||
+          event?.name ||
+          ''
+        ).toLowerCase();
+
+        return type.includes('akad');
+      }) ||
+      events[0] ||
+      null
+    );
   }
 
   getResepsiEvent(): any {
     const events = this.getEvents();
 
-    return events.find((event: any) => {
-      const type = String(event?.jenis_acara || event?.nama_acara || event?.name || '').toLowerCase();
-      return type.includes('resepsi') || type.includes('reception');
-    }) || events[1] || null;
+    return (
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara ||
+          event?.nama_acara ||
+          event?.type ||
+          event?.name ||
+          ''
+        ).toLowerCase();
+
+        return type.includes('resepsi') ||
+          type.includes('reception') ||
+          type.includes('walimatul');
+      }) ||
+      events[1] ||
+      null
+    );
   }
 
   getEventForLocation(): any {
     return this.getResepsiEvent() || this.getAkadEvent();
   }
 
+  getMainEventDateValue(): string {
+    const event = this.getAkadEvent() || this.getResepsiEvent();
+
+    return String(
+      event?.tanggal_acara ||
+      event?.tanggal ||
+      event?.date ||
+      event?.event_date ||
+      event?.start_date ||
+      event?.wedding_date ||
+      ''
+    ).trim();
+  }
+
   getMainEventDayName(): string {
-    const event = this.getAkadEvent() || this.getMainEvent();
-    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
+    const rawDate = this.getMainEventDateValue();
+
+    if (!rawDate) return '';
+
     const date = new Date(rawDate);
 
     if (isNaN(date.getTime())) return '';
@@ -326,11 +371,22 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMainEventLongDate(): string {
-    const event = this.getAkadEvent() || this.getMainEvent();
-    const rawDate = event?.tanggal_acara || event?.tanggal || event?.date || '';
-    const date = new Date(rawDate);
+    const rawDate = this.getMainEventDateValue();
 
-    if (isNaN(date.getTime())) return String(rawDate || '').trim();
+    if (!rawDate) return '';
+
+    const value = String(rawDate).trim();
+
+    const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymd) {
+      const date = new Date(`${ymd[1]}-${ymd[2]}-${ymd[3]}T00:00:00`);
+      const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
+      return `${ymd[3]} ${month} ${ymd[1]}`;
+    }
+
+    const date = new Date(value);
+
+    if (isNaN(date.getTime())) return value;
 
     const day = String(date.getDate()).padStart(2, '0');
     const month = date.toLocaleDateString('id-ID', { month: 'long' }).toUpperCase();
@@ -343,12 +399,16 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const startValue = String(start || '').trim();
     const endValue = String(end || '').trim();
 
-    if (!startValue && !endValue) return '';
+    const clean = (value: string): string => {
+      if (!value) return '';
+      return value.slice(0, 5).replace(':', '.');
+    };
 
-    const clean = (value: string) => value.slice(0, 5).replace(':', '.');
+    const startTime = clean(startValue);
+    const endTime = clean(endValue);
 
-    if (startValue && endValue) return `${clean(startValue)} - ${clean(endValue)} WIB`;
-    if (startValue) return `${clean(startValue)} WIB`;
+    if (startTime && endTime) return `${startTime} - ${endTime} WIB`;
+    if (startTime) return `${startTime} WIB`;
 
     return '';
   }
@@ -356,29 +416,50 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getAkadTimeLabel(): string {
     const event = this.getAkadEvent();
 
+    if (!event) return '';
+
     return this.formatEventTime(
-      event?.start_acara || event?.jam_mulai || event?.start_time,
-      event?.end_acara || event?.jam_selesai || event?.end_time
+      event?.start_acara ||
+      event?.jam_mulai ||
+      event?.start_time ||
+      event?.mulai,
+      event?.end_acara ||
+      event?.jam_selesai ||
+      event?.end_time ||
+      event?.selesai
     );
   }
 
   getResepsiTimeLabel(): string {
     const event = this.getResepsiEvent();
 
+    if (!event) return '';
+
     return this.formatEventTime(
-      event?.start_acara || event?.jam_mulai || event?.start_time,
-      event?.end_acara || event?.jam_selesai || event?.end_time
+      event?.start_acara ||
+      event?.jam_mulai ||
+      event?.start_time ||
+      event?.mulai,
+      event?.end_acara ||
+      event?.jam_selesai ||
+      event?.end_time ||
+      event?.selesai
     );
   }
 
   getEventVenueName(): string {
     const event = this.getEventForLocation();
 
+    if (!event) return '';
+
     return String(
       event?.nama_tempat ||
       event?.tempat ||
       event?.venue ||
       event?.lokasi ||
+      event?.location ||
+      event?.gedung ||
+      event?.nama_lokasi ||
       event?.nama_acara ||
       ''
     ).trim();
@@ -387,10 +468,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override getEventAddress(event?: WeddingEvent | any): string {
     const selectedEvent = event || this.getEventForLocation();
 
+    if (!selectedEvent) return '';
+
     return String(
       selectedEvent?.alamat ||
       selectedEvent?.address ||
       selectedEvent?.lokasi_detail ||
+      selectedEvent?.detail_lokasi ||
+      selectedEvent?.alamat_lengkap ||
       ''
     ).trim();
   }
@@ -398,11 +483,15 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getEventMapLink(): string {
     const event = this.getEventForLocation();
 
+    if (!event) return '';
+
     return String(
       event?.link_maps ||
+      event?.link_map ||
       event?.maps ||
       event?.map_url ||
       event?.google_maps ||
+      event?.google_map ||
       ''
     ).trim();
   }
@@ -410,32 +499,45 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getMapPreviewUrl(): string {
     const event = this.getEventForLocation();
 
-    const raw =
+    if (!event) return '';
+
+    const rawUrl =
       event?.map_image_url ||
       event?.maps_image ||
       event?.photo_maps ||
       event?.map_preview ||
+      event?.image_maps ||
+      event?.gambar_maps ||
       '';
 
-    const normalized = this.normalizePhotoUrl(raw);
+    const normalized = this.normalizePhotoUrl(rawUrl);
 
-    if (normalized) return normalized;
-
-    return '';
+    return normalized;
   }
 
   getEventPhotoUrl(): string {
-    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    const gallery = this.weddingData?.gallery || [];
 
     const item =
       gallery.find((photo: any) => {
         const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return name.includes('venue') || name.includes('lokasi') || name.includes('tempat') || name.includes('outdoor');
+        return (
+          name.includes('venue') ||
+          name.includes('lokasi') ||
+          name.includes('tempat') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding') ||
+          name.includes('couple') ||
+          name.includes('pasangan')
+        );
       }) ||
       gallery[2] ||
+      gallery[1] ||
       gallery[0];
 
-    return this.normalizePhotoUrl((item as any)?.photo_url || (item as any)?.photo || (item as any)?.url) || this.getCoverPhotoUrl();
+    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+
+    return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
   getCountdownPhotoUrl(): string {

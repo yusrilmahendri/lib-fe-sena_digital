@@ -695,9 +695,9 @@
 /* ── Event / Location ─────────────────────────────────────────── */
 .diamond-event {
   position: relative;
-  width: 100%;
+  width: 100% !important;
   max-width: 410px;
-  min-height: 760px;
+  min-height: 820px;
   margin: 0 auto;
   overflow: hidden;
   background: #142418;
@@ -719,32 +719,37 @@
   inset: 0;
   z-index: 2;
   background:
-    linear-gradient(180deg, rgba(12, 22, 15, .42) 0%, rgba(12, 22, 15, .54) 42%, rgba(12, 22, 15, .9) 100%);
+    linear-gradient(180deg, rgba(15, 22, 18, .28) 0%, rgba(15, 22, 18, .38) 35%, rgba(15, 22, 18, .78) 100%),
+    rgba(0, 0, 0, .16);
 }
 
 .diamond-event__content {
   position: relative;
   z-index: 3;
-  min-height: 760px;
-  padding: 70px 28px 54px;
+  min-height: 820px;
+  padding: 48px 28px 42px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+}
+
+.diamond-event__time {
+  width: 100%;
 }
 
 .diamond-event__label {
-  margin: 0 0 12px;
+  margin: 0 0 13px;
   font-size: 10px;
   line-height: 1;
-  letter-spacing: 5px;
-  font-weight: 700;
-  color: rgba(255,255,255,.82);
+  letter-spacing: 6px;
+  font-weight: 800;
+  color: rgba(255,255,255,.88);
 }
 
-.diamond-event__time h2 {
-  margin: 0 0 14px;
+.diamond-event__date-title {
+  margin: 0 0 16px;
+  max-width: 350px;
   font-size: 27px;
-  line-height: 1.15;
+  line-height: 1.12;
   font-weight: 800;
   text-transform: uppercase;
   color: #fff;
@@ -753,19 +758,19 @@
 .diamond-event__schedule {
   margin: 0 0 4px;
   font-size: 11px;
-  line-height: 1.45;
-  color: rgba(255,255,255,.86);
+  line-height: 1.5;
+  color: rgba(255,255,255,.9);
 }
 
 .diamond-event__place {
   margin-top: auto;
-  padding-bottom: 18px;
+  padding-bottom: 16px;
 }
 
 .diamond-event__place h3 {
-  margin: 0 0 8px;
-  max-width: 330px;
-  font-size: 26px;
+  margin: 0 0 9px;
+  max-width: 340px;
+  font-size: 27px;
   line-height: 1.1;
   font-weight: 800;
   text-transform: uppercase;
@@ -774,18 +779,18 @@
 
 .diamond-event__place p {
   margin: 0;
-  max-width: 320px;
+  max-width: 325px;
   font-size: 10px;
-  line-height: 1.6;
-  color: rgba(255,255,255,.82);
+  line-height: 1.55;
+  color: rgba(255,255,255,.86);
 }
 
 .diamond-event__map {
   width: 100%;
-  height: 178px;
+  height: 180px;
   border-radius: 18px;
   overflow: hidden;
-  background: rgba(255,255,255,.85);
+  background: rgba(255,255,255,.92);
   margin: 0 0 18px;
 }
 
@@ -810,16 +815,16 @@
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
-  box-shadow: 0 12px 24px rgba(0,0,0,.22);
+  box-shadow: 0 12px 24px rgba(0,0,0,.24);
 }
 
 .diamond-event__note {
   margin: 16px auto 0;
-  max-width: 310px;
+  max-width: 320px;
   text-align: center;
   font-size: 10px;
   line-height: 1.5;
-  color: rgba(255,255,255,.72);
+  color: rgba(255,255,255,.76);
 }
 
 /* ── Turut Mengundang ─────────────────────────────────────────── */
@@ -935,7 +940,11 @@
 }
 
 @media (max-width: 430px) {
-  .diamond-event,
+  .diamond-event {
+    max-width: none;
+    width: 100% !important;
+  }
+
   .diamond-countdown {
     width: 100%;
     max-width: none;

@@ -132,7 +132,11 @@
         <div class="diamond-event__content">
           <div class="diamond-event__time">
             <p class="diamond-event__label">WAKTU</p>
-            <h2>{{ getMainEventDayName() }},<br />{{ getMainEventLongDate() }}</h2>
+
+            <h2 class="diamond-event__date-title">
+              {{ getMainEventDayName() }}<span *ngIf="getMainEventDayName()">,</span><br />
+              {{ getMainEventLongDate() }}
+            </h2>
 
             <p class="diamond-event__schedule" *ngIf="getAkadTimeLabel()">
               Akad: {{ getAkadTimeLabel() }}
@@ -145,8 +149,14 @@
 
           <div class="diamond-event__place">
             <p class="diamond-event__label">TEMPAT</p>
-            <h3>{{ getEventVenueName() }}</h3>
-            <p>{{ getEventAddress() }}</p>
+
+            <h3 *ngIf="getEventVenueName()">
+              {{ getEventVenueName() }}
+            </h3>
+
+            <p *ngIf="getEventAddress()">
+              {{ getEventAddress() }}
+            </p>
           </div>
 
           <div class="diamond-event__map" *ngIf="getMapPreviewUrl()">
