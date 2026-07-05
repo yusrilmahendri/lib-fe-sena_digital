@@ -207,7 +207,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private getGalleryCandidateUrl(item: any): string {
-    return item?.photo_url || item?.url || item?.photo || '';
+    const galleryItem: any = item || {};
+    return galleryItem.photo_url || galleryItem.url || galleryItem.photo || '';
   }
 
   getOpeningPhoto(): string {
@@ -234,7 +235,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[1] ||
       gallery[0];
 
-    const rawUrl = (preferred as any)?.photo_url || (preferred as any)?.photo || (preferred as any)?.url || '';
+    const preferredItem: any = preferred || {};
+    const rawUrl = preferredItem.photo_url || preferredItem.photo || preferredItem.url || '';
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -535,7 +537,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[1] ||
       gallery[0];
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const galleryItem: any = item || {};
+    const rawUrl = galleryItem.photo_url || galleryItem.photo || galleryItem.url || '';
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -543,8 +546,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getCountdownPhotoUrl(): string {
     const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
     const item = gallery[0] || gallery[1];
+    const galleryItem: any = item || {};
 
-    return this.normalizePhotoUrl((item as any)?.photo_url || (item as any)?.photo || (item as any)?.url) || this.getCoverPhotoUrl();
+    return this.normalizePhotoUrl(galleryItem.photo_url || galleryItem.photo || galleryItem.url) || this.getCoverPhotoUrl();
   }
 
   private startDiamondCountdown(): void {
