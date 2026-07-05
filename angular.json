@@ -62,12 +62,25 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": true
+                },
+                "fonts": {
+                  "inline": false
+                }
+              },
               "outputHashing": "all"
             },
             "development": {
               "buildOptimizer": false,
               "optimization": {
-                "styles": true
+                "styles": true,
+                "fonts": {
+                  "inline": false
+                }
               },
               "vendorChunk": true,
               "extractLicenses": false,

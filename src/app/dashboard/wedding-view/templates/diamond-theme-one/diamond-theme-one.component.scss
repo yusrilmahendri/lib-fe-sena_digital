@@ -104,11 +104,11 @@
 .diamond-opening {
   position: relative;
   width: 100%;
-  max-width: 430px;
+  max-width: 410px;
   min-height: 100vh;
   margin: 0 auto;
   overflow: hidden;
-  background: #101b14;
+  background: #101713;
   color: #fff;
 }
 
@@ -118,73 +118,76 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
+  z-index: 1;
 }
 
 .diamond-opening__overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background:
-    linear-gradient(180deg, rgba(8, 18, 12, .35) 0%, rgba(8, 18, 12, .55) 48%, rgba(8, 18, 12, .88) 100%);
+    linear-gradient(180deg, rgba(6, 12, 8, .12) 0%, rgba(6, 12, 8, .28) 42%, rgba(6, 12, 8, .76) 100%),
+    rgba(0, 0, 0, .18);
 }
 
 .diamond-opening__content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   min-height: 100vh;
-  padding: 80px 28px 52px;
+  padding: 0 28px 64px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.diamond-opening__text {
+  width: 100%;
 }
 
 .diamond-opening__eyebrow {
   margin: 0 0 12px;
-  font-size: 11px;
-  letter-spacing: 4px;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
   text-transform: uppercase;
-  color: rgba(255,255,255,.85);
+  color: rgba(255, 255, 255, .9);
 }
 
 .diamond-opening__names {
   margin: 0;
-  font-family: Georgia, "Playfair Display", serif;
-  font-size: clamp(44px, 14vw, 68px);
-  line-height: .92;
+  max-width: 360px;
+  font-size: clamp(36px, 10.5vw, 50px);
+  line-height: 1.05;
   font-weight: 800;
-  color: #f4efe7;
-}
-
-.diamond-opening__date {
-  margin: 18px 0 34px;
-  font-size: 13px;
-  letter-spacing: 5px;
-}
-
-.diamond-opening__guest {
-  margin-bottom: 24px;
-}
-
-.diamond-opening__guest p {
-  margin: 0 0 8px;
-  font-size: 11px;
-  letter-spacing: 1.2px;
-  color: rgba(255,255,255,.78);
-}
-
-.diamond-opening__guest strong {
-  font-size: 18px;
+  letter-spacing: -1px;
   color: #fff;
+}
+
+.diamond-opening__date,
+.diamond-hero__date {
+  display: block;
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 6px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
 }
 
 .diamond-opening__button {
+  margin-top: 34px;
   width: 190px;
   height: 44px;
-  border: 1px solid rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.85);
   border-radius: 999px;
-  background: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
   color: #fff;
+  font-size: 15px;
   font-weight: 700;
   backdrop-filter: blur(8px);
   display: inline-flex;
@@ -276,12 +279,99 @@
 }
 
 .diamond-hero {
-  min-height: 520px;
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #101713;
+  color: #fff;
+}
+
+.diamond-hero__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  z-index: 1;
+}
+
+.diamond-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(6, 12, 8, .08) 0%, rgba(6, 12, 8, .22) 44%, rgba(6, 12, 8, .78) 100%),
+    rgba(0, 0, 0, .16);
+}
+
+.diamond-hero__content {
+  position: relative;
+  z-index: 3;
+  min-height: 100vh;
+  padding: 0 28px 54px;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 32px 24px 58px;
-  background-color: var(--diamond-forest-deep);
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  text-align: left;
+  color: #fff;
+}
+
+.diamond-hero__eyebrow {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.9);
+}
+
+.diamond-hero__names {
+  margin: 0;
+  max-width: 360px;
+  font-size: clamp(36px, 10.5vw, 50px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #fff;
+}
+
+.diamond-hero__date {
+  margin-bottom: 54px;
+}
+
+.diamond-hero__scroll {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 600;
+  color: rgba(255,255,255,.86);
+}
+
+.diamond-hero__scroll i {
+  font-size: 12px;
+}
+
+@media (max-width: 430px) {
+  .diamond-opening,
+  .diamond-hero {
+    width: 100%;
+    max-width: none;
+  }
+
+  .diamond-opening__content,
+  .diamond-hero__content {
+    padding-left: 26px;
+    padding-right: 26px;
+  }
 }
 
 /* ── Buttons ──────────────────────────────────────────────────── */
@@ -320,37 +410,80 @@
 
 .diamond-btn--full { width: 100%; }
 
-/* ── Quote block ──────────────────────────────────────────────── */
-.diamond-quote-block {
-  min-height: 360px;
+/* ── Prayer / Bismillah ───────────────────────────────────────── */
+.diamond-prayer {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 650px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #162719;
+  color: #fff;
+}
+
+.diamond-prayer__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.diamond-prayer__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(14, 31, 20, .65) 0%, rgba(14, 31, 20, .58) 45%, rgba(14, 31, 20, .78) 100%),
+    rgba(0, 0, 0, .18);
+}
+
+.diamond-prayer__content {
+  position: relative;
+  z-index: 3;
+  min-height: 650px;
+  padding: 70px 30px 76px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  padding: 48px 24px;
-}
-
-.diamond-script {
-  margin: 0 0 14px;
-  font-size: 1.6rem;
-  font-style: italic;
-  color: var(--diamond-accent-soft);
-}
-
-.diamond-quote {
-  margin: 16px auto;
-  max-width: 320px;
-  font-size: 1.05rem;
-  font-style: italic;
-  line-height: 1.7;
   text-align: center;
 }
 
-.diamond-quote__source {
+.diamond-prayer h2 {
+  margin: 0 0 22px;
+  font-size: 24px;
+  line-height: 1.25;
+  font-style: italic;
+  font-weight: 500;
+  color: #f3dfc8;
+}
+
+.diamond-prayer__intro {
+  margin: 0 auto 26px;
+  max-width: 340px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, .94);
+}
+
+.diamond-prayer__quote {
+  margin: 0 auto 14px;
+  max-width: 330px;
+  font-size: 13px;
+  line-height: 1.85;
+  font-style: italic;
+  color: rgba(255, 255, 255, .9);
+}
+
+.diamond-prayer__source {
   margin: 0;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.74rem;
-  letter-spacing: 0.12em;
-  color: var(--diamond-accent-soft);
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #f3dfc8;
 }
 
 /* ── Generic light sections ───────────────────────────────────── */
@@ -391,48 +524,101 @@
   text-align: center;
 }
 
-/* ── Mempelai (person) ────────────────────────────────────────── */
-.diamond-person {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  padding: 42px 22px;
-  text-align: center;
-}
-
-.diamond-person--reverse {
-  background: var(--diamond-soft);
-}
-
-.diamond-person__photo {
-  width: 200px;
-  height: 260px;
-  border-radius: 10px;
+/* ── Full-image couple ────────────────────────────────────────── */
+.diamond-person-full {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  min-height: 720px;
+  margin: 0 auto;
   overflow: hidden;
-  box-shadow: var(--diamond-shadow);
-  background: var(--diamond-soft);
+  background: #162719;
+  color: #fff;
 }
 
-.diamond-person__photo img {
+.diamond-person-full__bg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  object-position: center top;
+  z-index: 1;
 }
 
-.diamond-person__name {
-  margin: 8px 0 8px;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--diamond-ink);
+.diamond-person-full__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(9, 18, 12, .12) 0%, rgba(9, 18, 12, .26) 45%, rgba(9, 18, 12, .82) 100%);
 }
 
-.diamond-person__instagram {
-  margin: 0;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.82rem;
-  color: var(--diamond-accent);
+.diamond-person-full__content {
+  position: relative;
+  z-index: 3;
+  min-height: 720px;
+  padding: 0 30px 76px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.diamond-person-full__label {
+  margin: 0 0 10px;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, .78);
+}
+
+.diamond-person-full h2 {
+  margin: 0 0 10px;
+  font-size: 34px;
+  line-height: 1.08;
+  font-weight: 800;
+  color: #fff;
+}
+
+.diamond-person-full__parents {
+  margin: 0 0 12px;
+  max-width: 280px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, .82);
+}
+
+.diamond-person-full__instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  color: #243627;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+@media (max-width: 430px) {
+  .diamond-prayer,
+  .diamond-person-full {
+    width: 100%;
+    max-width: none;
+  }
+
+  .diamond-prayer__content {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .diamond-person-full__content {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
 }
 
 /* ── Save the Date ────────────────────────────────────────────── */
@@ -968,7 +1154,6 @@
 
 @media (max-width: 294px) {
   .diamond-section,
-  .diamond-person,
   .diamond-savedate,
   .diamond-countdown,
   .diamond-wishes,

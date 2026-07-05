@@ -2,17 +2,14 @@
   <article class="diamond-shell">
 
     <section class="diamond-opening" *ngIf="!isInvitationOpened">
-      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="" />
+      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" />
       <div class="diamond-opening__overlay"></div>
 
       <div class="diamond-opening__content">
-        <p class="diamond-opening__eyebrow">THE WEDDING OF</p>
-        <h1 class="diamond-opening__names">{{ getCoupleNames() }}</h1>
-        <p class="diamond-opening__date" *ngIf="getHeroDateLabel()">{{ getHeroDateLabel() }}</p>
-
-        <div class="diamond-opening__guest">
-          <p>KEPADA YTH. BAPAK/IBU/SAUDARA/I</p>
-          <strong>{{ getGuestName() }}</strong>
+        <div class="diamond-opening__text">
+          <p class="diamond-opening__eyebrow">THE WEDDING OF</p>
+          <h1 class="diamond-opening__names">{{ getCoupleNames() }}</h1>
+          <p class="diamond-opening__date">{{ getHeroDateLabel() || getFallbackDateLabel() }}</p>
         </div>
 
         <button type="button" class="diamond-opening__button" (click)="openInvitation()">
@@ -24,52 +21,101 @@
     <main class="diamond-main" *ngIf="isInvitationOpened">
       <!-- HERO -->
       <section class="diamond-hero">
-        <div class="diamond-hero__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
+        <img class="diamond-hero__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" />
         <div class="diamond-hero__overlay"></div>
+
         <div class="diamond-hero__content">
-          <p class="diamond-eyebrow diamond-eyebrow--light">The Wedding Of</p>
-          <h1 class="diamond-names">{{ getCoupleNames() }}</h1>
-          <p class="diamond-cover__date" *ngIf="getWeddingDateText()">{{ getWeddingDateText() }}</p>
+          <p class="diamond-hero__eyebrow">THE WEDDING OF</p>
+          <h1 class="diamond-hero__names">{{ getCoupleNames() }}</h1>
+          <p class="diamond-hero__date">{{ getHeroDateLabel() || getFallbackDateLabel() }}</p>
+
+          <div class="diamond-hero__scroll">
+            <span>GESER KE BAWAH</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
         </div>
       </section>
 
       <!-- BISMILLAH / QUOTE -->
-      <section class="diamond-quote-block">
-        <div class="diamond-quote-block__media" [style.background-image]="getCoverPhoto() ? 'url(' + getCoverPhoto() + ')' : null"></div>
-        <div class="diamond-quote-block__overlay"></div>
-        <div class="diamond-quote-block__content">
-          <p class="diamond-script">Bismillahirrahmanirrahim</p>
-          <p class="diamond-copy diamond-copy--light">{{ getInvitationIntro() }}</p>
-          <blockquote class="diamond-quote" *ngIf="getDiamondQuoteText() as quoteText">"{{ getShortQuote(quoteText) }}"</blockquote>
-          <p class="diamond-quote__source" *ngIf="getDiamondQuoteSource() as quoteSource">{{ quoteSource }}</p>
+      <section class="diamond-prayer">
+        <img class="diamond-prayer__bg" [src]="getPrayerPhotoUrl()" alt="" (error)="onCoverImageError($event)" />
+        <div class="diamond-prayer__overlay"></div>
+
+        <div class="diamond-prayer__content">
+          <h2>Bismillahirrahmanirrahim</h2>
+
+          <p class="diamond-prayer__intro">
+            Dengan memohon rahmat dan ridho Allah SWT,<br />
+            kami bermaksud mengundang Bapak/Ibu/Saudara/i<br />
+            untuk menghadiri dan memberikan doa restu pada<br />
+            acara pernikahan kami.
+          </p>
+
+          <p class="diamond-prayer__quote" *ngIf="getMainQuote()">
+            “{{ getMainQuote() }}”
+          </p>
+
+          <p class="diamond-prayer__source" *ngIf="getMainQuoteSource()">
+            {{ getMainQuoteSource() }}
+          </p>
         </div>
       </section>
 
-      <!-- MEMPELAI WANITA -->
-      <section class="diamond-person" *ngIf="isCoupleVisible()">
-        <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getBridePortrait()">
-          <img *ngIf="getBridePortrait()" [src]="getBridePortrait()" [alt]="getBrideFullName()" (error)="onImageError($event)">
-          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-        </div>
-        <div class="diamond-person__body">
-          <p class="diamond-eyebrow">Mempelai Wanita</p>
-          <h2 class="diamond-person__name">{{ getBrideFullName() }}</h2>
-          <p class="diamond-copy" *ngIf="getBrideParentLine()">{{ getBrideParentLine() }}</p>
-          <p class="diamond-person__instagram" *ngIf="getBrideInstagram() as instagram">{{ instagram }}</p>
+      <section class="diamond-person-full diamond-person-full--bride">
+        <img
+          class="diamond-person-full__bg"
+          [src]="getBridePhotoUrl()"
+          [alt]="getBrideName()"
+          (error)="onPersonImageError($event)" />
+
+        <div class="diamond-person-full__overlay"></div>
+
+        <div class="diamond-person-full__content">
+          <p class="diamond-person-full__label">MEMPELAI WANITA</p>
+          <h2>{{ getBrideName() }}</h2>
+
+          <p class="diamond-person-full__parents" *ngIf="getBrideParents()">
+            {{ getBrideParents() }}
+          </p>
+
+          <a
+            class="diamond-person-full__instagram"
+            *ngIf="getBrideInstagram()"
+            [href]="getInstagramUrl(getBrideInstagram())"
+            target="_blank"
+            rel="noopener">
+            <i class="fab fa-instagram"></i>
+            {{ getBrideInstagram() }}
+          </a>
         </div>
       </section>
 
-      <!-- MEMPELAI PRIA -->
-      <section class="diamond-person diamond-person--reverse" *ngIf="isCoupleVisible()">
-        <div class="diamond-person__photo gallery-card" [class.is-image-missing]="!getGroomPortrait()">
-          <img *ngIf="getGroomPortrait()" [src]="getGroomPortrait()" [alt]="getGroomFullName()" (error)="onImageError($event)">
-          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-        </div>
-        <div class="diamond-person__body">
-          <p class="diamond-eyebrow">Mempelai Pria</p>
-          <h2 class="diamond-person__name">{{ getGroomFullName() }}</h2>
-          <p class="diamond-copy" *ngIf="getGroomParentLine()">{{ getGroomParentLine() }}</p>
-          <p class="diamond-person__instagram" *ngIf="getGroomInstagram() as instagram">{{ instagram }}</p>
+      <section class="diamond-person-full diamond-person-full--groom">
+        <img
+          class="diamond-person-full__bg"
+          [src]="getGroomPhotoUrl()"
+          [alt]="getGroomName()"
+          (error)="onPersonImageError($event)" />
+
+        <div class="diamond-person-full__overlay"></div>
+
+        <div class="diamond-person-full__content">
+          <p class="diamond-person-full__label">MEMPELAI PRIA</p>
+          <h2>{{ getGroomName() }}</h2>
+
+          <p class="diamond-person-full__parents" *ngIf="getGroomParents()">
+            {{ getGroomParents() }}
+          </p>
+
+          <a
+            class="diamond-person-full__instagram"
+            *ngIf="getGroomInstagram()"
+            [href]="getInstagramUrl(getGroomInstagram())"
+            target="_blank"
+            rel="noopener">
+            <i class="fab fa-instagram"></i>
+            {{ getGroomInstagram() }}
+          </a>
         </div>
       </section>
 

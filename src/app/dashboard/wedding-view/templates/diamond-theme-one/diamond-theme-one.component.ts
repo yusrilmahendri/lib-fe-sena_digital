@@ -33,6 +33,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (changes['invitationOpened'] || changes['weddingData']) {
       this.syncInvitationState();
     }
+    if (changes['weddingData']) {
+      console.log('[DiamondThemeOne] weddingData events:', this.weddingData?.events);
+      console.log('[DiamondThemeOne] main event:', this.getMainEvent());
+      console.log('[DiamondThemeOne] hero date:', this.getHeroDateLabel());
+    }
   }
 
   override openInvitation(): void {
@@ -141,21 +146,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override getOpeningDateLabel(): string {
-    const event = this.getMainEvent();
-    const rawDate = event?.tanggal_acara || event?.date || event?.tanggal;
-    if (!rawDate) {
-      return '';
-    }
-
-    const date = new Date(rawDate);
-    if (Number.isNaN(date.getTime())) {
-      return '';
-    }
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = String(date.getFullYear());
-    return `${day} · ${month} · ${year}`;
+    return this.getHeroDateLabel();
   }
 
   override getCoverPhoto(): string {
@@ -164,18 +155,21 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getCoverPhotoUrl(): string {
     const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
-    const cover = gallery.find((item: any) => {
+    const namedCover = gallery.find((item: any) => {
       const name = String(item?.nama_foto || item?.name || '').toLowerCase();
-      return name.includes('cover');
-    }) || gallery[0];
+      return (name.includes('cover') || name.includes('outdoor')) && this.getGalleryCandidateUrl(item);
+    });
+    const firstGalleryPhoto = gallery.find((item: any) => this.getGalleryCandidateUrl(item));
 
-    const url = (cover as any)?.photo_url || (cover as any)?.url || (cover as any)?.photo;
     const candidates = [
-      url,
+      this.getGalleryCandidateUrl(namedCover),
+      this.getGalleryCandidateUrl(firstGalleryPhoto),
       (this.weddingData as any)?.cover_photo_url,
       (this.weddingData as any)?.mempelai?.cover_photo_url,
       this.weddingData?.mempelai?.cover_photo,
       (this.weddingData as any)?.cover_photo,
+      this.getBridePhoto(),
+      this.getGroomPhoto(),
     ];
 
     for (const candidate of candidates) {
@@ -188,8 +182,33 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return 'assets/thema-4/diamond-cover.jpg';
   }
 
+  private getGalleryCandidateUrl(item: any): string {
+    return item?.photo_url || item?.url || item?.photo || '';
+  }
+
   getOpeningPhoto(): string {
     return this.getCoverPhotoUrl();
+  }
+
+  getPrayerPhotoUrl(): string {
+    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+
+    const prayerPhoto =
+      gallery.find((item: any) => {
+        const name = String(item?.nama_foto || item?.name || item?.title || '').toLowerCase();
+        return name.includes('couple') ||
+          name.includes('pasangan') ||
+          name.includes('outdoor') ||
+          name.includes('prewedding');
+      }) ||
+      gallery[1] ||
+      gallery[0];
+
+    return this.normalizePhotoUrl(
+      (prayerPhoto as any)?.photo_url ||
+      (prayerPhoto as any)?.photo ||
+      (prayerPhoto as any)?.url
+    ) || this.getCoverPhotoUrl();
   }
 
   override getGuestName(): string {
@@ -204,13 +223,51 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     ).trim();
   }
 
-  override getEvents(): WeddingEvent[] {
-    return Array.isArray(this.weddingData?.events) ? this.weddingData?.events || [] : [];
+  override getEvents(): any[] {
+    const data: any = this.weddingData || {};
+
+    if (Array.isArray(data.events)) return data.events;
+    if (Array.isArray(data.acaras)) return data.acaras;
+    if (Array.isArray(data.event)) return data.event;
+    if (Array.isArray(data.detail_acara)) return data.detail_acara;
+    if (Array.isArray(data.detail_acaras)) return data.detail_acaras;
+
+    if (data.events && typeof data.events === 'object') {
+      return Object.values(data.events);
+    }
+
+    return [];
   }
 
   getMainEvent(): any {
     const events = this.getEvents();
-    return events.find((event: any) => String(event?.jenis_acara || '').toLowerCase().includes('akad')) || events[0] || null;
+
+    if (!events.length) return null;
+
+    return (
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara ||
+          event?.type ||
+          event?.nama_acara ||
+          event?.name ||
+          ''
+        ).toLowerCase();
+
+        return type.includes('akad');
+      }) ||
+      events.find((event: any) => {
+        return Boolean(
+          event?.tanggal_acara ||
+          event?.tanggal ||
+          event?.date ||
+          event?.event_date ||
+          event?.start_date ||
+          event?.wedding_date
+        );
+      }) ||
+      events[0]
+    );
   }
 
   getGroomPortrait(): string {
@@ -219,6 +276,139 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getBridePortrait(): string {
     return this.getBridePhoto() || '';
+  }
+
+  getMainQuote(): string {
+    const data: any = this.weddingData || {};
+    const quote = Array.isArray(data?.quotes)
+      ? data?.quotes?.[0]
+      : data?.quotes;
+
+    return String(quote?.quote || quote?.pesan || quote?.text || this.getDiamondQuoteText() || '').trim();
+  }
+
+  getMainQuoteSource(): string {
+    const data: any = this.weddingData || {};
+    const quote = Array.isArray(data?.quotes)
+      ? data?.quotes?.[0]
+      : data?.quotes;
+
+    return String(quote?.name || quote?.source || quote?.sumber || this.getDiamondQuoteSource() || '').trim();
+  }
+
+  getBrideData(): any {
+    const data: any = this.weddingData || {};
+    const mempelai = data?.mempelai || {};
+    const list = Array.isArray(mempelai) ? mempelai : [];
+
+    return (
+      list.find((item: any) => {
+        const gender = String(item?.gender || item?.jenis_kelamin || item?.type || '').toLowerCase();
+        return gender.includes('wanita') || gender.includes('perempuan') || gender.includes('bride');
+      }) ||
+      mempelai?.wanita ||
+      mempelai?.bride ||
+      mempelai?.female ||
+      data?.mempelai_wanita ||
+      this.getBride() ||
+      mempelai
+    );
+  }
+
+  getGroomData(): any {
+    const data: any = this.weddingData || {};
+    const mempelai = data?.mempelai || {};
+    const list = Array.isArray(mempelai) ? mempelai : [];
+
+    return (
+      list.find((item: any) => {
+        const gender = String(item?.gender || item?.jenis_kelamin || item?.type || '').toLowerCase();
+        return gender.includes('pria') || gender.includes('laki') || gender.includes('groom');
+      }) ||
+      mempelai?.pria ||
+      mempelai?.groom ||
+      mempelai?.male ||
+      data?.mempelai_pria ||
+      this.getGroom() ||
+      mempelai
+    );
+  }
+
+  getBridePhotoUrl(): string {
+    const bride = this.getBrideData();
+    return this.normalizePhotoUrl(
+      bride?.photo_url ||
+      bride?.foto ||
+      bride?.photo ||
+      bride?.image ||
+      bride?.avatar ||
+      this.getBridePhoto()
+    ) || this.getCoverPhotoUrl();
+  }
+
+  getGroomPhotoUrl(): string {
+    const groom = this.getGroomData();
+    return this.normalizePhotoUrl(
+      groom?.photo_url ||
+      groom?.foto ||
+      groom?.photo ||
+      groom?.image ||
+      groom?.avatar ||
+      this.getGroomPhoto()
+    ) || this.getCoverPhotoUrl();
+  }
+
+  override getBrideParents(): string {
+    const bride = this.getBrideData();
+    return String(
+      bride?.orang_tua ||
+      bride?.nama_orang_tua ||
+      bride?.parents ||
+      bride?.putri_dari ||
+      this.getBrideParentLine() ||
+      ''
+    ).trim();
+  }
+
+  override getGroomParents(): string {
+    const groom = this.getGroomData();
+    return String(
+      groom?.orang_tua ||
+      groom?.nama_orang_tua ||
+      groom?.parents ||
+      groom?.putra_dari ||
+      this.getGroomParentLine() ||
+      ''
+    ).trim();
+  }
+
+  override getBrideInstagram(): string {
+    const bride = this.getBrideData();
+    return String(bride?.instagram || bride?.ig || bride?.sosmed || super.getBrideInstagram() || '').replace('@', '').trim();
+  }
+
+  override getGroomInstagram(): string {
+    const groom = this.getGroomData();
+    return String(groom?.instagram || groom?.ig || groom?.sosmed || super.getGroomInstagram() || '').replace('@', '').trim();
+  }
+
+  getInstagramUrl(username: string): string {
+    const clean = String(username || '').replace('@', '').trim();
+    return clean ? `https://instagram.com/${clean}` : '#';
+  }
+
+  onCoverImageError(event: Event): void {
+    const target = event.target as HTMLImageElement | null;
+    if (!target) return;
+    target.onerror = null;
+    target.src = this.getCoverPhotoUrl();
+  }
+
+  onPersonImageError(event: Event): void {
+    const target = event.target as HTMLImageElement | null;
+    if (!target) return;
+    target.onerror = null;
+    target.src = this.getCoverPhotoUrl();
   }
 
   getDiamondQuoteText(): string {
@@ -315,7 +505,71 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getHeroDateLabel(): string {
-    return this.getOpeningDateLabel();
+    const event = this.getMainEvent();
+    const data: any = this.weddingData || {};
+
+    const rawDate =
+      event?.tanggal_acara ||
+      event?.tanggal ||
+      event?.date ||
+      event?.event_date ||
+      event?.start_date ||
+      event?.wedding_date ||
+      event?.countdown?.tanggal_acara ||
+      event?.countdown?.tanggal ||
+      event?.countdown?.date ||
+      data?.countdown?.tanggal_acara ||
+      data?.countdown?.tanggal ||
+      data?.countdown?.date ||
+      data?.countdown?.tanggal_countdown ||
+      data?.filter_undangan?.tanggal_acara ||
+      data?.filter_undangan?.tanggal ||
+      data?.website?.tanggal_acara ||
+      data?.website?.tanggal ||
+      '';
+
+    return this.formatDiamondDate(rawDate);
+  }
+
+  formatDiamondDate(rawDate: any): string {
+    if (!rawDate) return '';
+
+    if (rawDate instanceof Date && !isNaN(rawDate.getTime())) {
+      return this.formatDateParts(rawDate);
+    }
+
+    const value = String(rawDate).trim();
+
+    if (!value) return '';
+
+    const ymdMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (ymdMatch) {
+      return `${ymdMatch[3]} · ${ymdMatch[2]} · ${ymdMatch[1]}`;
+    }
+
+    const dmyMatch = value.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/);
+    if (dmyMatch) {
+      return `${dmyMatch[1]} · ${dmyMatch[2]} · ${dmyMatch[3]}`;
+    }
+
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      return this.formatDateParts(parsed);
+    }
+
+    return value;
+  }
+
+  formatDateParts(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day} · ${month} · ${year}`;
+  }
+
+  getFallbackDateLabel(): string {
+    return '';
   }
 
   normalizePhotoUrl(url: string | null | undefined): string {
