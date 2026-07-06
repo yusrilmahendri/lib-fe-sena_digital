@@ -119,6 +119,79 @@
         </div>
       </section>
 
+      <!-- WAKTU / TEMPAT -->
+      <section class="diamond-event">
+        <img
+          class="diamond-event__bg"
+          [src]="getEventPhotoUrl()"
+          alt=""
+          (error)="onCoverImageError($event)" />
+
+        <div class="diamond-event__overlay"></div>
+
+        <div class="diamond-event__content">
+          <div class="diamond-event__time">
+            <p class="diamond-event__label">WAKTU</p>
+
+            <h2 class="diamond-event__date-title">
+              <ng-container *ngIf="getMainEventDayName() || getMainEventLongDate(); else noEventDate">
+                {{ getMainEventDayName() }}<span *ngIf="getMainEventDayName()">,</span><br />
+                {{ getMainEventLongDate() }}
+              </ng-container>
+
+              <ng-template #noEventDate>
+                Tanggal belum tersedia
+              </ng-template>
+            </h2>
+
+            <p class="diamond-event__schedule" *ngIf="getAkadTimeLabel()">
+              Akad: {{ getAkadTimeLabel() }}
+            </p>
+
+            <p class="diamond-event__schedule" *ngIf="getResepsiTimeLabel()">
+              Resepsi: {{ getResepsiTimeLabel() }}
+            </p>
+          </div>
+
+          <div class="diamond-event__place">
+            <p class="diamond-event__label">TEMPAT</p>
+
+            <h3>
+              {{ getEventVenueName() || 'Tempat acara belum tersedia' }}
+            </h3>
+
+            <p>
+              {{ getEventAddress() || 'Alamat acara belum tersedia' }}
+            </p>
+          </div>
+
+          <div class="diamond-event__map" *ngIf="getMapPreviewUrl(); else mapPlaceholder">
+            <img [src]="getMapPreviewUrl()" alt="Lokasi acara" />
+          </div>
+
+          <ng-template #mapPlaceholder>
+            <div class="diamond-event__map diamond-event__map--placeholder">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>Preview maps belum tersedia</span>
+            </div>
+          </ng-template>
+
+          <a
+            class="diamond-event__maps-button"
+            *ngIf="getEventMapLink()"
+            [href]="getEventMapLink()"
+            target="_blank"
+            rel="noopener">
+            <i class="fas fa-map-marker-alt"></i>
+            Gunakan Google Maps
+          </a>
+
+          <p class="diamond-event__note">
+            Demi kenyamanan mohon gunakan akses utama atau alternatif yang tersedia.
+          </p>
+        </div>
+      </section>
+
       <!-- COUNTDOWN -->
       <section class="diamond-countdown">
         <img
@@ -381,78 +454,6 @@
             <i class="fab fa-youtube"></i>
             Gabung Live Streaming
           </a>
-        </div>
-      </section>
-
-      <!-- ACARA sementara disembunyikan -->
-      <section class="diamond-event" *ngIf="false">
-        <img
-          class="diamond-event__bg"
-          [src]="getEventPhotoUrl()"
-          alt=""
-          (error)="onCoverImageError($event)" />
-
-        <div class="diamond-event__overlay"></div>
-
-        <div class="diamond-event__content">
-          <div class="diamond-event__time">
-            <p class="diamond-event__label">WAKTU</p>
-
-            <h2 class="diamond-event__date-title">
-              <ng-container *ngIf="getMainEventDayName() || getMainEventLongDate(); else noEventDate">
-                {{ getMainEventDayName() }}<span *ngIf="getMainEventDayName()">,</span><br />
-                {{ getMainEventLongDate() }}
-              </ng-container>
-              <ng-template #noEventDate>
-                Tanggal belum tersedia
-              </ng-template>
-            </h2>
-
-            <p class="diamond-event__schedule" *ngIf="getAkadTimeLabel()">
-              Akad: {{ getAkadTimeLabel() }}
-            </p>
-
-            <p class="diamond-event__schedule" *ngIf="getResepsiTimeLabel()">
-              Resepsi: {{ getResepsiTimeLabel() }}
-            </p>
-          </div>
-
-          <div class="diamond-event__place">
-            <p class="diamond-event__label">TEMPAT</p>
-
-            <h3>
-              {{ getEventVenueName() || 'Tempat acara belum tersedia' }}
-            </h3>
-
-            <p>
-              {{ getEventAddress() || 'Alamat acara belum tersedia' }}
-            </p>
-          </div>
-
-          <div class="diamond-event__map" *ngIf="getMapPreviewUrl(); else mapPlaceholder">
-            <img [src]="getMapPreviewUrl()" alt="Lokasi acara" />
-          </div>
-
-          <ng-template #mapPlaceholder>
-            <div class="diamond-event__map diamond-event__map--placeholder">
-              <i class="fas fa-map-marker-alt"></i>
-              <span>Preview maps belum tersedia</span>
-            </div>
-          </ng-template>
-
-          <a
-            class="diamond-event__maps-button"
-            *ngIf="getEventMapLink()"
-            [href]="getEventMapLink()"
-            target="_blank"
-            rel="noopener">
-            <i class="fas fa-map-marker-alt"></i>
-            Gunakan Google Maps
-          </a>
-
-          <p class="diamond-event__note">
-            Demi kenyamanan mohon gunakan akses utama atau alternatif yang tersedia.
-          </p>
         </div>
       </section>
 

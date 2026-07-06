@@ -249,13 +249,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override getEvents(): any[] {
     const data: any = this.weddingData || {};
 
-    if (Array.isArray(data.events)) {
-      return data.events;
-    }
-
-    if (Array.isArray(data?.data?.events)) {
-      return data.data.events;
-    }
+    if (Array.isArray(data.events)) return data.events;
+    if (Array.isArray(data.acaras)) return data.acaras;
+    if (Array.isArray(data?.data?.events)) return data.data.events;
 
     if (data.events && typeof data.events === 'object') {
       return Object.values(data.events);
@@ -267,8 +263,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   private normalizeEventType(event: any): string {
     return String(
       event?.jenis_acara ||
-      event?.type ||
       event?.nama_acara ||
+      event?.type ||
       event?.name ||
       ''
     ).toLowerCase();
@@ -280,20 +276,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (!events.length) return null;
 
     return (
-      events.find((event: any) => {
-        const type = this.normalizeEventType(event);
-        return type.includes('akad');
-      }) ||
-      events.find((event: any) => {
-        return Boolean(
-          event?.tanggal_acara ||
-          event?.tanggal ||
-          event?.date ||
-          event?.event_date ||
-          event?.start_date ||
-          event?.wedding_date
-        );
-      }) ||
+      events.find((event: any) => this.normalizeEventType(event).includes('akad')) ||
+      events.find((event: any) => Boolean(this.getEventDateValue(event))) ||
       events[0]
     );
   }
@@ -302,10 +286,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const events = this.getEvents();
 
     return (
-      events.find((event: any) => {
-        const type = this.normalizeEventType(event);
-        return type.includes('akad');
-      }) ||
+      events.find((event: any) => this.normalizeEventType(event).includes('akad')) ||
       events[0] ||
       null
     );
@@ -313,15 +294,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getResepsiEvent(): any {
     const events = this.getEvents();
+    const akad = this.getAkadEvent();
 
     return (
       events.find((event: any) => {
         const type = this.normalizeEventType(event);
-        return type.includes('resepsi') ||
-          type.includes('reception') ||
-          type.includes('walimah');
+        return type.includes('resepsi') || type.includes('reception') || type.includes('walimah');
       }) ||
-      events.find((event: any) => event !== this.getAkadEvent()) ||
+      events.find((event: any) => event !== akad) ||
       events[1] ||
       null
     );
@@ -507,10 +487,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private debugDiamondEvents(): void {
-    console.log('[DiamondThemeOne] weddingData raw:', this.weddingData);
-    console.log('[DiamondThemeOne] events raw:', this.weddingData?.events);
-    console.log('[DiamondThemeOne] akad event:', this.getAkadEvent());
-    console.log('[DiamondThemeOne] resepsi event:', this.getResepsiEvent());
+    console.log('[DiamondThemeOne] events:', this.getEvents());
+    console.log('[DiamondThemeOne] akad:', this.getAkadEvent());
+    console.log('[DiamondThemeOne] resepsi:', this.getResepsiEvent());
     console.log('[DiamondThemeOne] day:', this.getMainEventDayName());
     console.log('[DiamondThemeOne] long date:', this.getMainEventLongDate());
     console.log('[DiamondThemeOne] akad time:', this.getAkadTimeLabel());
