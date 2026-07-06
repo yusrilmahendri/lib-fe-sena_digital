@@ -24,11 +24,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   private mapEmbedUrlCache = new Map<string, SafeResourceUrl>();
 
   constructor(
-    private sanitizer: DomSanitizer,
+    private diamondSanitizer: DomSanitizer,
     dashboardService: DashboardService,
     toastService: ToastService
   ) {
-    super(sanitizer, dashboardService, toastService);
+    super(diamondSanitizer, dashboardService, toastService);
   }
 
   override ngOnInit(): void {
@@ -476,7 +476,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       return this.mapEmbedUrlCache.get(rawEmbedUrl) || null;
     }
 
-    const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawEmbedUrl);
+    const safeUrl = this.diamondSanitizer.bypassSecurityTrustResourceUrl(rawEmbedUrl);
     this.mapEmbedUrlCache.set(rawEmbedUrl, safeUrl);
 
     return safeUrl;
