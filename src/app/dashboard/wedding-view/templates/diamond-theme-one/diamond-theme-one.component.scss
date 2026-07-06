@@ -1982,3 +1982,26 @@
     animation: none !important;
   }
 }
+
+/* ── Cover date visibility override ───────────────────────────── */
+.diamond-opening__date,
+.diamond-hero__date {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin: 14px 0 0 !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+  letter-spacing: 6px !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  text-transform: uppercase !important;
+  text-align: left !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.diamond-opening__button {
+  margin-top: 34px !important;
+}

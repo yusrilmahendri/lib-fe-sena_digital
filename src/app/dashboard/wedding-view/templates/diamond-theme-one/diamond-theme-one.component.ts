@@ -487,7 +487,90 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
 
+  getDiamondCoverDateLabel(): string {
+    const rawDate = this.getDiamondCoverRawDate();
+
+    return this.formatDiamondCoverDate(rawDate);
+  }
+
+  getDiamondCoverRawDate(): string {
+    const data: any = this.weddingData || {};
+
+    const events: any[] = Array.isArray(data.events)
+      ? data.events
+      : Array.isArray(data?.data?.events)
+        ? data.data.events
+        : data.events && typeof data.events === 'object'
+          ? Object.values(data.events)
+          : [];
+
+    const akad =
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara ||
+          event?.nama_acara ||
+          event?.type ||
+          event?.name ||
+          ''
+        ).toLowerCase();
+
+        return type.includes('akad');
+      }) ||
+      events[0] ||
+      null;
+
+    return String(
+      akad?.tanggal_acara ||
+      akad?.tanggal ||
+      akad?.date ||
+      akad?.event_date ||
+      akad?.start_date ||
+      data?.tanggal_acara ||
+      data?.tanggal ||
+      data?.wedding_date ||
+      data?.countdown?.tanggal_acara ||
+      data?.countdown?.tanggal ||
+      data?.filter_undangan?.tanggal_acara ||
+      data?.filter_undangan?.tanggal ||
+      ''
+    ).trim();
+  }
+
+  formatDiamondCoverDate(rawDate: any): string {
+    if (!rawDate) return '';
+
+    const value = String(rawDate).trim();
+    if (!value) return '';
+
+    const datePart = value.split('T')[0];
+
+    const ymd = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (ymd) {
+      return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
+    }
+
+    const dmy = datePart.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
+    if (dmy) {
+      return `${dmy[1]} · ${dmy[2]} · ${dmy[3]}`;
+    }
+
+    const parsed = new Date(value);
+
+    if (!isNaN(parsed.getTime())) {
+      const day = String(parsed.getDate()).padStart(2, '0');
+      const month = String(parsed.getMonth() + 1).padStart(2, '0');
+      const year = parsed.getFullYear();
+
+      return `${day} · ${month} · ${year}`;
+    }
+
+    return value;
+  }
+
   private debugDiamondDate(): void {
+    console.log('[DiamondThemeOne] cover date raw:', this.getDiamondCoverRawDate());
+    console.log('[DiamondThemeOne] cover date label:', this.getDiamondCoverDateLabel());
+    console.log('[DiamondThemeOne] events for cover date:', this.weddingData?.events);
     console.log('[DiamondThemeOne] date events:', this.getWeddingEvents());
     console.log('[DiamondThemeOne] raw date:', this.getWeddingMainDateValue());
     console.log('[DiamondThemeOne] hero date label:', this.getHeroDateLabel());
