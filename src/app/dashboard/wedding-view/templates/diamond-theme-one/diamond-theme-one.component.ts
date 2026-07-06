@@ -1,5 +1,5 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { BankAccount, GalleryItem, WeddingEvent, WeddingStory } from '../../../../services/wedding-data.service';
@@ -21,9 +21,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     seconds: '00',
   };
   private countdownInterval: any = null;
+  private mapEmbedUrlCache = new Map<string, SafeResourceUrl>();
 
   constructor(
-    sanitizer: DomSanitizer,
+    private sanitizer: DomSanitizer,
     dashboardService: DashboardService,
     toastService: ToastService
   ) {
@@ -50,6 +51,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (changes['weddingData']) {
       this.debugDiamondEvents();
       this.debugDiamondDate();
+      this.debugDiamondMap();
     }
   }
 
@@ -459,6 +461,76 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       '';
 
     return this.normalizePhotoUrl(rawUrl);
+  }
+
+  getMapEmbedUrl(): SafeResourceUrl | null {
+    const mapLink = this.getEventMapLink();
+    const address = this.getEventAddress();
+    const venue = this.getEventVenueName();
+
+    const rawEmbedUrl = this.buildGoogleMapsEmbedUrl(mapLink, address, venue);
+
+    if (!rawEmbedUrl) return null;
+
+    if (this.mapEmbedUrlCache.has(rawEmbedUrl)) {
+      return this.mapEmbedUrlCache.get(rawEmbedUrl) || null;
+    }
+
+    const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(rawEmbedUrl);
+    this.mapEmbedUrlCache.set(rawEmbedUrl, safeUrl);
+
+    return safeUrl;
+  }
+
+  private buildGoogleMapsEmbedUrl(mapLink?: string, address?: string, venue?: string): string {
+    const link = String(mapLink || '').trim();
+    const addressText = String(address || '').trim();
+    const venueText = String(venue || '').trim();
+
+    if (link) {
+      try {
+        const url = new URL(link);
+
+        const q = url.searchParams.get('q') || url.searchParams.get('query');
+
+        if (q) {
+          return `https://www.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+        }
+
+        const placeMatch = url.pathname.match(/\/place\/([^/]+)/);
+        if (placeMatch?.[1]) {
+          const place = decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+          return `https://www.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+        }
+
+        const coordinateMatch = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (coordinateMatch) {
+          return `https://www.google.com/maps?q=${coordinateMatch[1]},${coordinateMatch[2]}&output=embed`;
+        }
+      } catch (error) {
+        // Abaikan error parsing URL, lanjut fallback address.
+      }
+    }
+
+    const query = [venueText, addressText].filter(Boolean).join(', ');
+
+    if (query) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+    }
+
+    if (link) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(link)}&output=embed`;
+    }
+
+    return '';
+  }
+
+  private debugDiamondMap(): void {
+    console.log('[DiamondThemeOne] map link:', this.getEventMapLink());
+    console.log(
+      '[DiamondThemeOne] map embed:',
+      this.buildGoogleMapsEmbedUrl(this.getEventMapLink(), this.getEventAddress(), this.getEventVenueName())
+    );
   }
 
   getEventPhotoUrl(): string {

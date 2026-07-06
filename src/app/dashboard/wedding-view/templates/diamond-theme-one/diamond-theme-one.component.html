@@ -169,8 +169,14 @@
             </p>
           </div>
 
-          <div class="diamond-event__map" *ngIf="getMapPreviewUrl(); else mapPlaceholder">
-            <img [src]="getMapPreviewUrl()" alt="Lokasi acara" />
+          <div class="diamond-event__map" *ngIf="getMapEmbedUrl(); else mapPlaceholder">
+            <iframe
+              [src]="getMapEmbedUrl()"
+              title="Lokasi acara"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen>
+            </iframe>
           </div>
 
           <ng-template #mapPlaceholder>
