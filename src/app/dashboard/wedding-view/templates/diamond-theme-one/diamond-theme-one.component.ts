@@ -49,6 +49,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     }
     if (changes['weddingData']) {
       this.debugDiamondEvents();
+      this.debugDiamondDate();
     }
   }
 
@@ -484,6 +485,12 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const rawUrl = item?.photo_url || item?.photo || item?.url || '';
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  private debugDiamondDate(): void {
+    console.log('[DiamondThemeOne] date events:', this.getWeddingEvents());
+    console.log('[DiamondThemeOne] raw date:', this.getWeddingMainDateValue());
+    console.log('[DiamondThemeOne] hero date label:', this.getHeroDateLabel());
   }
 
   private debugDiamondEvents(): void {
@@ -941,53 +948,99 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return 'Paket Diamond';
   }
 
-  getHeroDateLabel(): string {
-    const event = this.getMainEvent();
+  getWeddingEvents(): any[] {
     const data: any = this.weddingData || {};
-    const events = this.getEvents();
 
-    const rawDate =
-      event?.tanggal_acara ||
-      event?.tanggal ||
-      event?.date ||
-      event?.event_date ||
-      event?.start_date ||
-      event?.wedding_date ||
+    if (Array.isArray(data.events)) return data.events;
+    if (Array.isArray(data.acaras)) return data.acaras;
+    if (Array.isArray(data.event)) return data.event;
+    if (Array.isArray(data.detail_acara)) return data.detail_acara;
+    if (Array.isArray(data.detail_acaras)) return data.detail_acaras;
+    if (Array.isArray(data?.data?.events)) return data.data.events;
+
+    if (data.events && typeof data.events === 'object') {
+      return Object.values(data.events);
+    }
+
+    return [];
+  }
+
+  getWeddingMainDateValue(): string {
+    const events = this.getWeddingEvents();
+
+    const akad =
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara ||
+          event?.nama_acara ||
+          event?.type ||
+          event?.name ||
+          ''
+        ).toLowerCase();
+
+        return type.includes('akad');
+      }) ||
+      events[0] ||
+      null;
+
+    const data: any = this.weddingData || {};
+
+    return String(
+      akad?.tanggal_acara ||
+      akad?.tanggal ||
+      akad?.date ||
+      akad?.event_date ||
+      akad?.start_date ||
       events?.[0]?.tanggal_acara ||
       events?.[0]?.tanggal ||
       events?.[0]?.date ||
-      events?.[0]?.event_date ||
       data?.countdown?.tanggal_acara ||
       data?.countdown?.tanggal ||
-      data?.countdown?.date ||
       data?.filter_undangan?.tanggal_acara ||
       data?.filter_undangan?.tanggal ||
-      data?.invitation_package?.tanggal_acara ||
-      data?.invitation_package?.tanggal ||
-      '';
-
-    return this.formatDiamondDate(rawDate);
+      ''
+    ).trim();
   }
 
-  formatDiamondDate(rawDate: any): string {
+  getHeroDateLabel(): string {
+    return this.formatDiamondDateLabel(this.getWeddingMainDateValue());
+  }
+
+  getFallbackWeddingDateLabel(): string {
+    const data: any = this.weddingData || {};
+
+    const rawDate =
+      data?.tanggal_acara ||
+      data?.tanggal ||
+      data?.wedding_date ||
+      data?.date ||
+      data?.invitation_package?.tanggal ||
+      data?.invitation_package?.tanggal_acara ||
+      '';
+
+    return this.formatDiamondDateLabel(rawDate);
+  }
+
+  formatDiamondDateLabel(rawDate: any): string {
     if (!rawDate) return '';
 
     const value = String(rawDate).trim();
     if (!value) return '';
 
-    // Format YYYY-MM-DD atau YYYY-MM-DDTHH:mm:ss
-    const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const datePart = value.split('T')[0];
+
+    const ymd = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (ymd) {
       return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
     }
 
-    // Format DD-MM-YYYY atau DD/MM/YYYY
-    const dmy = value.match(/^(\d{2})[/-](\d{2})[/-](\d{4})/);
+    const dmy = datePart.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/);
     if (dmy) {
       return `${dmy[1]} · ${dmy[2]} · ${dmy[3]}`;
     }
 
     const parsed = new Date(value);
+
     if (!isNaN(parsed.getTime())) {
       const day = String(parsed.getDate()).padStart(2, '0');
       const month = String(parsed.getMonth() + 1).padStart(2, '0');

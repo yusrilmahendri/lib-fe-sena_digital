@@ -9,7 +9,9 @@
         <div class="diamond-opening__text">
           <p class="diamond-opening__eyebrow">THE WEDDING OF</p>
           <h1 class="diamond-opening__names">{{ getCoupleNames() }}</h1>
-          <p class="diamond-opening__date">{{ getHeroDateLabel() }}</p>
+          <p class="diamond-opening__date">
+            {{ getHeroDateLabel() || getFallbackWeddingDateLabel() }}
+          </p>
         </div>
 
         <button type="button" class="diamond-opening__button" (click)="openInvitation()">
@@ -27,7 +29,9 @@
         <div class="diamond-hero__content">
           <p class="diamond-hero__eyebrow">THE WEDDING OF</p>
           <h1 class="diamond-hero__names">{{ getCoupleNames() }}</h1>
-          <p class="diamond-hero__date">{{ getHeroDateLabel() }}</p>
+          <p class="diamond-hero__date">
+            {{ getHeroDateLabel() || getFallbackWeddingDateLabel() }}
+          </p>
 
           <div class="diamond-hero__scroll">
             <span>GESER KE BAWAH</span>
