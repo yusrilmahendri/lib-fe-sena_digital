@@ -53,138 +53,228 @@
     </section>
 
     <div class="diamond-garden-main" [class.open]="isInvitationOpened">
-      <section class="diamond-garden-hero">
-        <div class="diamond-garden-hero__stack">
-          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--top">
-            <img
-              [src]="getGardenHeroImage(0)"
-              alt=""
-              (error)="onGardenImageError($event)" />
-          </div>
-
-          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--middle">
-            <img
-              [src]="getGardenHeroImage(1)"
-              alt=""
-              (error)="onGardenImageError($event)" />
-          </div>
-
-          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--bottom">
-            <img
-              [src]="getGardenHeroImage(2)"
-              alt=""
-              (error)="onGardenImageError($event)" />
-          </div>
+      <section class="theme-five-hero" id="mainContent">
+        <div class="hero-panel hero-top">
+          <img
+            [src]="getHeroImage(0)"
+            alt="Wedding photo top"
+            (error)="onGardenImageError($event)" />
+          <div class="hero-overlay"></div>
+          <div class="hero-top-text">THE WEDDING OF</div>
         </div>
 
-        <div class="diamond-garden-hero__overlay"></div>
+        <div class="hero-panel hero-middle">
+          <img
+            [src]="getHeroImage(1)"
+            alt="Wedding couple"
+            (error)="onGardenImageError($event)" />
+          <div class="hero-overlay"></div>
+          <div class="hero-name">{{ getGroomName() }} &amp; {{ getBrideName() }}</div>
+        </div>
 
-        <div class="diamond-garden-hero__content">
-          <p class="diamond-garden-hero__eyebrow">THE WEDDING OF</p>
+        <div class="hero-panel hero-bottom">
+          <img
+            [src]="getHeroImage(2)"
+            alt="Wedding venue"
+            (error)="onGardenImageError($event)" />
+          <div class="hero-overlay"></div>
 
-          <h1>
-            {{ getGroomName() }} &amp; {{ getBrideName() }}
-          </h1>
-
-          <p class="diamond-garden-hero__date">
+          <div class="hero-date">
             {{ getGardenDateLabel() || 'Tanggal belum tersedia' }}
-          </p>
+          </div>
 
-          <div class="diamond-garden-hero__scroll">
+          <div class="hero-scroll">
             <span>GESER KE BAWAH</span>
-            <i class="fas fa-chevron-down"></i>
+            <span class="arrow-down">⌄</span>
           </div>
         </div>
       </section>
 
-      <section class="diamond-garden-section diamond-garden-section--couple" *ngIf="isCoupleVisible()">
-        <div class="diamond-garden-floral diamond-garden-floral--left" aria-hidden="true"></div>
-        <div class="diamond-garden-floral diamond-garden-floral--right" aria-hidden="true"></div>
-        <p class="diamond-garden-section__eyebrow">The Wedding Couple</p>
-        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Kedua Mempelai</h2>
+      <section class="diamond-garden-couple" *ngIf="isCoupleVisible()">
+        <img
+          class="diamond-garden-couple__frame"
+          src="assets/thema-2/theme-1.png"
+          alt=""
+          aria-hidden="true" />
 
-        <article class="diamond-garden-polaroid">
-          <div class="diamond-garden-polaroid__frame gallery-card" [class.is-image-missing]="!getBridePortrait()">
-            <img *ngIf="getBridePortrait()" [src]="getBridePortrait()" [alt]="getBrideFullName()" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-          </div>
-          <h3>{{ getBrideFullName() }}</h3>
-          <p>{{ getBrideParentLine() }}</p>
-          <small>@ {{ getBrideNickname() }}</small>
-        </article>
+        <div class="diamond-garden-couple__content">
+          <p class="diamond-garden-couple__eyebrow">THE WEDDING COUPLE</p>
+          <h2>Kedua Mempelai</h2>
 
-        <div class="diamond-garden-couple__ornament" aria-hidden="true">
-          <span></span>
-          <i class="fas fa-infinity"></i>
-          <span></span>
-        </div>
-
-        <article class="diamond-garden-polaroid diamond-garden-polaroid--alt">
-          <div class="diamond-garden-polaroid__frame gallery-card" [class.is-image-missing]="!getGroomPortrait()">
-            <img *ngIf="getGroomPortrait()" [src]="getGroomPortrait()" [alt]="getGroomFullName()" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-          </div>
-          <h3>{{ getGroomFullName() }}</h3>
-          <p>{{ getGroomParentLine() }}</p>
-          <small>@ {{ getGroomNickname() }}</small>
-        </article>
-      </section>
-
-      <section class="diamond-garden-section diamond-garden-section--event" *ngIf="isEventVisible()">
-        <div class="diamond-garden-section__header">
-          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
-          <p class="diamond-garden-section__eyebrow">Save The Date</p>
-          <h2 class="diamond-garden-section__title">Akad Nikah</h2>
-        </div>
-
-        <article class="diamond-garden-event-card">
-          <div class="diamond-garden-event-card__date">
-            <span class="diamond-garden-event-card__day">{{ getEventDay(getAkadCard()) }}</span>
-            <div>
-              <strong>{{ getEventMonthName(getAkadCard()) }}</strong>
-              <small>{{ getEventYear(getAkadCard()) }}</small>
+          <article class="diamond-garden-person diamond-garden-person--bride">
+            <div class="diamond-garden-person__photo">
+              <img
+                [src]="getBridePhotoUrl()"
+                [alt]="getBrideName()"
+                (error)="onGardenImageError($event)" />
             </div>
-          </div>
-          <div class="diamond-garden-event-card__detail">
-            <p>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</p>
-            <p>{{ formatTimeRange(getAkadCard()) }}</p>
-            <strong>{{ getDetailEventVenue(getAkadCard()) }}</strong>
-            <span>{{ getEventAddress(getAkadCard()) }}</span>
-          </div>
-          <div class="diamond-garden-map-preview" role="img" aria-label="Preview lokasi akad nikah">
-            <div class="diamond-garden-map-preview__pin">
-              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-            </div>
-            <div class="diamond-garden-map-preview__roads"></div>
-            <div class="diamond-garden-map-preview__label">{{ getMapPreviewCaption(getAkadCard()) }}</div>
-          </div>
-          <a
-            *ngIf="getAkadMapLink() as mapsLink"
-            class="diamond-garden-button diamond-garden-button--secondary"
-            [href]="mapsLink"
-            target="_blank"
-            rel="noopener noreferrer">
-            <i class="fas fa-location-arrow" aria-hidden="true"></i>
-            Lihat Lokasi
-          </a>
-        </article>
-      </section>
 
-      <section class="diamond-garden-section diamond-garden-section--moment">
-        <p class="diamond-garden-section__eyebrow">Special Moments</p>
-        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Moment Menuju Hari Bahagia</h2>
-        <div class="diamond-garden-countdown">
-          <article class="diamond-garden-countdown__card" *ngFor="let part of getCountdownParts()">
-            <strong>{{ part.value }}</strong>
-            <span>{{ part.label }}</span>
+            <h3>{{ getBrideName() }}</h3>
+
+            <p class="diamond-garden-person__parents">
+              {{ getBrideParents() }}
+            </p>
+
+            <a
+              class="diamond-garden-person__instagram"
+              *ngIf="getBrideInstagram()"
+              [href]="getInstagramUrl(getBrideInstagram())"
+              target="_blank"
+              rel="noopener">
+              <i class="fab fa-instagram"></i>
+              {{ getBrideInstagram() }}
+            </a>
+          </article>
+
+          <div class="diamond-garden-couple__ampersand">&amp;</div>
+
+          <article class="diamond-garden-person diamond-garden-person--groom">
+            <div class="diamond-garden-person__photo">
+              <img
+                [src]="getGroomPhotoUrl()"
+                [alt]="getGroomName()"
+                (error)="onGardenImageError($event)" />
+            </div>
+
+            <h3>{{ getGroomName() }}</h3>
+
+            <p class="diamond-garden-person__parents">
+              {{ getGroomParents() }}
+            </p>
+
+            <a
+              class="diamond-garden-person__instagram"
+              *ngIf="getGroomInstagram()"
+              [href]="getInstagramUrl(getGroomInstagram())"
+              target="_blank"
+              rel="noopener">
+              <i class="fab fa-instagram"></i>
+              {{ getGroomInstagram() }}
+            </a>
           </article>
         </div>
+      </section>
 
-        <div class="diamond-garden-gallery">
-          <figure class="diamond-garden-gallery__item gallery-card" *ngFor="let item of getMomentGalleryItems()" [class.is-image-missing]="!item.photoUrl">
-            <img *ngIf="item.photoUrl" [src]="item.photoUrl" [alt]="item.alt" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-          </figure>
+      <section class="diamond-garden-event" *ngIf="isEventVisible()">
+        <img
+          class="diamond-garden-event__frame"
+          src="assets/thema-2/theme-2.png"
+          alt=""
+          aria-hidden="true" />
+
+        <div class="diamond-garden-event__content">
+          <p class="diamond-garden-event__eyebrow">SAVE THE DATE</p>
+
+          <h2>Akad Nikah</h2>
+
+          <p class="diamond-garden-event__intro">
+            Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud mengundang
+            Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.
+          </p>
+
+          <div class="diamond-garden-event__date-row">
+            <span class="diamond-garden-event__month">
+              {{ getGardenEventMonthLabel(getAkadEvent()) }}
+            </span>
+
+            <strong class="diamond-garden-event__day">
+              {{ getGardenEventDayNumber(getAkadEvent()) }}
+            </strong>
+
+            <span class="diamond-garden-event__year">
+              {{ getGardenEventYearLabel(getAkadEvent()) }}
+            </span>
+          </div>
+
+          <p class="diamond-garden-event__time" *ngIf="getAkadTimeLabel()">
+            {{ getAkadTimeLabel() }}
+          </p>
+
+          <h3>
+            {{ getDetailEventVenue(getAkadEvent()) || getEventVenueName(getAkadEvent()) || 'Tempat acara belum tersedia' }}
+          </h3>
+
+          <p class="diamond-garden-event__address">
+            {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
+          </p>
+
+          <a
+            class="diamond-garden-event__button"
+            *ngIf="getAkadMapLink() || getEventMapLink(getAkadEvent())"
+            [href]="getAkadMapLink() || getEventMapLink(getAkadEvent())"
+            target="_blank"
+            rel="noopener">
+            <i class="fas fa-map-marker-alt"></i>
+            Lihat Lokasi
+          </a>
+        </div>
+      </section>
+
+      <section class="diamond-garden-moments">
+        <img
+          class="diamond-garden-moments__frame"
+          src="assets/thema-2/theme-3.png"
+          alt=""
+          aria-hidden="true" />
+
+        <div class="diamond-garden-moments__content">
+          <p class="diamond-garden-moments__eyebrow">SPECIAL MOMENTS</p>
+
+          <h2>
+            Moment Menuju<br />
+            Hari Bahagia
+          </h2>
+
+          <div class="diamond-garden-moments__countdown">
+            <div class="diamond-garden-moments__time-box">
+              <strong>{{ countdown.days }}</strong>
+              <span>HARI</span>
+            </div>
+
+            <div class="diamond-garden-moments__time-box">
+              <strong>{{ countdown.hours }}</strong>
+              <span>JAM</span>
+            </div>
+
+            <div class="diamond-garden-moments__time-box">
+              <strong>{{ countdown.minutes }}</strong>
+              <span>MENIT</span>
+            </div>
+
+            <div class="diamond-garden-moments__time-box">
+              <strong>{{ countdown.seconds }}</strong>
+              <span>DETIK</span>
+            </div>
+          </div>
+
+          <div
+            class="diamond-garden-moments__featured"
+            *ngIf="getGardenMomentFeatured() as featured"
+            (click)="openGardenMomentVideo(featured)">
+            <img
+              [src]="getGardenMomentPhotoUrl(featured)"
+              [alt]="getGardenMomentAlt(featured, 0)"
+              (error)="onGardenImageError($event)" />
+
+            <button
+              type="button"
+              class="diamond-garden-moments__play"
+              *ngIf="hasGardenMomentVideo(featured)"
+              aria-label="Putar video">
+              <i class="fas fa-play"></i>
+            </button>
+          </div>
+
+          <div class="diamond-garden-moments__gallery">
+            <div
+              class="diamond-garden-moments__item"
+              *ngFor="let item of getGardenMomentPhotos(); let i = index">
+              <img
+                [src]="getGardenMomentPhotoUrl(item)"
+                [alt]="getGardenMomentAlt(item, i)"
+                (error)="onGardenImageError($event)" />
+            </div>
+          </div>
         </div>
       </section>
 

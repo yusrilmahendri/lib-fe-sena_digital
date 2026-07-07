@@ -66,6 +66,166 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     return this.getGuestName();
   }
 
+  override getBrideData(): any {
+    const data: any = this.weddingData || {};
+    const mempelai = data.mempelai || data.mempelais || data.couple || {};
+
+    return (
+      data.bride ||
+      mempelai.bride ||
+      mempelai.wanita ||
+      mempelai.perempuan ||
+      mempelai.mempelai_wanita ||
+      (Array.isArray(mempelai) ? mempelai.find((item: any) => {
+        const gender = String(item?.gender || item?.jenis_kelamin || item?.type || '').toLowerCase();
+        return gender.includes('wanita') || gender.includes('perempuan') || gender.includes('bride');
+      }) : null) ||
+      this.getBride() ||
+      {}
+    );
+  }
+
+  override getGroomData(): any {
+    const data: any = this.weddingData || {};
+    const mempelai = data.mempelai || data.mempelais || data.couple || {};
+
+    return (
+      data.groom ||
+      mempelai.groom ||
+      mempelai.pria ||
+      mempelai.laki_laki ||
+      mempelai.mempelai_pria ||
+      (Array.isArray(mempelai) ? mempelai.find((item: any) => {
+        const gender = String(item?.gender || item?.jenis_kelamin || item?.type || '').toLowerCase();
+        return gender.includes('pria') || gender.includes('laki') || gender.includes('groom');
+      }) : null) ||
+      this.getGroom() ||
+      {}
+    );
+  }
+
+  override getBrideName(): string {
+    const bride = this.getBrideData();
+    const data: any = this.weddingData || {};
+
+    return this.gardenFirstFilled([
+      data?.mempelai?.nama_wanita,
+      bride?.nama_lengkap,
+      bride?.full_name,
+      bride?.name,
+      bride?.nama,
+      bride?.nama_mempelai,
+      super.getBrideName(),
+    ], 'Mempelai Wanita');
+  }
+
+  override getGroomName(): string {
+    const groom = this.getGroomData();
+    const data: any = this.weddingData || {};
+
+    return this.gardenFirstFilled([
+      data?.mempelai?.nama_pria,
+      groom?.nama_lengkap,
+      groom?.full_name,
+      groom?.name,
+      groom?.nama,
+      groom?.nama_mempelai,
+      super.getGroomName(),
+    ], 'Mempelai Pria');
+  }
+
+  override getBrideParents(): string {
+    const bride = this.getBrideData();
+
+    return this.gardenFirstFilled([
+      bride?.nama_orang_tua,
+      bride?.orang_tua,
+      bride?.parents,
+      bride?.parent,
+      bride?.nama_ayah && bride?.nama_ibu ? `Putri dari ${bride.nama_ayah} & ${bride.nama_ibu}` : '',
+      super.getBrideParents(),
+    ], '');
+  }
+
+  override getGroomParents(): string {
+    const groom = this.getGroomData();
+
+    return this.gardenFirstFilled([
+      groom?.nama_orang_tua,
+      groom?.orang_tua,
+      groom?.parents,
+      groom?.parent,
+      groom?.nama_ayah && groom?.nama_ibu ? `Putra dari ${groom.nama_ayah} & ${groom.nama_ibu}` : '',
+      super.getGroomParents(),
+    ], '');
+  }
+
+  override getBridePhotoUrl(): string {
+    const bride = this.getBrideData();
+    const rawUrl =
+      bride?.photo_url ||
+      bride?.foto_url ||
+      bride?.photo ||
+      bride?.foto ||
+      bride?.image ||
+      bride?.avatar ||
+      '';
+
+    return this.normalizeGardenPhotoUrl(rawUrl) || super.getBridePhotoUrl();
+  }
+
+  override getGroomPhotoUrl(): string {
+    const groom = this.getGroomData();
+    const rawUrl =
+      groom?.photo_url ||
+      groom?.foto_url ||
+      groom?.photo ||
+      groom?.foto ||
+      groom?.image ||
+      groom?.avatar ||
+      '';
+
+    return this.normalizeGardenPhotoUrl(rawUrl) || super.getGroomPhotoUrl();
+  }
+
+  override getBrideInstagram(): string {
+    const bride = this.getBrideData();
+
+    return this.gardenFirstFilled([
+      bride?.instagram,
+      bride?.ig,
+      bride?.sosmed,
+      bride?.social_media,
+      super.getBrideInstagram(),
+    ], '').replace('@', '');
+  }
+
+  override getGroomInstagram(): string {
+    const groom = this.getGroomData();
+
+    return this.gardenFirstFilled([
+      groom?.instagram,
+      groom?.ig,
+      groom?.sosmed,
+      groom?.social_media,
+      super.getGroomInstagram(),
+    ], '').replace('@', '');
+  }
+
+  override getInstagramUrl(username: string): string {
+    const value = String(username || '').replace('@', '').trim();
+    return value ? `https://instagram.com/${value}` : '#';
+  }
+
+  private gardenFirstFilled(values: any[], fallback = ''): string {
+    const found = values.find((value) => {
+      const text = String(value || '').trim();
+      return !!text && text !== 'null' && text !== 'undefined';
+    });
+
+    return found ? String(found).trim() : fallback;
+  }
+
   getHeroLabel(): string {
     return 'Wedding Invitation';
   }
@@ -117,6 +277,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     return this.normalizeGardenPhotoUrl(rawUrl) || portraitFallback[index] || this.getGardenFallbackImage(index);
   }
 
+  getHeroImage(index: number): string {
+    return this.getGardenHeroImage(index);
+  }
+
   matchGardenPhotoName(photo: any, keywords: string[]): boolean {
     const name = String(
       photo?.nama_foto ||
@@ -157,6 +321,80 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
       '';
 
     return this.normalizeGardenPhotoUrl(rawUrl);
+  }
+
+  getGardenMomentGallery(): any[] {
+    const gallery: any[] = this.weddingData?.gallery || [];
+
+    return gallery.filter((item: any) => {
+      return Boolean(
+        item?.photo_url ||
+        item?.photo ||
+        item?.url ||
+        item?.image
+      );
+    });
+  }
+
+  getGardenMomentFeatured(): any {
+    const gallery = this.getGardenMomentGallery();
+
+    return (
+      gallery.find((item: any) => item?.url_video || item?.video_url || item?.link_video) ||
+      gallery[0] ||
+      null
+    );
+  }
+
+  getGardenMomentPhotos(): any[] {
+    const gallery = this.getGardenMomentGallery();
+    const featured = this.getGardenMomentFeatured();
+
+    return gallery
+      .filter((item: any) => item !== featured)
+      .slice(0, 3);
+  }
+
+  getGardenMomentPhotoUrl(item: any): string {
+    const rawUrl =
+      item?.photo_url ||
+      item?.photo ||
+      item?.url ||
+      item?.image ||
+      item?.foto ||
+      '';
+
+    return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(1);
+  }
+
+  getGardenMomentAlt(item: any, index: number): string {
+    return String(
+      item?.nama_foto ||
+      item?.name ||
+      item?.title ||
+      `Moment ${index + 1}`
+    );
+  }
+
+  hasGardenMomentVideo(item: any): boolean {
+    return Boolean(
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video
+    );
+  }
+
+  openGardenMomentVideo(item: any): void {
+    const videoUrl = String(
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video ||
+      ''
+    ).trim();
+
+    if (!videoUrl) return;
+
+    window.open(videoUrl, '_blank');
   }
 
   normalizeGardenPhotoUrl(rawUrl: any): string {
@@ -226,6 +464,108 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     );
   }
 
+  getGardenEventDate(event?: any): Date | null {
+    const rawDate = String(
+      event?.tanggal_acara ||
+      event?.tanggal ||
+      event?.date ||
+      event?.event_date ||
+      ''
+    ).trim();
+
+    if (!rawDate) return null;
+
+    const datePart = rawDate.split('T')[0];
+    const date = new Date(`${datePart}T00:00:00`);
+
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  getGardenEventMonthLabel(event?: any): string {
+    const date = this.getGardenEventDate(event);
+
+    if (!date) return '';
+
+    return date.toLocaleDateString('id-ID', { month: 'long' });
+  }
+
+  getGardenEventDayNumber(event?: any): string {
+    const date = this.getGardenEventDate(event);
+
+    if (!date) return '--';
+
+    return String(date.getDate()).padStart(2, '0');
+  }
+
+  getGardenEventYearLabel(event?: any): string {
+    const date = this.getGardenEventDate(event);
+
+    if (!date) return '';
+
+    return String(date.getFullYear());
+  }
+
+  override getEventVenueName(event?: any): string {
+    const selectedEvent = event || this.getGardenMainEvent();
+
+    return String(
+      selectedEvent?.nama_tempat ||
+      selectedEvent?.tempat ||
+      selectedEvent?.venue ||
+      selectedEvent?.lokasi ||
+      selectedEvent?.location ||
+      selectedEvent?.gedung ||
+      selectedEvent?.nama_lokasi ||
+      selectedEvent?.nama_acara ||
+      ''
+    ).trim();
+  }
+
+  override getDetailEventVenue(event?: any): string {
+    const selectedEvent = event || this.getGardenMainEvent();
+
+    return String(
+      selectedEvent?.nama_tempat ||
+      selectedEvent?.tempat ||
+      selectedEvent?.venue ||
+      selectedEvent?.lokasi ||
+      selectedEvent?.location ||
+      selectedEvent?.gedung ||
+      selectedEvent?.nama_lokasi ||
+      selectedEvent?.nama_acara ||
+      ''
+    ).trim();
+  }
+
+  getDetailEventAddress(event?: any): string {
+    return String(
+      event?.alamat ||
+      event?.address ||
+      event?.lokasi_detail ||
+      event?.detail_lokasi ||
+      event?.alamat_lengkap ||
+      ''
+    ).trim();
+  }
+
+  override getEventMapLink(event?: any): string {
+    const selectedEvent = event || this.getGardenMainEvent();
+
+    return String(
+      selectedEvent?.link_maps ||
+      selectedEvent?.link_map ||
+      selectedEvent?.maps ||
+      selectedEvent?.map_url ||
+      selectedEvent?.google_maps ||
+      selectedEvent?.google_map ||
+      ''
+    ).trim();
+  }
+
+  override getAkadMapLink(): string {
+    return this.getEventMapLink(this.getAkadEvent());
+  }
+
   getGardenDateLabel(): string {
     const event = this.getGardenMainEvent();
     const rawDate =
@@ -249,14 +589,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     const datePart = value.split('T')[0];
 
     const ymd = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (ymd) return `${ymd[3]} · ${ymd[2]} · ${ymd[1]}`;
+    if (ymd) return `${ymd[3]} . ${ymd[2]} . ${ymd[1]}`;
 
     const parsed = new Date(value);
     if (!isNaN(parsed.getTime())) {
       const day = String(parsed.getDate()).padStart(2, '0');
       const month = String(parsed.getMonth() + 1).padStart(2, '0');
       const year = parsed.getFullYear();
-      return `${day} · ${month} · ${year}`;
+      return `${day} . ${month} . ${year}`;
     }
 
     return value;

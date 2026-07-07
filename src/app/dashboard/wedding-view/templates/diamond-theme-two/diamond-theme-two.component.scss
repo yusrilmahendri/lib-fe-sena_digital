@@ -1155,3 +1155,595 @@
     margin-top: 36px;
   }
 }
+
+.theme-five-hero {
+  width: 100%;
+  max-width: 410px;
+  height: 800px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #111;
+}
+
+.hero-panel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.hero-top {
+  height: 200px;
+}
+
+.hero-middle {
+  height: 330px;
+}
+
+.hero-bottom {
+  height: 270px;
+}
+
+.hero-panel img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.28);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-top-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 7px;
+  text-transform: uppercase;
+}
+
+.hero-name {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  font-size: clamp(48px, 13vw, 56px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+.hero-date {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 42px;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 9px;
+}
+
+.hero-scroll {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 28px;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+}
+
+.hero-scroll span:first-child {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.arrow-down {
+  display: block;
+  margin-top: 6px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+@media (max-width: 360px) {
+  .hero-name {
+    font-size: 44px;
+  }
+
+  .hero-date {
+    letter-spacing: 7px;
+  }
+}
+
+.diamond-garden-couple {
+  position: relative;
+  width: 100% !important;
+  max-width: 410px;
+  min-height: 904px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #18351f;
+  color: #fff;
+}
+
+.diamond-garden-couple__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.diamond-garden-couple__content {
+  position: relative;
+  z-index: 2;
+  min-height: 904px;
+  padding: 78px 28px 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.diamond-garden-couple__eyebrow {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: rgba(232, 213, 154, 0.68);
+}
+
+.diamond-garden-couple h2 {
+  margin: 0 0 46px;
+  font-size: 33px;
+  line-height: 1.12;
+  font-weight: 700;
+  color: #dfc98e;
+}
+
+.diamond-garden-person {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #fff;
+}
+
+.diamond-garden-person--bride {
+  margin-bottom: 34px;
+}
+
+.diamond-garden-person--groom {
+  margin-top: 24px;
+}
+
+.diamond-garden-person__photo {
+  width: 156px;
+  height: 210px;
+  padding: 9px;
+  background: #fff;
+  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.diamond-garden-person--bride .diamond-garden-person__photo {
+  transform: rotate(-3deg);
+}
+
+.diamond-garden-person--groom .diamond-garden-person__photo {
+  transform: rotate(4deg);
+}
+
+.diamond-garden-person__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.diamond-garden-person h3 {
+  margin: 20px 0 8px;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: #fff;
+}
+
+.diamond-garden-person__parents {
+  margin: 0;
+  max-width: 260px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.diamond-garden-person__instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #223f27;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.diamond-garden-couple__ampersand {
+  margin: 8px 0 0;
+  font-family: Georgia, serif;
+  font-size: 48px;
+  line-height: 1;
+  font-style: italic;
+  color: #e4cf95;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-couple {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+.diamond-garden-event {
+  position: relative;
+  width: 100% !important;
+  max-width: 410px;
+  min-height: 720px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  color: #263b20;
+}
+
+.diamond-garden-event__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.diamond-garden-event__content {
+  position: relative;
+  z-index: 2;
+  min-height: 720px;
+  padding: 116px 34px 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.diamond-garden-event__eyebrow {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: #b16b61;
+}
+
+.diamond-garden-event h2 {
+  margin: 0 0 20px;
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #536c1e;
+}
+
+.diamond-garden-event__intro {
+  margin: 0 0 32px;
+  max-width: 300px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #4d4d4d;
+}
+
+.diamond-garden-event__date-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 0 18px;
+}
+
+.diamond-garden-event__month,
+.diamond-garden-event__year {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-top: 1px solid rgba(83, 108, 30, 0.42);
+  border-bottom: 1px solid rgba(83, 108, 30, 0.42);
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+.diamond-garden-event__day {
+  display: block;
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 700;
+  color: #536c1e;
+}
+
+.diamond-garden-event__time {
+  margin: 0 0 28px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  color: #555;
+}
+
+.diamond-garden-event h3 {
+  margin: 0 0 10px;
+  max-width: 310px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #263b20;
+}
+
+.diamond-garden-event__address {
+  margin: 0 0 28px;
+  max-width: 310px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #5f5f5f;
+}
+
+.diamond-garden-event__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 150px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #536c1e;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-event {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+.diamond-garden-moments {
+  position: relative;
+  width: 100% !important;
+  max-width: 410px;
+  min-height: 885px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #18351f;
+  color: #fff;
+}
+
+.diamond-garden-moments__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.diamond-garden-moments__content {
+  position: relative;
+  z-index: 2;
+  min-height: 885px;
+  padding: 72px 28px 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.diamond-garden-moments__eyebrow {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: rgba(232, 213, 154, 0.72);
+}
+
+.diamond-garden-moments h2 {
+  margin: 0 0 34px;
+  font-size: 31px;
+  line-height: 1.14;
+  font-weight: 700;
+  color: #dfc98e;
+}
+
+.diamond-garden-moments__countdown {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0 0 54px;
+  padding: 0 4px;
+}
+
+.diamond-garden-moments__time-box {
+  height: 70px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #bda666;
+  color: #536c1e;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(-3deg);
+  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.16);
+}
+
+.diamond-garden-moments__time-box:nth-child(2) {
+  transform: rotate(-2deg);
+}
+
+.diamond-garden-moments__time-box:nth-child(3) {
+  transform: rotate(3deg);
+}
+
+.diamond-garden-moments__time-box:nth-child(4) {
+  transform: rotate(-4deg);
+}
+
+.diamond-garden-moments__time-box strong {
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.diamond-garden-moments__time-box span {
+  margin-top: 7px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+.diamond-garden-moments__featured {
+  position: relative;
+  width: 100%;
+  height: 172px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 0 18px;
+  background: #fff;
+  border: 2px solid #bda666;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.diamond-garden-moments__featured img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.diamond-garden-moments__play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #9f453f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.diamond-garden-moments__gallery {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.diamond-garden-moments__item {
+  height: 158px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  border: 2px solid #bda666;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.2);
+}
+
+.diamond-garden-moments__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-moments {
+    width: 100% !important;
+    max-width: none;
+  }
+}
+
+@media (max-width: 340px) {
+  .diamond-garden-moments__content {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
+  .diamond-garden-moments__countdown {
+    gap: 8px;
+  }
+
+  .diamond-garden-moments__time-box {
+    height: 64px;
+  }
+
+  .diamond-garden-moments__item {
+    height: 142px;
+  }
+}
