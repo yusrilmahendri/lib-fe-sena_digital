@@ -612,7 +612,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       return 'Scan QR ini untuk membuka undangan personal dan mencatat kehadiran saat acara.';
     }
 
-    return 'Scan QR ini untuk membuka undangan.';
+    return 'QR ini tidak dapat digunakan untuk mencatat kehadiran karena tidak memiliki token tamu.';
   }
 
   private getInvitationQrTitle(): string {

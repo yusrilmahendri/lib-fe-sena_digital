@@ -6,6 +6,7 @@ export interface GuestInvitationRecord {
   url: string;
   checkedInAt: string | null;
   checkinCount: number;
+  lastScannedAt: string | null;
   createdAt: string;
 }
 
@@ -15,6 +16,23 @@ export interface CurrentGuestContext {
   invitation_url?: string;
   checked_in_at?: string | null;
   checkin_count?: number;
+}
+
+export type ScanAttendanceStatus = 'Berhasil' | 'Sudah Pernah Scan';
+
+export interface ParsedGuestScanUrl {
+  domain: string;
+  token: string;
+  to: string;
+  url: string;
+}
+
+export interface GuestScanProcessResult {
+  ok: boolean;
+  status: ScanAttendanceStatus | 'Tidak Ditemukan' | 'Error';
+  message: string;
+  guest?: GuestInvitationRecord;
+  scannedAt?: string;
 }
 
 export const GUEST_INVITATIONS_STORAGE_PREFIX = 'guest_invitations';
@@ -76,6 +94,20 @@ export function extractTokenFromInvitationUrl(url?: string): string {
   }
 }
 
+export function extractDomainFromInvitationUrl(url?: string): string {
+  if (!url) {
+    return '';
+  }
+
+  try {
+    const match = new URL(url).pathname.match(/\/wedding\/([^/?#]+)/i);
+    return match ? decodeURIComponent(match[1]).trim() : '';
+  } catch {
+    const match = String(url).match(/\/wedding\/([^/?#]+)/i);
+    return match ? decodeURIComponent(match[1]).trim() : '';
+  }
+}
+
 export function buildGuestInvitationUrl(
   origin: string,
   domain: string,
@@ -107,6 +139,7 @@ export function normalizeGuestRecord(
     invitation_url?: string;
     checked_in_at?: string | null;
     checkin_count?: number;
+    last_scanned_at?: string | null;
   },
   origin: string,
   domain: string
@@ -131,6 +164,7 @@ export function normalizeGuestRecord(
     url: invitationUrl,
     checkedInAt: raw.checkedInAt ?? raw.checked_in_at ?? null,
     checkinCount: Number(raw.checkinCount ?? raw.checkin_count ?? 0),
+    lastScannedAt: raw.lastScannedAt ?? raw.last_scanned_at ?? null,
     createdAt: String(raw.createdAt || new Date().toISOString()),
   };
 }
@@ -182,6 +216,170 @@ export function saveGuestInvitations(domain: string, records: GuestInvitationRec
   }
 }
 
+export function getCheckedInGuests(domain: string, origin: string): GuestInvitationRecord[] {
+  return loadGuestInvitations(domain, origin)
+    .filter((guest) => !!guest.checkedInAt)
+    .sort((left, right) => {
+      const leftTime = new Date(left.lastScannedAt || left.checkedInAt || 0).getTime();
+      const rightTime = new Date(right.lastScannedAt || right.checkedInAt || 0).getTime();
+      return rightTime - leftTime;
+    });
+}
+
+export function parseGuestScanUrl(decodedText: string): ParsedGuestScanUrl | null {
+  try {
+    const url = new URL(String(decodedText || '').trim());
+    const token = String(url.searchParams.get('token') || '').trim();
+    const to = String(url.searchParams.get('to') || '').trim();
+    const domain = extractDomainFromInvitationUrl(url.toString());
+
+    if (!domain) {
+      return null;
+    }
+
+    return {
+      domain,
+      token,
+      to,
+      url: url.toString(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * TEMPORARY: Processes QR scan results and stores attendance in localStorage only.
+ * Replace with backend check-in once the API is available.
+ */
+export function processGuestQrScan(
+  decodedText: string,
+  activeDomain: string,
+  origin: string
+): GuestScanProcessResult {
+  const trimmed = String(decodedText || '').trim();
+
+  if (!trimmed) {
+    return {
+      ok: false,
+      status: 'Error',
+      message: 'QR kosong atau tidak valid.',
+    };
+  }
+
+  try {
+    new URL(trimmed);
+  } catch {
+    return {
+      ok: false,
+      status: 'Error',
+      message: 'QR bukan URL undangan yang valid.',
+    };
+  }
+
+  const parsed = parseGuestScanUrl(trimmed);
+
+  if (!parsed) {
+    return {
+      ok: false,
+      status: 'Error',
+      message: 'URL undangan tidak valid. Pastikan QR berasal dari undangan personal.',
+    };
+  }
+
+  if (!parsed.token) {
+    return {
+      ok: false,
+      status: 'Error',
+      message: 'QR tidak memiliki token tamu. Pastikan QR berasal dari undangan personal.',
+    };
+  }
+
+  const domain = String(parsed.domain || activeDomain || '').trim();
+
+  if (!domain) {
+    return {
+      ok: false,
+      status: 'Error',
+      message: 'Domain undangan tidak ditemukan pada QR.',
+    };
+  }
+
+  const guests = loadGuestInvitations(domain, origin);
+  const guestIndex = guests.findIndex((guest) => guest.token === parsed.token);
+
+  if (guestIndex < 0) {
+    return {
+      ok: false,
+      status: 'Tidak Ditemukan',
+      message:
+        'Data tamu tidak ditemukan di browser ini. Pastikan daftar tamu dibuat/import di perangkat ini.',
+    };
+  }
+
+  const guest = guests[guestIndex];
+  const now = new Date().toISOString();
+  let status: ScanAttendanceStatus;
+
+  if (!guest.checkedInAt) {
+    guest.checkedInAt = now;
+    guest.checkinCount = 1;
+    status = 'Berhasil';
+  } else {
+    guest.checkinCount = Number(guest.checkinCount || 0) + 1;
+    status = 'Sudah Pernah Scan';
+  }
+
+  guest.lastScannedAt = now;
+  guests[guestIndex] = guest;
+  saveGuestInvitations(domain, guests);
+
+  return {
+    ok: true,
+    status,
+    message:
+      status === 'Berhasil'
+        ? 'Kehadiran tamu berhasil dicatat.'
+        : 'Tamu sudah pernah scan sebelumnya.',
+    guest,
+    scannedAt: now,
+  };
+}
+
+export function resetGuestAttendance(
+  domain: string,
+  guestId: string,
+  origin: string
+): boolean {
+  const guests = loadGuestInvitations(domain, origin);
+  const guestIndex = guests.findIndex((guest) => guest.id === guestId);
+
+  if (guestIndex < 0) {
+    return false;
+  }
+
+  guests[guestIndex] = {
+    ...guests[guestIndex],
+    checkedInAt: null,
+    checkinCount: 0,
+    lastScannedAt: null,
+  };
+
+  saveGuestInvitations(domain, guests);
+  return true;
+}
+
+export function resetAllGuestAttendance(domain: string, origin: string): void {
+  const guests = loadGuestInvitations(domain, origin).map((guest) => ({
+    ...guest,
+    checkedInAt: null,
+    checkinCount: 0,
+    lastScannedAt: null,
+  }));
+
+  saveGuestInvitations(domain, guests);
+}
+
 /**
  * TEMPORARY: Records guest attendance in localStorage only.
  * This must be replaced with a backend check-in endpoint once available.
@@ -202,14 +400,16 @@ export function recordGuestCheckin(domain: string, token: string, origin: string
   }
 
   const guest = guests[guestIndex];
+  const now = new Date().toISOString();
 
   if (!guest.checkedInAt) {
-    guest.checkedInAt = new Date().toISOString();
+    guest.checkedInAt = now;
     guest.checkinCount = 1;
   } else {
     guest.checkinCount = Number(guest.checkinCount || 0) + 1;
   }
 
+  guest.lastScannedAt = now;
   guests[guestIndex] = guest;
   saveGuestInvitations(cleanDomain, guests);
 
