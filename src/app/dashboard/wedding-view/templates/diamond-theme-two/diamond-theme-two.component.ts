@@ -66,6 +66,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     return this.getGuestName();
   }
 
+  get wishFormData(): any {
+    if (!this.wishForm.kehadiran) {
+      this.wishForm.kehadiran = 'hadir';
+    }
+
+    return this.wishForm;
+  }
+
   override getBrideData(): any {
     const data: any = this.weddingData || {};
     const mempelai = data.mempelai || data.mempelais || data.couple || {};
@@ -395,6 +403,53 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     if (!videoUrl) return;
 
     window.open(videoUrl, '_blank');
+  }
+
+  getGardenGuestWishes(): any[] {
+    const data: any = this.weddingData || {};
+
+    if (Array.isArray(data.guest_wishes)) return data.guest_wishes;
+    if (Array.isArray(data.ucapan)) return data.ucapan;
+    if (Array.isArray(data.wishes)) return data.wishes;
+    if (Array.isArray(data?.data?.guest_wishes)) return data.data.guest_wishes;
+
+    return [];
+  }
+
+  isRealGardenWish(item: any): boolean {
+    const name = String(item?.nama || item?.name || '').trim().toLowerCase();
+    const message = String(item?.pesan || item?.message || item?.ucapan || '').trim();
+    const normalized = message.toLowerCase();
+
+    if (!message) return false;
+    if (name === 'viewer') return false;
+    if (normalized.startsWith('undangan ') && normalized.endsWith(' telah dilihat')) return false;
+
+    return true;
+  }
+
+  getVisibleGardenWishes(): any[] {
+    return this.getGardenGuestWishes()
+      .filter((item: any) => this.isRealGardenWish(item))
+      .slice(0, 3);
+  }
+
+  getWishAttendance(wish: any): string {
+    return String(
+      wish?.kehadiran ||
+      wish?.attendance ||
+      wish?.status_kehadiran ||
+      'hadir'
+    ).toLowerCase();
+  }
+
+  override getWishAttendanceLabel(wish: any): string {
+    const status = typeof wish === 'string' ? wish.toLowerCase() : this.getWishAttendance(wish);
+
+    if (status === 'tidak_hadir') return 'Tidak Hadir';
+    if (status === 'mungkin') return 'Mungkin';
+
+    return 'Hadir';
   }
 
   normalizeGardenPhotoUrl(rawUrl: any): string {

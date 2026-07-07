@@ -278,47 +278,94 @@
         </div>
       </section>
 
-      <section class="diamond-garden-section diamond-garden-section--wishes" *ngIf="isWishVisible()">
-        <div class="diamond-garden-section__header">
-          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
-          <p class="diamond-garden-section__eyebrow">Send Your Wish</p>
-          <h2 class="diamond-garden-section__title">Ucapan &amp; Doa</h2>
-        </div>
+      <section class="diamond-garden-wishes" *ngIf="isWishVisible()">
+        <img
+          class="diamond-garden-wishes__frame"
+          src="assets/thema-2/theme-4.png"
+          alt=""
+          aria-hidden="true" />
 
-        <div class="diamond-garden-form">
-          <label class="diamond-garden-form__label" for="diamond-garden-name">Nama Lengkap</label>
-          <input id="diamond-garden-name" class="diamond-garden-form__input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama kamu">
+        <div class="diamond-garden-wishes__content">
+          <p class="diamond-garden-wishes__eyebrow">DOA &amp; HARAPAN</p>
 
-          <label class="diamond-garden-form__label" for="diamond-garden-message">Ucapan &amp; Doa</label>
-          <textarea id="diamond-garden-message" class="diamond-garden-form__textarea" [(ngModel)]="wishForm.pesan" placeholder="Tulis ucapan & doa terbaikmu..."></textarea>
+          <h2>Ucapan &amp; Doa</h2>
 
-          <label class="diamond-garden-form__label">Kehadiran</label>
-          <div class="diamond-garden-form__attendance">
-            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'hadir'" (click)="wishForm.kehadiran = 'hadir'">Hadir</button>
-            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'mungkin'" (click)="wishForm.kehadiran = 'mungkin'">Mungkin</button>
-            <button type="button" class="diamond-garden-chip" [class.diamond-garden-chip--active]="wishForm.kehadiran === 'tidak_hadir'" (click)="wishForm.kehadiran = 'tidak_hadir'">Tidak Hadir</button>
+          <form class="diamond-garden-wishes__form" (ngSubmit)="submitWish()" #gardenWishForm="ngForm">
+            <label>
+              <span>Nama Lengkap</span>
+              <input
+                type="text"
+                name="guestName"
+                [(ngModel)]="wishFormData.nama"
+                placeholder="Nama kamu"
+                autocomplete="name" />
+            </label>
+
+            <label>
+              <span>Ucapan &amp; Doa</span>
+              <textarea
+                name="guestMessage"
+                [(ngModel)]="wishFormData.pesan"
+                placeholder="Tulis ucapan & doa terbaikmu..."></textarea>
+            </label>
+
+            <div class="diamond-garden-wishes__attendance">
+              <span>Kehadiran</span>
+
+              <div class="diamond-garden-wishes__attendance-buttons">
+                <button
+                  type="button"
+                  [class.active]="wishFormData.kehadiran === 'hadir'"
+                  (click)="setWishAttendance('hadir')">
+                  Hadir
+                </button>
+
+                <button
+                  type="button"
+                  [class.active]="wishFormData.kehadiran === 'mungkin'"
+                  (click)="setWishAttendance('mungkin')">
+                  Mungkin
+                </button>
+
+                <button
+                  type="button"
+                  [class.active]="wishFormData.kehadiran === 'tidak_hadir'"
+                  (click)="setWishAttendance('tidak_hadir')">
+                  Tidak Hadir
+                </button>
+              </div>
+            </div>
+
+            <button class="diamond-garden-wishes__submit" type="submit" [disabled]="isSubmittingWish">
+              {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
+            </button>
+          </form>
+
+          <div class="diamond-garden-wishes__list" *ngIf="getVisibleGardenWishes().length; else noGardenWishes">
+            <article
+              class="diamond-garden-wishes__card"
+              *ngFor="let wish of getVisibleGardenWishes(); let i = index">
+              <div>
+                <h3>{{ wish?.nama || wish?.name || 'Tamu Undangan' }}</h3>
+                <p>{{ wish?.pesan || wish?.message || wish?.ucapan }}</p>
+              </div>
+
+              <span
+                class="diamond-garden-wishes__badge"
+                [class.hadir]="getWishAttendance(wish) === 'hadir'"
+                [class.mungkin]="getWishAttendance(wish) === 'mungkin'"
+                [class.tidak]="getWishAttendance(wish) === 'tidak_hadir'">
+                {{ getWishAttendanceLabel(wish) }}
+              </span>
+            </article>
           </div>
 
-          <button class="diamond-garden-button diamond-garden-button--primary diamond-garden-button--full" type="button" [disabled]="isSubmittingWish" (click)="submitWish()">
-            {{ isSubmittingWish ? 'Mengirim...' : 'Kirim Ucapan' }}
-          </button>
+          <ng-template #noGardenWishes>
+            <p class="diamond-garden-wishes__empty">
+              Belum ada ucapan dan doa.
+            </p>
+          </ng-template>
         </div>
-
-        <div class="diamond-garden-wishes" *ngIf="getDisplayedWishes().length; else emptyWishes">
-          <article class="diamond-garden-wish" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
-            <div class="diamond-garden-wish__head">
-              <strong>{{ wish.nama }}</strong>
-              <span class="diamond-garden-wish__badge" [ngClass]="getWishBadgeClass(wish.kehadiran)">
-                {{ getAttendanceLabel(wish.kehadiran) }}
-              </span>
-            </div>
-            <p>{{ wish.pesan }}</p>
-          </article>
-        </div>
-
-        <ng-template #emptyWishes>
-          <div class="diamond-garden-empty">Belum ada ucapan. Jadilah yang pertama mengirim doa terbaik.</div>
-        </ng-template>
       </section>
 
       <section class="diamond-garden-section diamond-garden-section--story" *ngIf="isStoryVisible()">

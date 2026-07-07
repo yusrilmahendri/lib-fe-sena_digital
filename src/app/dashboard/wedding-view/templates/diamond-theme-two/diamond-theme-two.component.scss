@@ -1747,3 +1747,308 @@
     height: 142px;
   }
 }
+
+.diamond-garden-event {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 410px !important;
+  min-height: 842px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+  color: #263b20 !important;
+}
+
+.diamond-garden-event__frame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center top !important;
+  display: block !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.diamond-garden-event__content {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  min-height: 842px !important;
+  padding: 118px 34px 96px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  background: transparent !important;
+}
+
+.diamond-garden-event__eyebrow {
+  margin: 0 0 12px !important;
+  font-size: 10px !important;
+  letter-spacing: 5px !important;
+  color: #b16b61 !important;
+}
+
+.diamond-garden-event h2 {
+  margin: 0 0 20px !important;
+  font-size: 38px !important;
+  line-height: 1.1 !important;
+  font-weight: 700 !important;
+  color: #536c1e !important;
+}
+
+.diamond-garden-event__intro {
+  margin: 0 0 32px !important;
+  max-width: 300px !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  color: #4d4d4d !important;
+}
+
+.diamond-garden-event__date-row {
+  width: 100% !important;
+  max-width: 300px !important;
+  margin: 0 0 18px !important;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-event {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 842px !important;
+  }
+
+  .diamond-garden-event__content {
+    min-height: 842px !important;
+  }
+}
+
+.diamond-garden-wishes {
+  position: relative;
+  width: 100% !important;
+  max-width: 410px;
+  min-height: 820px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #fff;
+  color: #263b20;
+}
+
+.diamond-garden-wishes__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.diamond-garden-wishes__content {
+  position: relative;
+  z-index: 2;
+  min-height: 820px;
+  padding: 112px 32px 78px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: transparent;
+}
+
+.diamond-garden-wishes__eyebrow {
+  margin: 0 0 12px;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 700;
+  color: #b16b61;
+}
+
+.diamond-garden-wishes h2 {
+  margin: 0 0 28px;
+  font-size: 36px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #536c1e;
+}
+
+.diamond-garden-wishes__form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.diamond-garden-wishes__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diamond-garden-wishes__form label span,
+.diamond-garden-wishes__attendance > span {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #536c1e;
+}
+
+.diamond-garden-wishes__form input,
+.diamond-garden-wishes__form textarea {
+  width: 100%;
+  border: 1px solid rgba(83, 108, 30, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #263b20;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.04);
+}
+
+.diamond-garden-wishes__form input {
+  height: 44px;
+  padding: 0 16px;
+}
+
+.diamond-garden-wishes__form textarea {
+  height: 82px;
+  padding: 14px 16px;
+  resize: none;
+}
+
+.diamond-garden-wishes__attendance {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diamond-garden-wishes__attendance-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.diamond-garden-wishes__attendance-buttons button {
+  height: 38px;
+  border: 1px solid rgba(83, 108, 30, 0.22);
+  border-radius: 999px;
+  background: #fff;
+  color: #263b20;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.diamond-garden-wishes__attendance-buttons button.active {
+  background: #536c1e;
+  border-color: #536c1e;
+  color: #fff;
+}
+
+.diamond-garden-wishes__submit {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: #b16b61;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 12px 22px rgba(177, 107, 97, 0.24);
+  cursor: pointer;
+}
+
+.diamond-garden-wishes__submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.diamond-garden-wishes__list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.diamond-garden-wishes__card {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 74px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(83, 108, 30, 0.16);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.diamond-garden-wishes__card h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.2;
+  color: #b16b61;
+}
+
+.diamond-garden-wishes__card p {
+  margin: 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #555;
+}
+
+.diamond-garden-wishes__badge {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #536c1e;
+  color: #fff;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.diamond-garden-wishes__badge.mungkin {
+  background: #d4a84f;
+}
+
+.diamond-garden-wishes__badge.tidak {
+  background: #b16b61;
+}
+
+.diamond-garden-wishes__empty {
+  margin: 10px 0 0;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 13px;
+  color: #777;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-wishes {
+    width: 100% !important;
+    max-width: none;
+  }
+}
