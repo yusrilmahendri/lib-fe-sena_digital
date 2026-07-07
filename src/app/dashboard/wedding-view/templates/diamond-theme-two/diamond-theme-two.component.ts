@@ -1,4 +1,4 @@
-import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -15,10 +15,12 @@ interface DiamondGardenGalleryItem {
   templateUrl: './diamond-theme-two.component.html',
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
-export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit {
-  gardenAkadMapEmbedSrc = '';
-  gardenAkadMapOpenLink = '';
-  gardenAkadMapInitialized = false;
+export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit, OnDestroy {
+  diamondGardenMapSrc = '';
+  diamondGardenMapLink = '';
+  diamondGardenMapDebug: any = null;
+  private diamondGardenMapRetryTimer: any = null;
+  private diamondGardenMapRetryCount = 0;
 
   constructor(
     svc: DashboardService,
@@ -30,8 +32,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override ngOnInit(): void {
     super.ngOnInit();
-    setTimeout(() => this.setupGardenAkadMap(), 300);
-    setTimeout(() => this.setupGardenAkadMap(), 1000);
+    setTimeout(() => this.initDiamondGardenMapWithRetry(), 300);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -42,9 +43,17 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     if (changes['weddingData']) {
-      this.gardenAkadMapInitialized = false;
-      setTimeout(() => this.setupGardenAkadMap(), 300);
+      setTimeout(() => this.initDiamondGardenMapWithRetry(), 300);
     }
+  }
+
+  override ngOnDestroy(): void {
+    if (this.diamondGardenMapRetryTimer) {
+      clearInterval(this.diamondGardenMapRetryTimer);
+      this.diamondGardenMapRetryTimer = null;
+    }
+
+    super.ngOnDestroy();
   }
 
   override openInvitation(): void {
@@ -704,106 +713,121 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.getResepsiEvent();
   }
 
-  private setupGardenAkadMap(): void {
-    const event: any = this.resolveDiamondGardenAkadEvent();
+  private initDiamondGardenMapWithRetry(): void {
+    if (this.diamondGardenMapRetryTimer) {
+      clearInterval(this.diamondGardenMapRetryTimer);
+      this.diamondGardenMapRetryTimer = null;
+    }
+
+    this.diamondGardenMapRetryCount = 0;
+
+    const run = () => {
+      this.diamondGardenMapRetryCount += 1;
+      this.setupDiamondGardenMap();
+
+      const hasMap = !!this.diamondGardenMapSrc;
+      const maxRetryReached = this.diamondGardenMapRetryCount >= 10;
+
+      if (hasMap || maxRetryReached) {
+        if (this.diamondGardenMapRetryTimer) {
+          clearInterval(this.diamondGardenMapRetryTimer);
+          this.diamondGardenMapRetryTimer = null;
+        }
+      }
+    };
+
+    run();
+    this.diamondGardenMapRetryTimer = setInterval(run, 500);
+  }
+
+  private setupDiamondGardenMap(): void {
+    const event: any = this.getDiamondGardenAkadEventForMap();
 
     const linkMaps = String(
       event?.link_maps ||
       event?.link_map ||
+      event?.maps_link ||
       event?.google_maps ||
-      event?.maps ||
+      event?.google_map ||
       event?.map_url ||
+      event?.maps ||
+      ''
+    ).trim();
+
+    const venue = String(
+      event?.nama_acara ||
+      event?.venue ||
+      event?.nama_tempat ||
+      event?.tempat ||
+      event?.lokasi ||
       ''
     ).trim();
 
     const address = String(
       event?.alamat ||
       event?.address ||
-      event?.lokasi ||
+      event?.alamat_acara ||
       ''
     ).trim();
 
-    const source = linkMaps || address;
+    const query = [venue, address]
+      .filter(Boolean)
+      .join(', ')
+      .trim();
 
-    console.log('[Diamond Garden Maps Source]', {
+    this.diamondGardenMapLink = linkMaps || (query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : '');
+
+    const previewQuery = query || linkMaps;
+
+    this.diamondGardenMapSrc = previewQuery
+      ? `https://www.google.com/maps?q=${encodeURIComponent(previewQuery)}&output=embed`
+      : '';
+
+    this.diamondGardenMapDebug = {
+      retry: this.diamondGardenMapRetryCount,
       event,
       linkMaps,
+      venue,
       address,
-      source
-    });
+      query,
+      previewQuery,
+      mapSrc: this.diamondGardenMapSrc,
+      mapLink: this.diamondGardenMapLink
+    };
 
-    if (!source) {
-      this.gardenAkadMapEmbedSrc = '';
-      this.gardenAkadMapOpenLink = '';
-      this.gardenAkadMapInitialized = true;
-      return;
-    }
-
-    this.gardenAkadMapOpenLink = linkMaps
-      ? linkMaps
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-
-    this.gardenAkadMapEmbedSrc = this.createGardenMapEmbedUrl(source);
-    this.gardenAkadMapInitialized = true;
-
-    console.log('[Diamond Garden Maps Ready]', {
-      openLink: this.gardenAkadMapOpenLink,
-      embedSrc: this.gardenAkadMapEmbedSrc
-    });
+    console.log('[Diamond Garden Map Debug]', this.diamondGardenMapDebug);
   }
 
-  private createGardenMapEmbedUrl(value: string): string {
-    const raw = String(value || '').trim();
-
-    if (!raw) {
-      return '';
-    }
-
-    if (raw.includes('/maps/embed')) {
-      return raw;
-    }
-
-    if (raw.includes('google.com/maps')) {
-      return raw.includes('output=embed')
-        ? raw
-        : `${raw}${raw.includes('?') ? '&' : '?'}output=embed`;
-    }
-
-    return `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
-  }
-
-  private resolveDiamondGardenAkadEvent(): any {
+  private getDiamondGardenAkadEventForMap(): any {
     const data: any = this.weddingData || {};
-    let events: any[] = [];
 
-    if (Array.isArray(data.events)) {
-      events = data.events;
-    } else if (Array.isArray(data.acaras)) {
-      events = data.acaras;
-    } else if (Array.isArray(data?.data?.events)) {
-      events = data.data.events;
-    } else if (data.events && typeof data.events === 'object') {
-      events = Object.values(data.events);
-    }
+    const events = []
+      .concat(Array.isArray(data.events) ? data.events : [])
+      .concat(Array.isArray(data.acaras) ? data.acaras : [])
+      .concat(Array.isArray(data.data?.events) ? data.data.events : [])
+      .concat(Array.isArray(data.invitation_package?.events) ? data.invitation_package.events : []);
 
     const akad = events.find((item: any) => {
-      const type = String(item?.jenis_acara || item?.type || item?.nama_acara || '').toLowerCase();
+      const type = String(
+        item?.jenis_acara ||
+        item?.nama_acara ||
+        item?.type ||
+        item?.title ||
+        ''
+      ).toLowerCase();
+
       return type.includes('akad');
     });
 
-    if (akad) {
-      return akad;
-    }
-
-    return events[0] || {};
+    return akad || events[0] || {};
   }
 
-  openGardenAkadMap(): void {
-    if (!this.gardenAkadMapOpenLink) {
+  openDiamondGardenMap(): void {
+    if (!this.diamondGardenMapLink) {
       return;
     }
 
-    window.open(this.gardenAkadMapOpenLink, '_blank', 'noopener,noreferrer');
+    window.open(this.diamondGardenMapLink, '_blank', 'noopener,noreferrer');
   }
 
   getGardenGiftAccounts(): any[] {
@@ -943,16 +967,24 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       ''
     ).trim();
 
-    if (rawLink) {
-      return this.createGardenMapEmbedUrl(rawLink);
-    }
+    const venue = String(
+      event?.nama_acara ||
+      event?.venue ||
+      event?.nama_tempat ||
+      event?.tempat ||
+      event?.lokasi ||
+      ''
+    ).trim();
 
     const address = this.getGardenEventAddress(event);
-    if (!address) {
+    const query = [venue, address].filter(Boolean).join(', ').trim();
+    const previewQuery = query || rawLink;
+
+    if (!previewQuery) {
       return '';
     }
 
-    return this.createGardenMapEmbedUrl(address);
+    return `https://www.google.com/maps?q=${encodeURIComponent(previewQuery)}&output=embed`;
   }
 
   getGardenDateLabel(): string {

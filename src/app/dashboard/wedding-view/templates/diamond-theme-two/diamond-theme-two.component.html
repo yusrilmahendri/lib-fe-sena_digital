@@ -204,15 +204,16 @@
 
           <div class="diamond-garden-event__map">
             <iframe
-              *ngIf="gardenAkadMapEmbedSrc; else gardenMapEmpty"
+              *ngIf="diamondGardenMapSrc; else diamondGardenMapEmpty"
               class="diamond-garden-event__map-iframe"
-              [attr.src]="gardenAkadMapEmbedSrc"
+              [attr.src]="diamondGardenMapSrc"
+              title="Lokasi acara"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen>
             </iframe>
 
-            <ng-template #gardenMapEmpty>
+            <ng-template #diamondGardenMapEmpty>
               <div class="diamond-garden-event__map-empty">
                 Preview maps belum tersedia
               </div>
@@ -222,8 +223,8 @@
           <button
             type="button"
             class="diamond-garden-event__location-button"
-            *ngIf="gardenAkadMapOpenLink"
-            (click)="openGardenAkadMap()">
+            *ngIf="diamondGardenMapLink"
+            (click)="openDiamondGardenMap()">
             <i class="fas fa-map-marker-alt"></i>
             Lihat Lokasi
           </button>

@@ -2820,14 +2820,14 @@
 
 .diamond-garden-event__map {
   position: relative !important;
-  z-index: 5 !important;
-  width: 270px !important;
+  z-index: 10 !important;
+  width: 278px !important;
   height: 150px !important;
-  margin: 26px auto 14px !important;
+  margin: 24px auto 16px !important;
   border-radius: 18px !important;
   overflow: hidden !important;
   background: #eef0ec !important;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.10) !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.12) !important;
 }
 
 .diamond-garden-event__map-iframe {
@@ -2846,15 +2846,16 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: #8f3f36 !important;
+  padding: 14px !important;
   font-size: 12px !important;
+  line-height: 1.4 !important;
+  color: #8c3f37 !important;
   text-align: center !important;
-  padding: 16px !important;
 }
 
 .diamond-garden-event__location-button {
   position: relative !important;
-  z-index: 6 !important;
+  z-index: 11 !important;
   width: fit-content !important;
   min-width: 150px !important;
   height: 44px !important;
