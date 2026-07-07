@@ -1,0 +1,8 @@
+<section class="guest-checkin-landing">
+  <div class="guest-checkin-landing__card">
+    <h1>Check-in Tamu</h1>
+    <p *ngIf="guestToken">Token kehadiran terdeteksi. Silakan serahkan layar ini kepada panitia acara.</p>
+    <p *ngIf="!guestToken">Token kehadiran tidak ditemukan.</p>
+    <small *ngIf="domain">Undangan: {{ domain }}</small>
+  </div>
+</section>

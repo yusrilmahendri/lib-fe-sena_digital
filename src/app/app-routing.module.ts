@@ -34,6 +34,7 @@ import { TestimoniesComponent } from './dashboard-admin/testimonies/testimonies.
 import { SettingsAplicationComponent } from './dashboard-admin/pengaturan/settings-aplication/settings-aplication.component';
 import { SettingsBundleComponent } from './dashboard-admin/pengaturan/settings-bundle/settings-bundle.component';
 import { SettingsPaymentComponent } from './dashboard-admin/pengaturan/settings-payment/settings-payment.component';
+import { GuestCheckinLandingComponent } from './guest-checkin-landing/guest-checkin-landing.component';
 import { WeddingViewComponent } from './dashboard/wedding-view/wedding-view.component';
 import { ProfileComponent } from './dashboard/profile/profile.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
@@ -44,6 +45,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'themes/:slug', component: ThemePreviewComponent },
+  { path: 'wedding/:coupleName/checkin', component: GuestCheckinLandingComponent },
   { path: 'wedding/:coupleName', component: WeddingViewComponent },
   { path: 'wedding', component: WeddingViewComponent }, // Fallback route without parameter
   { path: 'login', component: LoginPageComponent },

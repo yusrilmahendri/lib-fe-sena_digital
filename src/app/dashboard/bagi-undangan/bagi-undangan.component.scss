@@ -141,6 +141,8 @@
 .share-invitation__primary-btn,
 .share-invitation__secondary-btn,
 .share-invitation__whatsapp-btn,
+.share-invitation__qr-btn,
+.share-invitation__download-btn,
 .share-invitation__excel-btn {
   border: 0;
   border-radius: 12px;
@@ -228,6 +230,22 @@
 .share-invitation__guest-actions .share-invitation__whatsapp-btn {
   background: #22c55e;
   color: #ffffff;
+}
+
+.share-invitation__qr-btn,
+.share-invitation__download-btn,
+.share-invitation__guest-actions .share-invitation__qr-btn,
+.share-invitation__guest-actions .share-invitation__download-btn {
+  background: #172033;
+  border: 1px solid #172033;
+  color: #ffffff;
+}
+
+.share-invitation__download-btn,
+.share-invitation__guest-actions .share-invitation__download-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #172033;
 }
 
 .share-invitation__history-head {
@@ -346,6 +364,16 @@
     text-decoration: none;
     word-break: break-word;
   }
+
+  small {
+    color: #94a3b8;
+    display: block;
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 6px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 
 .share-invitation__guest-actions {
@@ -394,6 +422,8 @@
   .share-invitation__primary-btn,
   .share-invitation__secondary-btn,
   .share-invitation__whatsapp-btn,
+  .share-invitation__qr-btn,
+  .share-invitation__download-btn,
   .share-invitation__excel-btn {
     width: 100%;
   }

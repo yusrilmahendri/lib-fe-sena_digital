@@ -1,0 +1,9 @@
+<div class="attendance-qr" *ngIf="qrData">
+  <h4>{{ title }}</h4>
+  <div class="attendance-qr__canvas-wrap" *ngIf="!hasError">
+    <canvas #qrCanvas class="attendance-qr__canvas"></canvas>
+  </div>
+  <p class="attendance-qr__loading" *ngIf="isGenerating">Memuat QR...</p>
+  <p class="attendance-qr__error" *ngIf="hasError">QR kehadiran tidak dapat ditampilkan.</p>
+  <p class="attendance-qr__description">{{ description }}</p>
+</div>

@@ -79,6 +79,9 @@ import { ModalDeleteAllCategoryComponent } from './shared/modal/modal-delete-all
 import { ModalAddVideoCategoryComponent } from './shared/modal/modal-add-video-category/modal-add-video-category.component';
 import { ModalAddWebsiteCategoryComponent } from './shared/modal/modal-add-website-category/modal-add-website-category.component';
 import { QRCodeModalComponent } from './shared/modal/qr-code-modal/qr-code-modal.component';
+import { GuestCheckinQrModalComponent } from './shared/modal/guest-checkin-qr-modal/guest-checkin-qr-modal.component';
+import { AttendanceQrDisplayComponent } from './shared/attendance-qr-display/attendance-qr-display.component';
+import { GuestCheckinLandingComponent } from './guest-checkin-landing/guest-checkin-landing.component';
 import { WeddingViewComponent } from './dashboard/wedding-view/wedding-view.component';
 import { CoupleViewComponent } from './dashboard/wedding-view/couple-view/couple-view.component';
 import { MessageViewComponent } from './dashboard/wedding-view/message-view/message-view.component';
@@ -167,6 +170,9 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     ModalAddVideoCategoryComponent,
     ModalAddWebsiteCategoryComponent,
     QRCodeModalComponent,
+    GuestCheckinQrModalComponent,
+    AttendanceQrDisplayComponent,
+    GuestCheckinLandingComponent,
     WeddingViewComponent,
     CoupleViewComponent,
     MessageViewComponent,

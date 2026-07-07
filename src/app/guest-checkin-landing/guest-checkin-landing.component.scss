@@ -1,0 +1,34 @@
+.guest-checkin-landing {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+
+  &__card {
+    background: #ffffff;
+    border: 1px solid #eef2f7;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    max-width: 420px;
+    padding: 28px 24px;
+    text-align: center;
+    width: 100%;
+
+    h1 {
+      color: #172033;
+      font-size: 24px;
+      margin: 0 0 12px;
+    }
+
+    p {
+      color: #475569;
+      line-height: 1.6;
+      margin: 0 0 10px;
+    }
+
+    small {
+      color: #94a3b8;
+    }
+  }
+}

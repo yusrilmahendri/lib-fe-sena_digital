@@ -188,7 +188,7 @@
 
       <!-- Collapsible icons group -->
       <div class="side-icons-group" [class.visible]="sideIconsVisible" *ngIf="sideIconsVisible">
-        <button class="side-icon-btn" aria-label="QR code" (click)="openQRCodeModal()">
+        <button class="side-icon-btn" aria-label="QR Undangan" title="QR Undangan" (click)="openQRCodeModal()">
           <i class="fas fa-qrcode"></i>
         </button>
 
@@ -224,6 +224,14 @@
           <i class="fas fa-pause"></i>
         </button>
       </div>
+    </div>
+
+    <div class="attendance-qr-panel" *ngIf="invitationOpened && getGuestCheckinUrl()">
+      <wc-attendance-qr-display
+        [qrData]="getGuestCheckinUrl()"
+        title="QR Kehadiran Tamu"
+        description="Tunjukkan QR ini kepada panitia saat hadir di acara.">
+      </wc-attendance-qr-display>
     </div>
 
     <!-- Bottom navbar - only shown for legacy template, not active theme templates -->

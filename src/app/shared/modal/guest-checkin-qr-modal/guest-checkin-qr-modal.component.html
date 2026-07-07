@@ -1,0 +1,46 @@
+<div class="guest-checkin-qr-modal">
+  <div class="modal-header border-0">
+    <h5 class="modal-title w-100 text-center">QR Kehadiran</h5>
+    <button type="button" class="close" (click)="closeModal()" aria-label="Tutup">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+  <div class="modal-body text-center px-4 pb-4">
+    <p class="guest-checkin-qr-modal__name">{{ guestName }}</p>
+    <p class="guest-checkin-qr-modal__note">
+      QR ini digunakan panitia untuk mencatat kehadiran tamu saat acara.
+    </p>
+
+    <div *ngIf="isGenerating" class="guest-checkin-qr-modal__loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Membuat QR...</span>
+      </div>
+      <p class="mt-3 text-muted">Membuat QR kehadiran...</p>
+    </div>
+
+    <div *ngIf="errorMessage && !isGenerating" class="guest-checkin-qr-modal__error">
+      <p class="text-danger">{{ errorMessage }}</p>
+      <button type="button" class="btn btn-outline-primary" (click)="retryGeneration()">Coba Lagi</button>
+    </div>
+
+    <div *ngIf="!isGenerating && !errorMessage" class="guest-checkin-qr-modal__canvas-wrap">
+      <canvas #qrCanvas class="guest-checkin-qr-modal__canvas"></canvas>
+    </div>
+
+    <div class="guest-checkin-qr-modal__link" *ngIf="checkinUrl">
+      <input type="text" class="form-control" [value]="checkinUrl" readonly aria-label="Link check-in" />
+    </div>
+
+    <p class="guest-checkin-qr-modal__notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
+
+    <div class="guest-checkin-qr-modal__actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="copyCheckinLink()">
+        Copy Link Check-in
+      </button>
+      <button type="button" class="btn btn-primary" (click)="downloadQRCode()" [disabled]="!qrCodeGenerated">
+        Download QR
+      </button>
+    </div>
+  </div>
+</div>
