@@ -20,7 +20,6 @@ import {
 } from '../../theme-render.registry';
 import { environment } from '../../../environments/environment';
 import {
-  buildGuestCheckinUrl,
   buildGuestInvitationUrl,
   CurrentGuestContext,
 } from '../../shared/guest-checkin/guest-checkin.utils';
@@ -569,35 +568,23 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isPersonalGuestInvitation(): boolean {
-    return !!(this.currentGuest?.checkin_url || this.currentGuest?.guest_token);
+    return !!this.getGuestTokenFromQuery();
   }
 
-  getGuestCheckinUrl(): string {
-    return this.currentGuest?.checkin_url || this.getAttendanceQrUrl();
+  getCurrentInvitationQrUrl(): string {
+    return String(globalThis.location?.href || '').split('#')[0];
   }
 
-  getInvitationQrUrl(): string {
-    const baseUrl = this.getWeddingUrl();
-    const guestLabel = String(this.guestName || '').trim();
-
-    if (guestLabel && guestLabel !== 'Tamu Undangan') {
-      return `${baseUrl}?to=${encodeURIComponent(guestLabel)}`;
+  private getInvitationQrDescription(): string {
+    if (this.getGuestTokenFromQuery()) {
+      return 'Scan QR ini untuk membuka undangan personal dan mencatat kehadiran saat acara.';
     }
 
-    return baseUrl;
+    return 'Scan QR ini untuk membuka undangan.';
   }
 
-  getAttendanceQrUrl(): string {
-    if (this.currentGuest?.checkin_url) {
-      return this.currentGuest.checkin_url;
-    }
-
-    const token = this.currentGuest?.guest_token || this.getGuestTokenFromQuery();
-    if (!token || !this.domain) {
-      return '';
-    }
-
-    return buildGuestCheckinUrl(this.getPublicShareOrigin(), this.domain, token);
+  private getInvitationQrTitle(): string {
+    return this.getGuestTokenFromQuery() ? 'QR Undangan Tamu' : 'QR undangan umum';
   }
 
   private syncCurrentGuestContext(data?: any): void {
@@ -615,46 +602,38 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       data?.guest_token ||
       ''
     ).trim();
-    const guestName = String(
+    const guestSlugOrName = String(
       queryParams['to'] ||
       apiGuest?.guest_name ||
       apiGuest?.name ||
       this.guestName ||
       ''
     ).trim();
-    const checkinFromApi = String(apiGuest?.checkin_url || data?.checkin_url || '').trim();
     const hasPersonalGuestQuery =
-      !!String(queryParams['to'] || '').trim() &&
-      String(queryParams['to'] || '').trim().toLowerCase() !== 'tamu undangan';
+      !!guestSlugOrName &&
+      guestSlugOrName.toLowerCase() !== 'tamu undangan';
 
     if (!hasPersonalGuestQuery) {
       this.currentGuest = null;
       return;
     }
 
-    if (!guestToken && !checkinFromApi) {
-      this.currentGuest = null;
-      return;
-    }
-
-    const checkinUrl =
-      checkinFromApi ||
-      (guestToken && this.domain
-        ? buildGuestCheckinUrl(this.getPublicShareOrigin(), this.domain, guestToken)
+    const invitationUrl =
+      this.getCurrentInvitationQrUrl() ||
+      (this.domain
+        ? buildGuestInvitationUrl(
+            this.getPublicShareOrigin(),
+            this.domain,
+            guestSlugOrName,
+            guestToken || undefined
+          )
         : '');
 
-    if (!checkinUrl) {
-      this.currentGuest = null;
-      return;
-    }
-
     this.currentGuest = {
-      guest_name: guestName || this.guestName,
+      guest_name: guestSlugOrName || this.guestName,
       guest_token: guestToken,
-      checkin_url: checkinUrl,
-      invitation_url: guestName && this.domain
-        ? buildGuestInvitationUrl(this.getPublicShareOrigin(), this.domain, guestName)
-        : undefined,
+      checkin_url: invitationUrl,
+      invitation_url: invitationUrl,
       checked_in_at: apiGuest?.checked_in_at ?? data?.checked_in_at ?? null,
       checkin_count: Number(apiGuest?.checkin_count ?? data?.checkin_count ?? 0),
     };
@@ -1377,29 +1356,18 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * Open QR Code modal for sharing wedding URL
    */
   openQRCodeModal(): void {
-    console.log('openQRCodeModal called');
-    console.log('Current domain:', this.domain);
+    const weddingUrl = this.getCurrentInvitationQrUrl();
 
-    if (!this.domain) {
-      console.error('No domain available for QR code generation');
-      alert('No domain available for QR code generation');
+    if (!weddingUrl) {
+      alert('URL undangan belum tersedia.');
       return;
     }
 
-    const weddingUrl = this.getInvitationQrUrl();
-    const coupleNames = this.getCoupleDisplayName();
-
-    console.log('Wedding URL:', weddingUrl);
-    console.log('Couple names:', coupleNames);
-
     const initialState = {
       url: weddingUrl,
-      title: 'QR Undangan',
-      description: 'Scan QR ini untuk membuka undangan digital.'
+      title: this.getInvitationQrTitle(),
+      description: this.getInvitationQrDescription(),
     };
-
-    console.log('Modal initial state:', initialState);
-    console.log('Modal service:', this.modalService);
 
     try {
       this.qrModalRef = this.modalService.show(QRCodeModalComponent, {
@@ -1410,15 +1378,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         animated: true
       });
 
-      console.log('Modal ref created:', this.qrModalRef);
-
-      // Handle modal close event
       this.qrModalRef.onHide?.subscribe(() => {
-        console.log('QR Code modal closed');
         this.qrModalRef = undefined;
       });
-
-      console.log('QR Code modal opened successfully');
     } catch (error) {
       console.error('Error opening QR modal:', error);
       alert('Error opening QR modal: ' + error);

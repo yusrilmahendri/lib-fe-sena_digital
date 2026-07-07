@@ -1,14 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { BsModalService } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import {
+  buildGuestInvitationUrl,
   GuestInvitationRecord,
   normalizeGuestRecord,
-  slugifyGuestName,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
-import { GuestCheckinQrModalComponent } from 'src/app/shared/modal/guest-checkin-qr-modal/guest-checkin-qr-modal.component';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
-import * as QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -44,8 +41,7 @@ export class BagiUndanganComponent implements OnInit {
   private readonly maxStoredGuests = 500;
 
   constructor(
-    private dashboardService: DashboardService,
-    private modalService: BsModalService
+    private dashboardService: DashboardService
   ) {}
 
   ngOnInit(): void {
@@ -191,59 +187,6 @@ export class BagiUndanganComponent implements OnInit {
     return String(this.generatedGuestUrl || '').trim();
   }
 
-  public getAttendanceQrUrl(guest: GuestInvitationRecord): string {
-    return String(guest?.checkin_url || '').trim();
-  }
-
-  public openGuestAttendanceQrModal(guest: GuestInvitationRecord): void {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    this.modalService.show(GuestCheckinQrModalComponent, {
-      initialState: {
-        guestName: guest.guest_name || guest.name,
-        checkinUrl,
-        downloadFileName: this.buildGuestQrFileName(guest),
-      },
-      class: 'modal-lg',
-      backdrop: true,
-      keyboard: true,
-    });
-  }
-
-  public async downloadGuestAttendanceQr(guest: GuestInvitationRecord): Promise<void> {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    try {
-      const dataUrl = await QRCode.toDataURL(checkinUrl, {
-        errorCorrectionLevel: 'M',
-        margin: 2,
-        width: 512,
-        color: {
-          dark: '#172033',
-          light: '#FFFFFF',
-        },
-      });
-
-      const link = document.createElement('a');
-      link.download = this.buildGuestQrFileName(guest);
-      link.href = dataUrl;
-      link.click();
-      this.showNotice('QR kehadiran berhasil diunduh.');
-    } catch {
-      this.showNotice('Gagal mengunduh QR kehadiran.');
-    }
-  }
-
   public trackByGuest(index: number, guest: GuestInvitationRecord): string {
     return `${guest.createdAt}-${guest.name}-${index}`;
   }
@@ -351,7 +294,6 @@ export class BagiUndanganComponent implements OnInit {
       No: index + 1,
       'Nama Tamu': guest.guest_name || guest.name,
       'Link Undangan': guest.invitation_url || guest.url,
-      'Link Check-in': guest.checkin_url,
       'Guest Token': guest.guest_token,
       'Check-in Count': guest.checkin_count,
       'Checked In At': guest.checked_in_at || '',
@@ -363,7 +305,6 @@ export class BagiUndanganComponent implements OnInit {
         No: 1,
         'Nama Tamu': 'Belum ada tamu',
         'Link Undangan': '',
-        'Link Check-in': '',
         'Guest Token': '',
         'Check-in Count': 0,
         'Checked In At': '',
@@ -375,8 +316,7 @@ export class BagiUndanganComponent implements OnInit {
     worksheet['!cols'] = [
       { wch: 6 },
       { wch: 28 },
-      { wch: 64 },
-      { wch: 64 },
+      { wch: 72 },
       { wch: 36 },
       { wch: 14 },
       { wch: 22 },
@@ -475,11 +415,6 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     return this.extractGuestNamesFromExcelRows(arrayRows);
-  }
-
-  private buildGuestQrFileName(guest: GuestInvitationRecord): string {
-    const slug = slugifyGuestName(guest.guest_name || guest.name);
-    return `qr-kehadiran-${slug}.png`;
   }
 
   private normalizeStoredGuests(records: any[]): GuestInvitationRecord[] {
@@ -618,7 +553,7 @@ export class BagiUndanganComponent implements OnInit {
     return String(value || '').replace(/\r\n/g, '\n');
   }
 
-  private buildGuestInvitationUrl(guestName?: string): string {
+  private buildGuestInvitationUrl(guestName?: string, guestToken?: string): string {
     const domain =
       this.publicWeddingDomain ||
       this.normalizeWeddingDomain(this.weddingData?.setting?.domain) ||
@@ -629,11 +564,12 @@ export class BagiUndanganComponent implements OnInit {
       return '';
     }
 
-    const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
-    const origin = this.getInvitationShareOrigin();
-    const baseUrl = `${origin}/wedding/${encodeURIComponent(domain)}`;
-
-    return `${baseUrl}?to=${encodeURIComponent(cleanGuestName)}`;
+    return buildGuestInvitationUrl(
+      this.getInvitationShareOrigin(),
+      domain,
+      String(guestName || 'Tamu Undangan').trim(),
+      guestToken
+    );
   }
 
   private getInvitationShareOrigin(): string {
