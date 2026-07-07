@@ -935,3 +935,200 @@
     padding: 10px 6px;
   }
 }
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.diamond-garden-opening,
+.diamond-garden-hero {
+  position: relative;
+  width: 100% !important;
+  max-width: 410px;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #162719;
+  color: #fff;
+  padding: 0;
+  display: block;
+}
+
+.diamond-garden-opening__stack,
+.diamond-garden-hero__stack {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 24% 48% 28%;
+  width: 100%;
+  height: 100%;
+}
+
+.diamond-garden-opening__image,
+.diamond-garden-hero__panel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.diamond-garden-hero__panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.diamond-garden-opening__image--top,
+.diamond-garden-hero__panel--top img {
+  object-position: center;
+}
+
+.diamond-garden-opening__image--middle,
+.diamond-garden-hero__panel--middle img {
+  object-position: center;
+}
+
+.diamond-garden-opening__image--bottom,
+.diamond-garden-hero__panel--bottom img {
+  object-position: center;
+}
+
+.diamond-garden-opening__overlay,
+.diamond-garden-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.10) 22%, rgba(0, 0, 0, 0.24) 54%, rgba(0, 0, 0, 0.55) 100%),
+    rgba(9, 23, 15, 0.14);
+}
+
+.diamond-garden-opening__content,
+.diamond-garden-hero__content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  min-height: 100vh;
+  padding: 72px 28px 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: #fff;
+}
+
+.diamond-garden-opening__content {
+  justify-content: flex-end;
+}
+
+.diamond-garden-hero__content {
+  justify-content: flex-end;
+}
+
+.diamond-garden-opening__eyebrow,
+.diamond-garden-hero__eyebrow {
+  margin: 0 0 16px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 5px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.diamond-garden-opening h1,
+.diamond-garden-hero h1 {
+  margin: 0;
+  max-width: 360px;
+  font-size: 48px;
+  line-height: 1.05;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.26);
+}
+
+.diamond-garden-opening__date,
+.diamond-garden-hero__date {
+  display: block;
+  margin: 18px 0 0;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 7px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.diamond-garden-opening__guest-label {
+  margin: 36px 0 9px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.diamond-garden-opening__guest {
+  margin: 0 0 28px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.diamond-garden-opening__button {
+  height: 46px;
+  min-width: 210px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  backdrop-filter: blur(5px);
+}
+
+.diamond-garden-hero__scroll {
+  width: auto;
+  height: auto;
+  margin-top: 58px;
+  border: 0;
+  border-radius: 0;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.diamond-garden-hero__scroll span {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  animation: none;
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 3px;
+  font-weight: 800;
+}
+
+.diamond-garden-main {
+  display: none;
+  width: 100%;
+  max-width: 410px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.diamond-garden-main.open {
+  display: block;
+}
+
+@media (max-width: 430px) {
+  .diamond-garden-opening,
+  .diamond-garden-hero,
+  .diamond-garden-main {
+    width: 100% !important;
+    max-width: none;
+  }
+}

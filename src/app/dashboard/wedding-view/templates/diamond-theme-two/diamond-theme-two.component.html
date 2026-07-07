@@ -1,11 +1,25 @@
 <section class="diamond-garden-theme" *ngIf="weddingData">
   <article class="diamond-garden-shell">
     <section class="diamond-garden-opening" *ngIf="!isInvitationOpen">
-      <img
-        class="diamond-garden-opening__bg"
-        [src]="getGardenCoverPhotoUrl()"
-        alt="Wedding cover"
-        (error)="onGardenImageError($event)" />
+      <div class="diamond-garden-opening__stack">
+        <img
+          class="diamond-garden-opening__image diamond-garden-opening__image--top"
+          [src]="getGardenHeroImage(0)"
+          alt=""
+          (error)="onGardenImageError($event)" />
+
+        <img
+          class="diamond-garden-opening__image diamond-garden-opening__image--middle"
+          [src]="getGardenHeroImage(1)"
+          alt=""
+          (error)="onGardenImageError($event)" />
+
+        <img
+          class="diamond-garden-opening__image diamond-garden-opening__image--bottom"
+          [src]="getGardenHeroImage(2)"
+          alt=""
+          (error)="onGardenImageError($event)" />
+      </div>
 
       <div class="diamond-garden-opening__overlay"></div>
 
@@ -26,7 +40,7 @@
         </p>
 
         <p class="diamond-garden-opening__guest">
-          {{ getGuestName() || 'Tamu Undangan' }}
+          {{ guestName || 'Tamu Undangan' }}
         </p>
 
         <button
@@ -40,18 +54,45 @@
 
     <div class="diamond-garden-main" [class.open]="isInvitationOpen">
       <section class="diamond-garden-hero">
-        <div class="diamond-garden-hero__media" [style.background-image]="'url(' + getGardenCoverPhotoUrl() + ')'"></div>
+        <div class="diamond-garden-hero__stack">
+          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--top">
+            <img
+              [src]="getGardenHeroImage(0)"
+              alt=""
+              (error)="onGardenImageError($event)" />
+          </div>
+
+          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--middle">
+            <img
+              [src]="getGardenHeroImage(1)"
+              alt=""
+              (error)="onGardenImageError($event)" />
+          </div>
+
+          <div class="diamond-garden-hero__panel diamond-garden-hero__panel--bottom">
+            <img
+              [src]="getGardenHeroImage(2)"
+              alt=""
+              (error)="onGardenImageError($event)" />
+          </div>
+        </div>
+
         <div class="diamond-garden-hero__overlay"></div>
+
         <div class="diamond-garden-hero__content">
-          <p class="diamond-garden-hero__eyebrow">{{ getHeroLabel() }}</p>
-          <h1 class="diamond-garden-cover__names">
-            <span>{{ getPrimaryDisplayName() }}</span>
-            <em>&amp;</em>
-            <span>{{ getSecondaryDisplayName() }}</span>
+          <p class="diamond-garden-hero__eyebrow">THE WEDDING OF</p>
+
+          <h1>
+            {{ getGroomName() }} &amp; {{ getBrideName() }}
           </h1>
-          <p class="diamond-garden-cover__date">{{ getGardenDateLabel() || getHeroDateLabel() }}</p>
+
+          <p class="diamond-garden-hero__date">
+            {{ getGardenDateLabel() || 'Tanggal belum tersedia' }}
+          </p>
+
           <div class="diamond-garden-hero__scroll">
-            <span></span>
+            <span>GESER KE BAWAH</span>
+            <i class="fas fa-chevron-down"></i>
           </div>
         </div>
       </section>

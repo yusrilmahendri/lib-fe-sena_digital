@@ -50,19 +50,23 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   override getPrimaryDisplayName(): string {
-    return this.getBrideNickname() || 'Sena';
+    return this.getBrideNickname() || this.getBrideName() || 'Mempelai Wanita';
   }
 
   override getSecondaryDisplayName(): string {
-    return this.getGroomNickname() || 'Arya';
+    return this.getGroomNickname() || this.getGroomName() || 'Mempelai Pria';
   }
 
   override getBrideFullName(): string {
-    return this.getBrideName() || 'Sena Marsina';
+    return this.getBrideName() || 'Mempelai Wanita';
   }
 
   override getGroomFullName(): string {
-    return this.getGroomName() || 'Arya Guru Wibawa';
+    return this.getGroomName() || 'Mempelai Pria';
+  }
+
+  get guestName(): string {
+    return this.getGuestName();
   }
 
   getHeroLabel(): string {
@@ -74,20 +78,29 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenCoverPhotoUrl(): string {
+    return this.getGardenHeroImage(1);
+  }
+
+  getGardenGallery(): any[] {
     const gallery: any[] = this.weddingData?.gallery || [];
 
+    return gallery.filter((item: any) => {
+      return Boolean(item?.photo_url || item?.photo || item?.url || item?.image);
+    });
+  }
+
+  getGardenHeroImage(index: number): string {
+    const gallery = this.getGardenGallery();
+
+    const preferred: any[] = [
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['detail', 'bouquet', 'bunga', 'flower'])),
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'prewedding', 'outdoor'])),
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['venue', 'dekorasi', 'akad', 'resepsi', 'tempat'])),
+    ];
+
     const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('cover') ||
-          name.includes('sampul') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding')
-        );
-      }) ||
+      preferred[index] ||
+      gallery[index] ||
       gallery[0] ||
       null;
 
@@ -95,11 +108,32 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
       item?.photo_url ||
       item?.photo ||
       item?.url ||
-      (this.weddingData as any)?.cover_url ||
-      (this.weddingData as any)?.cover ||
+      item?.image ||
       '';
 
-    return this.normalizeGardenPhotoUrl(rawUrl) || 'assets/thema-5/cover.jpg';
+    return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(index);
+  }
+
+  matchGardenPhotoName(photo: any, keywords: string[]): boolean {
+    const name = String(
+      photo?.nama_foto ||
+      photo?.name ||
+      photo?.title ||
+      photo?.caption ||
+      ''
+    ).toLowerCase();
+
+    return keywords.some((keyword) => name.includes(keyword));
+  }
+
+  getGardenFallbackImage(index: number): string {
+    const fallback = [
+      'assets/thema-5/hero-top.jpg',
+      'assets/thema-5/hero-middle.jpg',
+      'assets/thema-5/hero-bottom.jpg',
+    ];
+
+    return fallback[index] || fallback[0];
   }
 
   normalizeGardenPhotoUrl(rawUrl: any): string {
@@ -132,9 +166,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     const target = event.target as HTMLImageElement | null;
     if (!target) return;
 
-    if (!target.src.includes('assets/thema-5/cover.jpg')) {
-      target.src = 'assets/thema-5/cover.jpg';
-    }
+    target.style.visibility = 'hidden';
   }
 
   getGardenEvents(): any[] {
