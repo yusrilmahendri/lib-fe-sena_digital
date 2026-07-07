@@ -112,6 +112,8 @@
   font-size: 1rem;
   min-height: 46px;
   padding: 0 14px;
+  pointer-events: auto;
+  touch-action: manipulation;
   width: 100%;
 }
 
@@ -145,6 +147,7 @@
   background: rgba(35, 27, 34, 0.2);
   content: '';
   inset: 0;
+  pointer-events: none;
   position: absolute;
 }
 
@@ -205,8 +208,10 @@
   gap: 8px;
   left: 16px;
   padding: 10px 16px;
+  pointer-events: auto;
   position: absolute;
-  z-index: 2;
+  touch-action: manipulation;
+  z-index: 3;
 }
 
 .theme-card__lock {
@@ -343,6 +348,8 @@
   justify-content: center;
   min-width: 184px;
   padding: 16px 28px;
+  pointer-events: auto;
+  touch-action: manipulation;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
@@ -413,6 +420,11 @@
   height: 44px;
   margin-bottom: 16px;
   width: 44px;
+}
+
+.theme-modal-backdrop,
+.theme-feedback-backdrop {
+  pointer-events: auto;
 }
 
 .theme-modal-backdrop {
