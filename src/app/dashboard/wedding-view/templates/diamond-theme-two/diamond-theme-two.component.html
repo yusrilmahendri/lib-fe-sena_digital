@@ -1,6 +1,6 @@
 <section class="diamond-garden-theme" *ngIf="weddingData">
   <article class="diamond-garden-shell">
-    <section class="diamond-garden-opening" *ngIf="!isInvitationOpen">
+    <section class="diamond-garden-opening" *ngIf="!isInvitationOpened">
       <div class="diamond-garden-opening__stack">
         <img
           class="diamond-garden-opening__image diamond-garden-opening__image--top"
@@ -52,7 +52,7 @@
       </div>
     </section>
 
-    <div class="diamond-garden-main" [class.open]="isInvitationOpen">
+    <div class="diamond-garden-main" [class.open]="isInvitationOpened">
       <section class="diamond-garden-hero">
         <div class="diamond-garden-hero__stack">
           <div class="diamond-garden-hero__panel diamond-garden-hero__panel--top">

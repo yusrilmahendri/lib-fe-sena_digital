@@ -16,8 +16,6 @@ interface DiamondGardenGalleryItem {
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
 export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
-  isInvitationOpen = false;
-
   constructor(
     svc: DashboardService,
     sanitizer: DomSanitizer,
@@ -29,13 +27,12 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
 
-    if (changes['invitationOpened']) {
-      this.isInvitationOpen = this.invitationOpened;
+    if (changes['invitationOpened'] && this.invitationOpened) {
+      this.isInvitationOpened = true;
     }
   }
 
   override openInvitation(): void {
-    this.isInvitationOpen = true;
     this.isInvitationOpened = true;
     this.hasOpened = true;
     this.openInvitationRequested.emit();
@@ -78,7 +75,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenCoverPhotoUrl(): string {
-    return this.getGardenHeroImage(1);
+    return this.getGardenHeroImage(2);
   }
 
   getGardenGallery(): any[] {
@@ -93,9 +90,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     const gallery = this.getGardenGallery();
 
     const preferred: any[] = [
-      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['detail', 'bouquet', 'bunga', 'flower'])),
-      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'prewedding', 'outdoor'])),
-      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['venue', 'dekorasi', 'akad', 'resepsi', 'tempat'])),
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['wanita', 'bride', 'female', 'mempelai wanita', 'pengantin wanita'])),
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['pria', 'groom', 'male', 'mempelai pria', 'pengantin pria'])),
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])),
+    ];
+
+    const portraitFallback = [
+      this.getBridePortrait(),
+      this.getGroomPortrait(),
+      this.getGardenGalleryCoverPhoto(),
     ];
 
     const item: any =
@@ -111,7 +114,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
       item?.image ||
       '';
 
-    return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(index);
+    return this.normalizeGardenPhotoUrl(rawUrl) || portraitFallback[index] || this.getGardenFallbackImage(index);
   }
 
   matchGardenPhotoName(photo: any, keywords: string[]): boolean {
@@ -134,6 +137,26 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     ];
 
     return fallback[index] || fallback[0];
+  }
+
+  getGardenGalleryCoverPhoto(): string {
+    const gallery = this.getGardenGallery();
+    const item: any =
+      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])) ||
+      gallery[2] ||
+      gallery[0] ||
+      null;
+
+    const rawUrl =
+      item?.photo_url ||
+      item?.photo ||
+      item?.url ||
+      item?.image ||
+      (this.weddingData as any)?.cover_url ||
+      (this.weddingData as any)?.cover ||
+      '';
+
+    return this.normalizeGardenPhotoUrl(rawUrl);
   }
 
   normalizeGardenPhotoUrl(rawUrl: any): string {
