@@ -22,6 +22,7 @@ import { environment } from '../../../environments/environment';
 import {
   buildGuestInvitationUrl,
   CurrentGuestContext,
+  recordGuestCheckin,
 } from '../../shared/guest-checkin/guest-checkin.utils';
 
 // Attendance interface for type safety
@@ -163,10 +164,40 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.initializeWeddingData();
   }
 
+  /**
+   * TEMPORARY: Records guest check-in in localStorage when a personal invitation token is present.
+   * Replace with backend check-in once the API is available.
+   */
+  private recordTemporaryGuestCheckin(): void {
+    const domain = String(
+      this.domain ||
+      this.route.snapshot.params['coupleName'] ||
+      this.route.snapshot.params['domain'] ||
+      ''
+    ).trim();
+    const token = this.getGuestTokenFromQuery();
+
+    if (!domain || !token) {
+      return;
+    }
+
+    this.syncCurrentGuestContext(this.weddingData as any);
+    const checkedInGuest = recordGuestCheckin(domain, token, this.getPublicShareOrigin());
+
+    if (checkedInGuest && this.currentGuest?.guest_token === token) {
+      this.currentGuest = {
+        ...this.currentGuest,
+        checked_in_at: checkedInGuest.checkedInAt,
+        checkin_count: checkedInGuest.checkinCount,
+      };
+    }
+  }
+
   private listenForGuestName(): void {
     const querySubscription = this.route.queryParams.subscribe(params => {
       this.guestName = String(params['to'] || '').trim() || 'Tamu Undangan';
       this.syncCurrentGuestContext(this.weddingData as any);
+      this.recordTemporaryGuestCheckin();
       if (this.weddingData) {
         this.weddingData = this.applyGuestNameToWeddingData(this.weddingData);
         this.weddingDataService.setWeddingData(this.weddingData);
@@ -385,6 +416,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         this.domain = routeDomain;
         console.log('Using domain from route params:', routeDomain);
         this.weddingData = null;
+        this.recordTemporaryGuestCheckin();
         this.loadWeddingDataFromAPI(this.domain!);
       } else if (this.domain) {
         console.log('Using domain from localStorage:', this.domain);
@@ -584,7 +616,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private getInvitationQrTitle(): string {
-    return this.getGuestTokenFromQuery() ? 'QR Undangan Tamu' : 'QR undangan umum';
+    return this.getGuestTokenFromQuery() ? 'QR Undangan Tamu' : 'QR Undangan Umum';
   }
 
   private syncCurrentGuestContext(data?: any): void {
@@ -632,7 +664,6 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentGuest = {
       guest_name: guestSlugOrName || this.guestName,
       guest_token: guestToken,
-      checkin_url: invitationUrl,
       invitation_url: invitationUrl,
       checked_in_at: apiGuest?.checked_in_at ?? data?.checked_in_at ?? null,
       checkin_count: Number(apiGuest?.checkin_count ?? data?.checkin_count ?? 0),

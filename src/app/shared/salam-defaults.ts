@@ -7,8 +7,7 @@ Dengan segala kerendahan hati dan syukur atas Karunia Allah SWT.
 Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk menghadiri acara pernikahan kami :`;
 
 export const DEFAULT_SALAM_BAWAH = `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.
-
-Atas kehadiran dan doa restunya, kami ucapkan terima kasih.`;
+Wassalamualaikum Wr Wb.`;
 
 export function normalizeSalamValue(value: unknown, fallback: string): string {
   const text = String(value ?? '').trim();

@@ -104,9 +104,9 @@
     <div class="share-invitation__guest-list" *ngIf="generatedGuests.length">
       <article class="share-invitation__guest" *ngFor="let guest of generatedGuests; trackBy: trackByGuest">
         <div class="share-invitation__guest-info">
-          <strong>{{ guest.guest_name || guest.name }}</strong>
-          <a [href]="guest.invitation_url || guest.url" target="_blank" rel="noopener noreferrer">
-            {{ guest.invitation_url || guest.url }}
+          <strong>{{ guest.name }}</strong>
+          <a [href]="guest.url" target="_blank" rel="noopener noreferrer">
+            {{ guest.url }}
           </a>
         </div>
         <div class="share-invitation__guest-actions">
@@ -116,7 +116,7 @@
           <button
             type="button"
             class="share-invitation__whatsapp-btn"
-            (click)="shareGuestInvitationWhatsapp(guest.invitation_url || guest.url, guest.guest_name || guest.name)">
+            (click)="shareGuestInvitationWhatsapp(guest.url, guest.name)">
             WhatsApp
           </button>
         </div>
