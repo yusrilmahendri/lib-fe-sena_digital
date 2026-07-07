@@ -16,11 +16,9 @@ interface DiamondGardenGalleryItem {
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
 export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit {
-  gardenAkadMapLink = '';
   gardenAkadMapEmbedSrc = '';
-  gardenMapReady = false;
-
-  private lastGardenMapSource = '';
+  gardenAkadMapOpenLink = '';
+  gardenAkadMapInitialized = false;
 
   constructor(
     svc: DashboardService,
@@ -32,7 +30,8 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override ngOnInit(): void {
     super.ngOnInit();
-    setTimeout(() => this.initGardenMapOnce(), 0);
+    setTimeout(() => this.setupGardenAkadMap(), 300);
+    setTimeout(() => this.setupGardenAkadMap(), 1000);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -43,7 +42,8 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     if (changes['weddingData']) {
-      setTimeout(() => this.initGardenMapOnce(), 0);
+      this.gardenAkadMapInitialized = false;
+      setTimeout(() => this.setupGardenAkadMap(), 300);
     }
   }
 
@@ -704,38 +704,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.getResepsiEvent();
   }
 
-  private initGardenMapOnce(): void {
-    const source = this.resolveGardenMapSource();
+  private setupGardenAkadMap(): void {
+    const event: any = this.resolveDiamondGardenAkadEvent();
 
-    if (!source) {
-      this.gardenAkadMapLink = '';
-      this.gardenAkadMapEmbedSrc = '';
-      this.gardenMapReady = false;
-      this.lastGardenMapSource = '';
-      return;
-    }
-
-    if (source === this.lastGardenMapSource && this.gardenAkadMapEmbedSrc) {
-      return;
-    }
-
-    this.lastGardenMapSource = source;
-    this.gardenAkadMapLink = this.resolveGardenMapOpenLink();
-    this.gardenAkadMapEmbedSrc = this.toGardenMapEmbedUrl(source);
-    this.gardenMapReady = !!this.gardenAkadMapEmbedSrc;
-  }
-
-  private getGardenMapCandidateEvents(): any[] {
-    return [
-      this.getGardenAkadEvent?.(),
-      this.getAkadEvent?.(),
-      this.getGardenReceptionEvent?.(),
-      this.getReceptionEvent?.(),
-    ].filter(Boolean);
-  }
-
-  private extractGardenLinkMaps(event?: any): string {
-    return String(
+    const linkMaps = String(
       event?.link_maps ||
       event?.link_map ||
       event?.google_maps ||
@@ -743,85 +715,95 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       event?.map_url ||
       ''
     ).trim();
-  }
 
-  private resolveGardenMapSource(): string {
-    const events = this.getGardenMapCandidateEvents();
-
-    for (const event of events) {
-      const linkMaps = this.extractGardenLinkMaps(event);
-      if (linkMaps) {
-        return linkMaps;
-      }
-    }
-
-    const fallbackEvent =
-      events[0] ||
-      this.getGardenAkadEvent?.() ||
-      this.getAkadEvent?.() ||
-      this.getGardenReceptionEvent?.() ||
-      this.getReceptionEvent?.() ||
-      {};
-
-    return String(
-      fallbackEvent?.alamat || fallbackEvent?.address || ''
-    ).trim();
-  }
-
-  private resolveGardenMapOpenLink(): string {
-    const events = this.getGardenMapCandidateEvents();
-
-    for (const event of events) {
-      const linkMaps = this.extractGardenLinkMaps(event);
-      if (linkMaps) {
-        return linkMaps;
-      }
-    }
-
-    const fallbackEvent =
-      events[0] ||
-      this.getGardenAkadEvent?.() ||
-      this.getAkadEvent?.() ||
-      this.getGardenReceptionEvent?.() ||
-      this.getReceptionEvent?.() ||
-      {};
-
-    const fallback = String(
-      fallbackEvent?.alamat || fallbackEvent?.address || ''
+    const address = String(
+      event?.alamat ||
+      event?.address ||
+      event?.lokasi ||
+      ''
     ).trim();
 
-    return fallback
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallback)}`
-      : '';
+    const source = linkMaps || address;
+
+    console.log('[Diamond Garden Maps Source]', {
+      event,
+      linkMaps,
+      address,
+      source
+    });
+
+    if (!source) {
+      this.gardenAkadMapEmbedSrc = '';
+      this.gardenAkadMapOpenLink = '';
+      this.gardenAkadMapInitialized = true;
+      return;
+    }
+
+    this.gardenAkadMapOpenLink = linkMaps
+      ? linkMaps
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+    this.gardenAkadMapEmbedSrc = this.createGardenMapEmbedUrl(source);
+    this.gardenAkadMapInitialized = true;
+
+    console.log('[Diamond Garden Maps Ready]', {
+      openLink: this.gardenAkadMapOpenLink,
+      embedSrc: this.gardenAkadMapEmbedSrc
+    });
   }
 
-  private toGardenMapEmbedUrl(raw: string): string {
-    const value = String(raw || '').trim();
+  private createGardenMapEmbedUrl(value: string): string {
+    const raw = String(value || '').trim();
 
-    if (!value) {
+    if (!raw) {
       return '';
     }
 
-    if (value.includes('/maps/embed')) {
-      return value;
+    if (raw.includes('/maps/embed')) {
+      return raw;
     }
 
-    if (value.includes('google.com/maps')) {
-      return value.includes('output=embed')
-        ? value
-        : `${value}${value.includes('?') ? '&' : '?'}output=embed`;
+    if (raw.includes('google.com/maps')) {
+      return raw.includes('output=embed')
+        ? raw
+        : `${raw}${raw.includes('?') ? '&' : '?'}output=embed`;
     }
 
-    if (value.includes('maps.app.goo.gl') || value.includes('goo.gl/maps')) {
-      return `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
+    return `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+  }
+
+  private resolveDiamondGardenAkadEvent(): any {
+    const data: any = this.weddingData || {};
+    let events: any[] = [];
+
+    if (Array.isArray(data.events)) {
+      events = data.events;
+    } else if (Array.isArray(data.acaras)) {
+      events = data.acaras;
+    } else if (Array.isArray(data?.data?.events)) {
+      events = data.data.events;
+    } else if (data.events && typeof data.events === 'object') {
+      events = Object.values(data.events);
     }
 
-    return `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
+    const akad = events.find((item: any) => {
+      const type = String(item?.jenis_acara || item?.type || item?.nama_acara || '').toLowerCase();
+      return type.includes('akad');
+    });
+
+    if (akad) {
+      return akad;
+    }
+
+    return events[0] || {};
   }
 
   openGardenAkadMap(): void {
-    if (!this.gardenAkadMapLink) return;
-    window.open(this.gardenAkadMapLink, '_blank', 'noopener,noreferrer');
+    if (!this.gardenAkadMapOpenLink) {
+      return;
+    }
+
+    window.open(this.gardenAkadMapOpenLink, '_blank', 'noopener,noreferrer');
   }
 
   getGardenGiftAccounts(): any[] {
@@ -962,7 +944,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     ).trim();
 
     if (rawLink) {
-      return this.toGardenMapEmbedUrl(rawLink);
+      return this.createGardenMapEmbedUrl(rawLink);
     }
 
     const address = this.getGardenEventAddress(event);
@@ -970,7 +952,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       return '';
     }
 
-    return this.toGardenMapEmbedUrl(address);
+    return this.createGardenMapEmbedUrl(address);
   }
 
   getGardenDateLabel(): string {
