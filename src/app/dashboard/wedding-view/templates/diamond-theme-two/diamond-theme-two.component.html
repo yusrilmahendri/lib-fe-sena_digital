@@ -92,10 +92,12 @@
 
       <section class="diamond-garden-couple" *ngIf="isCoupleVisible()">
         <img
+          #coupleFrame
           class="diamond-garden-couple__frame"
           src="assets/thema-2/theme-1.png"
           alt=""
-          aria-hidden="true" />
+          aria-hidden="true"
+          (error)="coupleFrame.style.display='none'" />
 
         <div class="diamond-garden-couple__content">
           <p class="diamond-garden-couple__eyebrow">THE WEDDING COUPLE</p>
@@ -157,10 +159,12 @@
 
       <section class="diamond-garden-event" *ngIf="isEventVisible()">
         <img
+          #eventFrame
           class="diamond-garden-event__frame"
           src="assets/thema-2/theme-2.png"
           alt=""
-          aria-hidden="true" />
+          aria-hidden="true"
+          (error)="eventFrame.style.display='none'" />
 
         <div class="diamond-garden-event__content">
           <p class="diamond-garden-event__eyebrow">SAVE THE DATE</p>
@@ -212,10 +216,12 @@
 
       <section class="diamond-garden-moments">
         <img
+          #momentsFrame
           class="diamond-garden-moments__frame"
           src="assets/thema-2/theme-3.png"
           alt=""
-          aria-hidden="true" />
+          aria-hidden="true"
+          (error)="momentsFrame.style.display='none'" />
 
         <div class="diamond-garden-moments__content">
           <p class="diamond-garden-moments__eyebrow">SPECIAL MOMENTS</p>
@@ -280,10 +286,12 @@
 
       <section class="diamond-garden-wishes" *ngIf="isWishVisible()">
         <img
+          #wishesFrame
           class="diamond-garden-wishes__frame"
           src="assets/thema-2/theme-4.png"
           alt=""
-          aria-hidden="true" />
+          aria-hidden="true"
+          (error)="wishesFrame.style.display='none'" />
 
         <div class="diamond-garden-wishes__content">
           <p class="diamond-garden-wishes__eyebrow">DOA &amp; HARAPAN</p>
