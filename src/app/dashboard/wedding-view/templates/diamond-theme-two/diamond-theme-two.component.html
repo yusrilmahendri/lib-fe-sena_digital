@@ -1,30 +1,46 @@
 <section class="diamond-garden-theme" *ngIf="weddingData">
   <article class="diamond-garden-shell">
-    <section class="diamond-garden-cover" *ngIf="!invitationOpened">
-      <div class="diamond-garden-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
-      <div class="diamond-garden-cover__overlay"></div>
-      <div class="diamond-garden-cover__content">
-        <p class="diamond-garden-cover__eyebrow">{{ getHeroLabel() }}</p>
-        <h1 class="diamond-garden-cover__names">
-          <span>{{ getPrimaryDisplayName() }}</span>
-          <em>&amp;</em>
-          <span>{{ getSecondaryDisplayName() }}</span>
+    <section class="diamond-garden-opening" *ngIf="!isInvitationOpen">
+      <img
+        class="diamond-garden-opening__bg"
+        [src]="getGardenCoverPhotoUrl()"
+        alt="Wedding cover"
+        (error)="onGardenImageError($event)" />
+
+      <div class="diamond-garden-opening__overlay"></div>
+
+      <div class="diamond-garden-opening__content">
+        <p class="diamond-garden-opening__eyebrow">THE WEDDING OF</p>
+
+        <h1>
+          {{ getGroomName() }} &amp;<br />
+          {{ getBrideName() }}
         </h1>
-        <p class="diamond-garden-cover__date">{{ getHeroDateLabel() }}</p>
-        <div class="diamond-garden-cover__guest">
-          <span>Kepada Yth.</span>
-          <strong>{{ getGuestName() }}</strong>
-        </div>
-        <button class="diamond-garden-button diamond-garden-button--primary" type="button" (click)="openInvitation()">
-          <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+
+        <p class="diamond-garden-opening__date">
+          {{ getGardenDateLabel() || 'Tanggal belum tersedia' }}
+        </p>
+
+        <p class="diamond-garden-opening__guest-label">
+          KEPADA YTH. BAPAK/IBU/SAUDARA/I
+        </p>
+
+        <p class="diamond-garden-opening__guest">
+          {{ getGuestName() || 'Tamu Undangan' }}
+        </p>
+
+        <button
+          type="button"
+          class="diamond-garden-opening__button"
+          (click)="openInvitation()">
           Buka Undangan
         </button>
       </div>
     </section>
 
-    <ng-container *ngIf="invitationOpened">
+    <div class="diamond-garden-main" [class.open]="isInvitationOpen">
       <section class="diamond-garden-hero">
-        <div class="diamond-garden-hero__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-garden-hero__media" [style.background-image]="'url(' + getGardenCoverPhotoUrl() + ')'"></div>
         <div class="diamond-garden-hero__overlay"></div>
         <div class="diamond-garden-hero__content">
           <p class="diamond-garden-hero__eyebrow">{{ getHeroLabel() }}</p>
@@ -33,18 +49,10 @@
             <em>&amp;</em>
             <span>{{ getSecondaryDisplayName() }}</span>
           </h1>
-          <p class="diamond-garden-cover__date">{{ getHeroDateLabel() }}</p>
-        </div>
-      </section>
-
-      <section class="diamond-garden-quote" *ngIf="isQuoteVisible()">
-        <div class="diamond-garden-quote__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
-        <div class="diamond-garden-quote__overlay"></div>
-        <div class="diamond-garden-quote__content">
-          <p class="diamond-garden-section__eyebrow diamond-garden-section__eyebrow--light">Ayat &amp; Doa Pembuka</p>
-          <blockquote class="diamond-garden-quote__text">{{ getQuranQuote() }}</blockquote>
-          <p class="diamond-garden-quote__source">{{ getQuranSource() }}</p>
-          <p class="diamond-garden-quote__lead">{{ getOpeningQuote() }}</p>
+          <p class="diamond-garden-cover__date">{{ getGardenDateLabel() || getHeroDateLabel() }}</p>
+          <div class="diamond-garden-hero__scroll">
+            <span></span>
+          </div>
         </div>
       </section>
 
@@ -224,7 +232,7 @@
       </section>
 
       <section class="diamond-garden-closing">
-        <div class="diamond-garden-closing__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div class="diamond-garden-closing__media" [style.background-image]="'url(' + getGardenCoverPhotoUrl() + ')'"></div>
         <div class="diamond-garden-closing__overlay"></div>
         <div class="diamond-garden-closing__content">
           <p>Merupakan suatu kehormatan dan kebahagiaan bagi kami atas kehadiran dan doa restunya.</p>
@@ -236,6 +244,6 @@
           <small>Terima kasih telah menjadi bagian dari hari bahagia kami.</small>
         </div>
       </section>
-    </ng-container>
+    </div>
   </article>
 </section>
