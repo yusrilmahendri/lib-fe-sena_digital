@@ -204,9 +204,9 @@
 
           <div class="diamond-garden-event__map">
             <iframe
-              *ngIf="diamondGardenMapSrc; else diamondGardenMapEmpty"
+              *ngIf="diamondGardenMapSafeSrc; else diamondGardenMapEmpty"
               class="diamond-garden-event__map-iframe"
-              [attr.src]="diamondGardenMapSrc"
+              [src]="diamondGardenMapSafeSrc"
               title="Lokasi acara"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"

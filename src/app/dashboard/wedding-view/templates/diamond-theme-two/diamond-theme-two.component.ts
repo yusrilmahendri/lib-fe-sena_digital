@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
@@ -15,24 +15,25 @@ interface DiamondGardenGalleryItem {
   templateUrl: './diamond-theme-two.component.html',
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
-export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit, OnDestroy {
+export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit {
   diamondGardenMapSrc = '';
+  diamondGardenMapSafeSrc: SafeResourceUrl | null = null;
   diamondGardenMapLink = '';
   diamondGardenMapDebug: any = null;
-  private diamondGardenMapRetryTimer: any = null;
-  private diamondGardenMapRetryCount = 0;
+  private diamondGardenMapInitialized = false;
 
   constructor(
     svc: DashboardService,
-    sanitizer: DomSanitizer,
+    private readonly diamondGardenSanitizer: DomSanitizer,
     toastService: ToastService
   ) {
-    super(sanitizer, svc, toastService);
+    super(diamondGardenSanitizer, svc, toastService);
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
-    setTimeout(() => this.initDiamondGardenMapWithRetry(), 300);
+    setTimeout(() => this.setupDiamondGardenMapOnce(), 500);
+    setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -43,17 +44,9 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     if (changes['weddingData']) {
-      setTimeout(() => this.initDiamondGardenMapWithRetry(), 300);
+      this.diamondGardenMapInitialized = false;
+      setTimeout(() => this.setupDiamondGardenMapOnce(), 300);
     }
-  }
-
-  override ngOnDestroy(): void {
-    if (this.diamondGardenMapRetryTimer) {
-      clearInterval(this.diamondGardenMapRetryTimer);
-      this.diamondGardenMapRetryTimer = null;
-    }
-
-    super.ngOnDestroy();
   }
 
   override openInvitation(): void {
@@ -713,34 +706,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.getResepsiEvent();
   }
 
-  private initDiamondGardenMapWithRetry(): void {
-    if (this.diamondGardenMapRetryTimer) {
-      clearInterval(this.diamondGardenMapRetryTimer);
-      this.diamondGardenMapRetryTimer = null;
+  private setupDiamondGardenMapOnce(): void {
+    if (this.diamondGardenMapInitialized) {
+      return;
     }
 
-    this.diamondGardenMapRetryCount = 0;
-
-    const run = () => {
-      this.diamondGardenMapRetryCount += 1;
-      this.setupDiamondGardenMap();
-
-      const hasMap = !!this.diamondGardenMapSrc;
-      const maxRetryReached = this.diamondGardenMapRetryCount >= 10;
-
-      if (hasMap || maxRetryReached) {
-        if (this.diamondGardenMapRetryTimer) {
-          clearInterval(this.diamondGardenMapRetryTimer);
-          this.diamondGardenMapRetryTimer = null;
-        }
-      }
-    };
-
-    run();
-    this.diamondGardenMapRetryTimer = setInterval(run, 500);
-  }
-
-  private setupDiamondGardenMap(): void {
     const event: any = this.getDiamondGardenAkadEventForMap();
 
     const linkMaps = String(
@@ -770,32 +740,34 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       ''
     ).trim();
 
-    const query = [venue, address]
-      .filter(Boolean)
-      .join(', ')
-      .trim();
-
-    this.diamondGardenMapLink = linkMaps || (query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : '');
-
+    const query = [venue, address].filter(Boolean).join(', ').trim();
     const previewQuery = query || linkMaps;
 
-    this.diamondGardenMapSrc = previewQuery
-      ? `https://www.google.com/maps?q=${encodeURIComponent(previewQuery)}&output=embed`
-      : '';
+    if (!previewQuery) {
+      console.warn('[Diamond Garden Maps] preview query kosong', { event, linkMaps, venue, address });
+      return;
+    }
+
+    const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(previewQuery)}&output=embed`;
+
+    this.diamondGardenMapSrc = embedSrc;
+    this.diamondGardenMapSafeSrc = this.diamondGardenSanitizer.bypassSecurityTrustResourceUrl(embedSrc);
+    this.diamondGardenMapLink = linkMaps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(previewQuery)}`;
 
     this.diamondGardenMapDebug = {
-      retry: this.diamondGardenMapRetryCount,
       event,
       linkMaps,
       venue,
       address,
       query,
       previewQuery,
-      mapSrc: this.diamondGardenMapSrc,
-      mapLink: this.diamondGardenMapLink
+      embedSrc,
+      openLink: this.diamondGardenMapLink
     };
 
-    console.log('[Diamond Garden Map Debug]', this.diamondGardenMapDebug);
+    this.diamondGardenMapInitialized = true;
+
+    console.log('[Diamond Garden Maps Ready]', this.diamondGardenMapDebug);
   }
 
   private getDiamondGardenAkadEventForMap(): any {

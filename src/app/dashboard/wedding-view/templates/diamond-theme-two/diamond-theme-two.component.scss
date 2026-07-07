@@ -2820,7 +2820,7 @@
 
 .diamond-garden-event__map {
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 20 !important;
   width: 278px !important;
   height: 150px !important;
   margin: 24px auto 16px !important;
@@ -2848,14 +2848,13 @@
   justify-content: center !important;
   padding: 14px !important;
   font-size: 12px !important;
-  line-height: 1.4 !important;
   color: #8c3f37 !important;
   text-align: center !important;
 }
 
 .diamond-garden-event__location-button {
   position: relative !important;
-  z-index: 11 !important;
+  z-index: 21 !important;
   width: fit-content !important;
   min-width: 150px !important;
   height: 44px !important;
