@@ -202,10 +202,21 @@
             {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
           </p>
 
+          <div
+            class="diamond-garden-event__map"
+            *ngIf="getGardenMapEmbedUrl(getAkadEvent()) as mapEmbedUrl">
+            <iframe
+              [attr.src]="mapEmbedUrl"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowfullscreen>
+            </iframe>
+          </div>
+
           <a
             class="diamond-garden-event__button"
-            *ngIf="getAkadMapLink() || getEventMapLink(getAkadEvent())"
-            [href]="getAkadMapLink() || getEventMapLink(getAkadEvent())"
+            *ngIf="getGardenMapLink(getAkadEvent()) as mapLink"
+            [href]="mapLink"
             target="_blank"
             rel="noopener">
             <i class="fas fa-map-marker-alt"></i>

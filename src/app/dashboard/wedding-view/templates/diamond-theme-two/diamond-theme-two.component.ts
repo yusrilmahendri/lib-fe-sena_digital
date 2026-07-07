@@ -621,6 +621,45 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     return this.getEventMapLink(this.getAkadEvent());
   }
 
+  getGardenMapLink(event?: any): string {
+    const link = String(
+      event?.link_maps ||
+      event?.link_map ||
+      event?.maps ||
+      event?.google_maps ||
+      event?.map_url ||
+      ''
+    ).trim();
+
+    if (link) return link;
+
+    const address = this.getGardenEventAddress(event);
+    if (!address) return '';
+
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  }
+
+  getGardenEventAddress(event?: any): string {
+    return String(
+      event?.alamat ||
+      event?.address ||
+      event?.lokasi ||
+      event?.location ||
+      ''
+    ).trim();
+  }
+
+  getGardenMapEmbedUrl(event?: any): string {
+    const address = this.getGardenEventAddress(event);
+    const mapLink = this.getGardenMapLink(event);
+
+    const query = address || mapLink;
+
+    if (!query) return '';
+
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+  }
+
   getGardenDateLabel(): string {
     const event = this.getGardenMainEvent();
     const rawDate =

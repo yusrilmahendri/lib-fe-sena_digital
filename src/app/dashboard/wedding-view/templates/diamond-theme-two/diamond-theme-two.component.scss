@@ -2156,3 +2156,153 @@
     max-width: none;
   }
 }
+
+.diamond-garden-event__map {
+  width: 100% !important;
+  max-width: 318px !important;
+  height: 150px !important;
+  margin: 18px auto 16px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  background: #f5f5f5 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.diamond-garden-event__map iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  display: block !important;
+}
+
+.diamond-garden-event__button {
+  margin-top: 0 !important;
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.diamond-garden-event__address {
+  margin-bottom: 10px !important;
+}
+
+.diamond-garden-event__content {
+  padding-top: 72px !important;
+}
+
+.diamond-garden-moments__eyebrow {
+  margin: 0 0 10px !important;
+  font-size: 10px !important;
+  letter-spacing: 5px !important;
+  font-weight: 700 !important;
+  color: rgba(232, 213, 154, 0.82) !important;
+  text-align: center !important;
+}
+
+.diamond-garden-moments h2 {
+  margin: 0 auto 0 !important;
+  max-width: 330px !important;
+  font-size: 31px !important;
+  line-height: 1.18 !important;
+  font-weight: 800 !important;
+  color: #dfc98e !important;
+  text-align: center !important;
+}
+
+.diamond-garden-moments__content {
+  padding-top: 78px !important;
+}
+
+.diamond-garden-moments__countdown {
+  width: 100% !important;
+  max-width: 355px !important;
+  margin: 24px auto 48px !important;
+  padding: 0 6px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+  align-items: center !important;
+  justify-items: center !important;
+  background: transparent !important;
+  position: relative !important;
+  z-index: 4 !important;
+}
+
+.diamond-garden-moments__time-box {
+  width: 74px !important;
+  height: 74px !important;
+  padding: 10px 6px 8px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #fffdf8 !important;
+  border: 2px solid #bca766 !important;
+  border-radius: 2px !important;
+  box-shadow:
+    4px 5px 0 rgba(188, 167, 102, 0.35),
+    0 10px 18px rgba(0, 0, 0, 0.1) !important;
+  color: #536c1e !important;
+  text-align: center !important;
+}
+
+.diamond-garden-moments__time-box strong {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  color: #536c1e !important;
+  letter-spacing: 0.5px !important;
+}
+
+.diamond-garden-moments__time-box span {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 600 !important;
+  color: #536c1e !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+}
+
+.diamond-garden-moments__time-box:nth-child(1) {
+  transform: rotate(-2.5deg) !important;
+}
+
+.diamond-garden-moments__time-box:nth-child(2) {
+  transform: rotate(2deg) !important;
+}
+
+.diamond-garden-moments__time-box:nth-child(3) {
+  transform: rotate(-1.8deg) !important;
+}
+
+.diamond-garden-moments__time-box:nth-child(4) {
+  transform: rotate(2.4deg) !important;
+}
+
+@media (max-width: 380px) {
+  .diamond-garden-moments__countdown {
+    gap: 7px !important;
+    padding: 0 4px !important;
+  }
+
+  .diamond-garden-moments__time-box {
+    width: 67px !important;
+    height: 70px !important;
+  }
+
+  .diamond-garden-moments__time-box strong {
+    font-size: 23px !important;
+  }
+
+  .diamond-garden-moments__time-box span {
+    font-size: 8px !important;
+    letter-spacing: 1.6px !important;
+  }
+}

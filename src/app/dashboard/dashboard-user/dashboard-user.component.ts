@@ -15,17 +15,6 @@ import { IdleTimeoutService } from 'src/app/core/services/idle-timeout.service';
   templateUrl: './dashboard-user.component.html',
   styleUrls: ['./dashboard-user.component.scss'],
   animations: [
-    // Sidebar slide animation
-    trigger('sidebarSlide', [
-      state('closed', style({
-        transform: 'translateX(-100%)'
-      })),
-      state('open', style({
-        transform: 'translateX(0)'
-      })),
-      transition('closed <=> open', animate('300ms cubic-bezier(0.4, 0.0, 0.2, 1)'))
-    ]),
-
     // Submenu dropdown animation
     trigger('submenuExpand', [
       state('collapsed', style({
@@ -81,6 +70,9 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.setRouteName();
       this.setRoutePath();
+      if (window.innerWidth <= 1024) {
+        this.closeSidebar();
+      }
       // Refresh profile data when navigating back from profile page
       if (this.router.url.includes('/dashboard') && !this.router.url.includes('/profile')) {
         this.getUserProfile();
@@ -200,19 +192,15 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     const windowWidth = event.target.innerWidth;
 
     if (windowWidth > 1024) {
-      // Desktop: sidebar should be open
       this.isSidebarOpen = true;
-    } else if (windowWidth <= 768) {
-      // Mobile: sidebar should be closed
+    } else {
       this.isSidebarOpen = false;
     }
-    // Tablet (769-1024): keep current state
   }
 
   selectMenu(): void {
     this.isDropdownOpen = false;
-    // Close sidebar on mobile after menu selection
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       this.closeSidebar();
     }
     this.router.navigate(['/dashboard/profile']);
@@ -220,7 +208,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   // Handle menu item click for mobile
   onMenuItemClick(): void {
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       this.closeSidebar();
     }
   }
