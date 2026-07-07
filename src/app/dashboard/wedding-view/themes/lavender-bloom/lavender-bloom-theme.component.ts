@@ -9,6 +9,11 @@ import {
   WeddingStory,
 } from '../../../../services/wedding-data.service';
 import { environment } from '../../../../../environments/environment';
+import {
+  resolveSalamAtas,
+  resolveSalamBawah,
+  resolveSalamPembuka,
+} from '../../../../shared/salam-defaults';
 
 type FilterKey =
   | 'halaman_sampul'
@@ -128,16 +133,54 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     return primaryEvent ? this.formatDate(primaryEvent.tanggal_acara, 'short') : 'Tanggal menyusul';
   }
 
+  protected getTestimoniSetting(): Record<string, any> {
+    const data: any = this.weddingData || {};
+
+    return (
+      data?.testimoni ||
+      data?.setting ||
+      data?.settings ||
+      data?.invitation_package ||
+      data?.data?.setting ||
+      {}
+    );
+  }
+
+  getInvitationOpeningText(): string {
+    const source = this.getTestimoniSetting();
+    const text = String(source['salam_pembuka'] ?? '').trim();
+
+    return resolveSalamPembuka(text);
+  }
+
+  getWhatsappOpeningText(): string {
+    const source = this.getTestimoniSetting();
+    const text = String(source['salam_atas'] ?? '').trim();
+
+    return resolveSalamAtas(text);
+  }
+
+  getWhatsappClosingText(): string {
+    const source = this.getTestimoniSetting();
+    const text = String(source['salam_bawah'] ?? '').trim();
+
+    return resolveSalamBawah(text);
+  }
+
+  getInvitationIntro(): string {
+    return this.getInvitationOpeningText();
+  }
+
   getOpeningMessage(): string {
-    return this.weddingData?.settings?.salam_pembuka || 'Bismillahirrahmanirrahim';
+    return this.getInvitationOpeningText();
   }
 
   getIntroductionText(): string {
-    return this.weddingData?.settings?.salam_atas || 'Dengan penuh rasa syukur, kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami.';
+    return this.getInvitationOpeningText();
   }
 
   getClosingText(): string {
-    return this.weddingData?.settings?.salam_bawah || 'Merupakan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.';
+    return 'Merupakan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.';
   }
 
   getParentsText(person: MempelaiPerson | null, gender: 'pria' | 'wanita'): string {

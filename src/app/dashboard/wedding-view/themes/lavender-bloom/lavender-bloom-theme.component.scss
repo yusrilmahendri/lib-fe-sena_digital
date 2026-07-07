@@ -2,6 +2,11 @@
   display: block;
 }
 
+.invitation-opening-text,
+.section-script.invitation-opening-text {
+  white-space: pre-line;
+}
+
 .lavender-theme {
   position: relative;
   z-index: 1;

@@ -48,12 +48,7 @@
         <div class="diamond-prayer__content">
           <h2>Bismillahirrahmanirrahim</h2>
 
-          <p class="diamond-prayer__intro">
-            Dengan memohon rahmat dan ridho Allah SWT,<br />
-            kami bermaksud mengundang Bapak/Ibu/Saudara/i<br />
-            untuk menghadiri dan memberikan doa restu pada<br />
-            acara pernikahan kami.
-          </p>
+          <p class="diamond-prayer__intro invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
 
           <p class="diamond-prayer__quote" *ngIf="getMainQuote()">
             “{{ getMainQuote() }}”

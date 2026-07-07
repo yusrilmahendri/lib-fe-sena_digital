@@ -4,6 +4,12 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
+import {
+  DEFAULT_SALAM_ATAS,
+  DEFAULT_SALAM_BAWAH,
+  DEFAULT_SALAM_PEMBUKA,
+  normalizeSalamValue,
+} from 'src/app/shared/salam-defaults';
 
 @Component({
   selector: 'wc-pengaturan',
@@ -11,6 +17,10 @@ import { ModalComponent } from 'src/app/shared/modal/modal.component';
   styleUrls: ['./pengaturan.component.scss'],
 })
 export class PengaturanComponent implements OnInit {
+  readonly DEFAULT_SALAM_PEMBUKA = DEFAULT_SALAM_PEMBUKA;
+  readonly DEFAULT_SALAM_ATAS = DEFAULT_SALAM_ATAS;
+  readonly DEFAULT_SALAM_BAWAH = DEFAULT_SALAM_BAWAH;
+
   domainTokenForm!: FormGroup;
   salamForm!: FormGroup;
   filterForm!: FormGroup;
@@ -70,24 +80,9 @@ export class PengaturanComponent implements OnInit {
 
 
     this.salamForm = this.fb.group({
-      salam_pembuka: [
-        `Assalamu'alaikum Warahmatullahi Wabarakatuh.
-
-Dengan memohon Rahmat dan Ridho Allah SWT, Kami akan menyelenggarakan resepsi pernikahan Putra-Putri kami :`,
-        [Validators.required]
-      ],
-      salam_atas: [
-        `Assalamualaikum Wr Wb.
-Dengan segala kerendahan hati dan syukur atas Karunia Allah SWT.
-Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk menghadiri acara pernikahan kami :`,
-        [Validators.required]
-      ],
-      salam_bawah: [
-        `Assalamualaikum Wr Wb.
-Dengan segala kerendahan hati dan syukur atas Karunia Allah SWT.
-Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk menghadiri acara pernikahan kami :`,
-        [Validators.required]
-      ]
+      salam_pembuka: [DEFAULT_SALAM_PEMBUKA, [Validators.required]],
+      salam_atas: [DEFAULT_SALAM_ATAS, [Validators.required]],
+      salam_bawah: [DEFAULT_SALAM_BAWAH, [Validators.required]]
     });
 
 
@@ -142,9 +137,18 @@ Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk me
         token: this.settingData.token || ''
       });
       this.salamForm.patchValue({
-        salam_pembuka: this.settingData.salam_pembuka || this.salamForm.get('salam_pembuka')?.value,
-        salam_atas: this.settingData.salam_atas || this.salamForm.get('salam_atas')?.value,
-        salam_bawah: this.settingData.salam_bawah || this.salamForm.get('salam_bawah')?.value
+        salam_pembuka: this.normalizeSalamValue(
+          this.settingData.salam_pembuka,
+          this.DEFAULT_SALAM_PEMBUKA
+        ),
+        salam_atas: this.normalizeSalamValue(
+          this.settingData.salam_atas,
+          this.DEFAULT_SALAM_ATAS
+        ),
+        salam_bawah: this.normalizeSalamValue(
+          this.settingData.salam_bawah,
+          this.DEFAULT_SALAM_BAWAH
+        ),
       });
     }
     // Patch filterForm with boolean values from backend (0/1 or '0'/'1')
@@ -380,6 +384,10 @@ Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk me
     });
   }
 
+  private normalizeSalamValue(value: unknown, fallback: string): string {
+    return normalizeSalamValue(value, fallback);
+  }
+
   saveSalam(): void {
     if (!this.salamForm.valid) {
       this.notyf.error('Mohon lengkapi semua field salam');
@@ -388,10 +396,15 @@ Kami bermaksud mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk me
 
     const formData = new FormData();
     const formValue = this.salamForm.value;
+    const payload = {
+      salam_pembuka: this.normalizeSalamValue(formValue.salam_pembuka, this.DEFAULT_SALAM_PEMBUKA),
+      salam_atas: this.normalizeSalamValue(formValue.salam_atas, this.DEFAULT_SALAM_ATAS),
+      salam_bawah: this.normalizeSalamValue(formValue.salam_bawah, this.DEFAULT_SALAM_BAWAH),
+    };
 
-    formData.append('salam_pembuka', formValue.salam_pembuka || '');
-    formData.append('salam_atas', formValue.salam_atas || '');
-    formData.append('salam_bawah', formValue.salam_bawah || '');
+    formData.append('salam_pembuka', payload.salam_pembuka);
+    formData.append('salam_atas', payload.salam_atas);
+    formData.append('salam_bawah', payload.salam_bawah);
 
     const initialState = {
       message: 'Apakah anda ingin menyimpan semua data salam?',

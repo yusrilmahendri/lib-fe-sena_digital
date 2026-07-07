@@ -417,7 +417,8 @@
   background: #b9c6cb;
 }
 
-.ruby-quote-opening {
+.ruby-quote-opening,
+.invitation-opening-text {
   margin: 0 auto;
   max-width: 372px;
   color: #111827;
@@ -425,7 +426,7 @@
   line-height: 1.75;
   font-weight: 400;
   text-align: center;
-  white-space: nowrap;
+  white-space: pre-line;
 }
 
 .ruby-quote-text {

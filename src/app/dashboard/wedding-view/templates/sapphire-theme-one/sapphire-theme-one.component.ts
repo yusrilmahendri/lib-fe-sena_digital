@@ -136,15 +136,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getIntroText(): string {
-    return this.getInvitationIntro();
-  }
-
-  getInvitationIntro(): string {
-    return (
-      this.weddingData?.settings?.salam_atas ||
-      'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud mengundang ' +
-      'Bapak/Ibu/Saudara/i untuk hadir di hari pernikahan kami.'
-    );
+    return this.getInvitationOpeningText();
   }
 
   getQuranQuote(): string {

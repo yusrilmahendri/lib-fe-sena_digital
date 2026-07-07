@@ -1479,13 +1479,15 @@
   color: #536c1e;
 }
 
-.diamond-garden-event__intro {
+.diamond-garden-event__intro,
+.invitation-opening-text {
   margin: 0 auto 28px;
   max-width: 292px;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.55;
   color: #333;
+  white-space: pre-line;
 }
 
 .diamond-garden-event__date-row {
@@ -1801,6 +1803,7 @@
   font-size: 13px !important;
   line-height: 1.55 !important;
   color: #333 !important;
+  white-space: pre-line !important;
 }
 
 .diamond-garden-event__date-row {

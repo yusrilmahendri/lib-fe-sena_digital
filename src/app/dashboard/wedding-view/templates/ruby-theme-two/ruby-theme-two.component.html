@@ -57,7 +57,7 @@
       <section class="ruby-two-section ruby-two-section--intro">
         <p class="ruby-two-section__eyebrow">Pembuka</p>
         <h2 class="ruby-two-script">Bismillahirrahmanirrahim</h2>
-        <p class="ruby-two-copy ruby-two-copy--center">{{ getInvitationIntro() }}</p>
+        <p class="ruby-two-copy ruby-two-copy--center invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
         <blockquote class="ruby-two-quote">{{ getQuranQuote() }}</blockquote>
         <p class="ruby-two-quote__source" *ngIf="getQuranSource()">{{ getQuranSource() }}</p>
       </section>
@@ -282,7 +282,7 @@
         <div class="ruby-two-closing__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
         <div class="ruby-two-closing__overlay"></div>
         <div class="ruby-two-closing__content">
-          <p>{{ weddingData?.settings?.salam_bawah || 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.' }}</p>
+          <p>{{ getClosingText() }}</p>
           <span class="ruby-two-closing__label">KAMI YANG BERBAHAGIA</span>
           <h2>
             <span>{{ getPrimaryDisplayName() }}</span>

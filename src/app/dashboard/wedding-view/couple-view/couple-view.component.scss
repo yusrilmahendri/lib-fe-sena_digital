@@ -17,13 +17,15 @@
   margin: 0 auto;
 }
 
-.opening-text {
+.opening-text,
+.invitation-opening-text {
   font-size: clamp(15px, 3.5vw, 18px);
   color: #5a5a5a;
   font-weight: 400;
   margin-bottom: clamp(25px, 6vw, 40px);
   line-height: 1.5;
   letter-spacing: 0.3px;
+  white-space: pre-line;
 
   // Entry animation - fade in only (no transform)
   opacity: 0;

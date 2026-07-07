@@ -102,15 +102,15 @@
         <h2>Salam Pembuka</h2>
         <form [formGroup]="salamForm" (ngSubmit)="saveSalam()" class="w-100">
           <label for="salam-pembuka" class="form-label fw-semibold">Salam Pembuka Undangan</label>
-          <textarea id="salam-pembuka" rows="4" class="form-control mb-4" formControlName="salam_pembuka"
+          <textarea id="salam-pembuka" rows="4" class="form-control salam-textarea mb-4" formControlName="salam_pembuka"
             [disabled]="isLoadingSalam"></textarea>
 
           <label for="salam-atas" class="form-label fw-semibold">Salam Pembuka WhatsApp (atas)</label>
-          <textarea id="salam-atas" rows="4" class="form-control mb-4" formControlName="salam_atas"
+          <textarea id="salam-atas" rows="4" class="form-control salam-textarea mb-4" formControlName="salam_atas"
             [disabled]="isLoadingSalam"></textarea>
 
           <label for="salam-bawah" class="form-label fw-semibold">Salam Pembuka WhatsApp (bawah)</label>
-          <textarea id="salam-bawah" rows="4" class="form-control mb-5" formControlName="salam_bawah"
+          <textarea id="salam-bawah" rows="4" class="form-control salam-textarea mb-5" formControlName="salam_bawah"
             [disabled]="isLoadingSalam"></textarea>
 
           <div class="d-grid gap-2">

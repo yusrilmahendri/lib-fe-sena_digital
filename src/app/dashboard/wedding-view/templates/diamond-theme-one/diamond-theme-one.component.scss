@@ -523,12 +523,14 @@
   color: #f3dfc8;
 }
 
-.diamond-prayer__intro {
+.diamond-prayer__intro,
+.invitation-opening-text {
   margin: 0 auto 26px;
   max-width: 340px;
   font-size: 13px;
   line-height: 1.75;
   color: rgba(255, 255, 255, .94);
+  white-space: pre-line;
 }
 
 .diamond-prayer__quote {

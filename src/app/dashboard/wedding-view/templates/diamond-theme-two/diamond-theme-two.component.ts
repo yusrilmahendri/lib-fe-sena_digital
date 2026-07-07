@@ -260,7 +260,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getOpeningQuote(): string {
-    return this.getInvitationIntro();
+    return this.getInvitationOpeningText();
   }
 
   getGardenCoverPhotoUrl(): string {

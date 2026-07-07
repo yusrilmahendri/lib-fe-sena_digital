@@ -59,12 +59,7 @@
           <h2>Bismillahirrahmanirrahim</h2>
           <div class="ruby-quote-line"></div>
 
-          <p class="ruby-quote-opening">
-            Dengan memohon rahmat dan ridho Allah SWT,<br>
-            kami bermaksud mengundang Bapak/Ibu/Saudara/<br>
-            i untuk menghadiri dan memberikan doa restu<br>
-            pada acara pernikahan kami.
-          </p>
+          <p class="ruby-quote-opening invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
 
           <p class="ruby-quote-text" *ngIf="getQuoteText() as quoteText">
             "{{ getShortQuote(quoteText) }}"

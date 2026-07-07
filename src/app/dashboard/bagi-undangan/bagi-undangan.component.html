@@ -1,11 +1,29 @@
 <section class="share-invitation">
-  <header class="share-invitation__header">
-    <div>
-      <p class="share-invitation__eyebrow">Bagikan undangan personal</p>
-      <h1>Bagi Undangan</h1>
-      <p>Buat link undangan unik untuk setiap tamu, lalu bagikan lewat WhatsApp atau Excel.</p>
+  <section class="share-guide-card" aria-label="Panduan bagi undangan">
+    <div class="share-guide-item">
+      <div class="share-guide-icon info" aria-hidden="true">
+        <i class="fas fa-info-circle"></i>
+      </div>
+      <div>
+        <h3>Panduan Bagi Undangan</h3>
+        <p>
+          Masukkan nama tamu, lalu klik <strong>Generate Link</strong> untuk membuat link undangan personal.
+          Gunakan tombol <strong>WhatsApp</strong> untuk membagikan undangan, tombol <strong>Copy</strong>
+          untuk menyalin link, atau fitur <strong>Import Excel</strong> untuk membuat banyak link sekaligus.
+        </p>
+      </div>
     </div>
-  </header>
+
+    <div class="share-guide-item warning">
+      <div class="share-guide-icon warning" aria-hidden="true">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div>
+        <h3>Peringatan</h3>
+        <p>{{ guestStorageWarningMessage }}</p>
+      </div>
+    </div>
+  </section>
 
   <div class="share-invitation__card">
     <div class="share-invitation__domain" *ngIf="publicWeddingDomain">

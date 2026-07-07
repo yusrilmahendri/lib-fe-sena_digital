@@ -1,5 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { WeddingData } from '../../../services/wedding-data.service';
+import { resolveSalamPembuka } from '../../../shared/salam-defaults';
 
 @Component({
   selector: 'wc-couple-view',
@@ -40,7 +41,15 @@ export class CoupleViewComponent implements OnInit {
   }
 
   getOpeningText(): string {
-    return this.weddingData?.settings?.salam_atas ||
-           'Tanpa mengurangi rasa hormat, kami mengundang<br>Bapak/Ibu/Saudara/I pada acara pernikahan:';
+    const data: any = this.weddingData || {};
+    const source =
+      data?.settings ||
+      data?.setting ||
+      data?.testimoni ||
+      data?.data?.setting ||
+      {};
+    const text = String(source?.salam_pembuka ?? '').trim();
+
+    return resolveSalamPembuka(text);
   }
 }

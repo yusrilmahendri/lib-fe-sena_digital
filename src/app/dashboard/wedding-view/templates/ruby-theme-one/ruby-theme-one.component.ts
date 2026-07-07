@@ -298,10 +298,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return 'Bismillahirrahmanirrahim';
   }
 
-  getInvitationIntro(): string {
-    return this.weddingData?.settings?.salam_atas
-      || 'Dengan memohon rahmat dan ridha Allah SWT, kami bermaksud mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.';
-  }
 
   getQuoteText(): string {
     return ((this.weddingData?.quotes || []).find((item) => item?.qoute)?.qoute || '').trim();

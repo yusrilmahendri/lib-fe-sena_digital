@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
+import { resolveSalamAtas, resolveSalamBawah } from 'src/app/shared/salam-defaults';
 import * as XLSX from 'xlsx';
 
 interface GeneratedGuestInvitation {
@@ -22,8 +23,18 @@ export class BagiUndanganComponent implements OnInit {
   public noticeMessage = '';
   public generatedGuests: GeneratedGuestInvitation[] = [];
   public isImportingGuests = false;
+  readonly guestStorageUsesLocalStorage = true;
+
+  get guestStorageWarningMessage(): string {
+    if (this.guestStorageUsesLocalStorage) {
+      return 'Daftar tamu tersimpan di browser ini. Jika cache browser dibersihkan atau dibuka di perangkat lain, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
+    }
+
+    return 'Daftar tamu pada halaman ini masih tersimpan sementara. Jika halaman di-refresh atau ditutup, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
+  }
 
   private weddingData: any = {};
+  private salamSetting: Record<string, any> = {};
   private readonly storagePrefix = 'generated_guest_invitations';
   private readonly maxStoredGuests = 500;
 
@@ -67,26 +78,14 @@ export class BagiUndanganComponent implements OnInit {
       response?.data?.setting ||
       {};
 
-    const testimoni =
-      response?.testimoni ||
-      response?.data?.testimoni ||
-      setting;
-
-    const mergedGreeting = { ...setting, ...testimoni };
+    this.salamSetting = { ...setting };
 
     this.weddingData = {
-      testimoni: mergedGreeting,
-      setting: mergedGreeting,
-      settings: mergedGreeting,
-      invitation_setting: mergedGreeting,
+      setting: this.salamSetting,
+      settings: this.salamSetting,
       filter_undangan: response?.filter_undangan || response?.data?.filter_undangan || {},
       data: response || {}
     };
-
-    console.log('[WhatsApp Share Settings Loaded]', {
-      salam_atas: mergedGreeting?.salam_atas,
-      salam_bawah: mergedGreeting?.salam_bawah
-    });
   }
 
   private normalizeWeddingDomain(value: any): string {
@@ -390,45 +389,43 @@ export class BagiUndanganComponent implements OnInit {
     return `daftar-tamu-undangan-${domain}.xlsx`;
   }
 
-  private getInvitationGreetingSetting(): any {
-    const data: any = this.weddingData || {};
-    const candidates = [
-      data?.testimoni,
-      data?.setting,
-      data?.settings,
-      data?.invitation_setting,
-      data?.filter_undangan,
-      data?.data?.testimoni,
-      data?.data?.setting
-    ].filter(Boolean);
+  private getInvitationGreetingSetting(): Record<string, any> {
+    return this.salamSetting || this.weddingData?.setting || {};
+  }
 
-    for (const candidate of candidates) {
-      if (
-        String(candidate?.salam_atas ?? '').trim() ||
-        String(candidate?.salam_bawah ?? '').trim()
-      ) {
-        return candidate;
-      }
+  private getSettingText(key: 'salam_atas' | 'salam_bawah' | 'salam_pembuka'): string {
+    const source =
+      this.salamSetting ||
+      this.weddingData?.setting ||
+      this.weddingData?.settings ||
+      this.weddingData?.data?.setting ||
+      {};
+
+    const raw = String(source?.[key] ?? '');
+
+    if (!raw.trim()) {
+      return '';
     }
 
-    return (
-      data?.testimoni ||
-      data?.setting ||
-      data?.settings ||
-      data?.invitation_setting ||
-      data?.filter_undangan ||
-      data?.data?.testimoni ||
-      data?.data?.setting ||
-      {}
-    );
+    return this.normalizeInvitationLineBreaks(raw);
+  }
+
+  private getWhatsappOpeningText(): string {
+    const text = String(this.salamSetting?.['salam_atas'] ?? '').trim();
+
+    return resolveSalamAtas(text);
+  }
+
+  private getWhatsappClosingText(): string {
+    const text = String(this.salamSetting?.['salam_bawah'] ?? '').trim();
+
+    return resolveSalamBawah(text);
   }
 
   private ensureInvitationGreetingSettings(onReady: () => void): void {
-    const setting = this.getInvitationGreetingSetting();
-
     if (
-      String(setting?.salam_atas ?? '').trim() ||
-      String(setting?.salam_bawah ?? '').trim()
+      this.getSettingText('salam_atas') ||
+      this.getSettingText('salam_bawah')
     ) {
       onReady();
       return;
@@ -443,46 +440,26 @@ export class BagiUndanganComponent implements OnInit {
     });
   }
 
-  private buildWhatsAppShareMessage(guestName?: string, invitationUrl?: string): string {
-    const setting = this.getInvitationGreetingSetting();
+  private buildWhatsAppShareMessage(_guestName?: string, invitationUrl?: string): string {
+    const salamAtas = this.getWhatsappOpeningText();
+    let salamBawah = this.getWhatsappClosingText();
+    const finalInvitationUrl = invitationUrl || this.buildGuestInvitationUrl(_guestName);
 
-    const salamAtasRaw = String(setting?.salam_atas ?? '');
-    const salamBawahRaw = String(setting?.salam_bawah ?? '');
-    const salamAtas = salamAtasRaw.trim();
-    const salamBawah = salamBawahRaw.trim();
+    if (
+      salamAtas &&
+      salamBawah &&
+      salamAtas.trim().toLowerCase() === salamBawah.trim().toLowerCase()
+    ) {
+      salamBawah = '';
+    }
 
-    const opening = salamAtas
-      ? this.normalizeInvitationLineBreaks(salamAtasRaw)
-      : [
-          'Assalamualaikum Wr Wb.',
-          'Dengan hormat kami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami:'
-        ].join('\n');
-
-    const closing = salamBawah
-      ? this.normalizeInvitationLineBreaks(salamBawahRaw)
-      : 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.';
-
-    const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
-    const finalInvitationUrl = invitationUrl || this.buildGuestInvitationUrl(cleanGuestName);
-
-    const message = [
-      opening,
-      '',
-      'Silakan buka undangan berikut:',
-      finalInvitationUrl,
-      '',
-      closing
-    ].join('\n');
-
-    console.log('[WhatsApp Share Message]', {
+    return [
       salamAtas,
-      salamBawah,
-      guestName: cleanGuestName,
-      invitationUrl: finalInvitationUrl,
-      message
-    });
-
-    return message;
+      `Silakan buka undangan berikut:\n${finalInvitationUrl}`,
+      salamBawah
+    ]
+      .filter((item) => !!String(item || '').trim())
+      .join('\n\n');
   }
 
   private normalizeInvitationLineBreaks(value: string): string {
