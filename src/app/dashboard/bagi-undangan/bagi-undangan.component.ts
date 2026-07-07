@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
-import { resolveSalamAtas, resolveSalamBawah } from 'src/app/shared/salam-defaults';
+import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
 import * as XLSX from 'xlsx';
 
 interface GeneratedGuestInvitation {
@@ -16,6 +16,9 @@ interface GeneratedGuestInvitation {
 })
 export class BagiUndanganComponent implements OnInit {
   @ViewChild('guestExcelInput') guestExcelInput?: ElementRef<HTMLInputElement>;
+
+  readonly DEFAULT_SALAM_ATAS = DEFAULT_SALAM_ATAS;
+  readonly DEFAULT_SALAM_BAWAH = DEFAULT_SALAM_BAWAH;
 
   public guestName = '';
   public generatedGuestUrl = '';
@@ -136,12 +139,18 @@ export class BagiUndanganComponent implements OnInit {
     this.showNotice('Link undangan personal berhasil dibuat.');
   }
 
-  public copyGuestInvitation(url = this.generatedGuestUrl): void {
-    if (!url) return;
+  public copyGuestInvitation(guestOrUrl?: GeneratedGuestInvitation | string): void {
+    const url = this.getGuestInvitationUrl(guestOrUrl);
 
-    navigator.clipboard?.writeText(url)
-      .then(() => this.showNotice('Link undangan berhasil disalin.'))
-      .catch(() => this.showNotice('Gagal menyalin link undangan.'));
+    if (!url) {
+      this.showNotice('Link undangan belum tersedia.');
+      return;
+    }
+
+    this.ensureInvitationGreetingSettings(() => {
+      const message = this.buildShareMessage(url);
+      this.copyTextToClipboard(message);
+    });
   }
 
   public shareGuestInvitationWhatsapp(url = this.generatedGuestUrl, guestName?: string): void {
@@ -159,9 +168,21 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     this.ensureInvitationGreetingSettings(() => {
-      const message = this.buildWhatsAppShareMessage(resolvedGuestName, invitationUrl);
+      const message = this.buildShareMessage(invitationUrl);
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     });
+  }
+
+  public getGuestInvitationUrl(guestOrUrl?: GeneratedGuestInvitation | string): string {
+    if (typeof guestOrUrl === 'string') {
+      return guestOrUrl.trim();
+    }
+
+    if (guestOrUrl && typeof guestOrUrl === 'object') {
+      return String(guestOrUrl.url || '').trim() || this.buildGuestInvitationUrl(guestOrUrl.name);
+    }
+
+    return String(this.generatedGuestUrl || '').trim();
   }
 
   public trackByGuest(index: number, guest: GeneratedGuestInvitation): string {
@@ -298,7 +319,7 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   public buildWhatsappUrl(guestName: string, guestUrl: string): string {
-    const message = this.buildWhatsAppShareMessage(guestName, guestUrl);
+    const message = this.buildShareMessage(guestUrl);
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
@@ -410,16 +431,30 @@ export class BagiUndanganComponent implements OnInit {
     return this.normalizeInvitationLineBreaks(raw);
   }
 
-  private getWhatsappOpeningText(): string {
-    const text = String(this.salamSetting?.['salam_atas'] ?? '').trim();
+  private normalizeText(value: unknown, fallback: string): string {
+    return normalizeSalamValue(value, fallback);
+  }
 
-    return resolveSalamAtas(text);
+  private getWhatsappOpeningText(): string {
+    return this.normalizeInvitationLineBreaks(
+      this.normalizeText(
+        this.salamSetting?.['salam_atas'] ??
+        this.weddingData?.setting?.salam_atas ??
+        this.weddingData?.settings?.salam_atas,
+        this.DEFAULT_SALAM_ATAS
+      )
+    );
   }
 
   private getWhatsappClosingText(): string {
-    const text = String(this.salamSetting?.['salam_bawah'] ?? '').trim();
-
-    return resolveSalamBawah(text);
+    return this.normalizeInvitationLineBreaks(
+      this.normalizeText(
+        this.salamSetting?.['salam_bawah'] ??
+        this.weddingData?.setting?.salam_bawah ??
+        this.weddingData?.settings?.salam_bawah,
+        this.DEFAULT_SALAM_BAWAH
+      )
+    );
   }
 
   private ensureInvitationGreetingSettings(onReady: () => void): void {
@@ -440,10 +475,10 @@ export class BagiUndanganComponent implements OnInit {
     });
   }
 
-  private buildWhatsAppShareMessage(_guestName?: string, invitationUrl?: string): string {
+  private buildShareMessage(url: string): string {
     const salamAtas = this.getWhatsappOpeningText();
     let salamBawah = this.getWhatsappClosingText();
-    const finalInvitationUrl = invitationUrl || this.buildGuestInvitationUrl(_guestName);
+    const invitationUrl = String(url || '').trim();
 
     if (
       salamAtas &&
@@ -455,11 +490,42 @@ export class BagiUndanganComponent implements OnInit {
 
     return [
       salamAtas,
-      `Silakan buka undangan berikut:\n${finalInvitationUrl}`,
+      `Silakan buka undangan berikut:\n${invitationUrl}`,
       salamBawah
     ]
       .filter((item) => !!String(item || '').trim())
       .join('\n\n');
+  }
+
+  private copyTextToClipboard(message: string): void {
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(message)
+        .then(() => this.showNotice('Pesan undangan berhasil disalin.'))
+        .catch(() => this.fallbackCopyText(message));
+      return;
+    }
+
+    this.fallbackCopyText(message);
+  }
+
+  private fallbackCopyText(text: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      document.execCommand('copy');
+      this.showNotice('Pesan undangan berhasil disalin.');
+    } catch {
+      this.showNotice('Gagal menyalin pesan undangan.');
+    } finally {
+      document.body.removeChild(textarea);
+    }
   }
 
   private normalizeInvitationLineBreaks(value: string): string {
