@@ -2696,36 +2696,6 @@
   cursor: pointer !important;
 }
 
-.diamond-garden-event__map {
-  position: relative !important;
-  z-index: 5 !important;
-  width: 270px !important;
-  height: 150px !important;
-  margin: 24px auto 16px !important;
-  border-radius: 18px !important;
-  overflow: hidden !important;
-  background: #f2f2f2 !important;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.14) !important;
-  transform: translateZ(0) !important;
-}
-
-.diamond-garden-event__map-iframe,
-.diamond-garden-event__map iframe {
-  width: 100% !important;
-  height: 100% !important;
-  border: 0 !important;
-  display: block !important;
-  pointer-events: auto !important;
-}
-
-.diamond-garden-event__map--empty {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  color: #9f4d43 !important;
-  font-size: 13px !important;
-}
-
 .diamond-garden-gift {
   position: relative !important;
   width: 100% !important;
@@ -2846,4 +2816,35 @@
 
 .diamond-garden-gift__card--empty {
   justify-content: flex-start !important;
+}
+
+.diamond-garden-event__map {
+  position: relative !important;
+  z-index: 5 !important;
+  width: 270px !important;
+  height: 150px !important;
+  margin: 24px auto 14px !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  background: #f2f2f2 !important;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.diamond-garden-event__map-iframe,
+.diamond-garden-event__map iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.diamond-garden-event__map--empty {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #8f3f36 !important;
+  font-size: 13px !important;
 }

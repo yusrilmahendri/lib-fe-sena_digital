@@ -20,7 +20,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   gardenAkadMapEmbedSrc = '';
   gardenMapReady = false;
 
-  private lastGardenMapLink = '';
+  private lastGardenMapSource = '';
 
   constructor(
     svc: DashboardService,
@@ -32,7 +32,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.initGardenMapOnce();
+    setTimeout(() => this.initGardenMapOnce(), 0);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -43,7 +43,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     if (changes['weddingData']) {
-      this.initGardenMapOnce();
+      setTimeout(() => this.initGardenMapOnce(), 0);
     }
   }
 
@@ -677,61 +677,146 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     );
   }
 
-  private initGardenMapOnce(): void {
-    const rawLink = this.resolveGardenAkadMapLink();
+  getGardenReceptionEvent(): any {
+    const data: any = this.weddingData || {};
+    const events = data.events || data.acaras || data.event || [];
 
-    if (!rawLink) {
+    if (!Array.isArray(events)) return null;
+
+    return (
+      events.find((event: any) => {
+        const type = String(
+          event?.jenis_acara || event?.type || event?.nama_acara || ''
+        ).toLowerCase();
+
+        return (
+          type.includes('resepsi') ||
+          type.includes('reception') ||
+          type.includes('walimah')
+        );
+      }) ||
+      events[1] ||
+      null
+    );
+  }
+
+  override getReceptionEvent(): any {
+    return this.getResepsiEvent();
+  }
+
+  private initGardenMapOnce(): void {
+    const source = this.resolveGardenMapSource();
+
+    if (!source) {
       this.gardenAkadMapLink = '';
       this.gardenAkadMapEmbedSrc = '';
       this.gardenMapReady = false;
-      this.lastGardenMapLink = '';
+      this.lastGardenMapSource = '';
       return;
     }
 
-    if (rawLink === this.lastGardenMapLink && this.gardenAkadMapEmbedSrc) {
+    if (source === this.lastGardenMapSource && this.gardenAkadMapEmbedSrc) {
       return;
     }
 
-    this.lastGardenMapLink = rawLink;
-    this.gardenAkadMapLink = rawLink;
-    this.gardenAkadMapEmbedSrc = this.toGardenGoogleMapEmbedUrl(rawLink);
-    this.gardenMapReady = true;
+    this.lastGardenMapSource = source;
+    this.gardenAkadMapLink = this.resolveGardenMapOpenLink();
+    this.gardenAkadMapEmbedSrc = this.toGardenMapEmbedUrl(source);
+    this.gardenMapReady = !!this.gardenAkadMapEmbedSrc;
   }
 
-  private resolveGardenAkadMapLink(): string {
-    const akad: any = this.getGardenAkadEvent() || this.getAkadEvent() || null;
-    const resepsi: any = this.getResepsiEvent() || null;
-    const event = akad || resepsi || {};
+  private getGardenMapCandidateEvents(): any[] {
+    return [
+      this.getGardenAkadEvent?.(),
+      this.getAkadEvent?.(),
+      this.getGardenReceptionEvent?.(),
+      this.getReceptionEvent?.(),
+    ].filter(Boolean);
+  }
 
+  private extractGardenLinkMaps(event?: any): string {
     return String(
       event?.link_maps ||
       event?.link_map ||
       event?.google_maps ||
       event?.maps ||
       event?.map_url ||
-      event?.alamat ||
       ''
     ).trim();
   }
 
-  private toGardenGoogleMapEmbedUrl(raw: string): string {
-    const link = String(raw || '').trim();
+  private resolveGardenMapSource(): string {
+    const events = this.getGardenMapCandidateEvents();
 
-    if (!link) {
+    for (const event of events) {
+      const linkMaps = this.extractGardenLinkMaps(event);
+      if (linkMaps) {
+        return linkMaps;
+      }
+    }
+
+    const fallbackEvent =
+      events[0] ||
+      this.getGardenAkadEvent?.() ||
+      this.getAkadEvent?.() ||
+      this.getGardenReceptionEvent?.() ||
+      this.getReceptionEvent?.() ||
+      {};
+
+    return String(
+      fallbackEvent?.alamat || fallbackEvent?.address || ''
+    ).trim();
+  }
+
+  private resolveGardenMapOpenLink(): string {
+    const events = this.getGardenMapCandidateEvents();
+
+    for (const event of events) {
+      const linkMaps = this.extractGardenLinkMaps(event);
+      if (linkMaps) {
+        return linkMaps;
+      }
+    }
+
+    const fallbackEvent =
+      events[0] ||
+      this.getGardenAkadEvent?.() ||
+      this.getAkadEvent?.() ||
+      this.getGardenReceptionEvent?.() ||
+      this.getReceptionEvent?.() ||
+      {};
+
+    const fallback = String(
+      fallbackEvent?.alamat || fallbackEvent?.address || ''
+    ).trim();
+
+    return fallback
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallback)}`
+      : '';
+  }
+
+  private toGardenMapEmbedUrl(raw: string): string {
+    const value = String(raw || '').trim();
+
+    if (!value) {
       return '';
     }
 
-    if (link.includes('/maps/embed')) {
-      return link;
+    if (value.includes('/maps/embed')) {
+      return value;
     }
 
-    if (link.includes('google.com/maps?q=')) {
-      return link.includes('output=embed')
-        ? link
-        : `${link}${link.includes('?') ? '&' : '?'}output=embed`;
+    if (value.includes('google.com/maps')) {
+      return value.includes('output=embed')
+        ? value
+        : `${value}${value.includes('?') ? '&' : '?'}output=embed`;
     }
 
-    return `https://www.google.com/maps?q=${encodeURIComponent(link)}&output=embed`;
+    if (value.includes('maps.app.goo.gl') || value.includes('goo.gl/maps')) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
+    }
+
+    return `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
   }
 
   openGardenAkadMap(): void {
@@ -876,17 +961,16 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       ''
     ).trim();
 
-    const address = this.getGardenEventAddress(event);
-
-    if (address) {
-      return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
-    }
-
     if (rawLink) {
-      return `https://maps.google.com/maps?q=${encodeURIComponent(rawLink)}&output=embed`;
+      return this.toGardenMapEmbedUrl(rawLink);
     }
 
-    return '';
+    const address = this.getGardenEventAddress(event);
+    if (!address) {
+      return '';
+    }
+
+    return this.toGardenMapEmbedUrl(address);
   }
 
   getGardenDateLabel(): string {
