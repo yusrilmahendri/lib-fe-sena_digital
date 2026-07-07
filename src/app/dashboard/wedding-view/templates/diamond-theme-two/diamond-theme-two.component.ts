@@ -1,5 +1,5 @@
 import { Component, SimpleChanges } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
@@ -16,12 +16,15 @@ interface DiamondGardenGalleryItem {
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
 export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
+  private gardenSanitizer!: DomSanitizer;
+
   constructor(
     svc: DashboardService,
     sanitizer: DomSanitizer,
     toastService: ToastService
   ) {
     super(sanitizer, svc, toastService);
+    this.gardenSanitizer = sanitizer;
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -643,6 +646,101 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
 
   override getAkadMapLink(): string {
     return this.getEventMapLink(this.getAkadEvent());
+  }
+
+  getGardenAkadEvent(): any {
+    const data: any = this.weddingData || {};
+    const events = data.events || data.acaras || data.event || [];
+
+    if (!Array.isArray(events)) return null;
+
+    return (
+      events.find((event: any) =>
+        String(event?.jenis_acara || event?.type || event?.nama_acara || '')
+          .toLowerCase()
+          .includes('akad')
+      ) ||
+      events[0] ||
+      null
+    );
+  }
+
+  getGardenAkadMapLink(): string {
+    const event = this.getGardenAkadEvent();
+    const link =
+      event?.link_maps ||
+      event?.link_map ||
+      event?.google_maps ||
+      event?.maps ||
+      event?.map_url ||
+      '';
+
+    return String(link || '').trim();
+  }
+
+  getGardenAkadMapEmbedUrl(): SafeResourceUrl | null {
+    const raw = this.getGardenAkadMapLink();
+    if (!raw) return null;
+
+    let embedUrl = raw;
+
+    if (raw.includes('/embed')) {
+      embedUrl = raw;
+    } else if (raw.includes('google.com/maps')) {
+      embedUrl = raw.replace('/maps/place/', '/maps/embed?pb=');
+      if (!embedUrl.includes('/maps/embed')) {
+        embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+      }
+    } else if (raw.includes('maps.app.goo.gl') || raw.includes('goo.gl/maps')) {
+      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+    } else {
+      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+    }
+
+    return this.gardenSanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+  }
+
+  openGardenAkadMap(): void {
+    const url = this.getGardenAkadMapLink();
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
+
+  getGardenGiftAccounts(): any[] {
+    const data: any = this.weddingData || {};
+    const accounts =
+      data.bank_accounts ||
+      data.rekenings ||
+      data.rekening ||
+      data.gifts ||
+      [];
+
+    return Array.isArray(accounts) ? accounts.filter(Boolean) : [];
+  }
+
+  copyGardenGiftNumber(account: any): void {
+    const value = String(
+      account?.nomor_rekening ||
+      account?.account_number ||
+      account?.no_rekening ||
+      ''
+    ).trim();
+
+    if (!value) return;
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(value);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
   }
 
   getGardenMapLink(event?: any): string {

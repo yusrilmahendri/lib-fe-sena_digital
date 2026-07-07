@@ -202,26 +202,29 @@
             {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
           </p>
 
-          <div
-            class="diamond-garden-event__map"
-            *ngIf="getGardenMapEmbedUrl(getAkadEvent()) as mapEmbedUrl">
+          <div class="diamond-garden-event__map" *ngIf="getGardenAkadMapEmbedUrl() as mapUrl; else noGardenMap">
             <iframe
-              [attr.src]="mapEmbedUrl"
+              [src]="mapUrl"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen>
             </iframe>
           </div>
 
-          <a
-            class="diamond-garden-event__button"
-            *ngIf="getGardenMapLink(getAkadEvent()) as mapLink"
-            [href]="mapLink"
-            target="_blank"
-            rel="noopener">
+          <ng-template #noGardenMap>
+            <div class="diamond-garden-event__map diamond-garden-event__map--empty">
+              <span>Preview maps belum tersedia</span>
+            </div>
+          </ng-template>
+
+          <button
+            type="button"
+            class="diamond-garden-event__map-button"
+            *ngIf="getGardenAkadMapLink()"
+            (click)="openGardenAkadMap()">
             <i class="fas fa-map-marker-alt"></i>
             Lihat Lokasi
-          </a>
+          </button>
         </div>
       </section>
 
@@ -416,30 +419,55 @@
         </div>
       </section>
 
-      <section class="diamond-garden-section diamond-garden-section--gift" *ngIf="isGiftVisible()">
-        <div class="diamond-garden-section__header">
-          <div class="diamond-garden-floral diamond-garden-floral--top" aria-hidden="true"></div>
-          <p class="diamond-garden-section__eyebrow">Wedding Gift</p>
-          <h2 class="diamond-garden-section__title">Tanda Kasih</h2>
-        </div>
+      <section class="diamond-garden-gift">
+        <img
+          class="diamond-garden-gift__frame"
+          src="assets/thema-2-diamond/theme-2.png"
+          alt=""
+          aria-hidden="true" />
 
-        <div class="diamond-garden-gifts" *ngIf="getVisibleBankAccounts().length; else emptyBanks">
-          <article class="diamond-garden-gift-card" *ngFor="let bank of getVisibleBankAccounts()">
-            <div class="diamond-garden-gift-card__bank">{{ bank.nomor_rekening }} / {{ bank.nama_bank || bank.bank?.name || 'BANK' }}</div>
-            <strong>{{ getGiftAddress(bank) }}</strong>
-            <button class="diamond-garden-button diamond-garden-button--outline" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
-              <i class="far fa-copy" aria-hidden="true"></i>
-              Salin
-            </button>
-          </article>
-        </div>
+        <div class="diamond-garden-gift__content">
+          <p class="diamond-garden-gift__eyebrow">WEDDING GIFT</p>
+          <h2 class="diamond-garden-gift__title">Tanda Kasih</h2>
 
-        <ng-template #emptyBanks>
-          <article class="diamond-garden-gift-card">
-            <div class="diamond-garden-gift-card__bank">Informasi Rekening</div>
-            <strong>Detail hadiah akan diperbarui</strong>
-          </article>
-        </ng-template>
+          <div class="diamond-garden-gift__list" *ngIf="getGardenGiftAccounts().length; else noGardenGift">
+            <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts()">
+              <div class="diamond-garden-gift__icon">
+                <i class="fas fa-gift"></i>
+              </div>
+
+              <div class="diamond-garden-gift__info">
+                <strong>
+                  {{ account.nomor_rekening || account.account_number || account.no_rekening }}
+                  <span *ngIf="account.nama_bank || account.bank_name">
+                    / {{ account.nama_bank || account.bank_name }}
+                  </span>
+                </strong>
+                <small>a.n. {{ account.nama_pemilik || account.account_name || account.pemilik || '-' }}</small>
+              </div>
+
+              <button
+                type="button"
+                class="diamond-garden-gift__copy"
+                *ngIf="account.nomor_rekening || account.account_number || account.no_rekening"
+                (click)="copyGardenGiftNumber(account)">
+                Salin
+              </button>
+            </div>
+          </div>
+
+          <ng-template #noGardenGift>
+            <div class="diamond-garden-gift__card diamond-garden-gift__card--empty">
+              <div class="diamond-garden-gift__icon">
+                <i class="fas fa-gift"></i>
+              </div>
+              <div class="diamond-garden-gift__info">
+                <strong>Informasi rekening belum tersedia</strong>
+                <small>Detail hadiah akan diperbarui</small>
+              </div>
+            </div>
+          </ng-template>
+        </div>
       </section>
 
       <section class="diamond-garden-footer">
