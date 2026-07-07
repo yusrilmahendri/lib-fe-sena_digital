@@ -2159,15 +2159,15 @@
 
 .diamond-garden-event__map {
   width: 100% !important;
-  max-width: 318px !important;
-  height: 150px !important;
-  margin: 18px auto 16px !important;
+  max-width: 320px !important;
+  height: 145px !important;
+  margin: 18px auto 14px !important;
   border-radius: 18px !important;
   overflow: hidden !important;
-  background: #f5f5f5 !important;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
+  background: #f4f4f4 !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12) !important;
   position: relative !important;
-  z-index: 3 !important;
+  z-index: 6 !important;
 }
 
 .diamond-garden-event__map iframe {
@@ -2175,12 +2175,13 @@
   height: 100% !important;
   border: 0 !important;
   display: block !important;
+  background: #f4f4f4 !important;
 }
 
 .diamond-garden-event__button {
   margin-top: 0 !important;
   position: relative !important;
-  z-index: 4 !important;
+  z-index: 7 !important;
 }
 
 .diamond-garden-event__address {
@@ -2304,5 +2305,345 @@
   .diamond-garden-moments__time-box span {
     font-size: 8px !important;
     letter-spacing: 1.6px !important;
+  }
+}
+
+.diamond-garden-moments__featured {
+  width: 100% !important;
+  max-width: 320px !important;
+  height: 150px !important;
+  margin: 0 auto 18px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  z-index: 5 !important;
+  background: transparent !important;
+}
+
+.diamond-garden-moments__featured img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.diamond-garden-moments__slider {
+  width: 100% !important;
+  max-width: 334px !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.diamond-garden-moments__track {
+  display: flex !important;
+  width: max-content !important;
+  gap: 10px !important;
+  animation: diamondGardenSlide 22s linear infinite !important;
+  will-change: transform !important;
+}
+
+.diamond-garden-moments__slider:hover .diamond-garden-moments__track {
+  animation-play-state: paused !important;
+}
+
+.diamond-garden-moments__slider .diamond-garden-moments__item {
+  width: 102px !important;
+  height: 150px !important;
+  flex: 0 0 102px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.diamond-garden-moments__slider .diamond-garden-moments__item img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+@keyframes diamondGardenSlide {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-50% - 5px));
+  }
+}
+
+.diamond-garden-story {
+  width: 100% !important;
+  max-width: 410px !important;
+  min-height: 730px !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #173d27 !important;
+  color: #f4e2a6 !important;
+}
+
+.diamond-garden-story__frame {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+}
+
+.diamond-garden-story__content {
+  position: relative !important;
+  z-index: 2 !important;
+  min-height: 730px !important;
+  padding: 82px 44px 78px !important;
+  box-sizing: border-box !important;
+}
+
+.diamond-garden-story__eyebrow {
+  margin: 0 0 10px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  letter-spacing: 5px !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  color: rgba(232, 213, 154, 0.78) !important;
+  font-weight: 700 !important;
+}
+
+.diamond-garden-story h2 {
+  margin: 0 auto 54px !important;
+  max-width: 300px !important;
+  font-size: 31px !important;
+  line-height: 1.18 !important;
+  font-weight: 800 !important;
+  text-align: center !important;
+  color: #dfc98e !important;
+}
+
+.diamond-garden-story__timeline {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 34px !important;
+  padding-left: 26px !important;
+}
+
+.diamond-garden-story__timeline::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 7px !important;
+  top: 8px !important;
+  bottom: 12px !important;
+  width: 1px !important;
+  background: rgba(223, 201, 142, 0.45) !important;
+}
+
+.diamond-garden-story__item {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.diamond-garden-story__dot {
+  position: absolute !important;
+  left: -25px !important;
+  top: 4px !important;
+  width: 11px !important;
+  height: 11px !important;
+  border-radius: 50% !important;
+  background: #dfc98e !important;
+  box-shadow: 0 0 0 4px rgba(223, 201, 142, 0.12) !important;
+}
+
+.diamond-garden-story__body {
+  text-align: left !important;
+}
+
+.diamond-garden-story__year {
+  display: block !important;
+  margin: 0 0 10px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+  letter-spacing: 1.5px !important;
+  font-weight: 500 !important;
+}
+
+.diamond-garden-story__body h3 {
+  margin: 0 0 8px !important;
+  font-size: 18px !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  color: #dfc98e !important;
+}
+
+.diamond-garden-story__body p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  font-weight: 400 !important;
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+@media (max-width: 380px) {
+  .diamond-garden-story__content {
+    padding: 76px 34px 72px !important;
+  }
+
+  .diamond-garden-story h2 {
+    font-size: 29px !important;
+    margin-bottom: 44px !important;
+  }
+
+  .diamond-garden-story__timeline {
+    gap: 28px !important;
+  }
+}
+
+.diamond-garden-footer {
+  width: 100% !important;
+  max-width: 410px !important;
+  min-height: 650px !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #0f2418 !important;
+  color: #fff !important;
+}
+
+.diamond-garden-footer__image {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  z-index: 1 !important;
+}
+
+.diamond-garden-footer__overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 22, 15, 0.3) 0%,
+      rgba(10, 22, 15, 0.48) 34%,
+      rgba(10, 22, 15, 0.78) 100%
+    ) !important;
+}
+
+.diamond-garden-footer__content {
+  position: relative !important;
+  z-index: 3 !important;
+  min-height: 650px !important;
+  padding: 118px 30px 52px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.diamond-garden-footer__message {
+  margin: 0 auto 70px !important;
+  max-width: 320px !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+.diamond-garden-footer__label {
+  margin: auto 0 16px !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  letter-spacing: 3.8px !important;
+  text-transform: uppercase !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  font-weight: 700 !important;
+}
+
+.diamond-garden-footer__names {
+  margin: 0 !important;
+  font-size: 42px !important;
+  line-height: 1.16 !important;
+  font-weight: 800 !important;
+  color: #ffffff !important;
+  text-transform: capitalize !important;
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.diamond-garden-footer__names span {
+  display: block !important;
+  font-size: 32px !important;
+  line-height: 1.05 !important;
+  margin: 2px 0 !important;
+  color: #ffffff !important;
+}
+
+.diamond-garden-footer__date {
+  margin: 18px 0 58px !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  letter-spacing: 7px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.diamond-garden-footer__credit {
+  margin-top: auto !important;
+  text-align: center !important;
+  color: #ffffff !important;
+}
+
+.diamond-garden-footer__credit p {
+  margin: 0 0 4px !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  color: #ffffff !important;
+}
+
+.diamond-garden-footer__credit span {
+  display: block !important;
+  margin-bottom: 2px !important;
+  font-size: 8px !important;
+  line-height: 1.2 !important;
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.diamond-garden-footer__credit strong {
+  color: #d8b653 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.5px !important;
+  font-weight: 800 !important;
+}
+
+@media (max-width: 380px) {
+  .diamond-garden-footer {
+    min-height: 620px !important;
+  }
+
+  .diamond-garden-footer__content {
+    min-height: 620px !important;
+    padding: 106px 24px 46px !important;
+  }
+
+  .diamond-garden-footer__names {
+    font-size: 38px !important;
+  }
+
+  .diamond-garden-footer__date {
+    letter-spacing: 5px !important;
   }
 }

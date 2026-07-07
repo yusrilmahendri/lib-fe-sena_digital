@@ -264,32 +264,32 @@
             </div>
           </div>
 
-          <div
-            class="diamond-garden-moments__featured"
-            *ngIf="getGardenMomentFeatured() as featured"
-            (click)="openGardenMomentVideo(featured)">
+          <div class="diamond-garden-moments__featured" *ngIf="getGardenFeaturedPhoto() as featuredPhoto">
             <img
-              [src]="getGardenMomentPhotoUrl(featured)"
-              [alt]="getGardenMomentAlt(featured, 0)"
+              [src]="featuredPhoto"
+              alt="Moment utama"
               (error)="onGardenImageError($event)" />
-
-            <button
-              type="button"
-              class="diamond-garden-moments__play"
-              *ngIf="hasGardenMomentVideo(featured)"
-              aria-label="Putar video">
-              <i class="fas fa-play"></i>
-            </button>
           </div>
 
-          <div class="diamond-garden-moments__gallery">
-            <div
-              class="diamond-garden-moments__item"
-              *ngFor="let item of getGardenMomentPhotos(); let i = index">
-              <img
-                [src]="getGardenMomentPhotoUrl(item)"
-                [alt]="getGardenMomentAlt(item, i)"
-                (error)="onGardenImageError($event)" />
+          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotos().length">
+            <div class="diamond-garden-moments__track">
+              <div
+                class="diamond-garden-moments__item"
+                *ngFor="let photo of getGardenMomentPhotos(); trackBy: trackByGardenPhoto">
+                <img
+                  [src]="photo"
+                  alt="Moment pernikahan"
+                  (error)="onGardenImageError($event)" />
+              </div>
+
+              <div
+                class="diamond-garden-moments__item"
+                *ngFor="let photo of getGardenMomentPhotos(); trackBy: trackByGardenPhoto">
+                <img
+                  [src]="photo"
+                  alt="Moment pernikahan"
+                  (error)="onGardenImageError($event)" />
+              </div>
             </div>
           </div>
         </div>
@@ -387,18 +387,32 @@
         </div>
       </section>
 
-      <section class="diamond-garden-section diamond-garden-section--story" *ngIf="isStoryVisible()">
-        <p class="diamond-garden-section__eyebrow">Our Journey</p>
-        <h2 class="diamond-garden-section__title diamond-garden-section__title--light">Cerita Perjalanan Kami</h2>
-        <div class="diamond-garden-timeline">
-          <article class="diamond-garden-timeline__item" *ngFor="let item of getLoveStoryItems(); trackBy: getStoryTrackBy">
-            <span class="diamond-garden-timeline__year">{{ item.date }}</span>
-            <div class="diamond-garden-timeline__dot"></div>
-            <div class="diamond-garden-timeline__body">
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.description }}</p>
-            </div>
-          </article>
+      <section class="diamond-garden-story">
+        <img
+          #storyFrame
+          class="diamond-garden-story__frame"
+          src="assets/thema-2/theme-3.png"
+          alt=""
+          aria-hidden="true"
+          (error)="storyFrame.style.display='none'" />
+
+        <div class="diamond-garden-story__content">
+          <p class="diamond-garden-story__eyebrow">OUR STORY</p>
+          <h2>Cerita Perjalanan<br />Kami</h2>
+
+          <div class="diamond-garden-story__timeline">
+            <article
+              class="diamond-garden-story__item"
+              *ngFor="let story of getGardenStories(); trackBy: trackByGardenStory">
+              <span class="diamond-garden-story__dot"></span>
+
+              <div class="diamond-garden-story__body">
+                <span class="diamond-garden-story__year">{{ story.year }}</span>
+                <h3>{{ story.title }}</h3>
+                <p>{{ story.description }}</p>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -428,17 +442,38 @@
         </ng-template>
       </section>
 
-      <section class="diamond-garden-closing">
-        <div class="diamond-garden-closing__media" [style.background-image]="'url(' + getGardenCoverPhotoUrl() + ')'"></div>
-        <div class="diamond-garden-closing__overlay"></div>
-        <div class="diamond-garden-closing__content">
-          <p>Merupakan suatu kehormatan dan kebahagiaan bagi kami atas kehadiran dan doa restunya.</p>
-          <h2>
-            <span>{{ getPrimaryDisplayName() }}</span>
-            <em>&amp;</em>
-            <span>{{ getSecondaryDisplayName() }}</span>
+      <section class="diamond-garden-footer">
+        <img
+          #footerImage
+          class="diamond-garden-footer__image"
+          [src]="getGardenFooterPhotoUrl()"
+          alt="Wedding footer"
+          (error)="footerImage.style.display='none'" />
+
+        <div class="diamond-garden-footer__overlay"></div>
+
+        <div class="diamond-garden-footer__content">
+          <p class="diamond-garden-footer__message">
+            Merupakan suatu kehormatan dan kebahagiaan<br />
+            bagi kami apabila Bapak/Ibu/Saudara/i berkenan<br />
+            hadir dan memberikan doa restu.
+          </p>
+
+          <p class="diamond-garden-footer__label">KAMI YANG BERBAHAGIA</p>
+
+          <h2 class="diamond-garden-footer__names">
+            {{ getGroomName() || getBrideName() }}
+            <span>&amp;</span>
+            {{ getBrideName() || getGroomName() }}
           </h2>
-          <small>Terima kasih telah menjadi bagian dari hari bahagia kami.</small>
+
+          <p class="diamond-garden-footer__date">{{ getGardenHeroDateLabel() }}</p>
+
+          <div class="diamond-garden-footer__credit">
+            <p>Paket <strong>Diamond</strong></p>
+            <span>Crafted with ♥ by</span>
+            <strong>SENA DIGITAL</strong>
+          </div>
         </div>
       </section>
     </div>

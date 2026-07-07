@@ -354,13 +354,37 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     );
   }
 
-  getGardenMomentPhotos(): any[] {
-    const gallery = this.getGardenMomentGallery();
-    const featured = this.getGardenMomentFeatured();
+  getGardenMomentPhotos(): string[] {
+    const gallery = this.weddingData?.gallery || [];
 
     return gallery
-      .filter((item: any) => item !== featured)
-      .slice(0, 3);
+      .map((item: any) => this.getGardenGalleryPhotoUrl(item))
+      .filter((url: string) => !!url)
+      .slice(0, 8);
+  }
+
+  getGardenFeaturedPhoto(): string {
+    const photos = this.getGardenMomentPhotos();
+
+    return photos[0] || this.getCoverPhotoUrl() || 'assets/thema-2/bg-wd.jpeg';
+  }
+
+  getGardenGalleryPhotoUrl(item: any): string {
+    const raw = String(
+      item?.photo_url ||
+      item?.photo ||
+      item?.url ||
+      item?.image ||
+      ''
+    ).trim();
+
+    if (!raw) return '';
+
+    return this.normalizeGardenPhotoUrl(raw);
+  }
+
+  trackByGardenPhoto(index: number, item: string): string {
+    return `${index}-${item}`;
   }
 
   getGardenMomentPhotoUrl(item: any): string {
@@ -622,7 +646,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenMapLink(event?: any): string {
-    const link = String(
+    const rawLink = String(
       event?.link_maps ||
       event?.link_map ||
       event?.maps ||
@@ -631,7 +655,9 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
       ''
     ).trim();
 
-    if (link) return link;
+    if (rawLink) {
+      return rawLink;
+    }
 
     const address = this.getGardenEventAddress(event);
     if (!address) return '';
@@ -645,19 +671,32 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
       event?.address ||
       event?.lokasi ||
       event?.location ||
+      event?.venue ||
       ''
     ).trim();
   }
 
   getGardenMapEmbedUrl(event?: any): string {
+    const rawLink = String(
+      event?.link_maps ||
+      event?.link_map ||
+      event?.maps ||
+      event?.google_maps ||
+      event?.map_url ||
+      ''
+    ).trim();
+
     const address = this.getGardenEventAddress(event);
-    const mapLink = this.getGardenMapLink(event);
 
-    const query = address || mapLink;
+    if (address) {
+      return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+    }
 
-    if (!query) return '';
+    if (rawLink) {
+      return `https://maps.google.com/maps?q=${encodeURIComponent(rawLink)}&output=embed`;
+    }
 
-    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+    return '';
   }
 
   getGardenDateLabel(): string {
@@ -751,5 +790,100 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
 
   getMapPreviewCaption(event: WeddingEvent): string {
     return this.getEventAddress(event);
+  }
+
+  getGardenStories(): Array<{ year: string; title: string; description: string }> {
+    const source =
+      this.weddingData?.stories ||
+      this.weddingData?.love_stories ||
+      this.weddingData?.cerita ||
+      this.weddingData?.cerita_perjalanan ||
+      this.weddingData?.invitation_package?.stories ||
+      [];
+
+    if (Array.isArray(source) && source.length) {
+      return source
+        .map((item: any) => ({
+          year: String(item?.year || item?.tahun || item?.date || item?.tanggal || '').trim(),
+          title: String(item?.title || item?.judul || item?.nama_cerita || '').trim(),
+          description: String(item?.description || item?.deskripsi || item?.cerita || item?.isi || '').trim(),
+        }))
+        .filter((item: any) => item.title || item.description);
+    }
+
+    return [
+      {
+        year: '2019',
+        title: 'Pertama Bertemu',
+        description: 'Dipertemukan di sebuah acara, percakapan singkat berubah menjadi awal dari segalanya.',
+      },
+      {
+        year: '2022',
+        title: 'Menjalin Hubungan',
+        description: 'Setiap hari menjadi lebih berwarna. Kami belajar tumbuh dan saling melengkapi.',
+      },
+      {
+        year: '2025',
+        title: 'Lamaran',
+        description: 'Di bawah langit senja, sebuah janji diucapkan untuk melangkah ke jenjang yang lebih serius.',
+      },
+      {
+        year: '2026',
+        title: 'Hari Bahagia',
+        description: 'Dengan restu keluarga, kami siap memulai babak baru sebagai sepasang suami istri.',
+      },
+    ];
+  }
+
+  trackByGardenStory(index: number, item: any): string {
+    return `${item?.year || index}-${item?.title || index}`;
+  }
+
+  getGardenHeroDateLabel(): string {
+    return this.getGardenDateLabel();
+  }
+
+  getGardenFooterPhotoUrl(): string {
+    const galleries =
+      this.weddingData?.gallery ||
+      this.weddingData?.galleries ||
+      this.weddingData?.photos ||
+      [];
+
+    if (Array.isArray(galleries) && galleries.length) {
+      const selected =
+        galleries.find((item: any) => item?.photo_url || item?.photo || item?.image_url) ||
+        galleries[0];
+
+      const raw =
+        selected?.photo_url ||
+        selected?.photo ||
+        selected?.image_url ||
+        selected?.url ||
+        '';
+
+      if (raw) {
+        return this.normalizeGardenPhotoUrl(raw);
+      }
+    }
+
+    const cover =
+      this.weddingData?.cover_url ||
+      this.weddingData?.cover ||
+      this.weddingData?.photo_cover ||
+      this.weddingData?.invitation_package?.cover ||
+      '';
+
+    if (cover) {
+      return this.normalizeGardenPhotoUrl(cover);
+    }
+
+    const groomPhoto = this.getGroomPhotoUrl();
+    if (groomPhoto) return groomPhoto;
+
+    const bridePhoto = this.getBridePhotoUrl();
+    if (bridePhoto) return bridePhoto;
+
+    return 'assets/thema-2/bg-wd.jpeg';
   }
 }
