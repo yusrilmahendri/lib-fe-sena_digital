@@ -45,7 +45,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
     if (changes['weddingData']) {
       this.diamondGardenMapInitialized = false;
+      this.diamondGardenMapSafeSrc = null;
+      this.diamondGardenMapSrc = '';
+      this.diamondGardenMapLink = '';
       setTimeout(() => this.setupDiamondGardenMapOnce(), 300);
+      setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
     }
   }
 

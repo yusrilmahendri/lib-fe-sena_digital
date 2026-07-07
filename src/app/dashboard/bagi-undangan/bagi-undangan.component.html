@@ -1,12 +1,16 @@
 <section class="share-invitation">
   <header class="share-invitation__header">
-    <h1>Bagi Undangan</h1>
-    <p>Buat link undangan personal untuk setiap tamu.</p>
+    <div>
+      <p class="share-invitation__eyebrow">Bagikan undangan personal</p>
+      <h1>Bagi Undangan</h1>
+      <p>Buat link undangan unik untuk setiap tamu, lalu bagikan lewat WhatsApp atau Excel.</p>
+    </div>
   </header>
 
   <div class="share-invitation__card">
     <div class="share-invitation__domain" *ngIf="publicWeddingDomain">
-      Domain undangan: <strong>{{ publicWeddingDomain }}</strong>
+      <span class="share-invitation__domain-label">Domain undangan aktif</span>
+      <strong>{{ publicWeddingDomain }}</strong>
     </div>
 
     <label class="share-invitation__label" for="guest-name">Nama tamu</label>
@@ -16,9 +20,8 @@
         type="text"
         [(ngModel)]="guestName"
         placeholder="Contoh: Bapak Andi"
-        (keyup.enter)="generateGuestInvitation()"
-      />
-      <button type="button" (click)="generateGuestInvitation()">
+        (keyup.enter)="generateGuestInvitation()" />
+      <button type="button" class="share-invitation__primary-btn" (click)="generateGuestInvitation()">
         Generate Link
       </button>
     </div>
@@ -26,32 +29,75 @@
     <p class="share-invitation__notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
 
     <div class="share-invitation__result" *ngIf="generatedGuestUrl">
-      <span>Link undangan</span>
+      <span class="share-invitation__result-label">Link undangan terbaru</span>
       <a [href]="generatedGuestUrl" target="_blank" rel="noopener noreferrer">
         {{ generatedGuestUrl }}
       </a>
       <div class="share-invitation__actions">
-        <button type="button" class="share-invitation__secondary" (click)="copyGuestInvitation()">
+        <button type="button" class="share-invitation__secondary-btn" (click)="copyGuestInvitation()">
           Copy Link
         </button>
-        <button type="button" class="share-invitation__whatsapp" (click)="shareGuestInvitationWhatsapp()">
+        <button type="button" class="share-invitation__whatsapp-btn" (click)="shareGuestInvitationWhatsapp()">
           Share WhatsApp
         </button>
       </div>
     </div>
   </div>
 
-  <section class="share-invitation__history" *ngIf="generatedGuests.length">
-    <h2>Link tamu yang sudah dibuat</h2>
-    <article class="share-invitation__guest" *ngFor="let guest of generatedGuests; trackBy: trackByGuest">
+  <section class="share-invitation__history">
+    <div class="share-invitation__history-head">
       <div>
-        <strong>{{ guest.name }}</strong>
-        <a [href]="guest.url" target="_blank" rel="noopener noreferrer">{{ guest.url }}</a>
+        <h2>Link tamu yang sudah dibuat</h2>
+        <p>{{ generatedGuests.length }} tamu tersimpan</p>
       </div>
-      <div class="share-invitation__guest-actions">
-        <button type="button" (click)="copyGuestInvitation(guest.url)">Copy</button>
-        <button type="button" (click)="shareGuestInvitationWhatsapp(guest.url)">WhatsApp</button>
+
+      <div class="share-invitation__excel-actions">
+        <button type="button" class="share-invitation__excel-btn" (click)="downloadGuestTemplate()">
+          Download Template
+        </button>
+        <button
+          type="button"
+          class="share-invitation__excel-btn"
+          [disabled]="isImportingGuests"
+          (click)="triggerGuestExcelImport()">
+          {{ isImportingGuests ? 'Mengimpor...' : 'Import Excel' }}
+        </button>
+        <button type="button" class="share-invitation__excel-btn share-invitation__excel-btn--primary" (click)="exportGuestsToExcel()">
+          Export Excel
+        </button>
       </div>
-    </article>
+    </div>
+
+    <input
+      #guestExcelInput
+      type="file"
+      class="share-invitation__excel-input"
+      accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      (change)="importGuestsFromExcel($event)" />
+
+    <div class="share-invitation__empty" *ngIf="!generatedGuests.length">
+      <div class="share-invitation__empty-icon" aria-hidden="true">
+        <i class="fas fa-user-friends"></i>
+      </div>
+      <h3>Belum ada tamu</h3>
+      <p>Tambahkan nama tamu atau import dari Excel untuk membuat link undangan personal.</p>
+    </div>
+
+    <div class="share-invitation__guest-list" *ngIf="generatedGuests.length">
+      <article class="share-invitation__guest" *ngFor="let guest of generatedGuests; trackBy: trackByGuest">
+        <div class="share-invitation__guest-info">
+          <strong>{{ guest.name }}</strong>
+          <a [href]="guest.url" target="_blank" rel="noopener noreferrer">{{ guest.url }}</a>
+        </div>
+        <div class="share-invitation__guest-actions">
+          <button type="button" class="share-invitation__secondary-btn" (click)="copyGuestInvitation(guest.url)">
+            Copy
+          </button>
+          <button type="button" class="share-invitation__whatsapp-btn" (click)="shareGuestInvitationWhatsapp(guest.url, guest.name)">
+            WhatsApp
+          </button>
+        </div>
+      </article>
+    </div>
   </section>
 </section>

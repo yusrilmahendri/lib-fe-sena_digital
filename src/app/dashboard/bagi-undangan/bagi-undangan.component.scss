@@ -1,182 +1,372 @@
 .share-invitation {
-  color: #1f2937;
-  max-width: 920px;
+  box-sizing: border-box;
+  color: #172033;
+  margin: 0 auto;
+  max-width: 980px;
+  overflow-x: hidden;
+  padding: 8px 4px 32px;
   width: 100%;
 }
 
 .share-invitation__header {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 
   h1 {
-    font-size: 28px;
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
     font-weight: 800;
-    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
   }
 
   p {
-    color: #6b7280;
+    color: #64748b;
+    line-height: 1.6;
     margin: 0;
+    max-width: 640px;
   }
+}
+
+.share-invitation__eyebrow {
+  color: #ff3d8d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
 }
 
 .share-invitation__card,
 .share-invitation__history {
   background: #ffffff;
-  border: 1px solid #eef0f4;
-  border-radius: 16px;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.06);
-  padding: 22px;
+  border: 1px solid #f4d3e1;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(255, 61, 141, 0.08);
+  padding: 24px;
+}
+
+.share-invitation__card + .share-invitation__history {
+  margin-top: 18px;
 }
 
 .share-invitation__domain {
-  background: #fff7fb;
-  border: 1px solid #f7d4e5;
-  border-radius: 12px;
-  color: #7a244e;
-  margin-bottom: 16px;
-  padding: 10px 12px;
+  background: linear-gradient(135deg, #fff5fa 0%, #fff 100%);
+  border: 1px solid #f4d3e1;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  padding: 16px 18px;
+
+  strong {
+    color: #172033;
+    display: block;
+    font-size: 20px;
+    margin-top: 4px;
+    word-break: break-word;
+  }
+}
+
+.share-invitation__domain-label {
+  color: #ff3d8d;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .share-invitation__label {
+  color: #172033;
   display: block;
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .share-invitation__form {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr auto;
 
   input {
-    border: 1px solid #d7dbe3;
-    border-radius: 12px;
-    flex: 1;
+    background: #fff;
+    border: 1px solid #f4d3e1;
+    border-radius: 14px;
+    box-sizing: border-box;
+    color: #172033;
     font-size: 15px;
-    min-height: 46px;
+    min-height: 50px;
     min-width: 0;
-    padding: 0 14px;
+    padding: 0 16px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+
+    &:focus {
+      border-color: #ff3d8d;
+      box-shadow: 0 0 0 4px rgba(255, 61, 141, 0.12);
+      outline: none;
+    }
+  }
+}
+
+.share-invitation__primary-btn,
+.share-invitation__secondary-btn,
+.share-invitation__whatsapp-btn,
+.share-invitation__excel-btn {
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 44px;
+  padding: 0 16px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
   }
 
-  button {
-    background: #d9468f;
-    border: 0;
-    border-radius: 12px;
-    color: #ffffff;
-    font-weight: 800;
-    min-height: 46px;
-    padding: 0 18px;
+  &:not(:disabled):active {
+    transform: translateY(1px);
   }
+}
+
+.share-invitation__primary-btn {
+  background: linear-gradient(135deg, #ff3d8d 0%, #d9468f 100%);
+  color: #ffffff;
+  min-height: 50px;
+  padding: 0 20px;
 }
 
 .share-invitation__notice {
-  color: #7a244e;
+  background: #fff5fa;
+  border: 1px solid #f4d3e1;
+  border-radius: 12px;
+  color: #9d174d;
+  font-size: 14px;
   font-weight: 600;
-  margin: 12px 0 0;
+  line-height: 1.5;
+  margin: 16px 0 0;
+  padding: 12px 14px;
 }
 
 .share-invitation__result {
-  background: #f9fafb;
-  border: 1px solid #eef0f4;
-  border-radius: 14px;
-  margin-top: 18px;
-  padding: 14px;
+  background: #fafbfd;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+  margin-top: 20px;
+  padding: 16px;
+}
 
-  span {
-    color: #6b7280;
-    display: block;
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
+.share-invitation__result-label {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
 
-  a {
-    color: #1f2937;
-    display: block;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-    text-decoration: none;
-  }
+.share-invitation__result a {
+  color: #172033;
+  display: block;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  word-break: break-word;
 }
 
 .share-invitation__actions,
 .share-invitation__guest-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  margin-top: 12px;
-
-  button {
-    border-radius: 10px;
-    font-weight: 800;
-    min-height: 40px;
-    padding: 0 14px;
-  }
+  margin-top: 14px;
 }
 
-.share-invitation__secondary,
-.share-invitation__guest-actions button:first-child {
+.share-invitation__secondary-btn,
+.share-invitation__guest-actions .share-invitation__secondary-btn {
   background: #ffffff;
-  border: 1px solid #d7dbe3;
-  color: #374151;
+  border: 1px solid #e2e8f0;
+  color: #172033;
 }
 
-.share-invitation__whatsapp,
-.share-invitation__guest-actions button:last-child {
+.share-invitation__whatsapp-btn,
+.share-invitation__guest-actions .share-invitation__whatsapp-btn {
   background: #22c55e;
-  border: 1px solid #22c55e;
   color: #ffffff;
 }
 
-.share-invitation__history {
-  margin-top: 18px;
+.share-invitation__history-head {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
 
   h2 {
-    font-size: 18px;
-    margin: 0 0 14px;
+    font-size: 20px;
+    margin: 0 0 4px;
   }
+
+  p {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+.share-invitation__excel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.share-invitation__excel-btn {
+  background: #ffffff;
+  border: 1px solid #f4d3e1;
+  color: #172033;
+}
+
+.share-invitation__excel-btn--primary {
+  background: #172033;
+  border-color: #172033;
+  color: #ffffff;
+}
+
+.share-invitation__excel-input {
+  display: none;
+}
+
+.share-invitation__empty {
+  align-items: center;
+  background: linear-gradient(180deg, #fffafb 0%, #ffffff 100%);
+  border: 1px dashed #f4d3e1;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 20px;
+  text-align: center;
+
+  h3 {
+    font-size: 18px;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: #64748b;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 420px;
+  }
+}
+
+.share-invitation__empty-icon {
+  align-items: center;
+  background: #fff0f7;
+  border-radius: 999px;
+  color: #ff3d8d;
+  display: flex;
+  font-size: 22px;
+  height: 56px;
+  justify-content: center;
+  margin-bottom: 14px;
+  width: 56px;
+}
+
+.share-invitation__guest-list {
+  display: grid;
+  gap: 12px;
 }
 
 .share-invitation__guest {
   align-items: center;
-  border-top: 1px solid #eef0f4;
+  background: #fafbfd;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
   display: flex;
-  gap: 14px;
+  gap: 16px;
   justify-content: space-between;
-  padding: 14px 0;
+  padding: 16px;
+}
 
-  &:first-of-type {
-    border-top: 0;
-    padding-top: 0;
-  }
+.share-invitation__guest-info {
+  flex: 1;
+  min-width: 0;
 
-  strong,
-  a {
+  strong {
+    color: #172033;
     display: block;
+    font-size: 16px;
+    margin-bottom: 6px;
+    word-break: break-word;
   }
 
   a {
-    color: #6b7280;
+    color: #64748b;
+    display: block;
     font-size: 13px;
-    margin-top: 4px;
+    line-height: 1.5;
     overflow-wrap: anywhere;
     text-decoration: none;
+    word-break: break-word;
   }
 }
 
-@media (max-width: 640px) {
+.share-invitation__guest-actions {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .share-invitation {
+    padding: 0 16px 24px;
+  }
+
   .share-invitation__card,
   .share-invitation__history {
     padding: 16px;
   }
 
-  .share-invitation__form,
-  .share-invitation__actions,
+  .share-invitation__form {
+    grid-template-columns: 1fr;
+  }
+
+  .share-invitation__primary-btn,
+  .share-invitation__secondary-btn,
+  .share-invitation__whatsapp-btn,
+  .share-invitation__excel-btn {
+    width: 100%;
+  }
+
+  .share-invitation__history-head,
+  .share-invitation__excel-actions,
   .share-invitation__guest,
+  .share-invitation__actions,
   .share-invitation__guest-actions {
     flex-direction: column;
   }
 
-  .share-invitation__form button,
-  .share-invitation__actions button,
-  .share-invitation__guest-actions button {
+  .share-invitation__excel-actions {
     width: 100%;
+  }
+
+  .share-invitation__guest {
+    align-items: stretch;
+  }
+
+  .share-invitation__guest-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .share-invitation__guest-actions {
+    grid-template-columns: 1fr;
   }
 }
