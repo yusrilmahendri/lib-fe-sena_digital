@@ -1,5 +1,5 @@
-import { Component, SimpleChanges } from '@angular/core';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { DomSanitizer } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
@@ -15,8 +15,12 @@ interface DiamondGardenGalleryItem {
   templateUrl: './diamond-theme-two.component.html',
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
-export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
-  private gardenSanitizer!: DomSanitizer;
+export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit {
+  gardenAkadMapLink = '';
+  gardenAkadMapEmbedSrc = '';
+  gardenMapReady = false;
+
+  private lastGardenMapLink = '';
 
   constructor(
     svc: DashboardService,
@@ -24,7 +28,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     toastService: ToastService
   ) {
     super(sanitizer, svc, toastService);
-    this.gardenSanitizer = sanitizer;
+  }
+
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.initGardenMapOnce();
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -32,6 +40,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
 
     if (changes['invitationOpened'] && this.invitationOpened) {
       this.isInvitationOpened = true;
+    }
+
+    if (changes['weddingData']) {
+      this.initGardenMapOnce();
     }
   }
 
@@ -665,55 +677,66 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     );
   }
 
-  getGardenAkadMapLink(): string {
-    const event = this.getGardenAkadEvent() || this.getAkadEvent();
-    const link =
+  private initGardenMapOnce(): void {
+    const rawLink = this.resolveGardenAkadMapLink();
+
+    if (!rawLink) {
+      this.gardenAkadMapLink = '';
+      this.gardenAkadMapEmbedSrc = '';
+      this.gardenMapReady = false;
+      this.lastGardenMapLink = '';
+      return;
+    }
+
+    if (rawLink === this.lastGardenMapLink && this.gardenAkadMapEmbedSrc) {
+      return;
+    }
+
+    this.lastGardenMapLink = rawLink;
+    this.gardenAkadMapLink = rawLink;
+    this.gardenAkadMapEmbedSrc = this.toGardenGoogleMapEmbedUrl(rawLink);
+    this.gardenMapReady = true;
+  }
+
+  private resolveGardenAkadMapLink(): string {
+    const akad: any = this.getGardenAkadEvent() || this.getAkadEvent() || null;
+    const resepsi: any = this.getResepsiEvent() || null;
+    const event = akad || resepsi || {};
+
+    return String(
       event?.link_maps ||
       event?.link_map ||
       event?.google_maps ||
       event?.maps ||
       event?.map_url ||
-      '';
-
-    return String(link || '').trim();
-  }
-
-  getGardenAkadMapEmbedUrl(): SafeResourceUrl | null {
-    const event = this.getGardenAkadEvent() || this.getAkadEvent();
-    const raw = this.getGardenAkadMapLink();
-    const address = String(
-      this.getDetailEventAddress(event) ||
-      this.getEventAddress(event) ||
-      this.getGardenEventAddress(event) ||
+      event?.alamat ||
       ''
     ).trim();
+  }
 
-    if (!raw && !address) return null;
+  private toGardenGoogleMapEmbedUrl(raw: string): string {
+    const link = String(raw || '').trim();
 
-    let embedUrl = raw;
-
-    if (raw.includes('/embed')) {
-      embedUrl = raw;
-    } else if (raw.includes('maps.app.goo.gl') || raw.includes('goo.gl/maps')) {
-      embedUrl = address
-        ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
-        : `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    } else if (raw.includes('google.com/maps')) {
-      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    } else if (address) {
-      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-    } else {
-      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    if (!link) {
+      return '';
     }
 
-    return this.gardenSanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+    if (link.includes('/maps/embed')) {
+      return link;
+    }
+
+    if (link.includes('google.com/maps?q=')) {
+      return link.includes('output=embed')
+        ? link
+        : `${link}${link.includes('?') ? '&' : '?'}output=embed`;
+    }
+
+    return `https://www.google.com/maps?q=${encodeURIComponent(link)}&output=embed`;
   }
 
   openGardenAkadMap(): void {
-    const url = this.getGardenAkadMapLink();
-    if (url) {
-      window.open(url, '_blank', 'noopener');
-    }
+    if (!this.gardenAkadMapLink) return;
+    window.open(this.gardenAkadMapLink, '_blank', 'noopener,noreferrer');
   }
 
   getGardenGiftAccounts(): any[] {

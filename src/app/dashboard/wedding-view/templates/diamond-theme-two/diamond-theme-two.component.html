@@ -202,9 +202,12 @@
             {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
           </p>
 
-          <div class="diamond-garden-event__map" *ngIf="getGardenAkadMapEmbedUrl() as mapUrl; else noGardenMap">
+          <div
+            class="diamond-garden-event__map"
+            *ngIf="gardenMapReady && gardenAkadMapEmbedSrc; else noGardenMap">
             <iframe
-              [src]="mapUrl"
+              class="diamond-garden-event__map-iframe"
+              [attr.src]="gardenAkadMapEmbedSrc"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen>
@@ -212,9 +215,7 @@
           </div>
 
           <ng-template #noGardenMap>
-            <div
-              class="diamond-garden-event__map diamond-garden-event__map--empty"
-              *ngIf="!getGardenAkadMapLink()">
+            <div class="diamond-garden-event__map diamond-garden-event__map--empty">
               <span>Preview maps belum tersedia</span>
             </div>
           </ng-template>
@@ -222,7 +223,7 @@
           <button
             type="button"
             class="diamond-garden-event__map-button"
-            *ngIf="getGardenAkadMapLink()"
+            *ngIf="gardenAkadMapLink"
             (click)="openGardenAkadMap()">
             <i class="fas fa-map-marker-alt"></i>
             Lihat Lokasi
@@ -424,7 +425,7 @@
       <section class="diamond-garden-gift">
         <img
           class="diamond-garden-gift__frame"
-          src="assets/thema-2-diamond/theme-2.png"
+          src="assets/thema-2/theme-2.png"
           alt=""
           aria-hidden="true" />
 
