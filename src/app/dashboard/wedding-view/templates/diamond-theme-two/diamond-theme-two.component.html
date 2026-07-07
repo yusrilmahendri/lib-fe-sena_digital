@@ -212,7 +212,9 @@
           </div>
 
           <ng-template #noGardenMap>
-            <div class="diamond-garden-event__map diamond-garden-event__map--empty">
+            <div
+              class="diamond-garden-event__map diamond-garden-event__map--empty"
+              *ngIf="!getGardenAkadMapLink()">
               <span>Preview maps belum tersedia</span>
             </div>
           </ng-template>
@@ -430,7 +432,7 @@
           <p class="diamond-garden-gift__eyebrow">WEDDING GIFT</p>
           <h2 class="diamond-garden-gift__title">Tanda Kasih</h2>
 
-          <div class="diamond-garden-gift__list" *ngIf="getGardenGiftAccounts().length; else noGardenGift">
+          <div class="diamond-garden-gift__list" *ngIf="getGardenGiftAccounts().length > 0; else noGardenGift">
             <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts()">
               <div class="diamond-garden-gift__icon">
                 <i class="fas fa-gift"></i>
@@ -438,18 +440,18 @@
 
               <div class="diamond-garden-gift__info">
                 <strong>
-                  {{ account.nomor_rekening || account.account_number || account.no_rekening }}
-                  <span *ngIf="account.nama_bank || account.bank_name">
-                    / {{ account.nama_bank || account.bank_name }}
+                  {{ getGardenGiftNumber(account) }}
+                  <span *ngIf="getGardenGiftBankName(account)">
+                    / {{ getGardenGiftBankName(account) }}
                   </span>
                 </strong>
-                <small>a.n. {{ account.nama_pemilik || account.account_name || account.pemilik || '-' }}</small>
+                <small>a.n. {{ getGardenGiftOwner(account) || '-' }}</small>
               </div>
 
               <button
                 type="button"
                 class="diamond-garden-gift__copy"
-                *ngIf="account.nomor_rekening || account.account_number || account.no_rekening"
+                *ngIf="getGardenGiftNumber(account)"
                 (click)="copyGardenGiftNumber(account)">
                 Salin
               </button>

@@ -2649,9 +2649,11 @@
 }
 
 .diamond-garden-event__map {
+  position: relative !important;
+  z-index: 3 !important;
   width: 270px !important;
   height: 150px !important;
-  margin: 28px auto 18px !important;
+  margin: 24px auto 16px !important;
   border-radius: 18px !important;
   overflow: hidden !important;
   background: #f2f2f2 !important;
@@ -2663,6 +2665,8 @@
   height: 100% !important;
   border: 0 !important;
   display: block !important;
+  position: relative !important;
+  z-index: 1 !important;
 }
 
 .diamond-garden-event__map--empty {
@@ -2695,7 +2699,7 @@
 .diamond-garden-gift {
   width: 100% !important;
   max-width: 410px !important;
-  min-height: 600px !important;
+  height: 730px !important;
   margin: 0 auto !important;
   position: relative !important;
   overflow: hidden !important;
@@ -2709,7 +2713,7 @@
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  object-position: center !important;
+  object-position: center center !important;
   z-index: 1 !important;
   pointer-events: none !important;
 }
@@ -2717,8 +2721,8 @@
 .diamond-garden-gift__content {
   position: relative !important;
   z-index: 2 !important;
-  min-height: 600px !important;
-  padding: 104px 42px 74px !important;
+  height: 100% !important;
+  padding: 122px 42px 70px !important;
   box-sizing: border-box !important;
   text-align: center !important;
   display: flex !important;
@@ -2730,14 +2734,14 @@
   margin: 0 0 12px !important;
   font-size: 10px !important;
   letter-spacing: 4px !important;
-  color: #b06a60 !important;
+  color: #b26c61 !important;
   font-weight: 700 !important;
 }
 
 .diamond-garden-gift__title {
-  margin: 0 0 38px !important;
+  margin: 0 0 36px !important;
   font-size: 34px !important;
-  line-height: 1.15 !important;
+  line-height: 1.12 !important;
   color: #55751a !important;
   font-weight: 800 !important;
 }
@@ -2754,8 +2758,8 @@
   min-height: 76px !important;
   padding: 12px 12px !important;
   box-sizing: border-box !important;
-  border: 2px solid #b8ae66 !important;
-  background: rgba(255, 255, 255, 0.88) !important;
+  border: 2px solid #b7ad63 !important;
+  background: rgba(255, 255, 255, 0.82) !important;
   display: flex !important;
   align-items: center !important;
   gap: 12px !important;
@@ -2765,7 +2769,7 @@
 .diamond-garden-gift__icon {
   width: 24px !important;
   flex: 0 0 24px !important;
-  color: #6b811d !important;
+  color: #667b1d !important;
   font-size: 15px !important;
   display: flex !important;
   align-items: center !important;
@@ -2780,7 +2784,7 @@
 .diamond-garden-gift__info strong {
   display: block !important;
   margin: 0 0 5px !important;
-  color: #5b7119 !important;
+  color: #5c7119 !important;
   font-size: 15px !important;
   line-height: 1.35 !important;
   font-weight: 800 !important;
@@ -2790,7 +2794,7 @@
 
 .diamond-garden-gift__info small {
   display: block !important;
-  color: #333333 !important;
+  color: #2d2d2d !important;
   font-size: 10px !important;
   line-height: 1.3 !important;
 }

@@ -666,7 +666,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenAkadMapLink(): string {
-    const event = this.getGardenAkadEvent();
+    const event = this.getGardenAkadEvent() || this.getAkadEvent();
     const link =
       event?.link_maps ||
       event?.link_map ||
@@ -679,22 +679,31 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenAkadMapEmbedUrl(): SafeResourceUrl | null {
+    const event = this.getGardenAkadEvent() || this.getAkadEvent();
     const raw = this.getGardenAkadMapLink();
-    if (!raw) return null;
+    const address = String(
+      this.getDetailEventAddress(event) ||
+      this.getEventAddress(event) ||
+      this.getGardenEventAddress(event) ||
+      ''
+    ).trim();
+
+    if (!raw && !address) return null;
 
     let embedUrl = raw;
 
     if (raw.includes('/embed')) {
       embedUrl = raw;
-    } else if (raw.includes('google.com/maps')) {
-      embedUrl = raw.replace('/maps/place/', '/maps/embed?pb=');
-      if (!embedUrl.includes('/maps/embed')) {
-        embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
-      }
     } else if (raw.includes('maps.app.goo.gl') || raw.includes('goo.gl/maps')) {
-      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+      embedUrl = address
+        ? `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+        : `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    } else if (raw.includes('google.com/maps')) {
+      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+    } else if (address) {
+      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     } else {
-      embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(raw)}&output=embed`;
+      embedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(raw)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
     }
 
     return this.gardenSanitizer.bypassSecurityTrustResourceUrl(embedUrl);
@@ -709,38 +718,98 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
 
   getGardenGiftAccounts(): any[] {
     const data: any = this.weddingData || {};
-    const accounts =
-      data.bank_accounts ||
-      data.rekenings ||
-      data.rekening ||
-      data.gifts ||
-      [];
+    const nestedData: any = data.data || {};
+    const packageData: any = data.invitation_package || {};
+    const userInfo: any = data.user_info || {};
+    const user: any = data.user || {};
 
-    return Array.isArray(accounts) ? accounts.filter(Boolean) : [];
+    const candidates = [
+      data.bank_accounts,
+      nestedData.bank_accounts,
+      data.bankAccounts,
+      data.rekenings,
+      data.rekening,
+      data.rekenings_user,
+      data.gift_accounts,
+      data.wedding_gifts,
+      data.gifts,
+      packageData.bank_accounts,
+      packageData.rekenings,
+      packageData.rekening,
+      userInfo.bank_accounts,
+      userInfo.rekenings,
+      user.bank_accounts,
+      user.rekenings,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate) && candidate.length > 0) {
+        return candidate.filter(Boolean);
+      }
+
+      if (candidate && typeof candidate === 'object') {
+        return [candidate];
+      }
+    }
+
+    const parentAccounts = this.getBankAccounts();
+    if (parentAccounts.length) {
+      return parentAccounts;
+    }
+
+    const visibleAccounts = this.getVisibleBankAccounts();
+    return visibleAccounts.length ? visibleAccounts : [];
+  }
+
+  getGardenGiftBankName(account: any): string {
+    return String(
+      account?.nama_bank ||
+      account?.bank_name ||
+      account?.bank?.nama_bank ||
+      account?.bank?.name ||
+      account?.name_bank ||
+      ''
+    ).trim();
+  }
+
+  getGardenGiftNumber(account: any): string {
+    return String(
+      account?.nomor_rekening ||
+      account?.no_rekening ||
+      account?.account_number ||
+      account?.number ||
+      ''
+    ).trim();
+  }
+
+  getGardenGiftOwner(account: any): string {
+    return String(
+      account?.nama_pemilik ||
+      account?.account_name ||
+      account?.pemilik ||
+      account?.atas_nama ||
+      account?.owner ||
+      ''
+    ).trim();
   }
 
   copyGardenGiftNumber(account: any): void {
-    const value = String(
-      account?.nomor_rekening ||
-      account?.account_number ||
-      account?.no_rekening ||
-      ''
-    ).trim();
-
+    const value = this.getGardenGiftNumber(account);
     if (!value) return;
 
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(value);
-    } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      return;
     }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
   }
 
   getGardenMapLink(event?: any): string {
