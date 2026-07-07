@@ -793,12 +793,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenStories(): Array<{ year: string; title: string; description: string }> {
+    const data: any = this.weddingData || {};
+    const invitationPackage: any = data.invitation_package || {};
+
     const source =
-      this.weddingData?.stories ||
-      this.weddingData?.love_stories ||
-      this.weddingData?.cerita ||
-      this.weddingData?.cerita_perjalanan ||
-      this.weddingData?.invitation_package?.stories ||
+      data.stories ||
+      data.love_stories ||
+      data.cerita ||
+      data.cerita_perjalanan ||
+      invitationPackage.stories ||
       [];
 
     if (Array.isArray(source) && source.length) {
@@ -844,10 +847,13 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
   }
 
   getGardenFooterPhotoUrl(): string {
+    const data: any = this.weddingData || {};
+    const invitationPackage: any = data.invitation_package || {};
+
     const galleries =
-      this.weddingData?.gallery ||
-      this.weddingData?.galleries ||
-      this.weddingData?.photos ||
+      data.gallery ||
+      data.galleries ||
+      data.photos ||
       [];
 
     if (Array.isArray(galleries) && galleries.length) {
@@ -868,10 +874,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent {
     }
 
     const cover =
-      this.weddingData?.cover_url ||
-      this.weddingData?.cover ||
-      this.weddingData?.photo_cover ||
-      this.weddingData?.invitation_package?.cover ||
+      data.cover_url ||
+      data.cover ||
+      data.photo_cover ||
+      invitationPackage.cover ||
       '';
 
     if (cover) {
