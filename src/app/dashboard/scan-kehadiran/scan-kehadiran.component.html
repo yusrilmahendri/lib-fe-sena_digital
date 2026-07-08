@@ -95,39 +95,75 @@
     </dl>
   </section>
 
-  <section class="scan-attendance__guest-card">
-    <div class="scan-attendance__section-head scan-attendance__section-head--split">
+  <section class="attendance-card">
+    <div class="attendance-card__header">
       <div>
-        <h2>List tamu hadir</h2>
-        <p>{{ presentGuests.length }} tamu hadir</p>
+        <h3>List tamu hadir</h3>
+        <p>{{ attendedGuests.length }} tamu hadir</p>
       </div>
-      <div class="scan-attendance__export-actions">
-        <button type="button" class="scan-attendance__secondary-btn" (click)="exportPresentGuestsToExcel()">
+
+      <div class="attendance-card__actions">
+        <button type="button" class="btn-outline" (click)="exportAttendedGuests()">
           Export Excel Tamu Hadir
         </button>
-        <button type="button" class="scan-attendance__danger-btn" (click)="resetAllAttendance()">
+        <button type="button" class="btn-danger" (click)="resetAllAttendance()">
           Reset Semua Kehadiran
         </button>
       </div>
     </div>
 
-    <div class="scan-attendance__empty" *ngIf="!presentGuests.length">
-      Belum ada tamu yang tercatat hadir.
+    <div *ngIf="attendedGuests.length > 0; else emptyAttendance" class="attendance-table-wrapper">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Tamu</th>
+            <th>Link Undangan</th>
+            <th>Status</th>
+            <th>Waktu Hadir</th>
+            <th>Jumlah Scan</th>
+            <th>Scan Terakhir</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let guest of attendedGuests; let i = index; trackBy: trackByGuest">
+            <td data-label="No">{{ i + 1 }}</td>
+            <td data-label="Nama Tamu">
+              <strong>{{ getGuestName(guest) }}</strong>
+            </td>
+            <td data-label="Link Undangan">
+              <a [href]="getGuestInvitationUrl(guest)" target="_blank" rel="noopener" class="attendance-link">
+                {{ getGuestInvitationUrl(guest) }}
+              </a>
+            </td>
+            <td data-label="Status">
+              <span class="status-badge status-badge--success">Hadir</span>
+            </td>
+            <td data-label="Waktu Hadir">
+              {{ formatDateTime(getCheckedInAt(guest)) }}
+            </td>
+            <td data-label="Jumlah Scan">
+              {{ getCheckinCount(guest) || 1 }}x
+            </td>
+            <td data-label="Scan Terakhir">
+              {{ formatDateTime(guest.lastScannedAt || getCheckedInAt(guest)) }}
+            </td>
+            <td data-label="Aksi">
+              <button type="button" class="btn-reset-small" (click)="resetAttendance(guest)">
+                Reset
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <div class="scan-attendance__guest-list" *ngIf="presentGuests.length">
-      <article class="scan-attendance__guest" *ngFor="let guest of presentGuests; trackBy: trackByGuest">
-        <div>
-          <strong>{{ getGuestName(guest) }}</strong>
-          <a [href]="getGuestInvitationUrl(guest)" target="_blank" rel="noopener noreferrer">
-            {{ getGuestInvitationUrl(guest) }}
-          </a>
-          <small>Hadir: {{ getCheckedInAt(guest) | date:'medium' }} · Scan: {{ getCheckinCount(guest) }}</small>
-        </div>
-        <button type="button" class="scan-attendance__secondary-btn" (click)="resetGuestAttendance(guest)">
-          Reset Hadir per tamu
-        </button>
-      </article>
-    </div>
+    <ng-template #emptyAttendance>
+      <div class="attendance-empty">
+        Belum ada tamu yang tercatat hadir.
+      </div>
+    </ng-template>
   </section>
 </section>

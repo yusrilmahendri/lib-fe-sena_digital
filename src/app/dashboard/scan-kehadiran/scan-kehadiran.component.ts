@@ -295,6 +295,40 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return Number(guest.checkinCount ?? guest.checkin_count ?? 0);
   }
 
+  public get attendedGuests(): StoredGuestInvitation[] {
+    return this.presentGuests;
+  }
+
+  public exportAttendedGuests(): void {
+    this.exportPresentGuestsToExcel();
+  }
+
+  public resetAttendance(guest: StoredGuestInvitation): void {
+    this.resetGuestAttendance(guest);
+  }
+
+  public formatDateTime(value: string | null | undefined): string {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return '-';
+    }
+
+    return date.toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  }
+
   private loadProfileDomain(): void {
     this.dashboardService.getProfile().subscribe({
       next: (response: ProfileResponse) => {
