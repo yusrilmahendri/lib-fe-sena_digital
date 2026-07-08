@@ -5,8 +5,13 @@ export interface GuestInvitationRecord {
   invitation_url: string;
   checkin_url: string;
   guest_token: string;
+  token: string;
+  guestSlug: string;
   checked_in_at: string | null;
+  checkedInAt: string | null;
+  lastScannedAt: string | null;
   checkin_count: number;
+  checkinCount: number;
   createdAt: string;
 }
 
@@ -37,16 +42,24 @@ export function slugifyGuestName(name: string): string {
   return slug || 'tamu';
 }
 
-export function buildGuestInvitationUrl(origin: string, domain: string, guestName: string): string {
+export function buildGuestInvitationUrl(origin: string, domain: string, guestName: string, guestToken = ''): string {
   const cleanOrigin = String(origin || '').replace(/\/$/, '');
   const cleanDomain = String(domain || '').trim();
   const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
+  const cleanGuestToken = String(guestToken || '').trim();
 
   if (!cleanDomain) {
     return '';
   }
 
-  return `${cleanOrigin}/wedding/${encodeURIComponent(cleanDomain)}?to=${encodeURIComponent(cleanGuestName)}`;
+  const guestSlug = slugifyGuestName(cleanGuestName);
+  const params = new URLSearchParams({ to: guestSlug });
+
+  if (cleanGuestToken) {
+    params.set('token', cleanGuestToken);
+  }
+
+  return `${cleanOrigin}/wedding/${encodeURIComponent(cleanDomain)}?${params.toString()}`;
 }
 
 export function buildGuestCheckinUrl(origin: string, domain: string, guestToken: string): string {
@@ -67,23 +80,28 @@ export function normalizeGuestRecord(
   domain: string
 ): GuestInvitationRecord {
   const guestName = String(raw.guest_name || raw.name || '').trim();
-  const guestToken = String(raw.guest_token || '').trim() || generateGuestToken();
+  const guestToken = String(raw.guest_token || raw.token || '').trim() || generateGuestToken();
+  const guestSlug = String(raw.guestSlug || '').trim() || slugifyGuestName(guestName);
   const invitationUrl =
-    String(raw.invitation_url || raw.url || '').trim() ||
-    buildGuestInvitationUrl(origin, domain, guestName);
-  const checkinUrl =
-    String(raw.checkin_url || '').trim() ||
-    buildGuestCheckinUrl(origin, domain, guestToken);
+    buildGuestInvitationUrl(origin, domain, guestName, guestToken) ||
+    String(raw.invitation_url || raw.url || '').trim();
+  const checkedInAt = raw.checkedInAt ?? raw.checked_in_at ?? null;
+  const checkinCount = Number(raw.checkinCount ?? raw.checkin_count ?? 0);
 
   return {
     name: guestName,
     url: invitationUrl,
     guest_name: guestName,
     invitation_url: invitationUrl,
-    checkin_url: checkinUrl,
+    checkin_url: '',
     guest_token: guestToken,
-    checked_in_at: raw.checked_in_at ?? null,
-    checkin_count: Number(raw.checkin_count || 0),
+    token: guestToken,
+    guestSlug,
+    checked_in_at: checkedInAt,
+    checkedInAt,
+    lastScannedAt: raw.lastScannedAt ?? null,
+    checkin_count: checkinCount,
+    checkinCount,
     createdAt: String(raw.createdAt || new Date().toISOString()),
   };
 }

@@ -311,6 +311,21 @@
             color: var(--sidebar-text);
             font-weight: 500;
           }
+
+          &.submenu-item--with-icon {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+
+            &::before {
+              display: none;
+            }
+
+            i {
+              font-size: 13px;
+              width: 14px;
+            }
+          }
         }
       }
     }

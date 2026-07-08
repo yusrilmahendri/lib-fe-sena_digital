@@ -70,6 +70,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.setRouteName();
       this.setRoutePath();
+      this.syncSubmenuStateWithRoute();
       if (window.innerWidth <= 1024) {
         this.closeSidebar();
       }
@@ -81,6 +82,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
     this.setRouteName();
     this.setRoutePath();
+    this.syncSubmenuStateWithRoute();
     this.getUserProfile();
 
     // Listen for profile updates from other components/tabs
@@ -159,6 +161,10 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
 
   isActiveRoute(route: string): boolean {
+    if (route === 'pengunjung' && this.router.url.includes('/dashboard/scan-kehadiran')) {
+      return true;
+    }
+
     return this.router.url.includes(route);
   }
 
@@ -168,6 +174,16 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   togglePengunjungSubmenu(): void {
     this.isPengunjungSubmenuOpen = !this.isPengunjungSubmenuOpen;
+  }
+
+  private syncSubmenuStateWithRoute(): void {
+    if (this.router.url.includes('/dashboard/scan-kehadiran') || this.router.url.includes('/dashboard/pengunjung')) {
+      this.isPengunjungSubmenuOpen = true;
+    }
+
+    if (this.router.url.includes('/dashboard/website')) {
+      this.isWebsiteSubmenuOpen = true;
+    }
   }
 
   @HostListener('document:click', ['$event'])

@@ -1,0 +1,133 @@
+<section class="scan-attendance">
+  <div class="scan-attendance__breadcrumb">
+    <span>Scan Kehadiran</span>
+    <span>/ scan-kehadiran</span>
+  </div>
+
+  <div class="scan-attendance__header">
+    <div>
+      <h1>Scan Kehadiran</h1>
+      <p>Scan QR undangan personal tamu untuk mencatat kehadiran. Data sementara tersimpan di browser ini.</p>
+    </div>
+  </div>
+
+  <section class="scan-attendance__notice-card scan-attendance__notice-card--warning">
+    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+    <p>
+      Fitur scan kehadiran ini sementara tersimpan di browser. Jika panitia memakai perangkat berbeda,
+      browser berbeda, cache dihapus, atau data tamu belum di-import, sistem tidak dapat menemukan tamu.
+    </p>
+  </section>
+
+  <section class="scan-attendance__domain-card">
+    <div>
+      <span>Domain aktif</span>
+      <strong>{{ resolvedDomain || 'Belum tersedia' }}</strong>
+    </div>
+    <label>
+      <span>Input manual domain</span>
+      <input
+        type="text"
+        [(ngModel)]="manualDomain"
+        (ngModelChange)="onManualDomainChange()"
+        placeholder="contoh: bibit-abid" />
+    </label>
+  </section>
+
+  <p class="scan-attendance__notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
+
+  <section class="scan-attendance__scanner-card">
+    <div class="scan-attendance__actions">
+      <button type="button" class="scan-attendance__primary-btn" [disabled]="isScanning" (click)="startScan()">
+        Mulai Scan
+      </button>
+      <button type="button" class="scan-attendance__secondary-btn" [disabled]="!isScanning" (click)="stopScan()">
+        Stop Scan
+      </button>
+      <button type="button" class="scan-attendance__secondary-btn" (click)="rescan()">
+        Scan Ulang
+      </button>
+    </div>
+
+    <div class="scan-attendance__reader-shell">
+      <div id="scan-kehadiran-reader" class="scan-attendance__reader"></div>
+    </div>
+  </section>
+
+  <section class="scan-attendance__last-card">
+    <div class="scan-attendance__section-head">
+      <h2>Hasil scan terakhir</h2>
+    </div>
+
+    <div class="scan-attendance__empty" *ngIf="!lastScanResult">
+      Belum ada QR yang discan.
+    </div>
+
+    <dl
+      class="scan-attendance__result"
+      *ngIf="lastScanResult"
+      [class.scan-attendance__result--error]="lastScanResult.isError">
+      <div>
+        <dt>Nama tamu</dt>
+        <dd>{{ lastScanResult.guestName }}</dd>
+      </div>
+      <div>
+        <dt>Link undangan</dt>
+        <dd>
+          <a
+            *ngIf="lastScanResult.invitationUrl"
+            [href]="lastScanResult.invitationUrl"
+            target="_blank"
+            rel="noopener noreferrer">
+            {{ lastScanResult.invitationUrl }}
+          </a>
+          <span *ngIf="!lastScanResult.invitationUrl">-</span>
+        </dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>{{ lastScanResult.status }}</dd>
+      </div>
+      <div>
+        <dt>Waktu scan</dt>
+        <dd>{{ lastScanResult.scannedAt | date:'medium' }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="scan-attendance__guest-card">
+    <div class="scan-attendance__section-head scan-attendance__section-head--split">
+      <div>
+        <h2>List tamu hadir</h2>
+        <p>{{ presentGuests.length }} tamu hadir</p>
+      </div>
+      <div class="scan-attendance__export-actions">
+        <button type="button" class="scan-attendance__secondary-btn" (click)="exportPresentGuestsToExcel()">
+          Export Excel Tamu Hadir
+        </button>
+        <button type="button" class="scan-attendance__danger-btn" (click)="resetAllAttendance()">
+          Reset Semua Kehadiran
+        </button>
+      </div>
+    </div>
+
+    <div class="scan-attendance__empty" *ngIf="!presentGuests.length">
+      Belum ada tamu yang tercatat hadir.
+    </div>
+
+    <div class="scan-attendance__guest-list" *ngIf="presentGuests.length">
+      <article class="scan-attendance__guest" *ngFor="let guest of presentGuests; trackBy: trackByGuest">
+        <div>
+          <strong>{{ getGuestName(guest) }}</strong>
+          <a [href]="getGuestInvitationUrl(guest)" target="_blank" rel="noopener noreferrer">
+            {{ getGuestInvitationUrl(guest) }}
+          </a>
+          <small>Hadir: {{ getCheckedInAt(guest) | date:'medium' }} · Scan: {{ getCheckinCount(guest) }}</small>
+        </div>
+        <button type="button" class="scan-attendance__secondary-btn" (click)="resetGuestAttendance(guest)">
+          Reset Hadir per tamu
+        </button>
+      </article>
+    </div>
+  </section>
+</section>

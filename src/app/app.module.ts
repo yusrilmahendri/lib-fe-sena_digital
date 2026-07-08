@@ -23,6 +23,7 @@ import { DashboardUserComponent } from './dashboard/dashboard-user/dashboard-use
 import { ProfileComponent } from './dashboard/profile/profile.component';
 import { OverviewComponent } from './dashboard/overview/overview.component';
 import { BagiUndanganComponent } from './dashboard/bagi-undangan/bagi-undangan.component';
+import { ScanKehadiranComponent } from './dashboard/scan-kehadiran/scan-kehadiran.component';
 import { SettingsComponent } from './dashboard/settings/settings.component';
 import { WebsiteComponent } from './dashboard-admin/website/website.component';
 import { WebsiteUserComponent } from './dashboard/website/website.component';
@@ -124,6 +125,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     ProfileComponent,
     OverviewComponent,
     BagiUndanganComponent,
+    ScanKehadiranComponent,
     SettingsComponent,
     WebsiteComponent,
     PengunjungComponent,

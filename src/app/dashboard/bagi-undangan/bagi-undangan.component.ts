@@ -1,14 +1,11 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { BsModalService } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import {
   GuestInvitationRecord,
   normalizeGuestRecord,
   slugifyGuestName,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
-import { GuestCheckinQrModalComponent } from 'src/app/shared/modal/guest-checkin-qr-modal/guest-checkin-qr-modal.component';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
-import * as QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -40,13 +37,11 @@ export class BagiUndanganComponent implements OnInit {
 
   private weddingData: any = {};
   private salamSetting: Record<string, any> = {};
-  private readonly storagePrefix = 'generated_guest_invitations';
+  private readonly storagePrefix = 'guest_invitations';
+  private readonly legacyStoragePrefix = 'generated_guest_invitations';
   private readonly maxStoredGuests = 500;
 
-  constructor(
-    private dashboardService: DashboardService,
-    private modalService: BsModalService
-  ) {}
+  constructor(private dashboardService: DashboardService) {}
 
   ngOnInit(): void {
     this.loadProfileDomain();
@@ -127,8 +122,6 @@ export class BagiUndanganComponent implements OnInit {
       return;
     }
 
-    this.generatedGuestUrl = this.buildGuestInvitationUrl(name);
-
     if (!this.addGuestLinkFromName(name)) {
       const existingGuest = this.generatedGuests.find(
         (guest) => String(guest.name || '').trim().toLowerCase() === name.toLowerCase()
@@ -141,6 +134,10 @@ export class BagiUndanganComponent implements OnInit {
       }
     }
 
+    const createdGuest = this.generatedGuests.find(
+      (guest) => String(guest.name || '').trim().toLowerCase() === name.toLowerCase()
+    );
+    this.generatedGuestUrl = createdGuest?.invitation_url || createdGuest?.url || '';
     this.showNotice('Link undangan personal berhasil dibuat.');
   }
 
@@ -185,63 +182,10 @@ export class BagiUndanganComponent implements OnInit {
 
     if (guestOrUrl && typeof guestOrUrl === 'object') {
       return String(guestOrUrl.invitation_url || guestOrUrl.url || '').trim()
-        || this.buildGuestInvitationUrl(guestOrUrl.guest_name || guestOrUrl.name);
+        || this.buildGuestInvitationUrl(guestOrUrl.guest_name || guestOrUrl.name, guestOrUrl.guest_token);
     }
 
     return String(this.generatedGuestUrl || '').trim();
-  }
-
-  public getAttendanceQrUrl(guest: GuestInvitationRecord): string {
-    return String(guest?.checkin_url || '').trim();
-  }
-
-  public openGuestAttendanceQrModal(guest: GuestInvitationRecord): void {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    this.modalService.show(GuestCheckinQrModalComponent, {
-      initialState: {
-        guestName: guest.guest_name || guest.name,
-        checkinUrl,
-        downloadFileName: this.buildGuestQrFileName(guest),
-      },
-      class: 'modal-lg',
-      backdrop: true,
-      keyboard: true,
-    });
-  }
-
-  public async downloadGuestAttendanceQr(guest: GuestInvitationRecord): Promise<void> {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    try {
-      const dataUrl = await QRCode.toDataURL(checkinUrl, {
-        errorCorrectionLevel: 'M',
-        margin: 2,
-        width: 512,
-        color: {
-          dark: '#172033',
-          light: '#FFFFFF',
-        },
-      });
-
-      const link = document.createElement('a');
-      link.download = this.buildGuestQrFileName(guest);
-      link.href = dataUrl;
-      link.click();
-      this.showNotice('QR kehadiran berhasil diunduh.');
-    } catch {
-      this.showNotice('Gagal mengunduh QR kehadiran.');
-    }
   }
 
   public trackByGuest(index: number, guest: GuestInvitationRecord): string {
@@ -351,10 +295,7 @@ export class BagiUndanganComponent implements OnInit {
       No: index + 1,
       'Nama Tamu': guest.guest_name || guest.name,
       'Link Undangan': guest.invitation_url || guest.url,
-      'Link Check-in': guest.checkin_url,
       'Guest Token': guest.guest_token,
-      'Check-in Count': guest.checkin_count,
-      'Checked In At': guest.checked_in_at || '',
       'Link WhatsApp': this.buildWhatsappUrl(guest.guest_name || guest.name, guest.invitation_url || guest.url)
     }));
 
@@ -363,10 +304,7 @@ export class BagiUndanganComponent implements OnInit {
         No: 1,
         'Nama Tamu': 'Belum ada tamu',
         'Link Undangan': '',
-        'Link Check-in': '',
         'Guest Token': '',
-        'Check-in Count': 0,
-        'Checked In At': '',
         'Link WhatsApp': ''
       });
     }
@@ -376,10 +314,7 @@ export class BagiUndanganComponent implements OnInit {
       { wch: 6 },
       { wch: 28 },
       { wch: 64 },
-      { wch: 64 },
       { wch: 36 },
-      { wch: 14 },
-      { wch: 22 },
       { wch: 72 }
     ];
 
@@ -409,9 +344,8 @@ export class BagiUndanganComponent implements OnInit {
       return false;
     }
 
-    const url = this.buildGuestInvitationUrl(cleanName);
     const guestRecord = normalizeGuestRecord(
-      { name: cleanName, url },
+      { name: cleanName },
       this.getInvitationShareOrigin(),
       this.publicWeddingDomain
     );
@@ -475,11 +409,6 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     return this.extractGuestNamesFromExcelRows(arrayRows);
-  }
-
-  private buildGuestQrFileName(guest: GuestInvitationRecord): string {
-    const slug = slugifyGuestName(guest.guest_name || guest.name);
-    return `qr-kehadiran-${slug}.png`;
   }
 
   private normalizeStoredGuests(records: any[]): GuestInvitationRecord[] {
@@ -618,7 +547,7 @@ export class BagiUndanganComponent implements OnInit {
     return String(value || '').replace(/\r\n/g, '\n');
   }
 
-  private buildGuestInvitationUrl(guestName?: string): string {
+  private buildGuestInvitationUrl(guestName?: string, guestToken?: string): string {
     const domain =
       this.publicWeddingDomain ||
       this.normalizeWeddingDomain(this.weddingData?.setting?.domain) ||
@@ -630,10 +559,16 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
+    const cleanGuestToken = String(guestToken || '').trim();
     const origin = this.getInvitationShareOrigin();
     const baseUrl = `${origin}/wedding/${encodeURIComponent(domain)}`;
+    const params = new URLSearchParams({ to: slugifyGuestName(cleanGuestName) });
 
-    return `${baseUrl}?to=${encodeURIComponent(cleanGuestName)}`;
+    if (cleanGuestToken) {
+      params.set('token', cleanGuestToken);
+    }
+
+    return `${baseUrl}?${params.toString()}`;
   }
 
   private getInvitationShareOrigin(): string {
@@ -738,7 +673,8 @@ export class BagiUndanganComponent implements OnInit {
   private loadStoredGuests(): void {
     try {
       const raw = localStorage.getItem(this.getStorageKey());
-      const parsed = raw ? JSON.parse(raw) : [];
+      const legacyRaw = raw ? '' : localStorage.getItem(this.getLegacyStorageKey());
+      const parsed = raw ? JSON.parse(raw) : legacyRaw ? JSON.parse(legacyRaw) : [];
       const records = Array.isArray(parsed) ? parsed : [];
       this.generatedGuests = this.normalizeStoredGuests(records);
 
@@ -752,6 +688,10 @@ export class BagiUndanganComponent implements OnInit {
 
   private getStorageKey(): string {
     return `${this.storagePrefix}_${this.publicWeddingDomain || 'unknown'}`;
+  }
+
+  private getLegacyStorageKey(): string {
+    return `${this.legacyStoragePrefix}_${this.publicWeddingDomain || 'unknown'}`;
   }
 
   private showNotice(message: string): void {
