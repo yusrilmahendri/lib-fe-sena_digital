@@ -60,7 +60,6 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public onManualDomainChange(): void {
-    this.activeDomain = this.normalizeWeddingDomain(this.manualDomain);
     this.loadPresentGuests();
   }
 
@@ -156,12 +155,35 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.activeDomain = domain;
-    this.manualDomain = domain;
+    const activeDomain = this.resolvedDomain;
+
+    if (!activeDomain) {
+      this.setScanResult({
+        guestName: '-',
+        invitationUrl: decodedText,
+        status: 'Domain undangan aktif belum tersedia.',
+        scannedAt,
+        isError: true,
+      });
+      this.pauseScannerBriefly();
+      return;
+    }
+
+    if (domain !== activeDomain) {
+      this.setScanResult({
+        guestName: '-',
+        invitationUrl: decodedText,
+        status: 'QR berasal dari domain undangan yang berbeda.',
+        scannedAt,
+        isError: true,
+      });
+      this.pauseScannerBriefly();
+      return;
+    }
 
     const scannedName = this.normalizeGuestName(parsed.to);
     const scannedSlug = this.createGuestSlug(scannedName);
-    const guests = this.loadGuests(domain);
+    const guests = this.loadGuests(activeDomain);
     const guestIndex = guests.findIndex((guest) => this.isMatchingGuest(guest, scannedName, scannedSlug));
 
     if (guestIndex < 0) {
@@ -188,7 +210,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     };
 
     guests[guestIndex] = updatedGuest;
-    this.saveGuests(domain, guests);
+    this.saveGuests(activeDomain, guests);
     this.presentGuests = this.filterPresentGuests(guests);
 
     this.setScanResult({
@@ -332,7 +354,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   private loadProfileDomain(): void {
     this.dashboardService.getProfile().subscribe({
       next: (response: ProfileResponse) => {
-        this.activeDomain = this.normalizeWeddingDomain(response?.data?.domain_info?.domain);
+        this.activeDomain = this.getActiveDomainFromProfile(response);
         this.manualDomain = this.activeDomain;
         this.loadPresentGuests();
       },
@@ -340,6 +362,20 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
         this.showNotice('Gagal mengambil domain aktif. Silakan isi domain manual.');
       },
     });
+  }
+
+  private getActiveDomainFromProfile(response: ProfileResponse): string {
+    const data: any = response?.data || {};
+
+    return this.normalizeWeddingDomain(
+      data?.activeWebsite?.domain ||
+      data?.active_website?.domain ||
+      data?.website_domain ||
+      data?.domain_info?.domain ||
+      data?.currentDomain ||
+      data?.current_domain ||
+      ''
+    );
   }
 
   private parseInvitationUrl(decodedText: string): { domain: string; token: string; to: string } {
