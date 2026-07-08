@@ -54,6 +54,10 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   showBillingMenu = false;
   userData: ProfileData | null = null;
 
+  get shouldShowSidebarOverlay(): boolean {
+    return this.isSidebarOpen && this.isMobileSidebarViewport();
+  }
+
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
@@ -89,8 +93,11 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   private initializeSidebarState(): void {
-    // Sidebar should be open by default on desktop (>1024px)
-    this.isSidebarOpen = window.innerWidth > 1024;
+    this.isSidebarOpen = !this.isMobileSidebarViewport();
+  }
+
+  private isMobileSidebarViewport(): boolean {
+    return window.innerWidth <= 1024;
   }
 
   getUserProfile(): void {
@@ -187,15 +194,14 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('window:resize', ['$event'])
-  onWindowResize(event: any): void {
-    const windowWidth = event.target.innerWidth;
-
-    if (windowWidth > 1024) {
-      this.isSidebarOpen = true;
-    } else {
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.isMobileSidebarViewport()) {
       this.isSidebarOpen = false;
+      return;
     }
+
+    this.isSidebarOpen = true;
   }
 
   selectMenu(): void {

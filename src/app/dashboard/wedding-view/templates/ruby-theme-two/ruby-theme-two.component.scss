@@ -99,6 +99,7 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, rgba(28, 16, 42, 0.42) 0%, rgba(76, 43, 107, 0.66) 56%, rgba(38, 18, 62, 0.82) 100%);
+  pointer-events: none;
 }
 
 .ruby-two-cover__overlay {

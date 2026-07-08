@@ -1,7 +1,7 @@
 <div class="dashboard-container">
   <!-- Overlay for mobile -->
   <div class="sidebar-overlay"
-       *ngIf="isSidebarOpen"
+       *ngIf="shouldShowSidebarOverlay"
        (click)="closeSidebar()"></div>
 
   <!-- Enhanced Toggle Button for Mobile -->
