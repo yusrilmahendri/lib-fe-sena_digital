@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Html5Qrcode } from 'html5-qrcode';
 import { DashboardService, ProfileResponse } from 'src/app/dashboard.service';
-import { createGuestSlug, normalizeGuestName } from 'src/app/shared/guest-checkin/guest-checkin.utils';
+import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import * as XLSX from 'xlsx';
 
 interface StoredGuestInvitation {
@@ -9,14 +9,8 @@ interface StoredGuestInvitation {
   name?: string;
   slug?: string;
   url?: string;
-  guest_name?: string;
-  invitation_url?: string;
-  guest_token?: string;
-  token?: string;
-  checked_in_at?: string | null;
   checkedInAt?: string | null;
   lastScannedAt?: string | null;
-  checkin_count?: number;
   checkinCount?: number;
 }
 
@@ -181,10 +175,9 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const scannedName = this.normalizeGuestName(parsed.to);
-    const scannedSlug = this.createGuestSlug(scannedName);
+    const guestSlug = String(parsed.to || '').trim();
     const guests = this.loadGuests(activeDomain);
-    const guestIndex = guests.findIndex((guest) => this.isMatchingGuest(guest, scannedName, scannedSlug));
+    const guestIndex = guests.findIndex((guest) => String(guest.slug || '').trim() === guestSlug);
 
     if (guestIndex < 0) {
       this.setScanResult({
@@ -202,10 +195,8 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     const alreadyCheckedIn = !!this.getCheckedInAt(guest);
     const updatedGuest: StoredGuestInvitation = {
       ...guest,
-      checked_in_at: alreadyCheckedIn ? guest.checked_in_at || guest.checkedInAt || null : scannedAt,
-      checkedInAt: alreadyCheckedIn ? guest.checkedInAt || guest.checked_in_at || null : scannedAt,
+      checkedInAt: alreadyCheckedIn ? guest.checkedInAt || null : scannedAt,
       lastScannedAt: scannedAt,
-      checkin_count: alreadyCheckedIn ? this.getCheckinCount(guest) + 1 : 1,
       checkinCount: alreadyCheckedIn ? this.getCheckinCount(guest) + 1 : 1,
     };
 
@@ -225,33 +216,30 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
   public exportPresentGuestsToExcel(): void {
     const rows = this.presentGuests.map((guest) => ({
-      nama_tamu: this.getGuestName(guest),
-      link_undangan: this.getGuestInvitationUrl(guest),
-      status_hadir: 'hadir',
-      waktu_hadir: this.getCheckedInAt(guest) || '',
-      jumlah_scan: this.getCheckinCount(guest),
-      scan_terakhir: guest.lastScannedAt || '',
+      Nama: this.getGuestName(guest),
+      Slug: guest.slug || '',
+      Link: this.getGuestInvitationUrl(guest),
+      'Waktu Hadir': this.getCheckedInAt(guest) || '',
+      'Jumlah Scan': this.getCheckinCount(guest),
     }));
 
     if (!rows.length) {
       rows.push({
-        nama_tamu: 'Belum ada tamu hadir',
-        link_undangan: '',
-        status_hadir: '',
-        waktu_hadir: '',
-        jumlah_scan: 0,
-        scan_terakhir: '',
+        Nama: 'Belum ada tamu hadir',
+        Slug: '',
+        Link: '',
+        'Waktu Hadir': '',
+        'Jumlah Scan': 0,
       });
     }
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     worksheet['!cols'] = [
       { wch: 28 },
+      { wch: 28 },
       { wch: 64 },
-      { wch: 16 },
       { wch: 24 },
       { wch: 12 },
-      { wch: 24 },
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tamu Hadir');
@@ -302,19 +290,19 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public getGuestName(guest: StoredGuestInvitation): string {
-    return String(guest.guest_name || guest.name || 'Tamu Undangan').trim();
+    return String(guest.name || 'Tamu Undangan').trim();
   }
 
   public getGuestInvitationUrl(guest: StoredGuestInvitation): string {
-    return String(guest.invitation_url || guest.url || '').trim();
+    return String(guest.url || '').trim();
   }
 
   public getCheckedInAt(guest: StoredGuestInvitation): string | null {
-    return guest.checkedInAt || guest.checked_in_at || null;
+    return guest.checkedInAt || null;
   }
 
   public getCheckinCount(guest: StoredGuestInvitation): number {
-    return Number(guest.checkinCount ?? guest.checkin_count ?? 0);
+    return Number(guest.checkinCount ?? 0);
   }
 
   public get attendedGuests(): StoredGuestInvitation[] {
@@ -378,7 +366,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     );
   }
 
-  private parseInvitationUrl(decodedText: string): { domain: string; token: string; to: string } {
+  private parseInvitationUrl(decodedText: string): { domain: string; to: string } {
     try {
       const url = new URL(decodedText);
       const segments = url.pathname.split('/').filter(Boolean);
@@ -387,11 +375,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
       return {
         domain: this.normalizeWeddingDomain(domain),
-        token: String(url.searchParams.get('token') || '').trim(),
         to: String(url.searchParams.get('to') || '').trim(),
       };
     } catch {
-      return { domain: '', token: '', to: '' };
+      return { domain: '', to: '' };
     }
   }
 
@@ -439,7 +426,18 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     try {
       const raw = localStorage.getItem(this.getStorageKey(domain));
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed.map((guest) => this.normalizeStoredGuest(guest)) : [];
+      const normalized = Array.isArray(parsed)
+        ? parsed.reduce((guests: StoredGuestInvitation[], guest) => {
+          guests.push(this.normalizeStoredGuest(guest, domain, guests));
+          return guests;
+        }, [])
+        : [];
+
+      if (raw) {
+        this.saveGuests(domain, normalized);
+      }
+
+      return normalized;
     } catch {
       return [];
     }
@@ -457,41 +455,59 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return String(guest.id || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
   }
 
-  private isMatchingGuest(guest: StoredGuestInvitation, scannedName: string, scannedSlug: string): boolean {
-    const guestName = this.getGuestName(guest);
-
-    return (
-      this.normalizeGuestName(guestName) === scannedName ||
-      String(guest.slug || '').trim() === scannedSlug ||
-      this.createGuestSlug(guestName) === scannedSlug
-    );
-  }
-
-  private normalizeGuestName(value: string): string {
-    return normalizeGuestName(value);
-  }
-
   private createGuestSlug(name: string): string {
     return createGuestSlug(name);
   }
 
-  private normalizeStoredGuest(raw: StoredGuestInvitation): StoredGuestInvitation {
+  private normalizeStoredGuest(
+    raw: StoredGuestInvitation,
+    domain: string,
+    existingGuests: StoredGuestInvitation[] = []
+  ): StoredGuestInvitation {
     const name = this.getGuestName(raw);
-    const checkedInAt = raw.checkedInAt || raw.checked_in_at || null;
-    const checkinCount = Number(raw.checkinCount ?? raw.checkin_count ?? 0);
+    const checkedInAt = raw.checkedInAt || (raw as any).checked_in_at || null;
+    const checkinCount = Number(raw.checkinCount ?? (raw as any).checkin_count ?? 0);
+    const rawSlug = String(raw.slug || '').trim();
+    const slugExists = rawSlug && existingGuests.some((guest) => guest.slug === rawSlug);
+    const slug = rawSlug && !slugExists ? rawSlug : this.generateUniqueSlug(rawSlug || name, existingGuests);
 
     return {
-      ...raw,
-      id: raw.id || raw.token || raw.guest_token || raw.slug || this.createGuestSlug(name),
+      id: raw.id || slug,
       name,
-      slug: raw.slug || this.createGuestSlug(name),
-      url: raw.url || raw.invitation_url || '',
+      slug,
+      url: this.buildGuestInvitationUrl(domain, slug),
       checkedInAt,
-      checked_in_at: checkedInAt,
       checkinCount,
-      checkin_count: checkinCount,
       lastScannedAt: raw.lastScannedAt || null,
     };
+  }
+
+  private buildGuestInvitationUrl(domain: string, slug: string): string {
+    const origin = String(window.location.origin || '').replace(/\/$/, '');
+    const shareOrigin = !origin || origin.includes('localhost') || origin.includes('127.0.0.1')
+      ? 'https://www.sena-digital.com'
+      : origin;
+
+    return `${shareOrigin}/wedding/${encodeURIComponent(domain)}?to=${encodeURIComponent(slug)}`;
+  }
+
+  private generateUniqueSlug(name: string, existingGuests: StoredGuestInvitation[]): string {
+    const baseSlug = this.createGuestSlug(name) || 'tamu';
+    const usedSlugs = new Set(existingGuests.map((guest) => guest.slug).filter(Boolean));
+
+    if (!usedSlugs.has(baseSlug)) {
+      return baseSlug;
+    }
+
+    let suffix = 2;
+    let candidate = `${baseSlug}-${suffix}`;
+
+    while (usedSlugs.has(candidate)) {
+      suffix += 1;
+      candidate = `${baseSlug}-${suffix}`;
+    }
+
+    return candidate;
   }
 
   private serializeGuest(guest: StoredGuestInvitation): Record<string, any> {
@@ -506,21 +522,14 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       createdAt: (guest as any).createdAt || new Date().toISOString(),
     };
 
-    const token = String(guest.token || guest.guest_token || '').trim();
-    if (token) {
-      serialized['token'] = token;
-    }
-
     return serialized;
   }
 
   private resetGuestAttendanceFields(guest: StoredGuestInvitation): StoredGuestInvitation {
     return {
       ...guest,
-      checked_in_at: null,
       checkedInAt: null,
       lastScannedAt: null,
-      checkin_count: 0,
       checkinCount: 0,
     };
   }

@@ -12,17 +12,17 @@
   </header>
 
   <section class="qr-modal-body">
-    <span class="qr-modal-badge" [class.qr-modal-badge--personal]="hasGuestToken()">
-      {{ hasGuestToken() ? 'QR Personal' : 'QR Umum' }}
+    <span class="qr-modal-badge" [class.qr-modal-badge--personal]="hasGuestName()">
+      {{ hasGuestName() ? 'QR Personal' : 'QR Umum' }}
     </span>
 
     <p class="qr-modal-description">{{ description }}</p>
 
-    <p class="qr-modal-guest" *ngIf="hasGuestToken() && getGuestNameFromUrl()">
+    <p class="qr-modal-guest" *ngIf="hasGuestName() && getGuestNameFromUrl()">
       Untuk: <strong>{{ getGuestNameFromUrl() }}</strong>
     </p>
 
-    <p class="qr-modal-warning" *ngIf="!hasGuestToken()">
+    <p class="qr-modal-warning" *ngIf="!hasGuestName()">
       QR ini tidak dapat digunakan untuk mencatat kehadiran karena tidak memiliki nama tamu undangan.
     </p>
 
@@ -56,10 +56,6 @@
         <button type="button" class="qr-modal-action qr-modal-action--primary" (click)="shareUrl()">
           <i class="fas fa-share-alt" aria-hidden="true"></i>
           <span>Share</span>
-        </button>
-        <button type="button" class="qr-modal-action qr-modal-action--secondary" (click)="downloadQRCode()">
-          <i class="fas fa-download" aria-hidden="true"></i>
-          <span>Download</span>
         </button>
         <button type="button" class="qr-modal-action qr-modal-action--secondary" (click)="copyUrl()">
           <i class="fas fa-link" aria-hidden="true"></i>

@@ -2,12 +2,17 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import {
   createGuestSlug,
+  generateUniqueSlug,
   GuestInvitationRecord,
   normalizeGuestRecord,
-  normalizeGuestName,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
 import * as XLSX from 'xlsx';
+
+interface ImportedGuestRow {
+  name: string;
+  slug?: string;
+}
 
 @Component({
   selector: 'wc-bagi-undangan',
@@ -123,18 +128,13 @@ export class BagiUndanganComponent implements OnInit {
       return;
     }
 
-    if (!this.addGuestLinkFromName(name)) {
-      const existingGuest = this.findGuestByName(name);
+    const createdGuest = this.addGuestLinkFromName(name);
 
-      if (existingGuest) {
-        this.generatedGuestUrl = this.getGuestInvitationUrl(existingGuest);
-        this.showNotice('Nama tamu sudah ada.');
-        return;
-      }
+    if (!createdGuest) {
+      return;
     }
 
-    const createdGuest = this.findGuestByName(name);
-    this.generatedGuestUrl = createdGuest ? this.getGuestInvitationUrl(createdGuest) : '';
+    this.generatedGuestUrl = this.getGuestInvitationUrl(createdGuest);
     this.showNotice('Link undangan personal berhasil dibuat.');
   }
 
@@ -178,8 +178,8 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     if (guestOrUrl && typeof guestOrUrl === 'object') {
-      return String(guestOrUrl.invitation_url || guestOrUrl.url || '').trim()
-        || this.buildGuestInvitationUrl(guestOrUrl.guest_name || guestOrUrl.name);
+      return String(guestOrUrl.url || '').trim()
+        || this.buildGuestInvitationUrl(guestOrUrl.slug);
     }
 
     return String(this.generatedGuestUrl || '').trim();
@@ -288,23 +288,23 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   public exportGuestsToExcel(): void {
-    const rows = this.generatedGuests.map((guest) => ({
-      nama_tamu: guest.guest_name || guest.name,
-      slug: guest.slug || this.createGuestSlug(guest.guest_name || guest.name),
-      link_undangan: guest.invitation_url || guest.url,
-      status_hadir: this.getGuestCheckedInAt(guest) ? 'hadir' : 'belum_hadir',
-      waktu_hadir: this.getGuestCheckedInAt(guest) || '',
-      jumlah_scan: this.getGuestCheckinCount(guest),
+    const rows = this.generatedGuests
+      .filter((guest) => !!guest.checkedInAt)
+      .map((guest) => ({
+      Nama: guest.name,
+      Slug: guest.slug,
+      Link: guest.url,
+      'Waktu Hadir': guest.checkedInAt || '',
+      'Jumlah Scan': guest.checkinCount,
     }));
 
     if (!rows.length) {
       rows.push({
-        nama_tamu: 'Belum ada tamu',
-        slug: '',
-        link_undangan: '',
-        status_hadir: '',
-        waktu_hadir: '',
-        jumlah_scan: 0,
+        Nama: 'Belum ada tamu hadir',
+        Slug: '',
+        Link: '',
+        'Waktu Hadir': '',
+        'Jumlah Scan': 0,
       });
     }
 
@@ -329,26 +329,23 @@ export class BagiUndanganComponent implements OnInit {
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
-  private addGuestLinkFromName(name: string): boolean {
+  private addGuestLinkFromName(name: string, requestedSlug = ''): GuestInvitationRecord | null {
     const cleanName = String(name || '').trim();
 
     if (!cleanName) {
-      return false;
+      return null;
     }
 
-    if (this.findGuestByName(cleanName)) {
-      this.showNotice('Nama tamu sudah ada.');
-      return false;
-    }
-
+    const slug = generateUniqueSlug(requestedSlug || cleanName, this.generatedGuests);
     const guestRecord = normalizeGuestRecord(
-      { name: cleanName },
+      { name: cleanName, slug },
       this.getInvitationShareOrigin(),
-      this.publicWeddingDomain
+      this.publicWeddingDomain,
+      this.generatedGuests
     );
 
-    if (!guestRecord.invitation_url) {
-      return false;
+    if (!guestRecord.url) {
+      return null;
     }
 
     this.generatedGuests = [
@@ -357,46 +354,45 @@ export class BagiUndanganComponent implements OnInit {
     ].slice(0, this.maxStoredGuests);
 
     this.persistGuestsToStorage();
-    return true;
+    return guestRecord;
   }
 
-  private importGuestNames(names: string[]): { successCount: number; duplicateCount: number } {
+  private importGuestNames(names: ImportedGuestRow[]): { successCount: number; duplicateCount: number } {
     let successCount = 0;
     let duplicateCount = 0;
 
     names.forEach((rawName) => {
-      const name = String(rawName || '').trim();
+      const name = String(rawName?.name || '').trim();
+      const slug = String(rawName?.slug || '').trim();
 
       if (!name) {
         return;
       }
 
-      if (this.findGuestByName(name)) {
-        duplicateCount += 1;
-        return;
-      }
-
-      if (this.addGuestLinkFromName(name)) {
+      if (this.addGuestLinkFromName(name, slug)) {
         successCount += 1;
+      } else {
+        duplicateCount += 1;
       }
     });
 
     return { successCount, duplicateCount };
   }
 
-  private extractGuestNamesFromImportRows(jsonRows: any[], arrayRows: (string | number)[][]): string[] {
+  private extractGuestNamesFromImportRows(jsonRows: any[], arrayRows: (string | number)[][]): ImportedGuestRow[] {
     const jsonNames = jsonRows
-      .map((row) =>
-        String(
+      .map((row) => ({
+        name: String(
           row['Nama Tamu'] ||
           row['nama_tamu'] ||
           row['nama'] ||
           row['tamu'] ||
           row['name'] ||
           ''
-        ).trim()
-      )
-      .filter(Boolean);
+        ).trim(),
+        slug: String(row['slug'] || row['Slug'] || '').trim(),
+      }))
+      .filter((row) => !!row.name);
 
     if (jsonNames.length) {
       return this.uniqueGuestNames(jsonNames);
@@ -410,8 +406,15 @@ export class BagiUndanganComponent implements OnInit {
     const domain = this.publicWeddingDomain;
 
     return records
-      .map((record) => normalizeGuestRecord(record, origin, domain))
-      .filter((record) => !!String(record.guest_name || record.name || '').trim());
+      .reduce((guests: GuestInvitationRecord[], record) => {
+        const guest = normalizeGuestRecord(record, origin, domain, guests);
+
+        if (String(guest.name || '').trim()) {
+          guests.push(guest);
+        }
+
+        return guests;
+      }, []);
   }
 
   private buildGuestExportFileName(): string {
@@ -541,7 +544,7 @@ export class BagiUndanganComponent implements OnInit {
     return String(value || '').replace(/\r\n/g, '\n');
   }
 
-  private buildGuestInvitationUrl(guestName?: string): string {
+  private buildGuestInvitationUrl(guestSlug?: string): string {
     const domain =
       this.publicWeddingDomain ||
       this.normalizeWeddingDomain(this.weddingData?.setting?.domain) ||
@@ -552,11 +555,11 @@ export class BagiUndanganComponent implements OnInit {
       return '';
     }
 
-    const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
+    const cleanGuestSlug = String(guestSlug || '').trim();
     const origin = this.getInvitationShareOrigin();
     const baseUrl = `${origin}/wedding/${encodeURIComponent(domain)}`;
 
-    return `${baseUrl}?to=${encodeURIComponent(cleanGuestName)}`;
+    return cleanGuestSlug ? `${baseUrl}?to=${encodeURIComponent(cleanGuestSlug)}` : '';
   }
 
   private getInvitationShareOrigin(): string {
@@ -575,7 +578,7 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     try {
-      return decodeURIComponent(new URL(url).searchParams.get('to') || '').trim();
+      return decodeURIComponent(new URL(url).searchParams.get('to') || '').replace(/-/g, ' ').trim();
     } catch {
       const match = String(url).match(/[?&]to=([^&]+)/i);
       return match ? decodeURIComponent(match[1]).trim() : '';
@@ -586,8 +589,8 @@ export class BagiUndanganComponent implements OnInit {
     this.addGuestLinkFromName(name);
   }
 
-  private extractGuestNamesFromExcelRows(rows: (string | number)[][]): string[] {
-    const names: string[] = [];
+  private extractGuestNamesFromExcelRows(rows: (string | number)[][]): ImportedGuestRow[] {
+    const names: ImportedGuestRow[] = [];
 
     if (!rows.length) {
       return names;
@@ -597,13 +600,15 @@ export class BagiUndanganComponent implements OnInit {
     const nameColumnIndex = headerRow.findIndex((cell) =>
       /^(nama(\s*tamu)?|nama_tamu|nama|tamu|name|guest(\s*name)?)$/.test(cell)
     );
+    const slugColumnIndex = headerRow.findIndex((cell) => cell === 'slug');
 
     if (nameColumnIndex >= 0) {
       for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
         const name = String(rows[rowIndex][nameColumnIndex] || '').trim();
+        const slug = slugColumnIndex >= 0 ? String(rows[rowIndex][slugColumnIndex] || '').trim() : '';
 
         if (name && !/^(no|nama(\s*tamu)?|name)$/i.test(name)) {
-          names.push(name);
+          names.push({ name, slug });
         }
       }
 
@@ -623,31 +628,20 @@ export class BagiUndanganComponent implements OnInit {
       }
 
       if (/^\d+$/.test(firstCell) && secondCell) {
-        names.push(secondCell);
+        names.push({ name: secondCell });
         return;
       }
 
       if (firstCell) {
-        names.push(firstCell);
+        names.push({ name: firstCell });
       }
     });
 
     return this.uniqueGuestNames(names);
   }
 
-  private uniqueGuestNames(names: string[]): string[] {
-    const seen = new Set<string>();
-
-    return names.filter((name) => {
-      const normalized = this.normalizeGuestName(name);
-
-      if (!normalized || seen.has(normalized)) {
-        return false;
-      }
-
-      seen.add(normalized);
-      return true;
-    });
+  private uniqueGuestNames(names: ImportedGuestRow[]): ImportedGuestRow[] {
+    return names.filter((guest) => !!String(guest.name || '').trim());
   }
 
   private persistGuestsToStorage(): void {
@@ -682,34 +676,16 @@ export class BagiUndanganComponent implements OnInit {
     return `${this.legacyStoragePrefix}_${this.publicWeddingDomain || 'unknown'}`;
   }
 
-  private findGuestByName(name: string): GuestInvitationRecord | undefined {
-    const normalizedName = this.normalizeGuestName(name);
-    const slug = this.createGuestSlug(name);
-
-    return this.generatedGuests.find((guest) => {
-      const guestName = guest.guest_name || guest.name || '';
-      return (
-        this.normalizeGuestName(guestName) === normalizedName ||
-        String(guest.slug || guest.guestSlug || '').trim() === slug ||
-        this.createGuestSlug(guestName) === slug
-      );
-    });
-  }
-
-  private normalizeGuestName(value: string): string {
-    return normalizeGuestName(value);
-  }
-
   private createGuestSlug(name: string): string {
     return createGuestSlug(name);
   }
 
   private getGuestCheckedInAt(guest: GuestInvitationRecord): string | null {
-    return guest.checkedInAt || guest.checked_in_at || null;
+    return guest.checkedInAt || null;
   }
 
   private getGuestCheckinCount(guest: GuestInvitationRecord): number {
-    return Number(guest.checkinCount ?? guest.checkin_count ?? 0);
+    return Number(guest.checkinCount ?? 0);
   }
 
   private serializeGuest(guest: GuestInvitationRecord): Record<string, any> {
@@ -723,11 +699,6 @@ export class BagiUndanganComponent implements OnInit {
       lastScannedAt: guest.lastScannedAt || null,
       createdAt: guest.createdAt,
     };
-
-    const token = String(guest.token || guest.guest_token || '').trim();
-    if (token) {
-      serialized['token'] = token;
-    }
 
     return serialized;
   }

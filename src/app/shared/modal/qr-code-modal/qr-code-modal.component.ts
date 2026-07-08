@@ -42,10 +42,6 @@ export class QRCodeModalComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {}
 
-  hasGuestToken(): boolean {
-    return this.hasGuestName();
-  }
-
   hasGuestName(): boolean {
     const params = new URLSearchParams(window.location.search);
     return !!params.get('to');
@@ -57,7 +53,7 @@ export class QRCodeModalComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getQrModalTitle(): string {
-    return this.hasGuestToken() ? 'QR Undangan Tamu' : 'QR Undangan Umum';
+    return this.hasGuestName() ? 'QR Undangan Tamu' : 'QR Undangan Umum';
   }
 
   getQrModalDescription(): string {
@@ -153,28 +149,6 @@ export class QRCodeModalComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     document.body.removeChild(textArea);
-  }
-
-  /**
-   * Download QR code as PNG image
-   */
-  downloadQRCode(): void {
-    if (!this.qrCanvas || !this.qrCodeGenerated) {
-      return;
-    }
-
-    try {
-      const canvas = this.qrCanvas.nativeElement;
-      const dataURL = canvas.toDataURL('image/png');
-
-      const link = document.createElement('a');
-      link.download = this.hasGuestToken() ? 'qr-undangan-tamu.png' : 'qr-undangan-umum.png';
-      link.href = dataURL;
-      link.click();
-      this.showNotice('QR berhasil diunduh.');
-    } catch (error) {
-      this.showNotice('Gagal mengunduh QR.');
-    }
   }
 
   /**

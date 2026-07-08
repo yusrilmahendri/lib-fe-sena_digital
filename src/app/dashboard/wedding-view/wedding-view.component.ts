@@ -19,11 +19,6 @@ import {
   ThemeSlug,
 } from '../../theme-render.registry';
 import { environment } from '../../../environments/environment';
-import {
-  buildGuestCheckinUrl,
-  buildGuestInvitationUrl,
-  CurrentGuestContext,
-} from '../../shared/guest-checkin/guest-checkin.utils';
 
 // Attendance interface for type safety
 interface AttendanceRequest {
@@ -106,7 +101,6 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   // Wedding data properties
   weddingData: WeddingData | null = null;
   guestName = 'Tamu Undangan';
-  currentGuest: CurrentGuestContext | null = null;
   activeThemeSlug: ThemeSlug | null = null;
   activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
 
@@ -167,7 +161,6 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private listenForGuestName(): void {
     const querySubscription = this.route.queryParams.subscribe(params => {
       this.guestName = String(params['to'] || '').trim() || 'Tamu Undangan';
-      this.syncCurrentGuestContext(this.weddingData as any);
       if (this.weddingData) {
         this.weddingData = this.applyGuestNameToWeddingData(this.weddingData);
         this.weddingDataService.setWeddingData(this.weddingData);
@@ -564,16 +557,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     } as WeddingData;
 
-    this.syncCurrentGuestContext(enriched as any);
     return enriched;
-  }
-
-  isPersonalGuestInvitation(): boolean {
-    return !!(this.currentGuest?.checkin_url || this.currentGuest?.guest_token);
-  }
-
-  getGuestCheckinUrl(): string {
-    return this.currentGuest?.checkin_url || this.getAttendanceQrUrl();
   }
 
   getInvitationQrUrl(): string {
@@ -587,83 +571,6 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     return baseUrl;
   }
 
-  getAttendanceQrUrl(): string {
-    if (this.currentGuest?.checkin_url) {
-      return this.currentGuest.checkin_url;
-    }
-
-    const token = this.currentGuest?.guest_token || this.getGuestTokenFromQuery();
-    if (!token || !this.domain) {
-      return '';
-    }
-
-    return buildGuestCheckinUrl(this.getPublicShareOrigin(), this.domain, token);
-  }
-
-  private syncCurrentGuestContext(data?: any): void {
-    const queryParams = this.route.snapshot.queryParams;
-    const apiGuest =
-      data?.current_guest ||
-      data?.invitation_guest ||
-      data?.guest_invitation ||
-      data?.guest ||
-      {};
-    const guestToken = String(
-      queryParams['token'] ||
-      queryParams['guest_token'] ||
-      apiGuest?.guest_token ||
-      data?.guest_token ||
-      ''
-    ).trim();
-    const guestName = String(
-      queryParams['to'] ||
-      apiGuest?.guest_name ||
-      apiGuest?.name ||
-      this.guestName ||
-      ''
-    ).trim();
-    const checkinFromApi = String(apiGuest?.checkin_url || data?.checkin_url || '').trim();
-    const hasPersonalGuestQuery =
-      !!String(queryParams['to'] || '').trim() &&
-      String(queryParams['to'] || '').trim().toLowerCase() !== 'tamu undangan';
-
-    if (!hasPersonalGuestQuery) {
-      this.currentGuest = null;
-      return;
-    }
-
-    if (!guestToken && !checkinFromApi) {
-      this.currentGuest = null;
-      return;
-    }
-
-    const checkinUrl =
-      checkinFromApi ||
-      (guestToken && this.domain
-        ? buildGuestCheckinUrl(this.getPublicShareOrigin(), this.domain, guestToken)
-        : '');
-
-    if (!checkinUrl) {
-      this.currentGuest = null;
-      return;
-    }
-
-    this.currentGuest = {
-      guest_name: guestName || this.guestName,
-      guest_token: guestToken,
-      checkin_url: checkinUrl,
-      invitation_url: guestName && this.domain
-        ? buildGuestInvitationUrl(this.getPublicShareOrigin(), this.domain, guestName)
-        : undefined,
-      checked_in_at: apiGuest?.checked_in_at ?? data?.checked_in_at ?? null,
-      checkin_count: Number(apiGuest?.checkin_count ?? data?.checkin_count ?? 0),
-    };
-  }
-
-  private getGuestTokenFromQuery(): string {
-    const queryParams = this.route.snapshot.queryParams;
-    return String(queryParams['token'] || queryParams['guest_token'] || '').trim();
-  }
 
   private getPublicShareOrigin(): string {
     const origin = String(globalThis.location?.origin || '').replace(/\/$/, '');
