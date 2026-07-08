@@ -1,0 +1,180 @@
+<section class="scan-attendance">
+  <header class="scan-attendance__header">
+    <h2>Scan Kehadiran</h2>
+    <p>Scan QR undangan personal tamu untuk mencatat kehadiran. Data sementara tersimpan di browser ini.</p>
+  </header>
+
+  <section class="scan-attendance__guide" aria-label="Panduan scan kehadiran">
+    <div class="scan-attendance__guide-icon" aria-hidden="true">
+      <i class="fas fa-qrcode"></i>
+    </div>
+    <div>
+      <h3>Panduan Scan</h3>
+      <p>
+        Scan QR undangan personal tamu untuk mencatat kehadiran. Data sementara tersimpan di browser ini.
+      </p>
+    </div>
+  </section>
+
+  <section class="scan-attendance__warning" aria-label="Peringatan scan kehadiran">
+    <div class="scan-attendance__warning-icon" aria-hidden="true">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <p>{{ warningMessage }}</p>
+  </section>
+
+  <section class="scan-attendance__card">
+    <div class="scan-attendance__domain">
+      <label for="scan-domain">Domain undangan aktif</label>
+      <input
+        *ngIf="publicWeddingDomain; else manualDomainField"
+        id="scan-domain"
+        type="text"
+        [ngModel]="publicWeddingDomain"
+        readonly />
+      <ng-template #manualDomainField>
+        <input
+          id="scan-domain"
+          type="text"
+          [(ngModel)]="manualDomain"
+          placeholder="Contoh: bibit-abid"
+          (ngModelChange)="onDomainInputChange()" />
+      </ng-template>
+      <p class="scan-attendance__domain-note" *ngIf="activeDomain">
+        Domain aktif: <strong>{{ activeDomain }}</strong>
+      </p>
+    </div>
+
+    <div class="scan-attendance__actions">
+      <button
+        type="button"
+        class="scan-attendance__btn scan-attendance__btn--primary"
+        [disabled]="isScannerLoading || isScanning || !activeDomain"
+        (click)="startScan()">
+        {{ isScannerLoading ? 'Menyiapkan...' : 'Mulai Scan' }}
+      </button>
+      <button
+        type="button"
+        class="scan-attendance__btn"
+        [disabled]="!isScanning"
+        (click)="stopScan()">
+        Stop Scan
+      </button>
+      <button
+        type="button"
+        class="scan-attendance__btn"
+        [disabled]="isScannerLoading || !activeDomain"
+        (click)="restartScan()">
+        Scan Ulang
+      </button>
+    </div>
+
+    <p class="scan-attendance__notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
+    <p class="scan-attendance__error" *ngIf="scannerError">{{ scannerError }}</p>
+
+    <div class="scan-attendance__scanner-wrap">
+      <div [id]="scannerElementId" class="scan-attendance__scanner"></div>
+      <p class="scan-attendance__scanner-placeholder" *ngIf="!isScanning">
+        Klik <strong>Mulai Scan</strong> untuk membuka kamera dan scan QR undangan personal tamu.
+      </p>
+    </div>
+  </section>
+
+  <section class="scan-attendance__card scan-attendance__last-result" *ngIf="lastScanResult">
+    <h3>Hasil Scan Terakhir</h3>
+    <div class="scan-attendance__result-card" [ngClass]="'scan-attendance__result-card--' + lastScanResult.statusClass">
+      <div class="scan-attendance__result-row">
+        <span>Nama tamu</span>
+        <strong>{{ lastScanResult.guestName }}</strong>
+      </div>
+      <div class="scan-attendance__result-row">
+        <span>Link undangan</span>
+        <a *ngIf="lastScanResult.url" [href]="lastScanResult.url" target="_blank" rel="noopener noreferrer">
+          {{ lastScanResult.url }}
+        </a>
+        <strong *ngIf="!lastScanResult.url">-</strong>
+      </div>
+      <div class="scan-attendance__result-row">
+        <span>Status</span>
+        <strong>{{ lastScanResult.status }}</strong>
+      </div>
+      <div class="scan-attendance__result-row">
+        <span>Waktu scan</span>
+        <strong>{{ formatDateTime(lastScanResult.scannedAt) }}</strong>
+      </div>
+      <p class="scan-attendance__result-message">{{ lastScanResult.message }}</p>
+    </div>
+  </section>
+
+  <section class="scan-attendance__card scan-attendance__checked-list">
+    <div class="scan-attendance__list-head">
+      <div>
+        <h3>Tamu Hadir</h3>
+        <p>{{ checkedInGuests.length }} tamu tercatat hadir</p>
+      </div>
+      <div class="scan-attendance__list-actions">
+        <button type="button" class="scan-attendance__btn" (click)="exportCheckedInGuests()">
+          Export Excel Tamu Hadir
+        </button>
+        <button type="button" class="scan-attendance__btn scan-attendance__btn--danger" (click)="resetAllCheckins()">
+          Reset Semua Kehadiran
+        </button>
+      </div>
+    </div>
+
+    <div class="scan-attendance__empty" *ngIf="!checkedInGuests.length">
+      <i class="fas fa-user-check" aria-hidden="true"></i>
+      <p>Belum ada tamu yang discan hadir.</p>
+    </div>
+
+    <div class="scan-attendance__table-wrap" *ngIf="checkedInGuests.length">
+      <table class="scan-attendance__table">
+        <thead>
+          <tr>
+            <th>Nama Tamu</th>
+            <th>Token</th>
+            <th>Waktu Hadir</th>
+            <th>Jumlah Scan</th>
+            <th>Link Undangan</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let guest of checkedInGuests; trackBy: trackByGuestId">
+            <td>{{ guest.name }}</td>
+            <td>{{ getShortToken(guest.token) }}</td>
+            <td>{{ formatDateTime(guest.checkedInAt) }}</td>
+            <td>{{ guest.checkinCount || 0 }}</td>
+            <td>
+              <a [href]="guest.url" target="_blank" rel="noopener noreferrer">{{ guest.url }}</a>
+            </td>
+            <td>Hadir</td>
+            <td>
+              <button type="button" class="scan-attendance__btn scan-attendance__btn--small" (click)="resetGuestCheckin(guest)">
+                Reset Hadir
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="scan-attendance__cards" *ngIf="checkedInGuests.length">
+      <article class="scan-attendance__guest-card" *ngFor="let guest of checkedInGuests; trackBy: trackByGuestId">
+        <div class="scan-attendance__guest-card-head">
+          <strong>{{ guest.name }}</strong>
+          <span>Hadir</span>
+        </div>
+        <p><span>Token</span> {{ getShortToken(guest.token) }}</p>
+        <p><span>Waktu hadir</span> {{ formatDateTime(guest.checkedInAt) }}</p>
+        <p><span>Jumlah scan</span> {{ guest.checkinCount || 0 }}</p>
+        <p><span>Scan terakhir</span> {{ formatDateTime(guest.lastScannedAt) }}</p>
+        <a [href]="guest.url" target="_blank" rel="noopener noreferrer">{{ guest.url }}</a>
+        <button type="button" class="scan-attendance__btn scan-attendance__btn--small" (click)="resetGuestCheckin(guest)">
+          Reset Hadir
+        </button>
+      </article>
+    </div>
+  </section>
+</section>

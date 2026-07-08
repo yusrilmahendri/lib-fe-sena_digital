@@ -9,8 +9,7 @@
         <p>
           Masukkan nama tamu, lalu klik <strong>Generate Link</strong> untuk membuat link undangan personal.
           Gunakan tombol <strong>WhatsApp</strong> untuk membagikan undangan, tombol <strong>Copy Pesan</strong>
-          untuk menyalin pesan undangan lengkap, <strong>QR Kehadiran</strong> untuk check-in tamu,
-          atau fitur <strong>Import Excel</strong> untuk membuat banyak link sekaligus.
+          untuk menyalin pesan undangan lengkap, atau fitur <strong>Import Excel</strong> untuk membuat banyak link sekaligus.
         </p>
       </div>
     </div>
@@ -105,11 +104,10 @@
     <div class="share-invitation__guest-list" *ngIf="generatedGuests.length">
       <article class="share-invitation__guest" *ngFor="let guest of generatedGuests; trackBy: trackByGuest">
         <div class="share-invitation__guest-info">
-          <strong>{{ guest.guest_name || guest.name }}</strong>
-          <a [href]="guest.invitation_url || guest.url" target="_blank" rel="noopener noreferrer">
-            {{ guest.invitation_url || guest.url }}
+          <strong>{{ guest.name }}</strong>
+          <a [href]="guest.url" target="_blank" rel="noopener noreferrer">
+            {{ guest.url }}
           </a>
-          <small *ngIf="guest.checkin_url">Check-in: {{ guest.checkin_url }}</small>
         </div>
         <div class="share-invitation__guest-actions">
           <button type="button" class="share-invitation__secondary-btn" (click)="copyGuestInvitation(guest)">
@@ -118,14 +116,8 @@
           <button
             type="button"
             class="share-invitation__whatsapp-btn"
-            (click)="shareGuestInvitationWhatsapp(guest.invitation_url || guest.url, guest.guest_name || guest.name)">
+            (click)="shareGuestInvitationWhatsapp(guest.url, guest.name)">
             WhatsApp
-          </button>
-          <button type="button" class="share-invitation__qr-btn" (click)="openGuestAttendanceQrModal(guest)">
-            QR Kehadiran
-          </button>
-          <button type="button" class="share-invitation__download-btn" (click)="downloadGuestAttendanceQr(guest)">
-            Download QR
           </button>
         </div>
       </article>
