@@ -1,98 +1,71 @@
-<!-- Simple ngx-bootstrap modal content for testing -->
-<div class="wedding-modal">
-
-  <!-- Modal Header -->
-  <div class="modal-header border-0">
-    <h5 class="modal-title w-100 text-center wedding-title">
-      <i class="fas fa-qrcode mr-2"></i>
-      {{ title }}
-    </h5>
-    <button type="button" class="close" (click)="closeModal()" aria-label="Close">
+<div class="qr-modal-card">
+  <header class="qr-modal-header">
+    <button type="button" class="qr-modal-close" (click)="closeModal()" aria-label="Tutup modal QR">
       <span aria-hidden="true">&times;</span>
     </button>
-  </div>
+    <div class="qr-modal-heading">
+      <span class="qr-modal-icon" aria-hidden="true">
+        <i class="fas fa-qrcode"></i>
+      </span>
+      <h2>{{ title }}</h2>
+    </div>
+  </header>
 
-  <!-- Modal Body -->
-  <div class="modal-body text-center px-4 pb-4">
+  <section class="qr-modal-body">
+    <span class="qr-modal-badge" [class.qr-modal-badge--personal]="hasGuestToken()">
+      {{ hasGuestToken() ? 'QR Personal' : 'QR Umum' }}
+    </span>
 
-    <!-- Description -->
-    <p class="description-text mb-4">{{ description }}</p>
+    <p class="qr-modal-description">{{ description }}</p>
 
-    <!-- Loading State -->
-    <div *ngIf="isGenerating" class="loading-container">
-      <div class="spinner-border text-success" role="status">
-        <span class="sr-only">Generating QR code...</span>
+    <p class="qr-modal-guest" *ngIf="hasGuestToken() && getGuestNameFromUrl()">
+      Untuk: <strong>{{ getGuestNameFromUrl() }}</strong>
+    </p>
+
+    <p class="qr-modal-warning" *ngIf="!hasGuestToken()">
+      QR ini tidak dapat digunakan untuk mencatat kehadiran karena tidak memiliki nama tamu undangan.
+    </p>
+
+    <div *ngIf="isGenerating" class="qr-modal-state">
+      <div class="spinner-border" role="status">
+        <span class="sr-only">Membuat QR...</span>
       </div>
-      <p class="mt-3 text-muted">Generating QR code...</p>
+      <p>Membuat QR...</p>
     </div>
 
-    <!-- Error State -->
-    <div *ngIf="errorMessage && !isGenerating" class="error-container">
-      <div class="error-icon mb-3">
-        <i class="fas fa-exclamation-triangle text-danger"></i>
-      </div>
-      <p class="text-danger mb-3">{{ errorMessage }}</p>
-      <button class="btn btn-outline-primary" (click)="retryGeneration()">
-        <i class="fas fa-redo mr-2"></i>
-        Try Again
+    <div *ngIf="errorMessage && !isGenerating" class="qr-modal-state qr-modal-state--error">
+      <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="qr-modal-action qr-modal-action--secondary" (click)="retryGeneration()">
+        Coba Lagi
       </button>
     </div>
 
-    <!-- QR Code Display -->
-    <div *ngIf="!isGenerating && !errorMessage" class="qr-container">
-      <div class="qr-wrapper">
-        <canvas #qrCanvas class="qr-canvas"></canvas>
+    <div *ngIf="!isGenerating && !errorMessage" class="qr-modal-content">
+      <div class="qr-modal-qr-card">
+        <canvas #qrCanvas class="qr-modal-canvas"></canvas>
       </div>
 
-      <!-- URL Display -->
-      <div class="url-display mt-4">
-        <div class="input-group">
-          <input
-            type="text"
-            class="form-control url-input"
-            [value]="url"
-            readonly
-            aria-label="Wedding invitation URL">
-          <div class="input-group-append">
-            <button
-              class="btn btn-outline-secondary copy-btn"
-              type="button"
-              (click)="copyUrl()"
-              aria-label="Copy URL">
-              <i class="fas fa-copy"></i>
-            </button>
-          </div>
-        </div>
+      <div class="qr-modal-url" title="{{ url }}">
+        {{ url }}
       </div>
 
-      <!-- Action Buttons -->
-      <div class="action-buttons mt-4">
-        <button
-          class="btn btn-success mr-2 mb-2"
-          (click)="shareUrl()"
-          aria-label="Share wedding invitation">
-          <i class="fas fa-share-alt mr-2"></i>
-          Share
-        </button>
+      <p class="qr-modal-notice" *ngIf="noticeMessage">{{ noticeMessage }}</p>
 
-        <button
-          class="btn btn-outline-success mr-2 mb-2"
-          (click)="downloadQRCode()"
-          aria-label="Download QR code">
-          <i class="fas fa-download mr-2"></i>
-          Download
+      <div class="qr-modal-actions">
+        <button type="button" class="qr-modal-action qr-modal-action--primary" (click)="shareUrl()">
+          <i class="fas fa-share-alt" aria-hidden="true"></i>
+          <span>Share</span>
         </button>
-
-        <button
-          class="btn btn-outline-primary mb-2"
-          (click)="copyUrl()"
-          aria-label="Copy URL">
-          <i class="fas fa-link mr-2"></i>
-          Copy Link
+        <button type="button" class="qr-modal-action qr-modal-action--secondary" (click)="downloadQRCode()">
+          <i class="fas fa-download" aria-hidden="true"></i>
+          <span>Download</span>
+        </button>
+        <button type="button" class="qr-modal-action qr-modal-action--secondary" (click)="copyUrl()">
+          <i class="fas fa-link" aria-hidden="true"></i>
+          <span>Copy Link</span>
         </button>
       </div>
-
-
     </div>
-  </div>
+  </section>
 </div>

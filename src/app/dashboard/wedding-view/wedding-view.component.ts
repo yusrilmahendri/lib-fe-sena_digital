@@ -1377,51 +1377,29 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * Open QR Code modal for sharing wedding URL
    */
   openQRCodeModal(): void {
-    console.log('openQRCodeModal called');
-    console.log('Current domain:', this.domain);
-
     if (!this.domain) {
-      console.error('No domain available for QR code generation');
-      alert('No domain available for QR code generation');
+      alert('Domain undangan belum tersedia.');
       return;
     }
 
-    const weddingUrl = this.getInvitationQrUrl();
-    const coupleNames = this.getCoupleDisplayName();
-
-    console.log('Wedding URL:', weddingUrl);
-    console.log('Couple names:', coupleNames);
-
     const initialState = {
-      url: weddingUrl,
-      title: 'QR Undangan',
-      description: 'Scan QR ini untuk membuka undangan digital.'
+      url: window.location.href
     };
-
-    console.log('Modal initial state:', initialState);
-    console.log('Modal service:', this.modalService);
 
     try {
       this.qrModalRef = this.modalService.show(QRCodeModalComponent, {
         initialState,
-        class: 'modal-lg',
+        class: 'qr-modal-dialog',
         backdrop: true,
         keyboard: true,
         animated: true
       });
 
-      console.log('Modal ref created:', this.qrModalRef);
-
-      // Handle modal close event
       this.qrModalRef.onHide?.subscribe(() => {
-        console.log('QR Code modal closed');
         this.qrModalRef = undefined;
       });
-
-      console.log('QR Code modal opened successfully');
     } catch (error) {
-      console.error('Error opening QR modal:', error);
-      alert('Error opening QR modal: ' + error);
+      alert('Gagal membuka QR undangan.');
     }
   }
 

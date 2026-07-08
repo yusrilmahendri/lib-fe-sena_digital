@@ -1,288 +1,310 @@
-// QR Code Modal Styles - Bootstrap 4 Compatible
-
-.wedding-modal {
-  background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
-  border: none;
-  border-radius: 15px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+.qr-modal-card {
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  color: #2a2118;
+  max-height: calc(100vh - 32px);
   overflow: hidden;
-  max-width: 500px;
-  width: 100%;
-  margin: auto;
+  width: min(420px, calc(100vw - 32px));
 }
 
-.modal-header {
-  background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
-  color: white;
-  padding: 20px;
-  border-bottom: none;
+.qr-modal-header {
+  align-items: center;
+  background: linear-gradient(135deg, #c79555, #e3bd7a);
+  color: #ffffff;
+  display: flex;
+  height: 72px;
+  justify-content: center;
+  padding: 12px 56px;
   position: relative;
+  text-align: center;
+}
 
-  .wedding-title {
-    font-family: 'Georgia', serif;
-    font-weight: 600;
+.qr-modal-heading {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-width: 0;
+
+  h2 {
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.2;
     margin: 0;
-    font-size: 1.4rem;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-
-  .close {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    opacity: 0.8;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-      opacity: 1;
-      transform: translateY(-50%) scale(1.1);
-    }
-
-    span {
-      line-height: 1;
-    }
   }
 }
 
-.modal-body {
-  padding: 30px 20px;
-  min-height: 200px;
+.qr-modal-icon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 999px;
+  display: flex;
+  flex: 0 0 34px;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
 
-  .description-text {
-    color: #6c757d;
-    font-size: 1rem;
-    line-height: 1.5;
-    margin-bottom: 25px;
+.qr-modal-close {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.18);
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  font-size: 24px;
+  height: 34px;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  transition: background 0.15s ease, transform 0.15s ease;
+  width: 34px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateY(-1px);
   }
 }
 
-// Loading State
-.loading-container {
-  padding: 40px 20px;
+.qr-modal-body {
+  padding: 22px;
+  text-align: center;
+}
+
+.qr-modal-badge {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  color: #6b7280;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 12px;
+  padding: 7px 11px;
+}
+
+.qr-modal-badge--personal {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a5a18;
+}
+
+.qr-modal-description {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 auto 12px;
+  max-width: 330px;
+}
+
+.qr-modal-guest,
+.qr-modal-warning {
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+}
+
+.qr-modal-guest {
+  background: #fff7ed;
+  color: #7c4a19;
+}
+
+.qr-modal-warning {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.qr-modal-state {
+  align-items: center;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 180px;
+  justify-content: center;
 
   .spinner-border {
-    width: 3rem;
-    height: 3rem;
-    border-width: 0.25em;
+    border-color: #e3bd7a;
+    border-right-color: transparent;
+    height: 34px;
+    width: 34px;
   }
 
   p {
-    margin-top: 15px;
-    color: #6c757d;
-    font-size: 0.95rem;
+    font-size: 14px;
+    margin: 0;
   }
 }
 
-// Error State
-.error-container {
-  padding: 20px;
-
-  .error-icon {
-    font-size: 3rem;
-    color: #dc3545;
-  }
-
-  .btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 500;
-  }
-}
-
-// QR Code Container
-.qr-container {
-  .qr-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 25px;
-    padding: 20px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    
-    .qr-canvas {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-    }
-  }
-}
-
-// URL Display
-.url-display {
-  .input-group {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    
-    .url-input {
-      background-color: #f8f9fa;
-      border: 1px solid #e9ecef;
-      font-family: 'Courier New', monospace;
-      font-size: 0.9rem;
-      padding: 12px 15px;
-      
-      &:focus {
-        background-color: white;
-        border-color: #d4a574;
-        box-shadow: 0 0 0 0.2rem rgba(212, 165, 116, 0.25);
-      }
-    }
-    
-    .input-group-append .copy-btn {
-      background: #d4a574;
-      border: 1px solid #d4a574;
-      color: white;
-      padding: 12px 15px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-        background: #b8956a;
-        border-color: #b8956a;
-        transform: translateY(-1px);
-      }
-      
-      &:active {
-        transform: translateY(0);
-      }
-    }
-  }
-}
-
-// Action Buttons
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-
-  .btn {
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border-width: 2px;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-    
-    &:active {
-      transform: translateY(-1px);
-    }
-    
-    i {
-      margin-right: 8px;
-    }
-  }
-
-  .btn-success {
-    background: #28a745;
-    border-color: #28a745;
-    
-    &:hover {
-      background: #218838;
-      border-color: #1e7e34;
-    }
-  }
-
-  .btn-outline-success {
-    color: #28a745;
-    border-color: #28a745;
-    
-    &:hover {
-      background: #28a745;
-      border-color: #28a745;
-      color: white;
-    }
-  }
-
-  .btn-outline-primary {
-    color: #007bff;
-    border-color: #007bff;
-    
-    &:hover {
-      background: #007bff;
-      border-color: #007bff;
-      color: white;
-    }
-  }
-}
-
-// Instructions
-.instructions {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 4px solid #d4a574;
-
-  small {
-    font-size: 0.875rem;
-    line-height: 1.4;
-  }
+.qr-modal-state--error {
+  color: #991b1b;
 
   i {
-    color: #d4a574;
+    font-size: 28px;
   }
 }
 
-// Responsive Design
-@media (max-width: 576px) {
-  .wedding-modal {
-    margin: 10px;
-    border-radius: 12px;
+.qr-modal-content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.qr-modal-qr-card {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #f1f1f1;
+  border-radius: 18px;
+  box-shadow: 0 14px 38px rgba(42, 33, 24, 0.12);
+  display: flex;
+  height: 282px;
+  justify-content: center;
+  margin: 0 auto 16px;
+  padding: 12px;
+  width: 282px;
+}
+
+.qr-modal-canvas {
+  display: block;
+  height: 260px !important;
+  max-height: 260px;
+  max-width: 260px;
+  width: 260px !important;
+}
+
+.qr-modal-url {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #4b5563;
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  margin-bottom: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 10px 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.qr-modal-notice {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  color: #166534;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.qr-modal-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.qr-modal-action {
+  align-items: center;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 7px;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 10px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+.qr-modal-action--primary {
+  background: #2a2118;
+  color: #ffffff;
+}
+
+.qr-modal-action--secondary {
+  background: #ffffff;
+  border: 1px solid #d7c1a6;
+  color: #2a2118;
+}
+
+@media (max-width: 480px) {
+  .qr-modal-card {
+    border-radius: 18px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    width: calc(100vw - 24px);
   }
 
-  .modal-header {
-    padding: 15px;
-    
-    .wedding-title {
-      font-size: 1.2rem;
-    }
+  .qr-modal-header {
+    height: 68px;
+    padding: 12px 48px;
   }
 
-  .modal-body {
-    padding: 20px 15px;
-  }
-
-  .action-buttons {
+  .qr-modal-heading {
     flex-direction: column;
-    
-    .btn {
-      width: 100%;
-      margin-bottom: 10px;
+    gap: 4px;
+
+    h2 {
+      font-size: 17px;
     }
   }
 
-  .qr-container .qr-wrapper {
-    padding: 15px;
+  .qr-modal-icon {
+    flex-basis: 26px;
+    font-size: 12px;
+    height: 26px;
+    width: 26px;
+  }
+
+  .qr-modal-body {
+    padding: 18px;
+  }
+
+  .qr-modal-qr-card {
+    height: min(72vw, 240px);
+    padding: 10px;
+    width: min(72vw, 240px);
+  }
+
+  .qr-modal-canvas {
+    height: calc(min(72vw, 240px) - 20px) !important;
+    max-height: 220px;
+    max-width: 220px;
+    width: calc(min(72vw, 240px) - 20px) !important;
+  }
+
+  .qr-modal-url {
+    font-size: 12px;
+  }
+
+  .qr-modal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-// Animation for modal entrance
-.wedding-modal {
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+@media (max-width: 340px) {
+  .qr-modal-actions {
+    grid-template-columns: 1fr;
   }
 }

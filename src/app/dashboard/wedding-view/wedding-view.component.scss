@@ -701,19 +701,3 @@
     opacity: 1;
   }
 }
-
-.attendance-qr-panel {
-  bottom: 96px;
-  left: 16px;
-  position: fixed;
-  z-index: 1200;
-}
-
-@media (max-width: 768px) {
-  .attendance-qr-panel {
-    bottom: 88px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-  }
-}

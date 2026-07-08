@@ -1,16 +1,18 @@
 export interface GuestInvitationRecord {
+  id: string;
   name: string;
+  slug: string;
   url: string;
-  guest_name: string;
-  invitation_url: string;
-  checkin_url: string;
-  guest_token: string;
-  token: string;
-  guestSlug: string;
-  checked_in_at: string | null;
+  guest_name?: string;
+  invitation_url?: string;
+  checkin_url?: string;
+  guest_token?: string;
+  token?: string;
+  guestSlug?: string;
+  checked_in_at?: string | null;
   checkedInAt: string | null;
   lastScannedAt: string | null;
-  checkin_count: number;
+  checkin_count?: number;
   checkinCount: number;
   createdAt: string;
 }
@@ -30,36 +32,37 @@ export function generateGuestToken(): string {
   return Array.from(random, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function slugifyGuestName(name: string): string {
-  const slug = String(name || 'tamu')
-    .trim()
+export function normalizeGuestName(value: string): string {
+  return decodeURIComponent(value || '')
+    .replace(/\+/g, ' ')
     .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+export function createGuestSlug(name: string): string {
+  return normalizeGuestName(name)
+    .replace(/&/g, 'dan')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+export function slugifyGuestName(name: string): string {
+  const slug = createGuestSlug(name);
 
   return slug || 'tamu';
 }
 
-export function buildGuestInvitationUrl(origin: string, domain: string, guestName: string, guestToken = ''): string {
+export function buildGuestInvitationUrl(origin: string, domain: string, guestName: string): string {
   const cleanOrigin = String(origin || '').replace(/\/$/, '');
   const cleanDomain = String(domain || '').trim();
   const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
-  const cleanGuestToken = String(guestToken || '').trim();
 
   if (!cleanDomain) {
     return '';
   }
 
-  const guestSlug = slugifyGuestName(cleanGuestName);
-  const params = new URLSearchParams({ to: guestSlug });
-
-  if (cleanGuestToken) {
-    params.set('token', cleanGuestToken);
-  }
-
-  return `${cleanOrigin}/wedding/${encodeURIComponent(cleanDomain)}?${params.toString()}`;
+  return `${cleanOrigin}/wedding/${encodeURIComponent(cleanDomain)}?to=${encodeURIComponent(cleanGuestName)}`;
 }
 
 export function buildGuestCheckinUrl(origin: string, domain: string, guestToken: string): string {
@@ -80,22 +83,26 @@ export function normalizeGuestRecord(
   domain: string
 ): GuestInvitationRecord {
   const guestName = String(raw.guest_name || raw.name || '').trim();
-  const guestToken = String(raw.guest_token || raw.token || '').trim() || generateGuestToken();
-  const guestSlug = String(raw.guestSlug || '').trim() || slugifyGuestName(guestName);
+  const guestToken = String(raw.guest_token || raw.token || '').trim();
+  const guestSlug = String(raw.slug || raw.guestSlug || '').trim() || createGuestSlug(guestName);
+  const existingUrl = String(raw.invitation_url || raw.url || '').trim();
   const invitationUrl =
-    buildGuestInvitationUrl(origin, domain, guestName, guestToken) ||
-    String(raw.invitation_url || raw.url || '').trim();
+    existingUrl ||
+    buildGuestInvitationUrl(origin, domain, guestName);
   const checkedInAt = raw.checkedInAt ?? raw.checked_in_at ?? null;
   const checkinCount = Number(raw.checkinCount ?? raw.checkin_count ?? 0);
+  const id = String(raw.id || guestToken || guestSlug || generateGuestToken());
 
   return {
+    id,
     name: guestName,
+    slug: guestSlug,
     url: invitationUrl,
     guest_name: guestName,
     invitation_url: invitationUrl,
     checkin_url: '',
-    guest_token: guestToken,
-    token: guestToken,
+    guest_token: guestToken || undefined,
+    token: guestToken || undefined,
     guestSlug,
     checked_in_at: checkedInAt,
     checkedInAt,

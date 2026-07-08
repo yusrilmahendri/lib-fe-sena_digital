@@ -1,10 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Html5Qrcode } from 'html5-qrcode';
 import { DashboardService, ProfileResponse } from 'src/app/dashboard.service';
+import { createGuestSlug, normalizeGuestName } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import * as XLSX from 'xlsx';
 
 interface StoredGuestInvitation {
+  id?: string;
   name?: string;
+  slug?: string;
   url?: string;
   guest_name?: string;
   invitation_url?: string;
@@ -127,12 +130,13 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
     const scannedAt = new Date().toISOString();
     const parsed = this.parseInvitationUrl(decodedText);
+    const domain = parsed.domain;
 
-    if (!parsed.token) {
+    if (!domain) {
       this.setScanResult({
         guestName: '-',
         invitationUrl: decodedText,
-        status: 'QR ini bukan undangan personal, sehingga tidak dapat dicatat sebagai hadir.',
+        status: 'QR tidak valid karena domain undangan tidak ditemukan.',
         scannedAt,
         isError: true,
       });
@@ -140,13 +144,11 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const domain = parsed.domain || this.resolvedDomain;
-
-    if (!domain) {
+    if (!parsed.to) {
       this.setScanResult({
         guestName: '-',
         invitationUrl: decodedText,
-        status: 'Domain undangan tidak ditemukan.',
+        status: 'QR ini tidak memiliki nama tamu undangan.',
         scannedAt,
         isError: true,
       });
@@ -157,14 +159,16 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     this.activeDomain = domain;
     this.manualDomain = domain;
 
+    const scannedName = this.normalizeGuestName(parsed.to);
+    const scannedSlug = this.createGuestSlug(scannedName);
     const guests = this.loadGuests(domain);
-    const guestIndex = guests.findIndex((guest) => this.getGuestToken(guest) === parsed.token);
+    const guestIndex = guests.findIndex((guest) => this.isMatchingGuest(guest, scannedName, scannedSlug));
 
     if (guestIndex < 0) {
       this.setScanResult({
         guestName: '-',
         invitationUrl: decodedText,
-        status: 'Data tamu tidak ditemukan di browser ini. Pastikan data tamu sudah dibuat atau di-import di perangkat scanner.',
+        status: 'Data tamu tidak ditemukan di browser ini. Pastikan nama tamu sudah dibuat atau di-import di perangkat scanner.',
         scannedAt,
         isError: true,
       });
@@ -198,37 +202,34 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public exportPresentGuestsToExcel(): void {
-    const rows = this.presentGuests.map((guest, index) => ({
-      No: index + 1,
-      'Nama Tamu': this.getGuestName(guest),
-      'Link Undangan': this.getGuestInvitationUrl(guest),
-      Status: 'Hadir',
-      'Waktu Scan': this.getCheckedInAt(guest) || '',
-      'Scan Terakhir': guest.lastScannedAt || '',
-      'Jumlah Scan': this.getCheckinCount(guest),
+    const rows = this.presentGuests.map((guest) => ({
+      nama_tamu: this.getGuestName(guest),
+      link_undangan: this.getGuestInvitationUrl(guest),
+      status_hadir: 'hadir',
+      waktu_hadir: this.getCheckedInAt(guest) || '',
+      jumlah_scan: this.getCheckinCount(guest),
+      scan_terakhir: guest.lastScannedAt || '',
     }));
 
     if (!rows.length) {
       rows.push({
-        No: 1,
-        'Nama Tamu': 'Belum ada tamu hadir',
-        'Link Undangan': '',
-        Status: '',
-        'Waktu Scan': '',
-        'Scan Terakhir': '',
-        'Jumlah Scan': 0,
+        nama_tamu: 'Belum ada tamu hadir',
+        link_undangan: '',
+        status_hadir: '',
+        waktu_hadir: '',
+        jumlah_scan: 0,
+        scan_terakhir: '',
       });
     }
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     worksheet['!cols'] = [
-      { wch: 6 },
       { wch: 28 },
       { wch: 64 },
       { wch: 16 },
       { wch: 24 },
-      { wch: 24 },
       { wch: 12 },
+      { wch: 24 },
     ];
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tamu Hadir');
@@ -244,6 +245,12 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const confirmed = window.confirm('Reset semua data kehadiran pada domain aktif?');
+
+    if (!confirmed) {
+      return;
+    }
+
     const guests = this.loadGuests(domain).map((guest) => this.resetGuestAttendanceFields(guest));
     this.saveGuests(domain, guests);
     this.presentGuests = [];
@@ -253,15 +260,15 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
   public resetGuestAttendance(guestToReset: StoredGuestInvitation): void {
     const domain = this.resolvedDomain;
-    const token = this.getGuestToken(guestToReset);
+    const guestKey = this.getGuestIdentityKey(guestToReset);
 
-    if (!domain || !token) {
+    if (!domain || !guestKey) {
       this.showNotice('Data tamu tidak valid.');
       return;
     }
 
     const guests = this.loadGuests(domain).map((guest) =>
-      this.getGuestToken(guest) === token ? this.resetGuestAttendanceFields(guest) : guest
+      this.getGuestIdentityKey(guest) === guestKey ? this.resetGuestAttendanceFields(guest) : guest
     );
     this.saveGuests(domain, guests);
     this.presentGuests = this.filterPresentGuests(guests);
@@ -269,7 +276,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public trackByGuest(index: number, guest: StoredGuestInvitation): string {
-    return `${this.getGuestToken(guest) || this.getGuestName(guest)}-${index}`;
+    return `${this.getGuestIdentityKey(guest) || this.getGuestName(guest)}-${index}`;
   }
 
   public getGuestName(guest: StoredGuestInvitation): string {
@@ -349,29 +356,92 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   private filterPresentGuests(guests: StoredGuestInvitation[]): StoredGuestInvitation[] {
-    return guests.filter((guest) => !!this.getCheckedInAt(guest));
+    return guests
+      .filter((guest) => !!this.getCheckedInAt(guest))
+      .sort((a, b) => {
+        const timeA = new Date(a.lastScannedAt || this.getCheckedInAt(a) || '').getTime() || 0;
+        const timeB = new Date(b.lastScannedAt || this.getCheckedInAt(b) || '').getTime() || 0;
+        return timeB - timeA;
+      });
   }
 
   private loadGuests(domain: string): StoredGuestInvitation[] {
     try {
       const raw = localStorage.getItem(this.getStorageKey(domain));
       const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
+      return Array.isArray(parsed) ? parsed.map((guest) => this.normalizeStoredGuest(guest)) : [];
     } catch {
       return [];
     }
   }
 
   private saveGuests(domain: string, guests: StoredGuestInvitation[]): void {
-    localStorage.setItem(this.getStorageKey(domain), JSON.stringify(guests));
+    localStorage.setItem(this.getStorageKey(domain), JSON.stringify(guests.map((guest) => this.serializeGuest(guest))));
   }
 
   private getStorageKey(domain: string): string {
     return `guest_invitations_${this.normalizeWeddingDomain(domain) || 'unknown'}`;
   }
 
-  private getGuestToken(guest: StoredGuestInvitation): string {
-    return String(guest.token || guest.guest_token || '').trim();
+  private getGuestIdentityKey(guest: StoredGuestInvitation): string {
+    return String(guest.id || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
+  }
+
+  private isMatchingGuest(guest: StoredGuestInvitation, scannedName: string, scannedSlug: string): boolean {
+    const guestName = this.getGuestName(guest);
+
+    return (
+      this.normalizeGuestName(guestName) === scannedName ||
+      String(guest.slug || '').trim() === scannedSlug ||
+      this.createGuestSlug(guestName) === scannedSlug
+    );
+  }
+
+  private normalizeGuestName(value: string): string {
+    return normalizeGuestName(value);
+  }
+
+  private createGuestSlug(name: string): string {
+    return createGuestSlug(name);
+  }
+
+  private normalizeStoredGuest(raw: StoredGuestInvitation): StoredGuestInvitation {
+    const name = this.getGuestName(raw);
+    const checkedInAt = raw.checkedInAt || raw.checked_in_at || null;
+    const checkinCount = Number(raw.checkinCount ?? raw.checkin_count ?? 0);
+
+    return {
+      ...raw,
+      id: raw.id || raw.token || raw.guest_token || raw.slug || this.createGuestSlug(name),
+      name,
+      slug: raw.slug || this.createGuestSlug(name),
+      url: raw.url || raw.invitation_url || '',
+      checkedInAt,
+      checked_in_at: checkedInAt,
+      checkinCount,
+      checkin_count: checkinCount,
+      lastScannedAt: raw.lastScannedAt || null,
+    };
+  }
+
+  private serializeGuest(guest: StoredGuestInvitation): Record<string, any> {
+    const serialized: Record<string, any> = {
+      id: guest.id || this.getGuestIdentityKey(guest),
+      name: this.getGuestName(guest),
+      slug: guest.slug || this.createGuestSlug(this.getGuestName(guest)),
+      url: this.getGuestInvitationUrl(guest),
+      checkedInAt: this.getCheckedInAt(guest),
+      checkinCount: this.getCheckinCount(guest),
+      lastScannedAt: guest.lastScannedAt || null,
+      createdAt: (guest as any).createdAt || new Date().toISOString(),
+    };
+
+    const token = String(guest.token || guest.guest_token || '').trim();
+    if (token) {
+      serialized['token'] = token;
+    }
+
+    return serialized;
   }
 
   private resetGuestAttendanceFields(guest: StoredGuestInvitation): StoredGuestInvitation {

@@ -1,2 +1,38 @@
 @import "./styles/variable", "./styles/global", "./styles/animation" , "~notyf/notyf.min.css";
 
+.modal-dialog.qr-modal-dialog {
+  align-items: center;
+  display: flex;
+  margin: 0 auto;
+  min-height: 100vh;
+  max-width: 420px;
+  pointer-events: none;
+  width: calc(100% - 32px);
+}
+
+.modal-dialog.qr-modal-dialog .modal-content {
+  background: transparent;
+  border: 0;
+  border-radius: 22px;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
+.modal.show {
+  z-index: 2010;
+}
+
+.modal-backdrop.show {
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(6px);
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2000;
+}
+
+@media (max-width: 480px) {
+  .modal-dialog.qr-modal-dialog {
+    max-width: 360px;
+    width: calc(100vw - 24px);
+  }
+}
