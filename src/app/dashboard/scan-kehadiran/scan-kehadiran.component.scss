@@ -1,0 +1,382 @@
+.scan-attendance {
+  box-sizing: border-box;
+  color: #172033;
+  margin: 0 auto;
+  max-width: 1080px;
+  overflow-x: hidden;
+  padding: 8px 4px 32px;
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.scan-attendance__header h2 {
+  color: #172033;
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.scan-attendance__header p,
+.scan-attendance__guide p,
+.scan-attendance__warning p,
+.scan-attendance__domain-note,
+.scan-attendance__notice,
+.scan-attendance__error,
+.scan-attendance__scanner-placeholder,
+.scan-attendance__empty p {
+  color: #5b667a;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.scan-attendance__guide,
+.scan-attendance__warning,
+.scan-attendance__card {
+  background: #ffffff;
+  border: 1px solid #f4d3e1;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(255, 61, 141, 0.08);
+  margin-top: 18px;
+  padding: 24px;
+}
+
+.scan-attendance__guide,
+.scan-attendance__warning {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+}
+
+.scan-attendance__guide {
+  background: linear-gradient(135deg, #fff7fb 0%, #ffffff 100%);
+}
+
+.scan-attendance__guide-icon,
+.scan-attendance__warning-icon {
+  align-items: center;
+  border-radius: 12px;
+  display: flex;
+  font-size: 18px;
+  height: 38px;
+  justify-content: center;
+  min-width: 38px;
+  width: 38px;
+}
+
+.scan-attendance__guide-icon {
+  background: #ffe4f1;
+  color: #ff3d8d;
+}
+
+.scan-attendance__warning {
+  background: #fff8eb;
+  border-color: #f6d58a;
+}
+
+.scan-attendance__warning-icon {
+  background: #fff3cd;
+  color: #b7791f;
+}
+
+.scan-attendance__warning p {
+  color: #7a4b00;
+}
+
+.scan-attendance__guide h3,
+.scan-attendance__card h3 {
+  color: #172033;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.scan-attendance__domain label {
+  color: #172033;
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.scan-attendance__domain input {
+  border: 1px solid #e7c8d8;
+  border-radius: 12px;
+  box-sizing: border-box;
+  font-size: 14px;
+  padding: 12px 14px;
+  width: 100%;
+}
+
+.scan-attendance__domain-manual {
+  margin-top: 10px;
+}
+
+.scan-attendance__domain-note {
+  margin-top: 10px;
+}
+
+.scan-attendance__actions,
+.scan-attendance__list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.scan-attendance__btn {
+  background: #ffffff;
+  border: 1px solid #d8dee8;
+  border-radius: 999px;
+  color: #172033;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 18px;
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.scan-attendance__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.scan-attendance__btn--primary {
+  background: linear-gradient(135deg, #ff3d8d 0%, #ff6cab 100%);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.scan-attendance__btn--danger {
+  background: #fff5f5;
+  border-color: #f5c2c7;
+  color: #b42318;
+}
+
+.scan-attendance__btn--small {
+  font-size: 12px;
+  padding: 8px 14px;
+}
+
+.scan-attendance__notice {
+  color: #0f5132;
+  margin-top: 14px;
+}
+
+.scan-attendance__error {
+  color: #b42318;
+  margin-top: 14px;
+}
+
+.scan-attendance__scanner-wrap {
+  background: #f8fafc;
+  border: 1px dashed #d8dee8;
+  border-radius: 16px;
+  margin-top: 18px;
+  min-height: 320px;
+  overflow: hidden;
+  position: relative;
+}
+
+.scan-attendance__scanner {
+  min-height: 320px;
+}
+
+.scan-attendance__scanner-placeholder {
+  inset: 0;
+  padding: 24px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.scan-attendance__result-card {
+  border: 1px solid #d8dee8;
+  border-radius: 16px;
+  margin-top: 12px;
+  padding: 16px;
+}
+
+.scan-attendance__result-card--success {
+  background: #ecfdf3;
+  border-color: #86efac;
+}
+
+.scan-attendance__result-card--warning {
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+.scan-attendance__result-card--danger {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.scan-attendance__result-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.scan-attendance__result-row span {
+  color: #5b667a;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scan-attendance__result-row a {
+  color: #ff3d8d;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.scan-attendance__result-message {
+  color: #172033;
+  font-size: 14px;
+  margin: 0;
+}
+
+.scan-attendance__list-head {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.scan-attendance__list-head p {
+  color: #5b667a;
+  font-size: 14px;
+  margin: 0;
+}
+
+.scan-attendance__empty {
+  align-items: center;
+  color: #5b667a;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.scan-attendance__empty i {
+  color: #ff3d8d;
+  font-size: 28px;
+}
+
+.scan-attendance__table-wrap {
+  display: none;
+  margin-top: 18px;
+  overflow-x: auto;
+}
+
+.scan-attendance__table {
+  border-collapse: collapse;
+  min-width: 920px;
+  width: 100%;
+}
+
+.scan-attendance__table th,
+.scan-attendance__table td {
+  border-bottom: 1px solid #edf2f7;
+  font-size: 13px;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.scan-attendance__table th {
+  color: #5b667a;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.scan-attendance__table a {
+  color: #ff3d8d;
+  word-break: break-all;
+}
+
+.scan-attendance__cards {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.scan-attendance__guest-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.scan-attendance__guest-card-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.scan-attendance__guest-card-head span {
+  background: #ecfdf3;
+  border-radius: 999px;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.scan-attendance__guest-card p {
+  color: #172033;
+  font-size: 13px;
+  margin: 0;
+}
+
+.scan-attendance__guest-card p span {
+  color: #5b667a;
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.scan-attendance__guest-card a {
+  color: #ff3d8d;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+@media (min-width: 900px) {
+  .scan-attendance__table-wrap {
+    display: block;
+  }
+
+  .scan-attendance__cards {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .scan-attendance__header h2 {
+    font-size: 24px;
+  }
+
+  .scan-attendance__actions,
+  .scan-attendance__list-actions {
+    flex-direction: column;
+  }
+
+  .scan-attendance__btn {
+    width: 100%;
+  }
+}

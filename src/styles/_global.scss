@@ -104,6 +104,63 @@ ul {
   overflow: none;
 }
 
+// Prevent orphaned modal backdrops from blocking taps/clicks on mobile.
+body:not(.modal-open) .modal-backdrop {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+// Decorative layers must never intercept clicks.
+.wedding-bg,
+.floral-bg,
+.no-outer-bg,
+.theme-bg,
+.decorative-layer,
+.section-frame,
+.frame-bg,
+.background-overlay,
+.wedding-container::before,
+.wedding-container::after {
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .dashboard-container,
+  .dashboard-content,
+  .content,
+  .wedding-container,
+  .invitation-wrapper,
+  .well {
+    pointer-events: auto;
+  }
+
+  .no-outlet-bg,
+  .floral-bg,
+  .wedding-bg,
+  .decorative-layer,
+  .background-overlay {
+    pointer-events: none !important;
+  }
+
+  .menu-toggle,
+  .user-profile,
+  .user-profile .dropdown-menu,
+  .theme-picker__submit,
+  .btn-pilih-tema,
+  .theme-card__preview,
+  .side-icon-toggle,
+  .side-icons-group,
+  .side-icon-btn,
+  .share-invitation__primary-btn,
+  .share-invitation__secondary-btn,
+  .share-invitation__whatsapp-btn,
+  .share-invitation__excel-btn,
+  .scan-attendance__btn {
+    pointer-events: auto;
+  }
+}
+
 // Custom Modal Styles - Global override for ngx-bootstrap modal
 .custom-payment-modal {
   .modal-content {

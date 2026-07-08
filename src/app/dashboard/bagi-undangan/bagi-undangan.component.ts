@@ -1,14 +1,13 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { BsModalService } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import {
+  buildGuestInvitationUrl,
   GuestInvitationRecord,
+  loadGuestInvitations,
   normalizeGuestRecord,
-  slugifyGuestName,
+  saveGuestInvitations,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
-import { GuestCheckinQrModalComponent } from 'src/app/shared/modal/guest-checkin-qr-modal/guest-checkin-qr-modal.component';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
-import * as QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -32,20 +31,18 @@ export class BagiUndanganComponent implements OnInit {
 
   get guestStorageWarningMessage(): string {
     if (this.guestStorageUsesLocalStorage) {
-      return 'Daftar tamu tersimpan di browser ini. Jika cache browser dibersihkan atau dibuka di perangkat lain, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
+      return 'Daftar tamu dan status scan kehadiran sementara tersimpan di browser ini. Jika cache browser dibersihkan, membuka dari perangkat lain, atau browser berbeda, data dapat hilang. Gunakan Export Excel sebagai cadangan. Penyimpanan permanen akan dilakukan setelah integrasi backend.';
     }
 
-    return 'Daftar tamu pada halaman ini masih tersimpan sementara. Jika halaman di-refresh atau ditutup, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
+    return 'Daftar tamu dan status scan kehadiran sementara tersimpan di browser ini. Jika halaman di-refresh atau ditutup, data dapat hilang. Gunakan Export Excel sebagai cadangan. Penyimpanan permanen akan dilakukan setelah integrasi backend.';
   }
 
   private weddingData: any = {};
   private salamSetting: Record<string, any> = {};
-  private readonly storagePrefix = 'generated_guest_invitations';
   private readonly maxStoredGuests = 500;
 
   constructor(
-    private dashboardService: DashboardService,
-    private modalService: BsModalService
+    private dashboardService: DashboardService
   ) {}
 
   ngOnInit(): void {
@@ -135,7 +132,7 @@ export class BagiUndanganComponent implements OnInit {
       );
 
       if (existingGuest) {
-        this.generatedGuestUrl = existingGuest.invitation_url || existingGuest.url;
+        this.generatedGuestUrl = existingGuest.url;
         this.showNotice('Link undangan untuk tamu ini sudah ada.');
         return;
       }
@@ -184,68 +181,15 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     if (guestOrUrl && typeof guestOrUrl === 'object') {
-      return String(guestOrUrl.invitation_url || guestOrUrl.url || '').trim()
-        || this.buildGuestInvitationUrl(guestOrUrl.guest_name || guestOrUrl.name);
+      return String(guestOrUrl.url || '').trim()
+        || this.buildGuestInvitationUrl(guestOrUrl.name);
     }
 
     return String(this.generatedGuestUrl || '').trim();
   }
 
-  public getAttendanceQrUrl(guest: GuestInvitationRecord): string {
-    return String(guest?.checkin_url || '').trim();
-  }
-
-  public openGuestAttendanceQrModal(guest: GuestInvitationRecord): void {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    this.modalService.show(GuestCheckinQrModalComponent, {
-      initialState: {
-        guestName: guest.guest_name || guest.name,
-        checkinUrl,
-        downloadFileName: this.buildGuestQrFileName(guest),
-      },
-      class: 'modal-lg',
-      backdrop: true,
-      keyboard: true,
-    });
-  }
-
-  public async downloadGuestAttendanceQr(guest: GuestInvitationRecord): Promise<void> {
-    const checkinUrl = this.getAttendanceQrUrl(guest);
-
-    if (!checkinUrl) {
-      this.showNotice('Link check-in tamu belum tersedia.');
-      return;
-    }
-
-    try {
-      const dataUrl = await QRCode.toDataURL(checkinUrl, {
-        errorCorrectionLevel: 'M',
-        margin: 2,
-        width: 512,
-        color: {
-          dark: '#172033',
-          light: '#FFFFFF',
-        },
-      });
-
-      const link = document.createElement('a');
-      link.download = this.buildGuestQrFileName(guest);
-      link.href = dataUrl;
-      link.click();
-      this.showNotice('QR kehadiran berhasil diunduh.');
-    } catch {
-      this.showNotice('Gagal mengunduh QR kehadiran.');
-    }
-  }
-
   public trackByGuest(index: number, guest: GuestInvitationRecord): string {
-    return `${guest.createdAt}-${guest.name}-${index}`;
+    return guest.id || `${guest.createdAt}-${guest.name}-${index}`;
   }
 
   public downloadGuestTemplate(): void {
@@ -347,40 +291,39 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   public exportGuestsToExcel(): void {
-    const rows = this.generatedGuests.map((guest, index) => ({
-      No: index + 1,
-      'Nama Tamu': guest.guest_name || guest.name,
-      'Link Undangan': guest.invitation_url || guest.url,
-      'Link Check-in': guest.checkin_url,
-      'Guest Token': guest.guest_token,
-      'Check-in Count': guest.checkin_count,
-      'Checked In At': guest.checked_in_at || '',
-      'Link WhatsApp': this.buildWhatsappUrl(guest.guest_name || guest.name, guest.invitation_url || guest.url)
-    }));
+    const rows = this.generatedGuests.map((guest) => {
+      const invitationUrl = guest.url;
+      const whatsappMessage = this.buildShareMessage(invitationUrl);
+
+      return {
+        nama_tamu: guest.name,
+        link_undangan: invitationUrl,
+        pesan_whatsapp: whatsappMessage,
+        status_hadir: guest.checkedInAt ? 'Hadir' : 'Belum Hadir',
+        waktu_hadir: guest.checkedInAt || '',
+        jumlah_scan: guest.checkinCount || 0,
+      };
+    });
 
     if (!rows.length) {
       rows.push({
-        No: 1,
-        'Nama Tamu': 'Belum ada tamu',
-        'Link Undangan': '',
-        'Link Check-in': '',
-        'Guest Token': '',
-        'Check-in Count': 0,
-        'Checked In At': '',
-        'Link WhatsApp': ''
+        nama_tamu: 'Belum ada tamu',
+        link_undangan: '',
+        pesan_whatsapp: '',
+        status_hadir: 'Belum Hadir',
+        waktu_hadir: '',
+        jumlah_scan: 0,
       });
     }
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
     worksheet['!cols'] = [
-      { wch: 6 },
       { wch: 28 },
-      { wch: 64 },
-      { wch: 64 },
-      { wch: 36 },
+      { wch: 72 },
+      { wch: 72 },
       { wch: 14 },
       { wch: 22 },
-      { wch: 72 }
+      { wch: 12 },
     ];
 
     const workbook = XLSX.utils.book_new();
@@ -416,7 +359,7 @@ export class BagiUndanganComponent implements OnInit {
       this.publicWeddingDomain
     );
 
-    if (!guestRecord.invitation_url) {
+    if (!guestRecord.url) {
       return false;
     }
 
@@ -477,18 +420,13 @@ export class BagiUndanganComponent implements OnInit {
     return this.extractGuestNamesFromExcelRows(arrayRows);
   }
 
-  private buildGuestQrFileName(guest: GuestInvitationRecord): string {
-    const slug = slugifyGuestName(guest.guest_name || guest.name);
-    return `qr-kehadiran-${slug}.png`;
-  }
-
   private normalizeStoredGuests(records: any[]): GuestInvitationRecord[] {
     const origin = this.getInvitationShareOrigin();
     const domain = this.publicWeddingDomain;
 
     return records
       .map((record) => normalizeGuestRecord(record, origin, domain))
-      .filter((record) => !!String(record.guest_name || record.name || '').trim());
+      .filter((record) => !!String(record.name || '').trim());
   }
 
   private buildGuestExportFileName(): string {
@@ -618,7 +556,7 @@ export class BagiUndanganComponent implements OnInit {
     return String(value || '').replace(/\r\n/g, '\n');
   }
 
-  private buildGuestInvitationUrl(guestName?: string): string {
+  private buildGuestInvitationUrl(guestName?: string, guestToken?: string): string {
     const domain =
       this.publicWeddingDomain ||
       this.normalizeWeddingDomain(this.weddingData?.setting?.domain) ||
@@ -629,11 +567,12 @@ export class BagiUndanganComponent implements OnInit {
       return '';
     }
 
-    const cleanGuestName = String(guestName || 'Tamu Undangan').trim();
-    const origin = this.getInvitationShareOrigin();
-    const baseUrl = `${origin}/wedding/${encodeURIComponent(domain)}`;
-
-    return `${baseUrl}?to=${encodeURIComponent(cleanGuestName)}`;
+    return buildGuestInvitationUrl(
+      this.getInvitationShareOrigin(),
+      domain,
+      String(guestName || 'Tamu Undangan').trim(),
+      guestToken
+    );
   }
 
   private getInvitationShareOrigin(): string {
@@ -728,30 +667,32 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   private persistGuestsToStorage(): void {
-    try {
-      localStorage.setItem(this.getStorageKey(), JSON.stringify(this.generatedGuests));
-    } catch {
-      // Local history is optional; link generation should still work.
+    if (!this.publicWeddingDomain) {
+      return;
     }
+
+    saveGuestInvitations(this.publicWeddingDomain, this.generatedGuests);
   }
 
   private loadStoredGuests(): void {
+    if (!this.publicWeddingDomain) {
+      this.generatedGuests = [];
+      return;
+    }
+
     try {
-      const raw = localStorage.getItem(this.getStorageKey());
-      const parsed = raw ? JSON.parse(raw) : [];
-      const records = Array.isArray(parsed) ? parsed : [];
+      const records = loadGuestInvitations(
+        this.publicWeddingDomain,
+        this.getInvitationShareOrigin()
+      );
       this.generatedGuests = this.normalizeStoredGuests(records);
 
-      if (records.length && this.generatedGuests.length) {
+      if (this.generatedGuests.length) {
         this.persistGuestsToStorage();
       }
     } catch {
       this.generatedGuests = [];
     }
-  }
-
-  private getStorageKey(): string {
-    return `${this.storagePrefix}_${this.publicWeddingDomain || 'unknown'}`;
   }
 
   private showNotice(message: string): void {

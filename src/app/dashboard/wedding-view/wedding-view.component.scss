@@ -6,18 +6,16 @@
   background-image: url('../../../assets/bg-wd.jpeg');
   min-height: 100vh;
   font-family: "Georgia", "Times New Roman", serif;
-  // padding-bottom: 120px;
   position: relative;
   background-repeat: no-repeat;
   background-size: 100vw 100vh;
-  // background-position: center center;
   background-attachment: scroll;
+  pointer-events: auto;
 }
 
 .wedding-container {
   position: relative;
-  // width: 100%;
-  // min-height: 100vh;
+  pointer-events: auto;
 }
 
 /* When ruby-theme-two is active, strip the outer floral/image background */
@@ -38,11 +36,12 @@
     top: auto;
     bottom: 90px;
     transform: none;
-    z-index: 1002;
+    z-index: 1300;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    pointer-events: none;
   }
 
   /* Main toggle button */
@@ -62,7 +61,8 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
     position: relative;
-    z-index: 1003;
+    z-index: 1301;
+    pointer-events: auto;
 
     &:hover {
       background: rgba(255, 255, 255, 1);
@@ -93,6 +93,7 @@
     transform: translateY(-10px) scale(0.8);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    pointer-events: auto;
 
     &.visible {
       opacity: 1;
@@ -116,6 +117,7 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(8px);
+    pointer-events: auto;
 
     &:hover {
       background: rgba(255, 255, 255, 1);
@@ -133,15 +135,16 @@
   @media screen and (max-width: 768px) {
     .side-icons-container {
       position: fixed;
-      right: 12px;
+      right: 16px;
       top: auto;
       bottom: 90px;
       transform: none;
-      z-index: 1002;
+      z-index: 1300;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
+      pointer-events: none;
     }
 
     .side-icon-toggle,
