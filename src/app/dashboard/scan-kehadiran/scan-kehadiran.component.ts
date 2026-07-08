@@ -324,11 +324,6 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       message: result.message,
     };
 
-    if (result.ok) {
-      this.showNotice(result.message);
-      return;
-    }
-
     this.showNotice(result.message);
   }
 

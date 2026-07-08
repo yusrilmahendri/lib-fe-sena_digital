@@ -287,11 +287,11 @@ export function processGuestQrScan(
     };
   }
 
-  if (!parsed.token) {
+  if (!parsed.token || !parsed.to) {
     return {
       ok: false,
       status: 'Error',
-      message: 'QR tidak memiliki token tamu. Pastikan QR berasal dari undangan personal.',
+      message: 'QR ini bukan undangan personal, sehingga tidak dapat dicatat sebagai hadir.',
     };
   }
 
@@ -313,7 +313,7 @@ export function processGuestQrScan(
       ok: false,
       status: 'Tidak Ditemukan',
       message:
-        'Data tamu tidak ditemukan di browser ini. Pastikan daftar tamu dibuat/import di perangkat ini.',
+        'Data tamu tidak ditemukan di browser ini. Pastikan data tamu sudah dibuat atau di-import di perangkat scanner.',
     };
   }
 
@@ -324,13 +324,13 @@ export function processGuestQrScan(
   if (!guest.checkedInAt) {
     guest.checkedInAt = now;
     guest.checkinCount = 1;
+    guest.lastScannedAt = now;
     status = 'Berhasil';
   } else {
     guest.checkinCount = Number(guest.checkinCount || 0) + 1;
+    guest.lastScannedAt = now;
     status = 'Sudah Pernah Scan';
   }
-
-  guest.lastScannedAt = now;
   guests[guestIndex] = guest;
   saveGuestInvitations(domain, guests);
 
