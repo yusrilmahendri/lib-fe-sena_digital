@@ -399,7 +399,6 @@ export class GalleryComponent implements OnInit, OnDestroy {
     this.originalSize = file.size;
     this.compressedSize = null;
     this.updatePreviewFromFile(file, file.name);
-    this.logPreviewState('selected');
 
     this.isCompressing = true;
     try {
@@ -408,12 +407,10 @@ export class GalleryComponent implements OnInit, OnDestroy {
       this.compressedFile = compressedFile;
       this.compressedSize = compressedFile.size;
       this.updatePreviewFromFile(compressedFile, compressedFile.name);
-      this.logPreviewState('compressed');
       this.uploadForm.patchValue({ file: compressedFile });
       this.uploadForm.get('file')?.markAsDirty();
     } catch (error) {
       console.error('[Gallery] compress preview failed', error);
-      this.logPreviewState('compress-failed');
       this.showError('Gagal kompresi foto. Coba gunakan file JPG, PNG, WEBP, atau GIF lain.');
       this.uploadForm.patchValue({ file: null });
     } finally {
@@ -661,13 +658,6 @@ export class GalleryComponent implements OnInit, OnDestroy {
     if (currentUrl && currentUrl.startsWith('blob:')) {
       URL.revokeObjectURL(currentUrl);
     }
-  }
-
-  private logPreviewState(stage: string): void {
-    console.log(`[Gallery Preview] stage=${stage}`);
-    console.log('[Gallery Preview] selectedFile', this.selectedFile);
-    console.log('[Gallery Preview] compressedFile', this.compressedFile);
-    console.log('[Gallery Preview] previewUrl', this.previewUrl);
   }
 
   private getUserPackageName(): string {
