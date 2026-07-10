@@ -38,6 +38,7 @@ import { AcaraComponent } from './dashboard/website/acara/acara.component';
 import { GalleryComponent } from './dashboard/website/gallery/gallery.component';
 import { CeritaQuoteComponent } from './dashboard/website/cerita-quote/cerita-quote.component';
 import { RekeningComponent } from './dashboard/website/rekening/rekening.component';
+import { MusikUndanganComponent } from './dashboard/website/musik-undangan/musik-undangan.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RiwayatComponent } from './dashboard/pengunjung/riwayat/riwayat.component';
 import { UcapanComponent } from './dashboard/pengunjung/ucapan/ucapan.component';
@@ -140,6 +141,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     GalleryComponent,
     CeritaQuoteComponent,
     RekeningComponent,
+    MusikUndanganComponent,
     RiwayatComponent,
     UcapanComponent,
     GenerateUndanganComponent,

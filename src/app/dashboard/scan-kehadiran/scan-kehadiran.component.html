@@ -95,7 +95,7 @@
     </dl>
   </section>
 
-  <section class="attendance-card" *ngIf="checkedInGuests as checkedGuests">
+  <section class="attendance-card" *ngIf="attendanceList as checkedGuests">
     <div class="attendance-card__header">
       <div>
         <h3>List tamu hadir</h3>
@@ -148,7 +148,7 @@
               {{ getCheckinCount(guest) || 1 }}x
             </td>
             <td data-label="Scan Terakhir">
-              {{ formatDateTime(guest.lastScannedAt || getCheckedInAt(guest)) }}
+              {{ formatDateTime(getLastScanAt(guest)) }}
             </td>
             <td data-label="Aksi">
               <button type="button" class="btn-reset-small" (click)="resetAttendance(guest)">

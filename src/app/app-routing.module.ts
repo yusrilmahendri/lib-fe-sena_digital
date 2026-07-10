@@ -20,6 +20,7 @@ import { AcaraComponent } from './dashboard/website/acara/acara.component';
 import { GalleryComponent } from './dashboard/website/gallery/gallery.component';
 import { CeritaQuoteComponent } from './dashboard/website/cerita-quote/cerita-quote.component';
 import { RekeningComponent } from './dashboard/website/rekening/rekening.component';
+import { MusikUndanganComponent } from './dashboard/website/musik-undangan/musik-undangan.component';
 import { RiwayatComponent } from './dashboard/pengunjung/riwayat/riwayat.component';
 import { UcapanComponent } from './dashboard/pengunjung/ucapan/ucapan.component';
 import { GenerateUndanganComponent } from './generate-undangan/generate-undangan.component';
@@ -74,6 +75,7 @@ const routes: Routes = [
           { path: 'mempelai', component: MempelaiComponent },
           { path: 'acara', component: AcaraComponent },
           { path: 'gallery', component: GalleryComponent },
+          { path: 'musik-undangan', component: MusikUndanganComponent },
           { path: 'cerita-quote', component: CeritaQuoteComponent },
           { path: 'rekening', component: RekeningComponent },
         ],

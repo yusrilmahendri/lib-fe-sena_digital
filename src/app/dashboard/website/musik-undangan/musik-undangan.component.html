@@ -1,0 +1,128 @@
+<div class="music-page container-fluid px-2 px-md-4 py-2">
+  <div class="music-header">
+    <div>
+      <p class="music-kicker">Website</p>
+      <h2>Musik Undangan</h2>
+      <p class="music-copy">Pilih musik katalog, gunakan musik default, atau unggah musik pribadi untuk paket Platinum/Diamond.</p>
+    </div>
+    <div class="music-status">
+      <span class="status-label">Aktif</span>
+      <strong>{{ getCurrentMusicLabel() }}</strong>
+    </div>
+  </div>
+
+  <div *ngIf="isLoadingMusic" class="loading-card">
+    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    Memuat data musik...
+  </div>
+
+  <div *ngIf="loadError && !isLoadingMusic" class="alert alert-danger" role="alert">
+    {{ loadError }}
+  </div>
+
+  <div *ngIf="!isLoadingMusic" class="row g-4">
+    <div class="col-12 col-xl-8">
+      <div class="card music-card">
+        <div class="section-bar"></div>
+        <div class="card-heading">
+          <div>
+            <h3>Daftar Lagu Sena Digital</h3>
+            <p>Pilih satu lagu yang akan dipakai sebagai musik undangan.</p>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="stopPreview()" [disabled]="!previewingMusicId">
+            <i class="fa fa-stop" aria-hidden="true"></i>
+            Stop
+          </button>
+        </div>
+
+        <label class="default-option" [class.selected]="selectedMusicId === null">
+          <input type="radio" name="music-selection" [checked]="selectedMusicId === null" (change)="selectMusic(null)" />
+          <span class="default-icon"><i class="fa fa-music" aria-hidden="true"></i></span>
+          <span class="default-copy">
+            <strong>Gunakan musik default</strong>
+            <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
+          </span>
+          <button type="button" class="icon-button" (click)="playDefaultPreview(); $event.preventDefault()" [disabled]="!musicSelection?.resolved_music_url && !musicSelection?.default_music?.audio_url" title="Preview musik default">
+            <i class="fa" [class.fa-play]="previewingMusicId !== 'default'" [class.fa-pause]="previewingMusicId === 'default'" aria-hidden="true"></i>
+          </button>
+        </label>
+
+        <div *ngIf="musicOptions.length; else emptyCatalog" class="music-list">
+          <label class="music-item" *ngFor="let music of musicOptions; trackBy: trackMusicById" [class.selected]="selectedMusicId === music.id">
+            <input type="radio" name="music-selection" [checked]="selectedMusicId === music.id" (change)="selectMusic(music.id)" />
+            <img *ngIf="music.thumbnail_url; else thumbnailFallback" class="music-thumb" [src]="music.thumbnail_url" [alt]="music.title" />
+            <ng-template #thumbnailFallback>
+              <span class="music-thumb fallback"><i class="fa fa-headphones" aria-hidden="true"></i></span>
+            </ng-template>
+            <span class="music-info">
+              <strong>{{ music.title }}</strong>
+              <small *ngIf="music.artist">{{ music.artist }}</small>
+              <small *ngIf="music.is_default" class="badge-soft">Default</small>
+            </span>
+            <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">Terpilih</span>
+            <button type="button" class="icon-button" (click)="playPreview(music); $event.preventDefault()" [disabled]="!music.audio_url" title="Preview lagu">
+              <i class="fa" [class.fa-play]="previewingMusicId !== music.id" [class.fa-pause]="previewingMusicId === music.id" aria-hidden="true"></i>
+            </button>
+          </label>
+        </div>
+
+        <ng-template #emptyCatalog>
+          <div class="empty-state">
+            <i class="fa fa-info-circle" aria-hidden="true"></i>
+            <p>Daftar lagu katalog belum tersedia dari response pengaturan. Musik default dan musik pribadi tetap aman digunakan.</p>
+          </div>
+        </ng-template>
+
+        <div class="actions">
+          <button type="button" class="btn btn-sky" (click)="saveMusicSelection()" [disabled]="isSavingMusic || isLoadingMusic">
+            <span *ngIf="isSavingMusic" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            {{ isSavingMusic ? 'Menyimpan...' : 'Simpan Pilihan' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <div class="card music-card upload-card">
+        <div class="section-bar"></div>
+        <h3>Musik Pribadi</h3>
+
+        <div *ngIf="musicSelection?.custom_music_url" class="custom-current">
+          <span class="default-icon"><i class="fa fa-file-audio-o" aria-hidden="true"></i></span>
+          <div>
+            <strong>{{ getCustomMusicName() }}</strong>
+            <small>{{ isCustomMusicActive() ? 'Musik pribadi menjadi sumber aktif.' : 'Musik pribadi sedang tersedia.' }}</small>
+          </div>
+          <button type="button" class="icon-button" (click)="playCustomPreview()" title="Preview musik pribadi">
+            <i class="fa" [class.fa-play]="previewingMusicId !== 'custom'" [class.fa-pause]="previewingMusicId === 'custom'" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div *ngIf="!canUploadCustomMusic()" class="alert alert-warning" role="alert">
+          Upload musik pribadi terkunci. Khusus Platinum/Diamond.
+        </div>
+
+        <div class="upload-box" [class.disabled]="!canUploadCustomMusic()">
+          <label for="custom-music-upload" class="form-label">Upload file musik</label>
+          <input id="custom-music-upload" type="file" class="form-control" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/mp4,.m4a" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
+          <small>{{ selectedUploadFileName || 'Format MP3, WAV, OGG, M4A. Maksimal 10 MB.' }}</small>
+        </div>
+
+        <div *ngIf="uploadError" class="alert alert-danger mt-3" role="alert">
+          {{ uploadError }}
+        </div>
+
+        <div class="side-actions">
+          <button type="button" class="btn btn-sky" (click)="uploadCustomMusic()" [disabled]="isUploadingMusic || !selectedUploadFile || !canUploadCustomMusic()">
+            <span *ngIf="isUploadingMusic" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            {{ isUploadingMusic ? 'Mengunggah...' : 'Upload' }}
+          </button>
+          <button type="button" class="btn btn-outline-danger" (click)="deleteCustomMusic()" [disabled]="isUploadingMusic || !musicSelection?.custom_music_url">
+            <i class="fa fa-trash" aria-hidden="true"></i>
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

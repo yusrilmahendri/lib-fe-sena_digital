@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
+import { MusicTrack, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
@@ -54,6 +55,12 @@ interface SettingsResponse {
     salam_pembuka: string;
     salam_atas: string;
     salam_bawah: string;
+    resolved_music_url?: string | null;
+    custom_music_url?: string | null;
+    selected_music?: MusicTrack | null;
+    default_music?: MusicTrack | null;
+    can_upload_custom_music?: boolean;
+    music_stream_url?: string | null;
     created_at: string;
     updated_at: string;
   };
@@ -856,8 +863,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Try to get music URL - prefer stream URL, fallback to direct musik URL
-    const musicUrl = this.weddingData.settings.music_stream_url || this.weddingData.settings.musik;
+    const musicUrl = resolveInvitationMusicUrl(this.weddingData);
 
     if (!musicUrl) {
       console.warn('No music URL available in wedding settings');
@@ -1101,12 +1107,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.audioElement) {
       console.warn('Audio not initialized, cannot toggle play');
       this.initializeAudio();
-      return;
-    }
-
-    if (this.isAudioLoading) {
-      console.warn('Audio is still loading, please wait');
-      return;
+      if (!this.audioElement) {
+        return;
+      }
     }
 
     if (this.audioError) {
@@ -1175,6 +1178,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Save state immediately after opening invitation
     this.saveStateToLocalStorage();
+
+    if (!this.isPlaying) {
+      this.togglePlay();
+    }
   }
 
   /**

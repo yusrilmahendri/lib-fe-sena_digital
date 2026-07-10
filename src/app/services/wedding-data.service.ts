@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { MusicTrack } from '../shared/invitation-music.model';
 
 // TypeScript interfaces for wedding data structure based on API response
 export interface UserInfo {
@@ -98,6 +99,11 @@ export interface WeddingSettings {
   salam_pembuka: string;
   salam_atas: string;
   salam_bawah: string;
+  resolved_music_url?: string | null;
+  custom_music_url?: string | null;
+  selected_music?: MusicTrack | null;
+  default_music?: MusicTrack | null;
+  can_upload_custom_music?: boolean;
   music_stream_url?: string;
   music_info?: {
     has_music: boolean;

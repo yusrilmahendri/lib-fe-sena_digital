@@ -24,22 +24,12 @@ export class PengaturanComponent implements OnInit {
   domainTokenForm!: FormGroup;
   salamForm!: FormGroup;
   filterForm!: FormGroup;
-  formData?: FormData;
-  musicForm!: FormGroup;
-
-  currentMusicUrl = '';
-  currentMusicName = '';
 
 
   isInitialLoading = false;
   isLoadingDomain = false;
-  isLoadingMusic = false;
   isLoadingSalam = false;
   isLoadingFilter = false;
-
-
-  selectedFileName = '';
-  uploadProgress = 0;
 
 
   private modalRef?: BsModalRef;
@@ -74,11 +64,6 @@ export class PengaturanComponent implements OnInit {
       token: ['']
     });
 
-    this.musicForm = this.fb.group({
-
-    });
-
-
     this.salamForm = this.fb.group({
       salam_pembuka: [DEFAULT_SALAM_PEMBUKA, [Validators.required]],
       salam_atas: [DEFAULT_SALAM_ATAS, [Validators.required]],
@@ -108,16 +93,6 @@ export class PengaturanComponent implements OnInit {
         this.dataFilter = res?.['data'];
         this.settingData = res?.['setting'];
         this.filterData = res?.['filter_undangan'];
-
-        const musikUrl = this.settingData?.musik || '';
-        this.musicForm.patchValue({
-          musik: musikUrl
-        });
-
-        this.currentMusicUrl = musikUrl;
-        this.currentMusicName = this.extractFileNameFromUrl(musikUrl);
-
-
 
         this.populateFormsWithData();
         this.isInitialLoading = false;
@@ -202,184 +177,6 @@ export class PengaturanComponent implements OnInit {
         this.notyf.error(err?.error?.message || 'Gagal menyimpan data domain dan token');
 
         this.isLoadingDomain = false;
-      }
-    });
-  }
-
-  uploadMusic(event: any): void {
-    const file = event.target.files[0];
-    const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp3'];
-    const maxSizeInBytes = 5 * 1024 * 1024;
-
-    if (!file) {
-      this.selectedFileName = '';
-      this.formData = undefined;
-      this.uploadProgress = 0;
-      return;
-    }
-
-    if (!allowedTypes.includes(file.type)) {
-      this.notyf.error('Jenis file tidak didukung. Hanya file musik (MP3, WAV, OGG) yang diperbolehkan');
-      event.target.value = '';
-      this.selectedFileName = '';
-      this.formData = undefined;
-      return;
-    }
-
-    if (file.size > maxSizeInBytes) {
-      this.notyf.error('Ukuran file terlalu besar. Maksimal 5 MB');
-      event.target.value = '';
-      this.selectedFileName = '';
-      this.formData = undefined;
-      return;
-    }
-
-    this.selectedFileName = file.name;
-    this.formData = new FormData();
-    this.formData.append('musik', file);
-
-    this.notyf.success('File musik berhasil dipilih. Klik "Sisipkan" untuk melanjutkan');
-
-
-    this.uploadProgress = 0;
-    const interval = setInterval(() => {
-      this.uploadProgress += 10;
-      if (this.uploadProgress >= 100) {
-        clearInterval(interval);
-
-        setTimeout(() => {
-          this.uploadProgress = 0;
-        }, 1000);
-      }
-    }, 100);
-  }
-
-  submitMusic(): void {
-    if (!this.formData) {
-      this.notyf.error('Tidak ada file musik yang dipilih. Silakan pilih file terlebih dahulu');
-      return;
-    }
-
-    const initialState = {
-      message: 'Apakah anda ingin menyimpan file musik ini?',
-      cancelClicked: () => this.modalRef?.hide(),
-      submitClicked: () => this.uploadMusicFile(),
-      submitMessage: 'Simpan',
-    };
-
-    this.modalRef = this.modalSvc.show(ModalComponent, { initialState });
-  }
-
-  private uploadMusicFile(): void {
-    this.isLoadingMusic = true;
-
-    this.dashboardSvc.create(DashboardServiceType.USER_SETTINGS_SUBMIT_MUSIC, this.formData!).subscribe({
-      next: (res) => {
-        this.notyf.success(res?.message || 'File musik berhasil diunggah');
-        this.modalRef?.hide();
-        this.isLoadingMusic = false;
-
-
-        const newMusicUrl = res?.data?.musik_url || res?.musik_url || '';
-        if (newMusicUrl) {
-          this.currentMusicUrl = newMusicUrl;
-          this.currentMusicName = this.selectedFileName;
-        }
-
-        this.resetMusicForm();
-
-
-        this.loadInitialData();
-      },
-      error: (err) => {
-        this.notyf.error(err?.error?.message || 'Gagal mengunggah file musik');
-
-        this.isLoadingMusic = false;
-      }
-    });
-  }
-
-  private resetMusicForm(): void {
-    this.formData = undefined;
-    this.selectedFileName = '';
-    this.uploadProgress = 0;
-    const fileInput = document.getElementById('music-upload') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
-  }
-
-  private extractFileNameFromUrl(url: string): string {
-    if (!url) return '';
-
-    try {
-      const urlParts = url.split('/');
-      const fileName = urlParts[urlParts.length - 1];
-      return decodeURIComponent(fileName);
-    } catch (error) {
-      return 'musik.mp3';
-    }
-  }
-
-  playCurrentMusic(): void {
-    if (this.currentMusicUrl) {
-      const audio = new Audio(this.currentMusicUrl);
-      audio.play().catch(err => {
-
-        this.notyf.error('Gagal memutar musik');
-      });
-    }
-  }
-
-
-
-  async playCurrentMusics() {
-    const params = {
-      id: this.settingData?.id || 0
-    };
-    this.dashboardSvc.list(DashboardServiceType.USER_SETTINGS_SUBMIT_MUSIC_GET, params).subscribe({
-      next: (res) => {
-        const audioUrl = res?.data?.musik_url || '';
-        if (audioUrl) {
-          const audio = new Audio(audioUrl);
-          audio.play().catch(err => {
-
-            this.notyf.error('Gagal memutar musik');
-          });
-        } else {
-          this.notyf.error('Tidak ada musik yang tersedia untuk diputar');
-        }
-      },
-      error: (err) => {
-
-        this.notyf.error('Gagal mengambil musik saat ini');
-      }
-    });
-
-  }
-
-  removeCurrentMusic(): void {
-    const initialState = {
-      message: 'Apakah Anda yakin ingin menghapus musik saat ini?',
-      cancelClicked: () => this.modalRef?.hide(),
-      submitClicked: () => this.deleteMusicFile(),
-      submitMessage: 'Hapus',
-    };
-
-    this.modalRef = this.modalSvc.show(ModalComponent, { initialState });
-  }
-
-  private deleteMusicFile(): void {
-    this.dashboardSvc.delete(DashboardServiceType.USER_SETTINGS_DELETE_MUSIC).subscribe({
-      next: (res) => {
-        this.currentMusicUrl = '';
-        this.currentMusicName = '';
-        this.notyf.success('Musik berhasil dihapus');
-        this.modalRef?.hide();
-      },
-      error: (err) => {
-
-        this.notyf.error('Gagal menghapus musik');
       }
     });
   }
@@ -471,29 +268,4 @@ export class PengaturanComponent implements OnInit {
     });
   }
 
-
-  downloadMusic(settingId: number): void {
-    this.dashboardSvc.list(DashboardServiceType.USER_SETTINGS_SUBMIT_MUSIC_DOWNLOAD).subscribe({
-      next: (res) => {
-
-        const blob = new Blob([res], { type: 'audio/mpeg' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'music.mp3';
-        a.click();
-        window.URL.revokeObjectURL(url);
-      },
-      error: (err) => {
-        this.notyf.error('Gagal mengunduh file musik');
-
-      }
-    });
-  }
-
-
-  streamMusic(settingId: number): void {
-    const streamUrl = `${DashboardServiceType.SETTINGS_SUBMIT}/music/stream?id=${settingId}`;
-    window.open(streamUrl, '_blank');
-  }
 }

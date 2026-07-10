@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { MusicTrack, UserMusicSelection } from './shared/invitation-music.model';
 
 
 // === DashboardServiceType Enum - API Endpoint Categories ===
@@ -113,6 +114,9 @@ export enum DashboardServiceType {
   USER_SETTINGS_SUBMIT_FILTER_UPDATE,
   USER_SETTINGS_SUBMIT_LIST_FILTER,
   USER_SETTINGS_DELETE_MUSIC,
+  USER_MUSIC_OPTIONS,
+  USER_MUSIC_SELECTION,
+  USER_CUSTOM_MUSIC,
   GALERY_DELETE,
   CERITA_DATA,
   CERITA_UPDATE,
@@ -241,6 +245,8 @@ export interface TestimonialBulkStatusRequest {
   ids: number[];
   status: boolean;
 }
+
+export { MusicTrack, UserMusicSelection };
 
 @Injectable({
   providedIn: 'root'
@@ -477,6 +483,12 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/user/list-data-setting`;
       case DashboardServiceType.USER_SETTINGS_DELETE_MUSIC:
         return `${this.BASE_URL_API}/v1/user/music/delete`;
+      case DashboardServiceType.USER_MUSIC_OPTIONS:
+        return `${this.BASE_URL_API}/v1/user/music-options`;
+      case DashboardServiceType.USER_MUSIC_SELECTION:
+        return `${this.BASE_URL_API}/v1/user/music-selection`;
+      case DashboardServiceType.USER_CUSTOM_MUSIC:
+        return `${this.BASE_URL_API}/v1/user/custom-music`;
 
       // wedding viewe
       case DashboardServiceType.WEDDING_VIEW_CORE:
@@ -744,6 +756,30 @@ export class DashboardService {
   uploadFile(serviceType: DashboardServiceType, formData: FormData): Observable<any> {
     // Don't set Content-Type header, let browser set it automatically for multipart/form-data
     return this.httpSvc.post(this.getUrl(serviceType), formData);
+  }
+
+  getMusicOptions(): Observable<any> {
+    return this.httpSvc.get(this.getUrl(DashboardServiceType.USER_MUSIC_OPTIONS));
+  }
+
+  getMusicSelection(): Observable<any> {
+    return this.httpSvc.get(this.getUrl(DashboardServiceType.USER_MUSIC_SELECTION));
+  }
+
+  updateMusicSelection(musicId: number | null): Observable<any> {
+    return this.httpSvc.put(this.getUrl(DashboardServiceType.USER_MUSIC_SELECTION), {
+      music_id: musicId,
+    });
+  }
+
+  uploadCustomMusic(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('music', file);
+    return this.httpSvc.post(this.getUrl(DashboardServiceType.USER_CUSTOM_MUSIC), formData);
+  }
+
+  deleteCustomMusic(): Observable<any> {
+    return this.httpSvc.delete(this.getUrl(DashboardServiceType.USER_CUSTOM_MUSIC));
   }
 
   updateRekening(id: number | string, payload: {
