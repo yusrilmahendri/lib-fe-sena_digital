@@ -127,15 +127,18 @@
 
       <div class="preview-frame">
         <img
-          *ngIf="previewUrl"
+          *ngIf="previewUrl; else previewEmpty"
           [src]="previewUrl"
           alt="Preview foto"
+          class="photo-preview-image"
           [style.object-fit]="uploadForm.value.display_mode || 'cover'"
           [style.object-position]="getPreviewObjectPosition(uploadForm.value)" />
-        <div *ngIf="!previewUrl" class="preview-empty">
+        <ng-template #previewEmpty>
+        <div class="preview-empty photo-preview-empty">
           <i class="fas fa-image"></i>
           <span>Preview foto akan tampil di sini.</span>
         </div>
+        </ng-template>
       </div>
 
       <dl class="preset-readout">

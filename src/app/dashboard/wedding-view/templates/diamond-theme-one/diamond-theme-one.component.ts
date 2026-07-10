@@ -1360,41 +1360,38 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     document.body.removeChild(textarea);
   }
 
-  getMomentGallery(): any[] {
-    const gallery: any[] = this.getCollageItems();
+  getMomentCollageItems(): any[] {
+    const collagePhotos: any[] = this.getCollageItems();
 
-    return gallery.filter((item: any) => {
+    return collagePhotos.filter((item: any) => {
       const url = item?.photo_url || item?.photo || item?.url || item?.image || '';
       return Boolean(url);
     });
   }
 
   getMomentFeaturedItem(): any {
-    const gallery = this.getMomentGallery();
-
-    return (
-      gallery.find((item: any) => item?.url_video || item?.video_url || item?.link_video) ||
-      gallery[0] ||
-      null
-    );
+    const collagePhotos = this.getMomentCollageItems();
+    return collagePhotos[0] || null;
   }
 
   getMomentPhotosPartOne(): any[] {
-    const gallery = this.getMomentGallery();
+    const collagePhotos = this.getMomentCollageItems();
 
-    if (!gallery.length) return [];
+    if (!collagePhotos.length) return [];
 
-    const withoutFeatured = gallery.filter((item: any) => item !== this.getMomentFeaturedItem());
+    const remaining = collagePhotos.slice(1);
 
-    return withoutFeatured.slice(0, 4);
+    return remaining.slice(0, 4);
   }
 
   getMomentPhotosPartTwo(): any[] {
-    const gallery = this.getMomentGallery();
+    const collagePhotos = this.getMomentCollageItems();
 
-    if (!gallery.length) return [];
+    if (!collagePhotos.length) return [];
 
-    return gallery.slice(4, 10);
+    const remaining = collagePhotos.slice(1);
+
+    return remaining.slice(4, 10);
   }
 
   getMomentPhotoUrl(item: any): string {
@@ -1441,7 +1438,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMomentsBackgroundUrl(index: number): string {
-    const gallery = this.getMomentGallery();
+    const gallery = this.getMomentCollageItems();
     const item = gallery[index + 1] || gallery[index] || gallery[0];
 
     return this.getMomentPhotoUrl(item) || this.getCoverPhotoUrl();

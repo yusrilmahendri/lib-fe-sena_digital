@@ -1,5 +1,5 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Notyf } from 'notyf';
@@ -27,7 +27,7 @@ type PhotoFormValue = {
   templateUrl: './gallery.component.html',
   styleUrls: ['./gallery.component.scss']
 })
-export class GalleryComponent implements OnInit {
+export class GalleryComponent implements OnInit, OnDestroy {
   readonly photoTypes: Array<{ value: PhotoType; label: string; empty: string }> = [
     { value: 'gallery', label: 'Foto Galeri', empty: 'Belum ada foto galeri.' },
     { value: 'collage', label: 'Foto Kolase', empty: 'Belum ada foto kolase.' },
@@ -90,6 +90,11 @@ export class GalleryComponent implements OnInit {
     this.loadInitialData();
   }
 
+  ngOnDestroy(): void {
+    this.clearPreview();
+    this.clearEditPreview();
+  }
+
   get activePhotos(): UserPhoto[] {
     return this.activeType === 'gallery' ? this.galleryPhotos : this.collagePhotos;
   }
@@ -116,7 +121,11 @@ export class GalleryComponent implements OnInit {
   }
 
   setActiveType(type: PhotoType): void {
+    if (this.activeType === type) {
+      return;
+    }
     this.activeType = type;
+    this.resetUploadForm();
     this.clearMessages();
   }
 
@@ -185,6 +194,7 @@ export class GalleryComponent implements OnInit {
   }
 
   openEdit(photo: UserPhoto): void {
+    this.revokeObjectUrl('editPreviewUrl');
     this.editingPhoto = photo;
     this.editPreviewUrl = photo.photo_url;
     this.editSelectedFile = null;
@@ -203,12 +213,8 @@ export class GalleryComponent implements OnInit {
   }
 
   closeEdit(): void {
+    this.clearEditPreview();
     this.editingPhoto = null;
-    this.editPreviewUrl = null;
-    this.editSelectedFile = null;
-    this.editCompressedFile = null;
-    this.editOriginalSize = null;
-    this.editCompressedSize = null;
     this.editForm.reset();
   }
 
@@ -381,28 +387,33 @@ export class GalleryComponent implements OnInit {
 
   private async prepareUploadFile(file: File): Promise<void> {
     this.clearMessages();
-    this.selectedFile = null;
-    this.compressedFile = null;
-    this.previewUrl = null;
-    this.originalSize = null;
-    this.compressedSize = null;
+    this.clearPreview();
 
     if (!this.validateFile(file)) {
       this.uploadForm.patchValue({ file: null });
       return;
     }
 
-    this.isCompressing = true;
+    this.selectedFile = file;
+    this.compressedFile = null;
     this.originalSize = file.size;
+    this.compressedSize = null;
+    this.updatePreviewFromFile(file, file.name);
+    this.logPreviewState('selected');
+
+    this.isCompressing = true;
     try {
       const compressed = await this.compressImage(file);
-      this.selectedFile = file;
-      this.compressedFile = compressed;
-      this.compressedSize = compressed.size;
-      this.previewUrl = URL.createObjectURL(compressed);
-      this.uploadForm.patchValue({ file: compressed });
+      const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
+      this.compressedFile = compressedFile;
+      this.compressedSize = compressedFile.size;
+      this.updatePreviewFromFile(compressedFile, compressedFile.name);
+      this.logPreviewState('compressed');
+      this.uploadForm.patchValue({ file: compressedFile });
       this.uploadForm.get('file')?.markAsDirty();
-    } catch {
+    } catch (error) {
+      console.error('[Gallery] compress preview failed', error);
+      this.logPreviewState('compress-failed');
       this.showError('Gagal kompresi foto. Coba gunakan file JPG, PNG, WEBP, atau GIF lain.');
       this.uploadForm.patchValue({ file: null });
     } finally {
@@ -412,24 +423,27 @@ export class GalleryComponent implements OnInit {
 
   private async prepareEditFile(file: File): Promise<void> {
     this.clearMessages();
-    this.editSelectedFile = null;
-    this.editCompressedFile = null;
-    this.editOriginalSize = null;
-    this.editCompressedSize = null;
+    this.clearEditPreview();
 
     if (!this.validateFile(file)) {
       return;
     }
 
-    this.isEditCompressing = true;
+    this.editSelectedFile = file;
+    this.editCompressedFile = null;
     this.editOriginalSize = file.size;
+    this.editCompressedSize = null;
+    this.updateEditPreviewFromFile(file, file.name);
+
+    this.isEditCompressing = true;
     try {
       const compressed = await this.compressImage(file);
-      this.editSelectedFile = file;
-      this.editCompressedFile = compressed;
-      this.editCompressedSize = compressed.size;
-      this.editPreviewUrl = URL.createObjectURL(compressed);
-    } catch {
+      const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
+      this.editCompressedFile = compressedFile;
+      this.editCompressedSize = compressedFile.size;
+      this.updateEditPreviewFromFile(compressedFile, compressedFile.name);
+    } catch (error) {
+      console.error('[Gallery] compress edit preview failed', error);
       this.showError('Gagal kompresi foto edit. Coba gunakan file JPG, PNG, WEBP, atau GIF lain.');
     } finally {
       this.isEditCompressing = false;
@@ -584,11 +598,76 @@ export class GalleryComponent implements OnInit {
       focal_point_y: null,
       is_featured: false,
     });
+    this.clearPreview();
+  }
+
+  private clearPreview(): void {
+    this.revokeObjectUrl('previewUrl');
+    this.previewUrl = null;
     this.selectedFile = null;
     this.compressedFile = null;
-    this.previewUrl = null;
     this.originalSize = null;
     this.compressedSize = null;
+  }
+
+  private clearEditPreview(): void {
+    this.revokeObjectUrl('editPreviewUrl');
+    this.editPreviewUrl = null;
+    this.editSelectedFile = null;
+    this.editCompressedFile = null;
+    this.editOriginalSize = null;
+    this.editCompressedSize = null;
+  }
+
+  private updatePreviewFromFile(file: File | Blob | null, fileName = 'preview.webp'): void {
+    this.revokeObjectUrl('previewUrl');
+    this.previewUrl = null;
+
+    if (!file) {
+      return;
+    }
+
+    const previewFile = this.ensureFile(file, fileName, file.type || 'image/webp');
+    this.previewUrl = URL.createObjectURL(previewFile);
+  }
+
+  private updateEditPreviewFromFile(file: File | Blob | null, fileName = 'preview.webp'): void {
+    this.revokeObjectUrl('editPreviewUrl');
+    this.editPreviewUrl = null;
+
+    if (!file) {
+      return;
+    }
+
+    const previewFile = this.ensureFile(file, fileName, file.type || 'image/webp');
+    this.editPreviewUrl = URL.createObjectURL(previewFile);
+  }
+
+  private ensureFile(file: File | Blob, fileName: string, fallbackType: string): File {
+    if (file instanceof File) {
+      return file;
+    }
+
+    return new File([file], fileName, { type: file.type || fallbackType });
+  }
+
+  private buildCompressedFileName(file: File): string {
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'preview';
+    return `${baseName}.webp`;
+  }
+
+  private revokeObjectUrl(target: 'previewUrl' | 'editPreviewUrl'): void {
+    const currentUrl = this[target];
+    if (currentUrl && currentUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(currentUrl);
+    }
+  }
+
+  private logPreviewState(stage: string): void {
+    console.log(`[Gallery Preview] stage=${stage}`);
+    console.log('[Gallery Preview] selectedFile', this.selectedFile);
+    console.log('[Gallery Preview] compressedFile', this.compressedFile);
+    console.log('[Gallery Preview] previewUrl', this.previewUrl);
   }
 
   private getUserPackageName(): string {

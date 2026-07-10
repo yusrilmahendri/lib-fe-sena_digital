@@ -95,11 +95,11 @@
     </dl>
   </section>
 
-  <section class="attendance-card">
+  <section class="attendance-card" *ngIf="checkedInGuests as checkedGuests">
     <div class="attendance-card__header">
       <div>
         <h3>List tamu hadir</h3>
-        <p>{{ checkedInGuests.length }} tamu hadir</p>
+        <p>{{ checkedGuests.length }} tamu hadir</p>
       </div>
 
       <div class="attendance-card__actions">
@@ -112,7 +112,7 @@
       </div>
     </div>
 
-    <div *ngIf="checkedInGuests.length > 0; else emptyAttendance" class="attendance-table-wrapper">
+    <div *ngIf="checkedGuests.length > 0; else emptyAttendance" class="attendance-table-wrapper">
       <table class="attendance-table">
         <thead>
           <tr>
@@ -128,7 +128,7 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let guest of checkedInGuests; let i = index; trackBy: trackByGuest">
+          <tr *ngFor="let guest of checkedGuests; let i = index; trackBy: trackByGuest">
             <td data-label="No">{{ i + 1 }}</td>
             <td data-label="Nama Tamu">
               <strong>{{ getGuestName(guest) }}</strong>

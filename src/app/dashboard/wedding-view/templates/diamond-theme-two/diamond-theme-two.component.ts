@@ -295,11 +295,12 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   getGardenHeroItem(index: number): any {
     const gallery = this.getGardenGallery();
+    const featured = this.getFeaturedGalleryItem();
 
     const preferred: any[] = [
       gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['wanita', 'bride', 'female', 'mempelai wanita', 'pengantin wanita'])),
       gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['pria', 'groom', 'male', 'mempelai pria', 'pengantin pria'])),
-      gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])),
+      featured || gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])),
     ];
 
     return (
@@ -346,7 +347,9 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   getGardenGalleryCoverPhoto(): string {
     const gallery = this.getGardenGallery();
+    const featured = this.getFeaturedGalleryItem();
     const item: any =
+      featured ||
       gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])) ||
       gallery[2] ||
       gallery[0] ||
