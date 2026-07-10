@@ -3,6 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Notyf } from 'notyf';
+import Swal from 'sweetalert2';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import {
   getUserPhotoObjectPosition,
@@ -78,6 +79,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
   successMessage = '';
   editingPhoto: UserPhoto | null = null;
   userData: any = null;
+  previewSessionId = 0;
 
   private readonly compressionQuality = 0.85;
   private readonly maxImageDimension = 1920;
@@ -269,22 +271,61 @@ export class GalleryComponent implements OnInit, OnDestroy {
     });
   }
 
-  deletePhoto(photo: UserPhoto): void {
-    const confirmed = window.confirm('Apakah Anda yakin ingin menghapus foto ini?');
-    if (!confirmed) {
+  async deletePhoto(photo: UserPhoto): Promise<void> {
+    const result = await Swal.fire({
+      title: 'Hapus foto ini?',
+      text: 'Foto yang dihapus tidak dapat dikembalikan.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, hapus',
+      cancelButtonText: 'Batal',
+      reverseButtons: true,
+      focusCancel: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#94a3b8',
+      width: 460,
+      customClass: {
+        popup: 'gallery-delete-swal',
+      },
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
     this.dashboardSvc.deleteV2(DashboardServiceType.USER_PHOTOS, photo.id).subscribe({
       next: () => {
-        this.notyf.success('Foto berhasil dihapus.');
+        void Swal.fire({
+          icon: 'success',
+          title: 'Foto berhasil dihapus',
+          timer: 1600,
+          showConfirmButton: false,
+          width: 420,
+          customClass: {
+            popup: 'gallery-delete-swal',
+          },
+        });
         if (photo.photo_type === 'gallery') {
           this.galleryPhotos = this.galleryPhotos.filter((item) => item.id !== photo.id);
         } else {
           this.collagePhotos = this.collagePhotos.filter((item) => item.id !== photo.id);
         }
       },
-      error: (err) => this.showError(this.resolveErrorMessage(err, 'Gagal hapus foto.')),
+      error: (err) => {
+        const message = this.resolveErrorMessage(err, 'Gagal hapus foto.');
+        this.showError(message);
+        void Swal.fire({
+          icon: 'error',
+          title: 'Gagal menghapus foto',
+          text: message,
+          confirmButtonText: 'Tutup',
+          confirmButtonColor: '#e11d48',
+          width: 460,
+          customClass: {
+            popup: 'gallery-delete-swal',
+          },
+        });
+      },
     });
   }
 
@@ -387,34 +428,44 @@ export class GalleryComponent implements OnInit, OnDestroy {
 
   private async prepareUploadFile(file: File): Promise<void> {
     this.clearMessages();
-    this.clearPreview();
+    this.clearPreview(false);
 
     if (!this.validateFile(file)) {
       this.uploadForm.patchValue({ file: null });
       return;
     }
 
+    const sessionId = ++this.previewSessionId;
     this.selectedFile = file;
     this.compressedFile = null;
     this.originalSize = file.size;
     this.compressedSize = null;
-    this.updatePreviewFromFile(file, file.name);
+    this.setPreviewUrlFromBlob(file, file.name);
 
     this.isCompressing = true;
     try {
       const compressed = await this.compressImage(file);
+      if (sessionId !== this.previewSessionId) {
+        return;
+      }
       const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
       this.compressedFile = compressedFile;
       this.compressedSize = compressedFile.size;
-      this.updatePreviewFromFile(compressedFile, compressedFile.name);
+      this.setPreviewUrlFromBlob(compressedFile, compressedFile.name);
       this.uploadForm.patchValue({ file: compressedFile });
       this.uploadForm.get('file')?.markAsDirty();
     } catch (error) {
+      if (sessionId !== this.previewSessionId) {
+        return;
+      }
       console.error('[Gallery] compress preview failed', error);
+      console.error('[Gallery Preview] compression failed, fallback to original', error);
       this.showError('Gagal kompresi foto. Coba gunakan file JPG, PNG, WEBP, atau GIF lain.');
       this.uploadForm.patchValue({ file: null });
     } finally {
-      this.isCompressing = false;
+      if (sessionId === this.previewSessionId) {
+        this.isCompressing = false;
+      }
     }
   }
 
@@ -598,9 +649,11 @@ export class GalleryComponent implements OnInit, OnDestroy {
     this.clearPreview();
   }
 
-  private clearPreview(): void {
-    this.revokeObjectUrl('previewUrl');
-    this.previewUrl = null;
+  private clearPreview(invalidateSession = true): void {
+    if (invalidateSession) {
+      this.previewSessionId++;
+    }
+    this.clearPreviewUrl();
     this.selectedFile = null;
     this.compressedFile = null;
     this.originalSize = null;
@@ -616,16 +669,28 @@ export class GalleryComponent implements OnInit, OnDestroy {
     this.editCompressedSize = null;
   }
 
-  private updatePreviewFromFile(file: File | Blob | null, fileName = 'preview.webp'): void {
-    this.revokeObjectUrl('previewUrl');
-    this.previewUrl = null;
+  private setPreviewUrlFromBlob(blob: Blob | File | null, fallbackName = 'preview-image.jpg'): void {
+    this.clearPreviewUrl();
 
-    if (!file) {
+    if (!blob) {
+      this.logPreviewState();
       return;
     }
 
-    const previewFile = this.ensureFile(file, fileName, file.type || 'image/webp');
-    this.previewUrl = URL.createObjectURL(previewFile);
+    const file =
+      blob instanceof File
+        ? blob
+        : new File([blob], fallbackName, { type: blob.type || 'image/jpeg' });
+
+    this.previewUrl = URL.createObjectURL(file);
+    this.logPreviewState();
+  }
+
+  private clearPreviewUrl(): void {
+    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
+    this.previewUrl = null;
   }
 
   private updateEditPreviewFromFile(file: File | Blob | null, fileName = 'preview.webp'): void {
@@ -658,6 +723,21 @@ export class GalleryComponent implements OnInit, OnDestroy {
     if (currentUrl && currentUrl.startsWith('blob:')) {
       URL.revokeObjectURL(currentUrl);
     }
+  }
+
+  onPreviewImageLoad(): void {
+    console.log('[Gallery Preview] image loaded for URL', this.previewUrl);
+  }
+
+  onPreviewImageError(event: Event): void {
+    console.error('[Gallery Preview] render failed for URL', this.previewUrl, event);
+  }
+
+  private logPreviewState(): void {
+    console.log('[Gallery Preview] active previewUrl', this.previewUrl);
+    console.log('[Gallery Preview] selectedFile', this.selectedFile?.name);
+    console.log('[Gallery Preview] compressedFile', this.compressedFile?.name || this.compressedFile?.type);
+    console.log('[Gallery Preview] previewSessionId', this.previewSessionId);
   }
 
   private getUserPackageName(): string {

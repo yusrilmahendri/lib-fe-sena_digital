@@ -704,3 +704,16 @@ textarea {
     min-height: 135px;
   }
 }
+
+:host ::ng-deep .gallery-delete-swal {
+  border-radius: 16px;
+  padding: 1.35rem 1.25rem 1.15rem;
+}
+
+@media (max-width: 640px) {
+  :host ::ng-deep .gallery-delete-swal {
+    width: calc(100vw - 1.5rem) !important;
+    margin: 0 auto;
+    padding: 1.1rem 0.95rem 0.95rem;
+  }
+}

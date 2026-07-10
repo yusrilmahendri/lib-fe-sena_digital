@@ -132,7 +132,9 @@
           alt="Preview foto"
           class="photo-preview-image"
           [style.object-fit]="uploadForm.value.display_mode || 'cover'"
-          [style.object-position]="getPreviewObjectPosition(uploadForm.value)" />
+          [style.object-position]="getPreviewObjectPosition(uploadForm.value)"
+          (load)="onPreviewImageLoad()"
+          (error)="onPreviewImageError($event)" />
         <ng-template #previewEmpty>
         <div class="preview-empty photo-preview-empty">
           <i class="fas fa-image"></i>
