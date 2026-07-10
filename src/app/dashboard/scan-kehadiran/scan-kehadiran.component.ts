@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Html5Qrcode } from 'html5-qrcode';
 import { DashboardService, ProfileResponse } from 'src/app/dashboard.service';
 import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
@@ -32,14 +32,17 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public manualDomain = '';
   public noticeMessage = '';
   public lastScanResult: ScanResult | null = null;
-  public presentGuests: StoredGuestInvitation[] = [];
+  public allGuests: StoredGuestInvitation[] = [];
   public isScanning = false;
 
   private readonly scannerElementId = 'scan-kehadiran-reader';
   private scanner?: Html5Qrcode;
   private isScanPaused = false;
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit(): void {
     this.loadProfileDomain();
@@ -54,7 +57,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public onManualDomainChange(): void {
-    this.loadPresentGuests();
+    this.loadAllGuests();
   }
 
   public async startScan(): Promise<void> {
@@ -74,7 +77,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       await this.scanner.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => this.handleScanResult(decodedText),
+        (decodedText) => this.ngZone.run(() => this.handleScanResult(decodedText)),
         () => undefined
       );
       this.isScanning = true;
@@ -175,9 +178,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.allGuests = this.loadGuests(activeDomain);
+
     const guestSlug = String(parsed.to || '').trim();
-    const guests = this.loadGuests(activeDomain);
-    const guestIndex = guests.findIndex((guest) => String(guest.slug || '').trim() === guestSlug);
+    const guestIndex = this.allGuests.findIndex((guest) => String(guest.slug || '').trim() === guestSlug);
 
     if (guestIndex < 0) {
       this.setScanResult({
@@ -191,22 +195,19 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const guest = guests[guestIndex];
+    const guest = { ...this.allGuests[guestIndex] };
     const alreadyCheckedIn = !!this.getCheckedInAt(guest);
-    const updatedGuest: StoredGuestInvitation = {
-      ...guest,
-      checkedInAt: alreadyCheckedIn ? guest.checkedInAt || null : scannedAt,
-      lastScannedAt: scannedAt,
-      checkinCount: alreadyCheckedIn ? this.getCheckinCount(guest) + 1 : 1,
-    };
 
-    guests[guestIndex] = updatedGuest;
-    this.saveGuests(activeDomain, guests);
-    this.presentGuests = this.filterPresentGuests(guests);
+    guest.checkedInAt = alreadyCheckedIn ? guest.checkedInAt || null : scannedAt;
+    guest.lastScannedAt = scannedAt;
+    guest.checkinCount = this.getCheckinCount(guest) + 1;
+
+    this.allGuests = this.allGuests.map((item, index) => index === guestIndex ? guest : item);
+    this.saveGuests(activeDomain, this.allGuests);
 
     this.setScanResult({
-      guestName: this.getGuestName(updatedGuest),
-      invitationUrl: this.getGuestInvitationUrl(updatedGuest),
+      guestName: this.getGuestName(guest),
+      invitationUrl: this.getGuestInvitationUrl(guest),
       status: alreadyCheckedIn ? 'Sudah Pernah Scan' : 'Berhasil',
       scannedAt,
       isError: false,
@@ -215,7 +216,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public exportPresentGuestsToExcel(): void {
-    const rows = this.presentGuests.map((guest) => ({
+    const rows = this.checkedInGuests.map((guest) => ({
       Nama: this.getGuestName(guest),
       Slug: guest.slug || '',
       Link: this.getGuestInvitationUrl(guest),
@@ -261,9 +262,9 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const guests = this.loadGuests(domain).map((guest) => this.resetGuestAttendanceFields(guest));
-    this.saveGuests(domain, guests);
-    this.presentGuests = [];
+    const guests = this.allGuests.length ? this.allGuests : this.loadGuests(domain);
+    this.allGuests = guests.map((guest) => this.resetGuestAttendanceFields(guest));
+    this.saveGuests(domain, this.allGuests);
     this.lastScanResult = null;
     this.showNotice('Semua data kehadiran berhasil direset.');
   }
@@ -277,11 +278,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const guests = this.loadGuests(domain).map((guest) =>
+    this.allGuests = this.allGuests.map((guest) =>
       this.getGuestIdentityKey(guest) === guestKey ? this.resetGuestAttendanceFields(guest) : guest
     );
-    this.saveGuests(domain, guests);
-    this.presentGuests = this.filterPresentGuests(guests);
+    this.saveGuests(domain, this.allGuests);
     this.showNotice('Status hadir tamu berhasil direset.');
   }
 
@@ -305,16 +305,8 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return Number(guest.checkinCount ?? 0);
   }
 
-  public get attendedGuests(): StoredGuestInvitation[] {
-    return this.presentGuests;
-  }
-
-  public exportAttendedGuests(): void {
-    this.exportPresentGuestsToExcel();
-  }
-
-  public resetAttendance(guest: StoredGuestInvitation): void {
-    this.resetGuestAttendance(guest);
+  public get checkedInGuests(): StoredGuestInvitation[] {
+    return this.allGuests.filter((guest) => guest.checkedInAt != null);
   }
 
   public formatDateTime(value: string | null | undefined): string {
@@ -344,7 +336,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       next: (response: ProfileResponse) => {
         this.activeDomain = this.getActiveDomainFromProfile(response);
         this.manualDomain = this.activeDomain;
-        this.loadPresentGuests();
+        this.loadAllGuests();
       },
       error: () => {
         this.showNotice('Gagal mengambil domain aktif. Silakan isi domain manual.');
@@ -407,19 +399,9 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     this.lastScanResult = result;
   }
 
-  private loadPresentGuests(): void {
+  private loadAllGuests(): void {
     const domain = this.resolvedDomain;
-    this.presentGuests = domain ? this.filterPresentGuests(this.loadGuests(domain)) : [];
-  }
-
-  private filterPresentGuests(guests: StoredGuestInvitation[]): StoredGuestInvitation[] {
-    return guests
-      .filter((guest) => !!this.getCheckedInAt(guest))
-      .sort((a, b) => {
-        const timeA = new Date(a.lastScannedAt || this.getCheckedInAt(a) || '').getTime() || 0;
-        const timeB = new Date(b.lastScannedAt || this.getCheckedInAt(b) || '').getTime() || 0;
-        return timeB - timeA;
-      });
+    this.allGuests = domain ? this.loadGuests(domain) : [];
   }
 
   private loadGuests(domain: string): StoredGuestInvitation[] {

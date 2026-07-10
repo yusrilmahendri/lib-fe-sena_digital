@@ -99,11 +99,11 @@
     <div class="attendance-card__header">
       <div>
         <h3>List tamu hadir</h3>
-        <p>{{ attendedGuests.length }} tamu hadir</p>
+        <p>{{ checkedInGuests.length }} tamu hadir</p>
       </div>
 
       <div class="attendance-card__actions">
-        <button type="button" class="btn-outline" (click)="exportAttendedGuests()">
+        <button type="button" class="btn-outline" (click)="exportPresentGuestsToExcel()">
           Export Excel Tamu Hadir
         </button>
         <button type="button" class="btn-danger" (click)="resetAllAttendance()">
@@ -112,7 +112,7 @@
       </div>
     </div>
 
-    <div *ngIf="attendedGuests.length > 0; else emptyAttendance" class="attendance-table-wrapper">
+    <div *ngIf="checkedInGuests.length > 0; else emptyAttendance" class="attendance-table-wrapper">
       <table class="attendance-table">
         <thead>
           <tr>
@@ -128,7 +128,7 @@
         </thead>
 
         <tbody>
-          <tr *ngFor="let guest of attendedGuests; let i = index; trackBy: trackByGuest">
+          <tr *ngFor="let guest of checkedInGuests; let i = index; trackBy: trackByGuest">
             <td data-label="No">{{ i + 1 }}</td>
             <td data-label="Nama Tamu">
               <strong>{{ getGuestName(guest) }}</strong>
@@ -151,7 +151,7 @@
               {{ formatDateTime(guest.lastScannedAt || getCheckedInAt(guest)) }}
             </td>
             <td data-label="Aksi">
-              <button type="button" class="btn-reset-small" (click)="resetAttendance(guest)">
+              <button type="button" class="btn-reset-small" (click)="resetGuestAttendance(guest)">
                 Reset
               </button>
             </td>
