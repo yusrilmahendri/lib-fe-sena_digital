@@ -104,7 +104,7 @@
 
         <div class="upload-box" [class.disabled]="!canUploadCustomMusic()">
           <label for="custom-music-upload" class="form-label">Upload file musik</label>
-          <input id="custom-music-upload" type="file" class="form-control" accept="audio/mp3,audio/wav,audio/ogg,audio/mpeg,audio/mp4,.m4a" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
+          <input id="custom-music-upload" type="file" class="form-control" accept="audio/*,.mp3,.wav,.m4a,.ogg" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
           <small>{{ selectedUploadFileName || 'Format MP3, WAV, OGG, M4A. Maksimal 10 MB.' }}</small>
         </div>
 

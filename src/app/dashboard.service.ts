@@ -772,10 +772,8 @@ export class DashboardService {
     });
   }
 
-  uploadCustomMusic(file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('music', file);
-    return this.httpSvc.post(this.getUrl(DashboardServiceType.USER_CUSTOM_MUSIC), formData);
+  uploadCustomMusic(payload: FormData): Observable<any> {
+    return this.httpSvc.post(this.getUrl(DashboardServiceType.USER_CUSTOM_MUSIC), payload);
   }
 
   deleteCustomMusic(): Observable<any> {

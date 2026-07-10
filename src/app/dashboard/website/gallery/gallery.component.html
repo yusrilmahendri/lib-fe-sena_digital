@@ -127,6 +127,7 @@
 
       <div class="preview-frame photo-preview-box">
         <img
+          #previewImage
           *ngIf="previewUrl; else previewEmpty"
           [src]="previewUrl"
           alt="Preview foto"

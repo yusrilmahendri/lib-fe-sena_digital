@@ -118,11 +118,27 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   uploadCustomMusic(): void {
-    if (!this.selectedUploadFile || this.isUploadingMusic || !this.canUploadCustomMusic()) return;
+    if (this.isUploadingMusic || !this.canUploadCustomMusic()) return;
+
+    if (!this.selectedUploadFile) {
+      this.uploadError = 'Pilih file musik terlebih dahulu.';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('musik', this.selectedUploadFile, this.selectedUploadFile.name);
+
+    console.log('[CustomMusic] selectedMusicFile', this.selectedUploadFile);
+    console.log('[CustomMusic] name', this.selectedUploadFile.name);
+    console.log('[CustomMusic] size', this.selectedUploadFile.size);
+    console.log('[CustomMusic] type', this.selectedUploadFile.type);
+    formData.forEach((value, key) => {
+      console.log('[CustomMusic][FormData]', key, value);
+    });
 
     this.isUploadingMusic = true;
     this.uploadError = '';
-    this.dashboardSvc.uploadCustomMusic(this.selectedUploadFile).subscribe({
+    this.dashboardSvc.uploadCustomMusic(formData).subscribe({
       next: (res: any) => {
         this.notyf.success(res?.message || 'Musik pribadi berhasil diunggah');
         this.isUploadingMusic = false;

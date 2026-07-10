@@ -1,5 +1,5 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Notyf } from 'notyf';
@@ -28,7 +28,7 @@ type PhotoFormValue = {
   templateUrl: './gallery.component.html',
   styleUrls: ['./gallery.component.scss']
 })
-export class GalleryComponent implements OnInit, OnDestroy {
+export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly photoTypes: Array<{ value: PhotoType; label: string; empty: string }> = [
     { value: 'gallery', label: 'Foto Galeri', empty: 'Belum ada foto galeri.' },
     { value: 'collage', label: 'Foto Kolase', empty: 'Belum ada foto kolase.' },
@@ -81,6 +81,8 @@ export class GalleryComponent implements OnInit, OnDestroy {
   userData: any = null;
   previewSessionId = 0;
 
+  @ViewChild('previewImage') private previewImage?: ElementRef<HTMLImageElement>;
+
   private readonly compressionQuality = 0.85;
   private readonly maxImageDimension = 1920;
   private readonly allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -95,6 +97,10 @@ export class GalleryComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearPreview();
     this.clearEditPreview();
+  }
+
+  ngAfterViewChecked(): void {
+    this.syncPreviewImageSrc();
   }
 
   get activePhotos(): UserPhoto[] {
@@ -693,6 +699,17 @@ export class GalleryComponent implements OnInit, OnDestroy {
     this.previewUrl = null;
   }
 
+  private syncPreviewImageSrc(): void {
+    if (!this.previewUrl || !this.previewImage?.nativeElement) {
+      return;
+    }
+
+    const image = this.previewImage.nativeElement;
+    if (image.getAttribute('src') !== this.previewUrl) {
+      image.src = this.previewUrl;
+    }
+  }
+
   private updateEditPreviewFromFile(file: File | Blob | null, fileName = 'preview.webp'): void {
     this.revokeObjectUrl('editPreviewUrl');
     this.editPreviewUrl = null;
@@ -734,7 +751,8 @@ export class GalleryComponent implements OnInit, OnDestroy {
   }
 
   private logPreviewState(): void {
-    console.log('[Gallery Preview] active previewUrl', this.previewUrl);
+    console.log('[Gallery Preview] previewUrl raw =', this.previewUrl);
+    console.log('[Gallery Preview] type of previewUrl =', typeof this.previewUrl);
     console.log('[Gallery Preview] selectedFile', this.selectedFile?.name);
     console.log('[Gallery Preview] compressedFile', this.compressedFile?.name || this.compressedFile?.type);
     console.log('[Gallery Preview] previewSessionId', this.previewSessionId);
