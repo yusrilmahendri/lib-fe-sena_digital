@@ -307,8 +307,8 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public getGuestName(guest: GuestInvitation): string {
     return String(
       guest.name ||
-      guest.guest_name ||
-      guest.nama_tamu ||
+      guest['guest_name'] ||
+      guest['nama_tamu'] ||
       guest.guest?.name ||
       guest.guest?.nama ||
       'Tamu Undangan'
@@ -318,9 +318,9 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public getGuestInvitationUrl(guest: GuestInvitation): string {
     return String(
       guest.url ||
-      guest.invitation_link ||
-      guest.link_undangan ||
-      guest.guest_url ||
+      guest['invitation_link'] ||
+      guest['link_undangan'] ||
+      guest['guest_url'] ||
       ''
     ).trim();
   }
@@ -330,7 +330,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public getCheckinCount(guest: GuestInvitation): number {
-    return Number(guest.checkinCount ?? guest.scan_count ?? guest.jumlah_scan ?? guest.total_scan ?? 0);
+    return Number(guest.checkinCount ?? guest['scan_count'] ?? guest['jumlah_scan'] ?? guest['total_scan'] ?? 0);
   }
 
   public get checkedInGuests(): GuestInvitation[] {
@@ -460,7 +460,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   private getGuestIdentityKey(guest: GuestInvitation): string {
-    return String(guest.id || guest.guest_id || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
+    return String(guest.id || guest['guest_id'] || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
   }
 
   private loadAttendanceList(): void {
@@ -494,12 +494,12 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    const attendedValue = guest.is_present ?? guest.attended ?? guest.present;
+    const attendedValue = guest['is_present'] ?? guest['attended'] ?? guest['present'];
     return attendedValue === true || attendedValue === 1 || String(attendedValue).toLowerCase() === 'true';
   }
 
   private getAttendanceStatus(guest: GuestInvitation): string {
-    return String(guest.status ?? guest.scan_status ?? guest.attendance_status ?? '').trim();
+    return String(guest['status'] ?? guest['scan_status'] ?? guest['attendance_status'] ?? '').trim();
   }
 
   private normalizeStatus(value: string): string {
@@ -508,14 +508,14 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
   private getAttendanceTime(guest: GuestInvitation, includeCreatedAt = true): string | null {
     const value = guest.checkedInAt ||
-      guest.checked_in_at ||
-      guest.attended_at ||
-      guest.waktu_hadir ||
-      guest.scanned_at ||
-      guest.scan_time ||
+      guest['checked_in_at'] ||
+      guest['attended_at'] ||
+      guest['waktu_hadir'] ||
+      guest['scanned_at'] ||
+      guest['scan_time'] ||
       (
         includeCreatedAt && this.normalizeStatus(this.getAttendanceStatus(guest))
-          ? guest.created_at
+          ? guest['created_at']
           : null
       );
 
@@ -524,9 +524,9 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
   public getLastScanAt(guest: GuestInvitation): string | null {
     const value = guest.lastScannedAt ||
-      guest.last_scan_at ||
-      guest.scan_terakhir ||
-      guest.updated_at ||
+      guest['last_scan_at'] ||
+      guest['scan_terakhir'] ||
+      guest['updated_at'] ||
       this.getAttendanceTime(guest);
 
     return value ? String(value) : null;
