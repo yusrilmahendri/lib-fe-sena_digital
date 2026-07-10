@@ -9,17 +9,22 @@ import {
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { LandingModalService } from './landing-modal.service';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthInterceptor implements HttpInterceptor {
+  private readonly apiBaseUrl = environment.apiBaseUrl;
+
   constructor(private landingModal: LandingModalService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('access_token');
 
-    const authReq = token
+    const shouldAttachAuthHeader = !!token && this.shouldAttachAuthHeader(req.url);
+
+    const authReq = shouldAttachAuthHeader
       ? req.clone({
           setHeaders: {
             Authorization: `Bearer ${token}`,
@@ -46,7 +51,45 @@ export class AuthInterceptor implements HttpInterceptor {
     );
   }
 
+  private shouldAttachAuthHeader(url: string): boolean {
+    if (!this.isApiRequest(url)) {
+      return false;
+    }
+
+    // Prevent unnecessary preflight on endpoints that should remain anonymous.
+    if (this.isAuthEndpoint(url) || this.isPublicApiEndpoint(url)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private isApiRequest(url: string): boolean {
+    if (url.startsWith('/api/') || url.startsWith('api/')) {
+      return true;
+    }
+
+    if (url.startsWith(this.apiBaseUrl)) {
+      return true;
+    }
+
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return parsed.pathname.startsWith('/api/');
+    } catch {
+      return false;
+    }
+  }
+
   private isAuthEndpoint(url: string): boolean {
     return /\/(login|forgot-password|reset-password|register)\b/.test(url);
+  }
+
+  private isPublicApiEndpoint(url: string): boolean {
+    return (
+      /\/v1\/testimoni\/public\b/.test(url) ||
+      /\/v1\/wedding-profile\/public\b/.test(url) ||
+      /\/themes\/(categories|theme|popular)\b/.test(url)
+    );
   }
 }

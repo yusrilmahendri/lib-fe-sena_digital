@@ -49,6 +49,21 @@
   padding: 1rem;
 }
 
+.music-status strong {
+  overflow-wrap: anywhere;
+}
+
+.source-pill {
+  background: #fdf2f8;
+  border-radius: 999px;
+  color: #be185d;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.6rem;
+}
+
 .status-label {
   color: #f472b6;
   font-size: 0.75rem;
@@ -156,6 +171,13 @@
   min-width: 0;
 }
 
+.default-copy strong,
+.music-info strong,
+.custom-current strong,
+.selected-file-name {
+  overflow-wrap: anywhere;
+}
+
 .default-copy small,
 .music-info small,
 .custom-current small,
@@ -247,6 +269,11 @@
   margin-bottom: 1rem;
 }
 
+.custom-current--active {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.16);
+}
+
 .upload-box {
   border: 1px dashed #f0a6c9;
   border-radius: 0.75rem;
@@ -261,6 +288,7 @@
 
 input[type='file'] {
   font-size: 0.9rem;
+  max-width: 100%;
 }
 
 @media (max-width: 767.98px) {
@@ -271,6 +299,7 @@ input[type='file'] {
 
   .music-status {
     min-width: 0;
+    width: 100%;
   }
 
   .music-card {
@@ -286,14 +315,27 @@ input[type='file'] {
   .music-item,
   .custom-current {
     align-items: flex-start;
+    gap: 0.7rem;
   }
 
   .selected-badge {
     display: none;
   }
 
+  .icon-button {
+    flex-basis: 42px;
+    height: 42px;
+    width: 42px;
+  }
+
   .actions,
   .side-actions {
     flex-direction: column;
+  }
+
+  .actions .btn,
+  .side-actions .btn {
+    min-height: 44px;
+    width: 100%;
   }
 }

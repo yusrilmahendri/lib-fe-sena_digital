@@ -8,6 +8,7 @@
     <div class="music-status">
       <span class="status-label">Aktif</span>
       <strong>{{ getCurrentMusicLabel() }}</strong>
+      <span class="source-pill">{{ getSourceTypeLabel(getActiveSourceType()) }}</span>
     </div>
   </div>
 
@@ -42,6 +43,7 @@
             <strong>Gunakan musik default</strong>
             <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
           </span>
+          <span *ngIf="getActiveSourceType() === 'default'" class="selected-badge">Aktif</span>
           <button type="button" class="icon-button" (click)="playDefaultPreview(); $event.preventDefault()" [disabled]="!musicSelection?.resolved_music_url && !musicSelection?.default_music?.audio_url" title="Preview musik default">
             <i class="fa" [class.fa-play]="previewingMusicId !== 'default'" [class.fa-pause]="previewingMusicId === 'default'" aria-hidden="true"></i>
           </button>
@@ -56,10 +58,12 @@
             </ng-template>
             <span class="music-info">
               <strong>{{ music.title }}</strong>
-              <small *ngIf="music.artist">{{ music.artist }}</small>
+              <small *ngIf="getMusicMeta(music)">{{ getMusicMeta(music) }}</small>
               <small *ngIf="music.is_default" class="badge-soft">Default</small>
             </span>
-            <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">Terpilih</span>
+            <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">
+              {{ getActiveSourceType() === 'catalog' ? 'Aktif' : 'Terpilih' }}
+            </span>
             <button type="button" class="icon-button" (click)="playPreview(music); $event.preventDefault()" [disabled]="!music.audio_url" title="Preview lagu">
               <i class="fa" [class.fa-play]="previewingMusicId !== music.id" [class.fa-pause]="previewingMusicId === music.id" aria-hidden="true"></i>
             </button>
@@ -87,12 +91,15 @@
         <div class="section-bar"></div>
         <h3>Musik Pribadi</h3>
 
-        <div *ngIf="musicSelection?.custom_music_url" class="custom-current">
+        <div *ngIf="getCustomMusicUrl()" class="custom-current" [class.custom-current--active]="isCustomMusicActive()">
           <span class="default-icon"><i class="fa fa-file-audio-o" aria-hidden="true"></i></span>
           <div>
             <strong>{{ getCustomMusicName() }}</strong>
             <small>{{ isCustomMusicActive() ? 'Musik pribadi menjadi sumber aktif.' : 'Musik pribadi sedang tersedia.' }}</small>
+            <small *ngIf="getCustomMusicSizeLabel()">Ukuran: {{ getCustomMusicSizeLabel() }}</small>
+            <small *ngIf="getCustomMusicUploadedAt()">Upload: {{ getCustomMusicUploadedAt() }}</small>
           </div>
+          <span *ngIf="isCustomMusicActive()" class="selected-badge">Aktif</span>
           <button type="button" class="icon-button" (click)="playCustomPreview()" title="Preview musik pribadi">
             <i class="fa" [class.fa-play]="previewingMusicId !== 'custom'" [class.fa-pause]="previewingMusicId === 'custom'" aria-hidden="true"></i>
           </button>
@@ -105,7 +112,7 @@
         <div class="upload-box" [class.disabled]="!canUploadCustomMusic()">
           <label for="custom-music-upload" class="form-label">Upload file musik</label>
           <input id="custom-music-upload" type="file" class="form-control" accept="audio/*,.mp3,.wav,.m4a,.ogg" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
-          <small>{{ selectedUploadFileName || 'Format MP3, WAV, OGG, M4A. Maksimal 10 MB.' }}</small>
+          <small class="selected-file-name">{{ selectedMusicFileName || 'Format MP3, WAV, OGG, M4A. Maksimal 10 MB.' }}</small>
         </div>
 
         <div *ngIf="uploadError" class="alert alert-danger mt-3" role="alert">
@@ -113,11 +120,11 @@
         </div>
 
         <div class="side-actions">
-          <button type="button" class="btn btn-sky" (click)="uploadCustomMusic()" [disabled]="isUploadingMusic || !selectedUploadFile || !canUploadCustomMusic()">
+          <button type="button" class="btn btn-sky" (click)="uploadCustomMusic()" [disabled]="isUploadingMusic || !selectedMusicFile || !canUploadCustomMusic()">
             <span *ngIf="isUploadingMusic" class="spinner-border spinner-border-sm me-2" role="status"></span>
             {{ isUploadingMusic ? 'Mengunggah...' : 'Upload' }}
           </button>
-          <button type="button" class="btn btn-outline-danger" (click)="deleteCustomMusic()" [disabled]="isUploadingMusic || !musicSelection?.custom_music_url">
+          <button type="button" class="btn btn-outline-danger" (click)="deleteCustomMusic()" [disabled]="isUploadingMusic || !getCustomMusicUrl()">
             <i class="fa fa-trash" aria-hidden="true"></i>
             Hapus
           </button>
