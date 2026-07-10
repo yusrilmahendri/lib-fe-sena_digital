@@ -53,6 +53,7 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { NgxSelectModule } from 'ngx-select-ex';
 import { DashboardAdminComponent } from './dashboard-admin/dashboard-admin.component';
 import { DashboardComponent } from './dashboard-admin/dashboard/dashboard.component';
@@ -208,6 +209,7 @@ import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
     MatAutocompleteModule,
     MatInputModule,
     MatFormFieldModule,
+    DragDropModule,
     NgxSelectModule,
     BsDatepickerModule.forRoot(), // Use forRoot() on BsDatepickerModule
     ModalModule.forRoot(),

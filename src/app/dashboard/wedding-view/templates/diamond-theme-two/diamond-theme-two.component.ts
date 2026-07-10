@@ -268,7 +268,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenGallery(): any[] {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     return gallery.filter((item: any) => {
       return Boolean(item?.photo_url || item?.photo || item?.url || item?.image);
@@ -276,6 +276,24 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenHeroImage(index: number): string {
+    const item = this.getGardenHeroItem(index);
+    const rawUrl =
+      item?.photo_url ||
+      item?.photo ||
+      item?.url ||
+      item?.image ||
+      '';
+
+    const portraitFallback = [
+      this.getBridePortrait(),
+      this.getGroomPortrait(),
+      this.getGardenGalleryCoverPhoto(),
+    ];
+
+    return this.normalizeGardenPhotoUrl(rawUrl) || portraitFallback[index] || this.getGardenFallbackImage(index);
+  }
+
+  getGardenHeroItem(index: number): any {
     const gallery = this.getGardenGallery();
 
     const preferred: any[] = [
@@ -284,26 +302,20 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       gallery.find((photo: any) => this.matchGardenPhotoName(photo, ['couple', 'pasangan', 'berdua', 'prewedding', 'outdoor', 'cover', 'sampul'])),
     ];
 
-    const portraitFallback = [
-      this.getBridePortrait(),
-      this.getGroomPortrait(),
-      this.getGardenGalleryCoverPhoto(),
-    ];
-
-    const item: any =
+    return (
       preferred[index] ||
       gallery[index] ||
       gallery[0] ||
-      null;
+      null
+    );
+  }
 
-    const rawUrl =
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
-      '';
+  getGardenHeroObjectFit(index: number): string {
+    return this.getPhotoObjectFit(this.getGardenHeroItem(index));
+  }
 
-    return this.normalizeGardenPhotoUrl(rawUrl) || portraitFallback[index] || this.getGardenFallbackImage(index);
+  getGardenHeroObjectPosition(index: number): string {
+    return this.getPhotoObjectPosition(this.getGardenHeroItem(index));
   }
 
   getHeroImage(index: number): string {
@@ -353,7 +365,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentGallery(): any[] {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getCollageItems();
 
     return gallery.filter((item: any) => {
       return Boolean(
@@ -376,12 +388,18 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentPhotos(): string[] {
-    const gallery = this.weddingData?.gallery || [];
-
-    return gallery
+    return this.getGardenMomentGallery()
       .map((item: any) => this.getGardenGalleryPhotoUrl(item))
       .filter((url: string) => !!url)
       .slice(0, 8);
+  }
+
+  getGardenMomentPhotoItems(): any[] {
+    return this.getGardenMomentGallery().slice(0, 8);
+  }
+
+  getGardenFeaturedPhotoItem(): any {
+    return this.getGardenMomentPhotoItems()[0] || null;
   }
 
   getGardenFeaturedPhoto(): string {
@@ -404,8 +422,8 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.normalizeGardenPhotoUrl(raw);
   }
 
-  trackByGardenPhoto(index: number, item: string): string {
-    return `${index}-${item}`;
+  trackByGardenPhoto(index: number, item: any): string {
+    return `${index}-${item?.id || item?.photo_url || item?.photo || item}`;
   }
 
   getGardenMomentPhotoUrl(item: any): string {

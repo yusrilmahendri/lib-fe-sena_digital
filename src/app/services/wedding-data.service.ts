@@ -57,6 +57,19 @@ export interface WeddingQuote {
 export interface GalleryItem {
   id: number;
   photo: string;
+  photo_type?: 'gallery' | 'collage' | string | null;
+  photo_url?: string | null;
+  description?: string | null;
+  position?: string | null;
+  display_mode?: 'cover' | 'contain' | string | null;
+  focal_point_x?: number | string | null;
+  focal_point_y?: number | string | null;
+  object_position?: string | null;
+  is_featured?: boolean | number | string | null;
+  sort_order?: number | string | null;
+  original_size?: number | null;
+  compressed_size?: number | null;
+  quality?: number | null;
   url_video: string;
   nama_foto: string;
   status: number;

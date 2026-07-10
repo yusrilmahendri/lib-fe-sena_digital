@@ -4,7 +4,7 @@ import { DashboardService, ProfileResponse } from 'src/app/dashboard.service';
 import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import * as XLSX from 'xlsx';
 
-interface StoredGuestInvitation {
+interface GuestInvitation {
   id?: string;
   name?: string;
   slug?: string;
@@ -32,7 +32,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public manualDomain = '';
   public noticeMessage = '';
   public lastScanResult: ScanResult | null = null;
-  public allGuests: StoredGuestInvitation[] = [];
+  public allGuests: GuestInvitation[] = [];
   public isScanning = false;
 
   private readonly scannerElementId = 'scan-kehadiran-reader';
@@ -198,12 +198,13 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     const guest = { ...this.allGuests[guestIndex] };
     const alreadyCheckedIn = !!this.getCheckedInAt(guest);
 
-    guest.checkedInAt = alreadyCheckedIn ? guest.checkedInAt || null : scannedAt;
+    guest.checkedInAt = scannedAt;
     guest.lastScannedAt = scannedAt;
     guest.checkinCount = this.getCheckinCount(guest) + 1;
 
     this.allGuests = this.allGuests.map((item, index) => index === guestIndex ? guest : item);
     this.saveGuests(activeDomain, this.allGuests);
+    this.logAttendanceState();
 
     this.setScanResult({
       guestName: this.getGuestName(guest),
@@ -266,10 +267,11 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     this.allGuests = guests.map((guest) => this.resetGuestAttendanceFields(guest));
     this.saveGuests(domain, this.allGuests);
     this.lastScanResult = null;
+    this.logAttendanceState();
     this.showNotice('Semua data kehadiran berhasil direset.');
   }
 
-  public resetGuestAttendance(guestToReset: StoredGuestInvitation): void {
+  public resetGuestAttendance(guestToReset: GuestInvitation): void {
     const domain = this.resolvedDomain;
     const guestKey = this.getGuestIdentityKey(guestToReset);
 
@@ -282,31 +284,42 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       this.getGuestIdentityKey(guest) === guestKey ? this.resetGuestAttendanceFields(guest) : guest
     );
     this.saveGuests(domain, this.allGuests);
+    this.logAttendanceState();
     this.showNotice('Status hadir tamu berhasil direset.');
   }
 
-  public trackByGuest(index: number, guest: StoredGuestInvitation): string {
+  public resetAttendance(guest: GuestInvitation): void {
+    this.resetGuestAttendance(guest);
+  }
+
+  public trackByGuest(index: number, guest: GuestInvitation): string {
     return `${this.getGuestIdentityKey(guest) || this.getGuestName(guest)}-${index}`;
   }
 
-  public getGuestName(guest: StoredGuestInvitation): string {
+  public getGuestName(guest: GuestInvitation): string {
     return String(guest.name || 'Tamu Undangan').trim();
   }
 
-  public getGuestInvitationUrl(guest: StoredGuestInvitation): string {
+  public getGuestInvitationUrl(guest: GuestInvitation): string {
     return String(guest.url || '').trim();
   }
 
-  public getCheckedInAt(guest: StoredGuestInvitation): string | null {
+  public getCheckedInAt(guest: GuestInvitation): string | null {
     return guest.checkedInAt || null;
   }
 
-  public getCheckinCount(guest: StoredGuestInvitation): number {
+  public getCheckinCount(guest: GuestInvitation): number {
     return Number(guest.checkinCount ?? 0);
   }
 
-  public get checkedInGuests(): StoredGuestInvitation[] {
-    return this.allGuests.filter((guest) => guest.checkedInAt != null);
+  public get checkedInGuests(): GuestInvitation[] {
+    return (this.allGuests || [])
+      .filter((guest) => !!guest.checkedInAt)
+      .sort((a, b) => {
+        const timeA = new Date(a.lastScannedAt || a.checkedInAt || 0).getTime();
+        const timeB = new Date(b.lastScannedAt || b.checkedInAt || 0).getTime();
+        return timeB - timeA;
+      });
   }
 
   public formatDateTime(value: string | null | undefined): string {
@@ -402,14 +415,15 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   private loadAllGuests(): void {
     const domain = this.resolvedDomain;
     this.allGuests = domain ? this.loadGuests(domain) : [];
+    this.logAttendanceState();
   }
 
-  private loadGuests(domain: string): StoredGuestInvitation[] {
+  private loadGuests(domain: string): GuestInvitation[] {
     try {
       const raw = localStorage.getItem(this.getStorageKey(domain));
       const parsed = raw ? JSON.parse(raw) : [];
       const normalized = Array.isArray(parsed)
-        ? parsed.reduce((guests: StoredGuestInvitation[], guest) => {
+        ? parsed.reduce((guests: GuestInvitation[], guest) => {
           guests.push(this.normalizeStoredGuest(guest, domain, guests));
           return guests;
         }, [])
@@ -425,7 +439,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     }
   }
 
-  private saveGuests(domain: string, guests: StoredGuestInvitation[]): void {
+  private saveGuests(domain: string, guests: GuestInvitation[]): void {
     localStorage.setItem(this.getStorageKey(domain), JSON.stringify(guests.map((guest) => this.serializeGuest(guest))));
   }
 
@@ -433,7 +447,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return `guest_invitations_${this.normalizeWeddingDomain(domain) || 'unknown'}`;
   }
 
-  private getGuestIdentityKey(guest: StoredGuestInvitation): string {
+  private getGuestIdentityKey(guest: GuestInvitation): string {
     return String(guest.id || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
   }
 
@@ -442,10 +456,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   private normalizeStoredGuest(
-    raw: StoredGuestInvitation,
+    raw: GuestInvitation,
     domain: string,
-    existingGuests: StoredGuestInvitation[] = []
-  ): StoredGuestInvitation {
+    existingGuests: GuestInvitation[] = []
+  ): GuestInvitation {
     const name = this.getGuestName(raw);
     const checkedInAt = raw.checkedInAt || (raw as any).checked_in_at || null;
     const checkinCount = Number(raw.checkinCount ?? (raw as any).checkin_count ?? 0);
@@ -473,7 +487,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return `${shareOrigin}/wedding/${encodeURIComponent(domain)}?to=${encodeURIComponent(slug)}`;
   }
 
-  private generateUniqueSlug(name: string, existingGuests: StoredGuestInvitation[]): string {
+  private generateUniqueSlug(name: string, existingGuests: GuestInvitation[]): string {
     const baseSlug = this.createGuestSlug(name) || 'tamu';
     const usedSlugs = new Set(existingGuests.map((guest) => guest.slug).filter(Boolean));
 
@@ -492,7 +506,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return candidate;
   }
 
-  private serializeGuest(guest: StoredGuestInvitation): Record<string, any> {
+  private serializeGuest(guest: GuestInvitation): Record<string, any> {
     const serialized: Record<string, any> = {
       id: guest.id || this.getGuestIdentityKey(guest),
       name: this.getGuestName(guest),
@@ -507,7 +521,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     return serialized;
   }
 
-  private resetGuestAttendanceFields(guest: StoredGuestInvitation): StoredGuestInvitation {
+  private resetGuestAttendanceFields(guest: GuestInvitation): GuestInvitation {
     return {
       ...guest,
       checkedInAt: null,
@@ -541,5 +555,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
         this.noticeMessage = '';
       }
     }, 3000);
+  }
+
+  private logAttendanceState(): void {
+    console.log('[Scan Kehadiran] allGuests:', this.allGuests);
+    console.log('[Scan Kehadiran] checkedInGuests:', this.checkedInGuests);
   }
 }

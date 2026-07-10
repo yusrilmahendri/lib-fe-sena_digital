@@ -120,7 +120,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   // ─── Photos ──────────────────────────────────────────────────────────
 
   override getCoverPhoto(): string {
+    const featuredGalleryPhoto = this.getFeaturedGalleryItem();
+    const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';
     return this.getSafeImageUrl([
+      featuredGalleryUrl,
       (this.weddingData as any)?.cover_photo_url,
       (this.weddingData as any)?.mempelai?.cover_photo_url,
       this.weddingData?.mempelai?.cover_photo,

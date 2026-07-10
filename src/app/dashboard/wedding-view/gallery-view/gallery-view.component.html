@@ -10,6 +10,8 @@
         *ngIf="getImageUrl(item)"
         [src]="getImageUrl(item)"
         [alt]="getImageAlt(item, i)"
+        [style.object-fit]="getImageObjectFit(item)"
+        [style.object-position]="getImageObjectPosition(item)"
         loading="lazy"
         (error)="onImageError($event)"
       />

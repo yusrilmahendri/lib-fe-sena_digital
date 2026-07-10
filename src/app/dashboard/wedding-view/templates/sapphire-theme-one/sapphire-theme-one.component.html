@@ -4,7 +4,9 @@
     *ngIf="!invitationOpened"
     class="sapphire-opening"
     [class.sapphire-opening--exiting]="isOpening"
-    [style.background-image]="'url(' + getCoverPhoto() + ')'">
+    [style.background-image]="'url(' + getCoverPhoto() + ')'"
+    [style.background-size]="getCoverPhotoObjectFit()"
+    [style.background-position]="getCoverPhotoObjectPosition()">
     <div class="sapphire-opening__content">
       <p class="sapphire-opening__eyebrow">THE WEDDING OF</p>
       <h1 class="sapphire-opening__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h1>
@@ -26,7 +28,11 @@
 
   <main *ngIf="invitationOpened" class="sapphire-content sapphire-content--reveal">
 
-    <section class="sapphire-post-hero" [style.background-image]="'url(' + getCoverPhoto() + ')'">
+    <section
+      class="sapphire-post-hero"
+      [style.background-image]="'url(' + getCoverPhoto() + ')'"
+      [style.background-size]="getCoverPhotoObjectFit()"
+      [style.background-position]="getCoverPhotoObjectPosition()">
       <div class="sapphire-post-hero__overlay"></div>
       <div class="sapphire-post-hero__content">
         <p class="sapphire-post-hero__eyebrow">THE WEDDING OF</p>
@@ -96,14 +102,14 @@
       <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
         <div class="sapphire-gallery-grid">
           <figure class="sapphire-gallery-item sapphire-gallery-item--featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
-            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
             <div class="sapphire-gallery-play" *ngIf="hasGalleryVideo(featured)">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
           </figure>
           <figure class="sapphire-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
           </figure>
         </div>

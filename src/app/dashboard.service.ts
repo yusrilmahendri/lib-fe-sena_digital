@@ -175,6 +175,8 @@ export enum DashboardServiceType {
   THEME_PUBLIC_POPULAR_THEMES,
   THEME_USER_SELECT,
   THEME_USER_SELECTED,
+  USER_PHOTOS,
+  USER_PHOTOS_SORT,
   DELETE_REKENING_ADMIN,
   UPDATE_REKENING_ADMIN,
 }
@@ -571,6 +573,10 @@ export class DashboardService {
         return `${this.BASE_URL_API}/themes/select`;
       case DashboardServiceType.THEME_USER_SELECTED:
         return `${this.BASE_URL_API}/themes/selected`;
+      case DashboardServiceType.USER_PHOTOS:
+        return `${this.BASE_URL_API}/v1/user/photos`;
+      case DashboardServiceType.USER_PHOTOS_SORT:
+        return `${this.BASE_URL_API}/v1/user/photos/sort`;
 
       default:
         return '';

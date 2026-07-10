@@ -4,7 +4,11 @@
              [class.ruby-cover--opening]="isOpening"
              [class.ruby-cover--opened]="invitationOpened">
       <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
-        <div class="ruby-cover__media ruby-cover__bg" [style.background-image]="'url(' + coverPhoto + ')'"></div>
+        <div
+          class="ruby-cover__media ruby-cover__bg"
+          [style.background-image]="'url(' + coverPhoto + ')'"
+          [style.background-size]="getCoverPhotoObjectFit()"
+          [style.background-position]="getCoverPhotoObjectPosition()"></div>
       </ng-container>
       <ng-template #coverPlaceholder>
         <div class="ruby-cover__placeholder" aria-hidden="true"></div>
@@ -226,6 +230,8 @@
               *ngIf="getGalleryPhotoUrl(mainGalleryPhoto)"
               [src]="getGalleryPhotoUrl(mainGalleryPhoto)"
               [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
+              [style.object-fit]="getPhotoObjectFit(mainGalleryPhoto)"
+              [style.object-position]="getPhotoObjectPosition(mainGalleryPhoto)"
               (error)="onGalleryImageError($event)"
             />
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
@@ -251,6 +257,8 @@
                   *ngIf="getGalleryPhotoUrl(item)"
                   [src]="getGalleryPhotoUrl(item)"
                   [alt]="item.nama_foto || 'Galeri foto'"
+                  [style.object-fit]="getPhotoObjectFit(item)"
+                  [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onGalleryImageError($event)"
                 />
                 <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
@@ -268,6 +276,8 @@
                     *ngIf="getGalleryPhotoUrl(item)"
                     [src]="getGalleryPhotoUrl(item)"
                     alt=""
+                    [style.object-fit]="getPhotoObjectFit(item)"
+                    [style.object-position]="getPhotoObjectPosition(item)"
                     (error)="onGalleryImageError($event)"
                   />
                   <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>

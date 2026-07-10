@@ -169,7 +169,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override getCoverPhoto(): string {
+    const featuredGalleryPhoto = this.getFeaturedGalleryItem();
+    const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';
     const coverPhoto = this.getSafeImageUrl([
+      featuredGalleryUrl,
       (this.weddingData as any)?.cover_photo_url,
       (this.weddingData as any)?.mempelai?.cover_photo_url,
       this.weddingData?.mempelai?.cover_photo,
@@ -215,7 +218,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   get galleryPhotos(): GalleryItem[] {
-    const photos = ((this as any)?.data?.gallery || this.weddingData?.gallery || []) as GalleryItem[];
+    const photos = this.getGalleryItems();
     return photos.filter((item) => {
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
@@ -228,7 +231,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       return null;
     }
 
-    return photos.find((item) => this.hasVideo(item)) || photos[0];
+    return photos[0];
   }
 
   get galleryThumbs(): GalleryItem[] {

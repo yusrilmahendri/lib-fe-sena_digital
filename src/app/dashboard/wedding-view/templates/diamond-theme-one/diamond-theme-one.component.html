@@ -2,7 +2,7 @@
   <article class="diamond-shell">
 
     <section class="diamond-opening" *ngIf="!isInvitationOpened">
-      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" />
+      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
       <div class="diamond-opening__overlay"></div>
 
       <div class="diamond-opening__content">
@@ -23,7 +23,7 @@
     <main class="diamond-main" *ngIf="isInvitationOpened">
       <!-- HERO -->
       <section class="diamond-hero">
-        <img class="diamond-hero__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" />
+        <img class="diamond-hero__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
         <div class="diamond-hero__overlay"></div>
 
         <div class="diamond-hero__content">
@@ -386,6 +386,8 @@
               <img
                 [src]="getMomentPhotoUrl(featured)"
                 [alt]="getMomentAlt(featured, 0)"
+                [style.object-fit]="getPhotoObjectFit(featured)"
+                [style.object-position]="getPhotoObjectPosition(featured)"
                 (error)="onMomentImageError($event)" />
 
               <button
@@ -404,6 +406,8 @@
                 <img
                   [src]="getMomentPhotoUrl(item)"
                   [alt]="getMomentAlt(item, i)"
+                  [style.object-fit]="getPhotoObjectFit(item)"
+                  [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onMomentImageError($event)" />
               </div>
             </div>
@@ -430,6 +434,8 @@
                 <img
                   [src]="getMomentPhotoUrl(item)"
                   [alt]="getMomentAlt(item, i)"
+                  [style.object-fit]="getPhotoObjectFit(item)"
+                  [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onMomentImageError($event)" />
               </div>
             </div>

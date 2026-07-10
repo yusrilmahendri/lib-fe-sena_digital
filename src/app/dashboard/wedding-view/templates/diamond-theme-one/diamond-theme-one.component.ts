@@ -174,7 +174,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getCoverPhotoUrl(): string {
-    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    const featuredGalleryPhoto = this.getFeaturedGalleryItem();
+    const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';
+    const gallery = this.getGalleryItems();
     const namedCover = gallery.find((item: any) => {
       const name = String(item?.nama_foto || item?.name || '').toLowerCase();
       return (name.includes('cover') || name.includes('outdoor')) && this.getGalleryCandidateUrl(item);
@@ -182,6 +184,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const firstGalleryPhoto = gallery.find((item: any) => this.getGalleryCandidateUrl(item));
 
     const candidates = [
+      featuredGalleryUrl,
       this.getGalleryCandidateUrl(namedCover),
       this.getGalleryCandidateUrl(firstGalleryPhoto),
       (this.weddingData as any)?.cover_photo_url,
@@ -212,7 +215,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getPrayerPhotoUrl(): string {
-    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    const gallery = this.getGalleryItems();
 
     const preferred =
       gallery.find((item: any) => {
@@ -534,7 +537,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getEventPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {
@@ -662,7 +665,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getCountdownPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {
@@ -786,7 +789,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getWishesPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {
@@ -1308,7 +1311,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getGiftPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {
@@ -1358,7 +1361,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMomentGallery(): any[] {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getCollageItems();
 
     return gallery.filter((item: any) => {
       const url = item?.photo_url || item?.photo || item?.url || item?.image || '';
@@ -1408,6 +1411,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getMomentAlt(item: any, index: number): string {
     return String(
+      item?.description ||
       item?.nama_foto ||
       item?.name ||
       item?.title ||
@@ -1490,7 +1494,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getLiveStreamingPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {
@@ -1514,7 +1518,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getFooterPhotoUrl(): string {
-    const gallery: any[] = this.weddingData?.gallery || [];
+    const gallery: any[] = this.getGalleryItems();
 
     const item: any =
       gallery.find((photo: any) => {

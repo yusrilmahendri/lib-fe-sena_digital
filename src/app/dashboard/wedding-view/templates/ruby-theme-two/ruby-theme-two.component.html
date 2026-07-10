@@ -4,7 +4,11 @@
       class="ruby-two-cover"
       *ngIf="!hasOpened"
       [class.ruby-two-cover--opening]="isOpening">
-      <div class="ruby-two-cover__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+      <div
+        class="ruby-two-cover__media"
+        [style.background-image]="'url(' + getCoverPhoto() + ')'"
+        [style.background-size]="getCoverPhotoObjectFit()"
+        [style.background-position]="getCoverPhotoObjectPosition()"></div>
       <div class="ruby-two-cover__overlay"></div>
       <div class="ruby-two-cover__content">
         <p class="ruby-two-cover__eyebrow">THE WEDDING OF</p>
@@ -36,7 +40,11 @@
 
     <div class="ruby-two-main" *ngIf="hasOpened" [class.ruby-two-main--visible]="hasOpened">
       <section class="ruby-two-hero">
-        <div class="ruby-two-hero__media" [style.background-image]="'url(' + getCoverPhoto() + ')'"></div>
+        <div
+          class="ruby-two-hero__media"
+          [style.background-image]="'url(' + getCoverPhoto() + ')'"
+          [style.background-size]="getCoverPhotoObjectFit()"
+          [style.background-position]="getCoverPhotoObjectPosition()"></div>
         <div class="ruby-two-hero__overlay"></div>
         <div class="ruby-two-hero__content">
           <p class="ruby-two-cover__eyebrow">THE WEDDING OF</p>
@@ -177,7 +185,7 @@
 
         <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
           <article class="ruby-two-gallery-featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
-            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" (error)="onImageError($event)">
+            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             <div class="ruby-two-gallery-featured__play" *ngIf="featured.url_video">
               <i class="fas fa-play" aria-hidden="true"></i>
@@ -186,7 +194,7 @@
 
           <div class="ruby-two-gallery-grid">
             <article class="ruby-two-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" (error)="onImageError($event)">
+              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
               <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
             </article>
           </div>

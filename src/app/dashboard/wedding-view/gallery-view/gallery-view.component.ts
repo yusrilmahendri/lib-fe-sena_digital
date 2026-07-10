@@ -1,6 +1,11 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { GalleryItem } from '../../../services/wedding-data.service';
 import { environment } from '../../../../environments/environment';
+import {
+  getOrderedGalleryPhotos,
+  getPhotoObjectFit,
+  getPhotoObjectPosition,
+} from '../../../shared/user-photo.model';
 
 @Component({
   selector: 'wc-gallery-view',
@@ -17,11 +22,11 @@ export class GalleryViewComponent implements OnInit {
   }
 
   getGalleryImages(): GalleryItem[] {
-    return this.galleryItems || [];
+    return getOrderedGalleryPhotos(this.galleryItems || []);
   }
 
   hasImages(): boolean {
-    return !!(this.galleryItems && this.galleryItems.length > 0);
+    return this.getGalleryImages().length > 0;
   }
 
   getImageUrl(item: GalleryItem): string {
@@ -29,7 +34,15 @@ export class GalleryViewComponent implements OnInit {
   }
 
   getImageAlt(item: GalleryItem, index: number): string {
-    return item.nama_foto || `Gallery image ${index + 1}`;
+    return item.description || item.nama_foto || `Gallery image ${index + 1}`;
+  }
+
+  getImageObjectFit(item: GalleryItem): string {
+    return getPhotoObjectFit(item);
+  }
+
+  getImageObjectPosition(item: GalleryItem): string {
+    return getPhotoObjectPosition(item);
   }
 
   trackByGalleryId(index: number, item: GalleryItem): number {

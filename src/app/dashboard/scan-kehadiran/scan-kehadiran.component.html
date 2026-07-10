@@ -151,7 +151,7 @@
               {{ formatDateTime(guest.lastScannedAt || getCheckedInAt(guest)) }}
             </td>
             <td data-label="Aksi">
-              <button type="button" class="btn-reset-small" (click)="resetGuestAttendance(guest)">
+              <button type="button" class="btn-reset-small" (click)="resetAttendance(guest)">
                 Reset
               </button>
             </td>

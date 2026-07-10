@@ -14,6 +14,13 @@ import {
   resolveSalamBawah,
   resolveSalamPembuka,
 } from '../../../../shared/salam-defaults';
+import {
+  getFeaturedGalleryPhoto,
+  getOrderedCollagePhotos,
+  getOrderedGalleryPhotos,
+  getPhotoObjectFit,
+  getPhotoObjectPosition,
+} from '../../../../shared/user-photo.model';
 
 type FilterKey =
   | 'halaman_sampul'
@@ -112,7 +119,11 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
   }
 
   getCoverPhoto(): string {
+    const featuredGalleryPhoto = this.getFeaturedGalleryItem();
+    const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';
+
     return this.normalizeMediaUrl(
+      featuredGalleryUrl ||
       (this.weddingData as any)?.cover_photo_url ||
       (this.weddingData as any)?.mempelai?.cover_photo_url ||
       this.weddingData?.mempelai?.cover_photo ||
@@ -235,11 +246,17 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
   }
 
   getGalleryItems(): GalleryItem[] {
-    return Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    return getOrderedGalleryPhotos(gallery);
+  }
+
+  getCollageItems(): GalleryItem[] {
+    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
+    return getOrderedCollagePhotos(gallery);
   }
 
   getFeaturedGalleryItem(): GalleryItem | null {
-    return this.getGalleryItems()[0] || null;
+    return getFeaturedGalleryPhoto(this.getGalleryItems());
   }
 
   getGalleryGridItems(): GalleryItem[] {
@@ -260,6 +277,10 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
 
   hasGallery(): boolean {
     return this.getGalleryItems().length > 0;
+  }
+
+  hasCollage(): boolean {
+    return this.getCollageItems().length > 0;
   }
 
   hasGuestWishes(): boolean {
@@ -373,7 +394,23 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
   }
 
   getGalleryAlt(item: GalleryItem, index: number): string {
-    return item.nama_foto || `Galeri ${index + 1}`;
+    return item.description || item.nama_foto || `Galeri ${index + 1}`;
+  }
+
+  getPhotoObjectFit(item: any): string {
+    return getPhotoObjectFit(item);
+  }
+
+  getPhotoObjectPosition(item: any): string {
+    return getPhotoObjectPosition(item);
+  }
+
+  getCoverPhotoObjectFit(): string {
+    return this.getFeaturedGalleryItem() ? this.getPhotoObjectFit(this.getFeaturedGalleryItem()) : 'cover';
+  }
+
+  getCoverPhotoObjectPosition(): string {
+    return this.getFeaturedGalleryItem() ? this.getPhotoObjectPosition(this.getFeaturedGalleryItem()) : 'center center';
   }
 
   getPersonPhotoUrl(person: MempelaiPerson | null): string {
