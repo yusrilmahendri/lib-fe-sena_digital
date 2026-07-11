@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
@@ -14,6 +14,12 @@ interface Acara {
   end_acara: string;
   alamat: string;
   link_maps: string;
+  address?: string;
+  location_name?: string;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  google_maps_url?: string;
+  place_id?: string;
   countdown?: Countdown;
 }
 
@@ -78,6 +84,8 @@ export class AcaraComponent implements OnInit {
   }
 
   private createDynamicEventForm(eventData?: Partial<Acara>): FormGroup {
+    const normalizedLocation = this.normalizeLocationData(eventData);
+
     return this.fb.group({
       id: [eventData?.id ?? null],
       nama_acara: [eventData?.nama_acara ?? '', Validators.required],
@@ -89,9 +97,15 @@ export class AcaraComponent implements OnInit {
       ],
       start_acara: [eventData?.start_acara ?? '', Validators.required],
       end_acara: [eventData?.end_acara ?? '', Validators.required],
-      alamat: [eventData?.alamat ?? '', Validators.required],
-      link_maps: [eventData?.link_maps ?? '', Validators.required],
-    });
+      alamat: [normalizedLocation.address],
+      address: [normalizedLocation.address],
+      location_name: [normalizedLocation.location_name],
+      latitude: [normalizedLocation.latitude],
+      longitude: [normalizedLocation.longitude],
+      link_maps: [normalizedLocation.google_maps_url],
+      google_maps_url: [normalizedLocation.google_maps_url],
+      place_id: [normalizedLocation.place_id],
+    }, { validators: this.locationValidator });
   }
 
   addDynamicEvent(): void {
@@ -204,7 +218,7 @@ export class AcaraComponent implements OnInit {
   }
 
   onDynamicSubmitClicked(): void {
-    if (this.dynamicEventForm.valid) {
+    if (this.dynamicEventForm.valid && this.hasMinimumLocationData()) {
       const message =
         this.data.length > 0
           ? 'Apakah anda ingin mengubah data acara ini?'
@@ -219,7 +233,8 @@ export class AcaraComponent implements OnInit {
 
       this.showModal(initialState);
     } else {
-      this.notyf.error('Form tidak valid. Harap periksa data acara.');
+      this.markFormGroupTouched(this.dynamicEventForm);
+      this.notyf.error(this.getLocationValidationMessage() || 'Form tidak valid. Harap periksa data acara.');
     }
   }
 
@@ -292,9 +307,9 @@ export class AcaraComponent implements OnInit {
   }
 
 submitDynamicEventForm(): void {
-  if (this.dynamicEventForm.valid) {
+  if (this.dynamicEventForm.valid && this.hasMinimumLocationData()) {
     this.isLoading = true;
-    const events = this.dynamicEvents.value as Acara[];
+    const events = (this.dynamicEvents.value as Acara[]).map(event => this.prepareEventLocationPayload(event));
 
 
     const eventsToCreate = events.filter(event => !event.id);
@@ -316,6 +331,12 @@ submitDynamicEventForm(): void {
         end_acara: eventsToCreate.map(event => event.end_acara),
         alamat: eventsToCreate.map(event => event.alamat),
         link_maps: eventsToCreate.map(event => event.link_maps),
+        address: eventsToCreate.map(event => event.address || event.alamat || ''),
+        location_name: eventsToCreate.map(event => event.location_name || ''),
+        latitude: eventsToCreate.map(event => event.latitude || ''),
+        longitude: eventsToCreate.map(event => event.longitude || ''),
+        google_maps_url: eventsToCreate.map(event => event.google_maps_url || event.link_maps || ''),
+        place_id: eventsToCreate.map(event => event.place_id || ''),
       };
 
       console.log('[SubmissionAcaraPayload]', createPayload);
@@ -337,6 +358,12 @@ submitDynamicEventForm(): void {
         end_acara: event.end_acara,
         alamat: event.alamat,
         link_maps: event.link_maps,
+        address: event.address || event.alamat || '',
+        location_name: event.location_name || '',
+        latitude: event.latitude || '',
+        longitude: event.longitude || '',
+        google_maps_url: event.google_maps_url || event.link_maps || '',
+        place_id: event.place_id || '',
       }));
 
       const finalUpdatePayload = {
@@ -357,11 +384,11 @@ submitDynamicEventForm(): void {
             let successMessage = '';
 
             if (eventsToCreate.length > 0 && eventsToUpdate.length > 0) {
-              successMessage = 'Data acara berhasil disimpan dan diperbarui.';
+              successMessage = 'Data acara dan lokasi berhasil disimpan dan diperbarui.';
             } else if (eventsToCreate.length > 0) {
-              successMessage = 'Data acara berhasil disimpan.';
+              successMessage = 'Data lokasi acara berhasil disimpan.';
             } else {
-              successMessage = 'Data acara berhasil diperbarui.';
+              successMessage = 'Data acara dan lokasi berhasil diperbarui.';
             }
 
             this.notyf.success(successMessage);
@@ -378,7 +405,8 @@ submitDynamicEventForm(): void {
       this.notyf.error('Tidak ada data untuk disimpan.');
     }
   } else {
-    this.notyf.error('Form tidak valid. Harap periksa data acara.');
+    this.markFormGroupTouched(this.dynamicEventForm);
+    this.notyf.error(this.getLocationValidationMessage() || 'Form tidak valid. Harap periksa data acara.');
   }
 }
 
@@ -394,5 +422,220 @@ submitDynamicEventForm(): void {
 
   hasExistingData(): boolean {
     return this.data.length > 0;
+  }
+
+  syncAddressAlias(index: number): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const address = String(form.get('address')?.value || '').trim();
+    form.patchValue({ alamat: address }, { emitEvent: false });
+  }
+
+  syncMapsUrlAlias(index: number): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const mapsUrl = String(form.get('google_maps_url')?.value || '').trim();
+    form.patchValue({ link_maps: mapsUrl }, { emitEvent: false });
+    this.applyCoordinatesFromMapsUrl(index, false);
+  }
+
+  openGoogleMapsPicker(index: number): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const query = [
+      form.get('location_name')?.value,
+      form.get('address')?.value,
+      form.get('latitude')?.value && form.get('longitude')?.value
+        ? `${form.get('latitude')?.value},${form.get('longitude')?.value}`
+        : '',
+    ].map(value => String(value || '').trim()).find(value => !!value);
+
+    const url = query
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+      : 'https://www.google.com/maps';
+
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  applyCoordinatesFromMapsUrl(index: number, showMessage = true): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const mapsUrl = String(form.get('google_maps_url')?.value || form.get('link_maps')?.value || '').trim();
+    const coordinates = this.extractCoordinates(mapsUrl);
+
+    if (!coordinates) {
+      return;
+    }
+
+    form.patchValue({
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      link_maps: mapsUrl,
+      google_maps_url: mapsUrl,
+    }, { emitEvent: false });
+
+    form.updateValueAndValidity();
+
+    if (showMessage) {
+      this.notyf.success('Lokasi berhasil dipilih.');
+    }
+  }
+
+  useManualCoordinates(index: number): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const latitude = String(form.get('latitude')?.value || '').trim();
+    const longitude = String(form.get('longitude')?.value || '').trim();
+
+    if (!latitude || !longitude) {
+      this.notyf.error('Latitude dan longitude harus diisi berpasangan.');
+      return;
+    }
+
+    const googleMapsUrl = this.buildGoogleMapsUrl(latitude, longitude);
+    form.patchValue({
+      link_maps: googleMapsUrl,
+      google_maps_url: googleMapsUrl,
+    }, { emitEvent: false });
+    form.updateValueAndValidity();
+    this.notyf.success('Lokasi berhasil dipilih.');
+  }
+
+  resetLocation(index: number): void {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    form.patchValue({
+      location_name: '',
+      latitude: '',
+      longitude: '',
+      link_maps: '',
+      google_maps_url: '',
+      place_id: '',
+    });
+    this.notyf.success('Titik lokasi berhasil dihapus. Alamat manual tetap bisa disimpan.');
+  }
+
+  getSelectedCoordinates(index: number): string {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const latitude = String(form.get('latitude')?.value || '').trim();
+    const longitude = String(form.get('longitude')?.value || '').trim();
+
+    return latitude && longitude ? `${latitude}, ${longitude}` : 'Belum ada koordinat terpilih';
+  }
+
+  getMapsPreviewUrl(index: number): string {
+    const form = this.dynamicEvents.at(index) as FormGroup;
+    const mapsUrl = String(form.get('google_maps_url')?.value || form.get('link_maps')?.value || '').trim();
+    const latitude = String(form.get('latitude')?.value || '').trim();
+    const longitude = String(form.get('longitude')?.value || '').trim();
+
+    return mapsUrl || (latitude && longitude ? this.buildGoogleMapsUrl(latitude, longitude) : '');
+  }
+
+  private normalizeLocationData(eventData?: Partial<Acara>): Required<Pick<Acara, 'alamat' | 'address' | 'location_name' | 'link_maps' | 'google_maps_url' | 'place_id'>> & Pick<Acara, 'latitude' | 'longitude'> {
+    const data = eventData as any;
+    const address = String(data?.address || data?.alamat || data?.location_name || '').trim();
+    const locationName = String(data?.location_name || data?.nama_lokasi || data?.nama_tempat || '').trim();
+    const latitude = data?.latitude ?? data?.lat ?? '';
+    const longitude = data?.longitude ?? data?.lng ?? data?.long ?? '';
+    const googleMapsUrl = String(data?.google_maps_url || data?.link_maps || data?.maps_url || data?.map_url || '').trim();
+
+    return {
+      alamat: address,
+      address,
+      location_name: locationName,
+      latitude,
+      longitude,
+      link_maps: googleMapsUrl,
+      google_maps_url: googleMapsUrl,
+      place_id: String(data?.place_id || '').trim(),
+    };
+  }
+
+  private prepareEventLocationPayload(event: Acara): Acara {
+    const address = String(event.address || event.alamat || '').trim();
+    const latitude = String(event.latitude || '').trim();
+    const longitude = String(event.longitude || '').trim();
+    const googleMapsUrl = String(event.google_maps_url || event.link_maps || (latitude && longitude ? this.buildGoogleMapsUrl(latitude, longitude) : '')).trim();
+
+    return {
+      ...event,
+      alamat: address,
+      address,
+      link_maps: googleMapsUrl,
+      google_maps_url: googleMapsUrl,
+      location_name: String(event.location_name || '').trim(),
+      latitude,
+      longitude,
+      place_id: String(event.place_id || '').trim(),
+    };
+  }
+
+  private locationValidator(control: AbstractControl): ValidationErrors | null {
+    const latitude = String(control.get('latitude')?.value || '').trim();
+    const longitude = String(control.get('longitude')?.value || '').trim();
+
+    if ((latitude && !longitude) || (!latitude && longitude)) {
+      return { coordinatePair: true };
+    }
+
+    return null;
+  }
+
+  private hasMinimumLocationData(): boolean {
+    return this.dynamicEvents.controls.every(control => {
+      const form = control as FormGroup;
+      const address = String(form.get('address')?.value || form.get('alamat')?.value || '').trim();
+      const mapsUrl = String(form.get('google_maps_url')?.value || form.get('link_maps')?.value || '').trim();
+      const latitude = String(form.get('latitude')?.value || '').trim();
+      const longitude = String(form.get('longitude')?.value || '').trim();
+
+      return !!(address || mapsUrl || (latitude && longitude));
+    });
+  }
+
+  private getLocationValidationMessage(): string {
+    const hasCoordinatePairError = this.dynamicEvents.controls.some(control => control.hasError('coordinatePair'));
+
+    if (hasCoordinatePairError) {
+      return 'Latitude dan longitude harus diisi berpasangan.';
+    }
+
+    if (!this.hasMinimumLocationData()) {
+      return 'Silakan pilih titik lokasi di peta atau isi alamat manual.';
+    }
+
+    return '';
+  }
+
+  private extractCoordinates(value: string): { latitude: string; longitude: string } | null {
+    if (!value) {
+      return null;
+    }
+
+    const decodedValue = decodeURIComponent(value);
+    const patterns = [
+      /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+      /[?&]query=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+      /[?&]q=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+      /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = decodedValue.match(pattern);
+      if (match?.[1] && match?.[2]) {
+        return { latitude: match[1], longitude: match[2] };
+      }
+    }
+
+    return null;
+  }
+
+  private buildGoogleMapsUrl(latitude: string, longitude: string): string {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
+    Object.values(formGroup.controls).forEach((control: AbstractControl) => {
+      control.markAsTouched();
+
+      if (control instanceof FormGroup || control instanceof FormArray) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 }

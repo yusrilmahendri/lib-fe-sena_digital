@@ -319,7 +319,8 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getEventAddress(event: WeddingEvent): string {
-    return event?.alamat || 'Alamat menyusul';
+    const data = event as any;
+    return data?.address || event?.alamat || data?.location_name || 'Alamat menyusul';
   }
 
   getDetailEventVenue(event: WeddingEvent): string {
@@ -327,6 +328,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     return (
       data?.nama_lokasi ||
       data?.nama_tempat ||
+      data?.location_name ||
       data?.venue ||
       data?.tempat ||
       data?.lokasi ||
@@ -338,6 +340,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   getEventMapLink(event: WeddingEvent): string | null {
     const data = event as any;
     const directLink = [
+      data?.google_maps_url,
       data?.link_maps,
       data?.map_url,
       data?.google_maps,
@@ -356,7 +359,6 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   getMapEmbedUrl(event: any): string {
     const data = event as any;
     const directEmbed = [
-      data?.link_maps,
       data?.maps_embed,
       data?.map_embed,
       data?.embed_maps,
@@ -508,6 +510,14 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   private getMapQuery(event: WeddingEvent): string {
+    const data = event as any;
+    const latitude = String(data?.latitude || '').trim();
+    const longitude = String(data?.longitude || '').trim();
+
+    if (latitude && longitude) {
+      return `${latitude},${longitude}`;
+    }
+
     return [
       this.getEventAddress(event),
       this.getDetailEventVenue(event),

@@ -16,6 +16,9 @@ import {
   styleUrls: ['./musik-undangan.component.scss'],
 })
 export class MusikUndanganComponent implements OnInit, OnDestroy {
+  private readonly allowedMusicExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
+  private readonly maxMusicUploadSizeInBytes = 10 * 1024 * 1024;
+
   isLoadingMusic = false;
   isSavingMusic = false;
   isUploadingMusic = false;
@@ -118,11 +121,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
-    const maxSizeInBytes = 10 * 1024 * 1024;
-    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+    const fileExtension = this.getMusicFileExtension(file);
 
-    if (!allowedExtensions.includes(fileExtension)) {
+    if (!this.allowedMusicExtensions.includes(fileExtension)) {
       this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
       input.value = '';
       this.selectedMusicFile = null;
@@ -130,7 +131,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (file.size > maxSizeInBytes) {
+    if (file.size > this.maxMusicUploadSizeInBytes) {
       this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
       input.value = '';
       this.selectedMusicFile = null;
@@ -676,6 +677,11 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       response?.message,
       response?.errors?.musik?.[0],
     ]) || fallback;
+  }
+
+  private getMusicFileExtension(file: File): string {
+    const fileName = String(file?.name || '').trim();
+    return fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() || '' : '';
   }
 
   private normalizeSourceType(value: string | null): MusicSourceType {

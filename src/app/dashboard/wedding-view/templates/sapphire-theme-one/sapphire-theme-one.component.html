@@ -151,19 +151,17 @@
         <p class="sapphire-event-time">{{ formatTimeRange(getAkadCard()) }}</p>
         <strong class="sapphire-event-venue">{{ getDetailEventVenue(getAkadCard()) }}</strong>
         <p class="sapphire-event-address">{{ getEventAddress(getAkadCard()) }}</p>
-        <ng-container *ngIf="false">
-          <div class="sapphire-map-preview sapphire-map-preview--akad" *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder">
-            <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        <div class="sapphire-map-preview sapphire-map-preview--akad" *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder">
+          <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
+        <ng-template #akadMapPlaceholder>
+          <div class="sapphire-map-preview sapphire-map-preview--akad sapphire-map-preview--placeholder">
+            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
           </div>
-          <ng-template #akadMapPlaceholder>
-            <div class="sapphire-map-preview sapphire-map-preview--akad sapphire-map-preview--placeholder">
-              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-            </div>
-          </ng-template>
-          <a *ngIf="getEventMapLink(getAkadCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-            Gunakan Google Maps
-          </a>
-        </ng-container>
+        </ng-template>
+        <a *ngIf="getEventMapLink(getAkadCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+          Gunakan Google Maps
+        </a>
       </article>
 
       <article class="sapphire-event-block">

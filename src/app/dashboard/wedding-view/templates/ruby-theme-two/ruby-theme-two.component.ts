@@ -235,7 +235,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   getEventAddress(event: WeddingEvent): string {
-    return event?.alamat || 'Alamat menyusul';
+    const data = event as any;
+    return data?.address || event?.alamat || data?.location_name || 'Alamat menyusul';
   }
 
   getDetailEventVenue(event: WeddingEvent): string {
@@ -243,6 +244,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     return (
       data?.nama_lokasi ||
       data?.nama_tempat ||
+      data?.location_name ||
       data?.venue ||
       data?.tempat ||
       data?.lokasi ||
@@ -262,6 +264,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   getEventMapLink(event: WeddingEvent): string | null {
     const data = event as any;
     const directLink = [
+      data?.google_maps_url,
       data?.link_maps,
       data?.map_url,
       data?.google_maps,
@@ -553,6 +556,14 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   private getMapQuery(event: WeddingEvent): string {
+    const data = event as any;
+    const latitude = String(data?.latitude || '').trim();
+    const longitude = String(data?.longitude || '').trim();
+
+    if (latitude && longitude) {
+      return `${latitude},${longitude}`;
+    }
+
     return [
       this.getEventAddress(event),
       this.getDetailEventVenue(event),

@@ -440,7 +440,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const event = this.getEventForLocation();
     if (!event) return '';
 
-    return String(
+    const directLink = String(
+      event?.google_maps_url ||
       event?.link_maps ||
       event?.link_map ||
       event?.maps ||
@@ -449,6 +450,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       event?.google_map ||
       ''
     ).trim();
+
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(event?.latitude || '').trim();
+    const longitude = String(event?.longitude || '').trim();
+
+    return latitude && longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
+      : '';
   }
 
   getMapPreviewUrl(): string {
@@ -1057,8 +1069,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getEventMapsLink(event: WeddingEvent): string | null {
-    const link = String(event?.link_maps || '').trim();
-    return link || null;
+    const data = event as any;
+    const link = String(data?.google_maps_url || event?.link_maps || data?.maps_url || data?.map_url || '').trim();
+    if (link) {
+      return link;
+    }
+
+    const latitude = String(data?.latitude || '').trim();
+    const longitude = String(data?.longitude || '').trim();
+    return latitude && longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
+      : null;
   }
 
   getCalendarLink(event: WeddingEvent): string | null {
@@ -1237,7 +1258,16 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getAkadMapLink(): string {
     const event = this.getAkadCard();
     const data = event as any;
-    return String(event?.link_maps || data?.maps || data?.map_url || '').trim();
+    const directLink = String(data?.google_maps_url || event?.link_maps || data?.maps || data?.map_url || '').trim();
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(data?.latitude || '').trim();
+    const longitude = String(data?.longitude || '').trim();
+    return latitude && longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
+      : '';
   }
 
   getGiftAddress(bank?: any): string {

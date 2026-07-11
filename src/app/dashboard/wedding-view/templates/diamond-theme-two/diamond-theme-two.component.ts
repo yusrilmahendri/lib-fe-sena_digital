@@ -612,7 +612,8 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   override getEventMapLink(event?: any): string {
     const selectedEvent = event || this.getGardenMainEvent();
 
-    return String(
+    const directLink = String(
+      selectedEvent?.google_maps_url ||
       selectedEvent?.link_maps ||
       selectedEvent?.link_map ||
       selectedEvent?.maps ||
@@ -621,6 +622,16 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       selectedEvent?.google_map ||
       ''
     ).trim();
+
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(selectedEvent?.latitude || '').trim();
+    const longitude = String(selectedEvent?.longitude || '').trim();
+    return latitude && longitude
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
+      : '';
   }
 
   override getAkadMapLink(): string {
@@ -865,6 +876,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   getGardenMapLink(event?: any): string {
     const rawLink = String(
+      event?.google_maps_url ||
       event?.link_maps ||
       event?.link_map ||
       event?.maps ||
@@ -877,6 +889,12 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       return rawLink;
     }
 
+    const latitude = String(event?.latitude || '').trim();
+    const longitude = String(event?.longitude || '').trim();
+    if (latitude && longitude) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+    }
+
     const address = this.getGardenEventAddress(event);
     if (!address) return '';
 
@@ -887,6 +905,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return String(
       event?.alamat ||
       event?.address ||
+      event?.location_name ||
       event?.lokasi ||
       event?.location ||
       event?.venue ||
@@ -896,6 +915,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   getGardenMapEmbedUrl(event?: any): string {
     const rawLink = String(
+      event?.google_maps_url ||
       event?.link_maps ||
       event?.link_map ||
       event?.maps ||

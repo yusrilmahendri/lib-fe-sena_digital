@@ -56,12 +56,26 @@ export class AkadViewComponent implements OnInit {
 
   getLocation(): string {
     const event = this.getEventData();
-    return event?.alamat || 'Lokasi akan diumumkan';
+    const data = event as any;
+    return data?.address || event?.alamat || data?.location_name || 'Lokasi akan diumumkan';
   }
 
   getMapsLink(): string | null {
     const event = this.getEventData();
-    return event?.link_maps || null;
+    const data = event as any;
+    const directLink = String(data?.google_maps_url || event?.link_maps || data?.maps_url || data?.map_url || '').trim();
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(data?.latitude || '').trim();
+    const longitude = String(data?.longitude || '').trim();
+    if (latitude && longitude) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+    }
+
+    const address = String(data?.address || event?.alamat || data?.location_name || '').trim();
+    return address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
   }
 
   openMapsLocation(): void {

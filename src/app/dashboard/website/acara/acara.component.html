@@ -61,6 +61,9 @@
 
                 <!-- Hidden ID -->
                 <input type="hidden" formControlName="id" />
+                <input type="hidden" formControlName="alamat" />
+                <input type="hidden" formControlName="link_maps" />
+                <input type="hidden" formControlName="place_id" />
 
                 <div class="mb-4">
                   <label for="namaAcara{{i}}" class="form-label fw-semibold">Nama Acara</label>
@@ -117,25 +120,79 @@
                 <div class="mb-4">
                   <label for="alamat{{i}}" class="form-label fw-semibold">Alamat</label>
                   <textarea class="form-control text-secondary" id="alamat{{i}}" rows="3"
-                    formControlName="alamat" placeholder="Masukkan alamat lengkap acara"
-                    [disabled]="isLoading"></textarea>
-                  <div class="text-danger small mt-1"
-                    *ngIf="eventForm.get('alamat')?.invalid && eventForm.get('alamat')?.touched">
-                    Alamat wajib diisi
-                  </div>
+                    formControlName="address" placeholder="Masukkan alamat lengkap acara"
+                    [disabled]="isLoading" (input)="syncAddressAlias(i)"></textarea>
+                  <small class="form-text text-muted">
+                    Alamat manual tetap bisa disimpan walaupun belum memilih titik di peta.
+                  </small>
                 </div>
 
-                <div class="mb-4">
-                  <label for="linkLokasi{{i}}" class="form-label fw-semibold">Link Lokasi</label>
-                  <div class="input-group">
-                    <button class="btn btn-google" type="button" disabled>Google Maps</button>
-                    <input type="url" class="form-control text-secondary" id="linkLokasi{{i}}"
-                      placeholder="https://maps.google.com/..." formControlName="link_maps"
+                <div class="location-picker mb-4">
+                  <div class="location-picker__header">
+                    <div>
+                      <label for="namaLokasi{{i}}" class="form-label fw-semibold">Lokasi Google Maps</label>
+                      <p class="location-picker__hint">Pilih titik lokasi dari Google Maps atau isi koordinat manual.</p>
+                    </div>
+                    <button class="btn btn-google" type="button" (click)="openGoogleMapsPicker(i)" [disabled]="isLoading">
+                      <i class="fa fa-map-marker"></i>
+                      Buka Google Maps
+                    </button>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="namaLokasi{{i}}" class="form-label fw-semibold">Nama Lokasi</label>
+                    <input type="text" class="form-control text-secondary" id="namaLokasi{{i}}"
+                      placeholder="Contoh: Gedung Serbaguna Melati" formControlName="location_name"
                       [disabled]="isLoading" />
                   </div>
-                  <div class="text-danger small mt-1"
-                    *ngIf="eventForm.get('link_maps')?.invalid && eventForm.get('link_maps')?.touched">
-                    Link lokasi wajib diisi
+
+                  <div class="responsive-form-row mb-3">
+                    <div>
+                      <label for="latitude{{i}}" class="form-label fw-semibold">Latitude</label>
+                      <input type="text" class="form-control text-secondary" id="latitude{{i}}"
+                        placeholder="-6.200000" formControlName="latitude" [disabled]="isLoading" />
+                    </div>
+                    <div>
+                      <label for="longitude{{i}}" class="form-label fw-semibold">Longitude</label>
+                      <input type="text" class="form-control text-secondary" id="longitude{{i}}"
+                        placeholder="106.816666" formControlName="longitude" [disabled]="isLoading" />
+                    </div>
+                  </div>
+                  <div class="text-danger small mb-3" *ngIf="eventForm.hasError('coordinatePair') && (eventForm.get('latitude')?.touched || eventForm.get('longitude')?.touched)">
+                    Latitude dan longitude harus diisi berpasangan.
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="linkLokasi{{i}}" class="form-label fw-semibold">Link Google Maps</label>
+                    <input type="url" class="form-control text-secondary" id="linkLokasi{{i}}"
+                      placeholder="https://maps.google.com/..." formControlName="google_maps_url"
+                      [disabled]="isLoading" (input)="syncMapsUrlAlias(i)" />
+                    <small class="form-text text-muted">
+                      Tempel URL Google Maps untuk memuat koordinat otomatis bila tersedia.
+                    </small>
+                  </div>
+
+                  <div class="location-picker__actions">
+                    <button class="btn btn-outline-primary btn-sm" type="button" (click)="applyCoordinatesFromMapsUrl(i)" [disabled]="isLoading">
+                      Ambil Koordinat dari Link
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" type="button" (click)="useManualCoordinates(i)" [disabled]="isLoading">
+                      Gunakan Koordinat
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" type="button" (click)="resetLocation(i)" [disabled]="isLoading">
+                      Reset Lokasi
+                    </button>
+                  </div>
+
+                  <div class="location-preview">
+                    <div>
+                      <span>Koordinat terpilih</span>
+                      <strong>{{ getSelectedCoordinates(i) }}</strong>
+                    </div>
+                    <div *ngIf="getMapsPreviewUrl(i) as mapsPreviewUrl">
+                      <span>Preview link maps</span>
+                      <a [href]="mapsPreviewUrl" target="_blank" rel="noopener noreferrer">{{ mapsPreviewUrl }}</a>
+                    </div>
                   </div>
                 </div>
 

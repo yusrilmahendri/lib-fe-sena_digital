@@ -330,11 +330,25 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
   }
 
   getLocationAddress(): string {
-    return this.getLocationEvent()?.alamat || 'Lokasi acara akan diumumkan segera.';
+    const event = this.getLocationEvent() as any;
+    return event?.address || event?.alamat || event?.location_name || 'Lokasi acara akan diumumkan segera.';
   }
 
   getMapsLink(): string | null {
-    return this.getLocationEvent()?.link_maps || null;
+    const event = this.getLocationEvent() as any;
+    const directLink = String(event?.google_maps_url || event?.link_maps || event?.maps_url || event?.map_url || '').trim();
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(event?.latitude || '').trim();
+    const longitude = String(event?.longitude || '').trim();
+    if (latitude && longitude) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+    }
+
+    const address = String(event?.address || event?.alamat || event?.location_name || '').trim();
+    return address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
   }
 
   getCountdownParts(): Array<{ label: string; value: string }> {

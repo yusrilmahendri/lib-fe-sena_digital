@@ -359,7 +359,8 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getEventAddress(event: WeddingEvent): string {
-    return event.alamat || 'Alamat acara akan diumumkan segera.';
+    const data = event as any;
+    return data?.address || event.alamat || data?.location_name || 'Alamat acara akan diumumkan segera.';
   }
 
   getLocationVenue(): string {
@@ -691,8 +692,8 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     this.receptionVenueName = String(this.receptionEvent.nama_acara || '').trim();
-    this.receptionAddress = String(this.receptionEvent.alamat || '').trim();
-    this.googleMapsUrl = String(this.receptionEvent.link_maps || '').trim();
+    this.receptionAddress = String((this.receptionEvent as any).address || this.receptionEvent.alamat || '').trim();
+    this.googleMapsUrl = String((this.receptionEvent as any).google_maps_url || this.receptionEvent.link_maps || '').trim();
 
     const mapQuery = this.receptionAddress || this.receptionVenueName;
     if (mapQuery) {

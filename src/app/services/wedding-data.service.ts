@@ -40,6 +40,12 @@ export interface WeddingEvent {
   end_acara: string;
   alamat: string;
   link_maps: string;
+  address?: string | null;
+  location_name?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
+  google_maps_url?: string | null;
+  place_id?: string | null;
   countdown: string | null;
 }
 

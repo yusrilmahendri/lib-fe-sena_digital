@@ -14,6 +14,9 @@ import { AdminMusicCatalogService } from 'src/app/services/admin-music-catalog.s
   styleUrls: ['./music-catalog.component.scss'],
 })
 export class MusicCatalogComponent implements OnInit {
+  private readonly allowedMusicExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
+  private readonly maxMusicUploadSizeInBytes = 10 * 1024 * 1024;
+
   items: AdminMusicCatalogItem[] = [];
   isLoading = false;
   isUploading = false;
@@ -63,18 +66,16 @@ export class MusicCatalogComponent implements OnInit {
       return;
     }
 
-    const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
-    const maxSizeInBytes = 10 * 1024 * 1024;
-    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+    const fileExtension = this.getMusicFileExtension(file);
 
-    if (!allowedExtensions.includes(fileExtension)) {
+    if (!this.allowedMusicExtensions.includes(fileExtension)) {
       this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
       input.value = '';
       this.uploadFile = null;
       return;
     }
 
-    if (file.size > maxSizeInBytes) {
+    if (file.size > this.maxMusicUploadSizeInBytes) {
       this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
       input.value = '';
       this.uploadFile = null;
@@ -106,7 +107,8 @@ export class MusicCatalogComponent implements OnInit {
         this.loadCatalog();
       },
       error: (err) => {
-        this.notyf.error(this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.'));
+        this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
+        this.notyf.error(this.uploadError);
         this.isUploading = false;
       },
     });
@@ -257,6 +259,11 @@ export class MusicCatalogComponent implements OnInit {
       response?.message,
       response?.errors?.musik?.[0],
     ]) || fallback;
+  }
+
+  private getMusicFileExtension(file: File): string {
+    const fileName = String(file?.name || '').trim();
+    return fileName.includes('.') ? fileName.split('.').pop()?.toLowerCase() || '' : '';
   }
 
   private firstString(values: unknown[]): string | null {

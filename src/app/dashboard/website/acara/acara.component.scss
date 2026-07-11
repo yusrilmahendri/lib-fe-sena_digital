@@ -258,6 +258,58 @@ textarea.form-control {
   gap: 1rem;
 }
 
+.location-picker {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+}
+
+.location-picker__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.location-picker__hint {
+  color: #6b7280;
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.location-picker__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.location-preview {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  border: 1px dashed #d1d5db;
+  overflow-wrap: anywhere;
+}
+
+.location-preview span {
+  display: block;
+  color: #6b7280;
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.location-preview strong,
+.location-preview a {
+  color: #111827;
+  font-size: 0.875rem;
+}
+
 @media (max-width: 575px) {
   .card-header-responsive {
     flex-direction: column;
