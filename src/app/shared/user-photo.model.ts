@@ -1,3 +1,5 @@
+import { environment } from '../../environments/environment';
+
 export type PhotoType = 'gallery' | 'collage';
 
 export type PhotoPosition =
@@ -17,6 +19,9 @@ export interface UserPhoto {
   id: number;
   photo_type: PhotoType;
   photo_url: string;
+  image_url?: string | null;
+  preview_url?: string | null;
+  photo?: string | null;
   description?: string | null;
   position: PhotoPosition;
   display_mode: PhotoDisplayMode;
@@ -29,6 +34,88 @@ export interface UserPhoto {
   compressed_size?: number | null;
   quality?: number | null;
   created_at?: string | null;
+}
+
+export function normalizeInvitationMediaUrl(value: any): string {
+  if (!value) {
+    return '';
+  }
+
+  const raw = String(value).trim();
+
+  if (!raw || raw === 'null' || raw === 'undefined') {
+    return '';
+  }
+
+  if (raw.startsWith('data:') || raw.startsWith('blob:')) {
+    return raw;
+  }
+
+  if (/^\/?assets\//i.test(raw)) {
+    return raw.replace(/^\/+/, '');
+  }
+
+  const origin = getInvitationApiOrigin();
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      const pathname = url.pathname || '';
+      const shouldUseApiOrigin =
+        pathname.startsWith('/api/photos/') ||
+        pathname.startsWith('/storage/') ||
+        pathname.includes('/storage/photos/photos/');
+
+      if (shouldUseApiOrigin) {
+        const normalizedPath = normalizeStoragePath(pathname);
+        return `${origin}/${normalizedPath}`;
+      }
+    } catch {
+      return raw;
+    }
+
+    return raw.replace('/storage/photos/photos/', '/storage/photos/');
+  }
+
+  const normalizedPath = normalizeStoragePath(raw);
+
+  if (normalizedPath) {
+    return `${origin}/${normalizedPath}`;
+  }
+
+  return '';
+}
+
+export function resolveInvitationPhotoUrl(photo: any): string {
+  if (!photo) {
+    return '';
+  }
+
+  return normalizeInvitationMediaUrl(
+    photo?.photo_url ||
+    photo?.image_url ||
+    photo?.preview_url ||
+    photo?.url ||
+    photo?.file_url ||
+    photo?.path_url ||
+    photo?.image ||
+    photo?.photo ||
+    photo?.file_path ||
+    photo?.path ||
+    photo?.foto ||
+    photo
+  );
+}
+
+export function logInvitationImageError(event: Event, context: string, raw?: any, resolved?: string): void {
+  const img = event.target as HTMLImageElement | null;
+  console.error('[InvitationImageError]', {
+    context,
+    src: img?.currentSrc || img?.src || resolved || '',
+    raw,
+    resolved,
+  });
+  img?.closest('.gallery-card')?.classList.add('is-image-missing');
 }
 
 export const PHOTO_POSITION_OBJECT_POSITION: Record<PhotoPosition, string> = {
@@ -127,4 +214,57 @@ function normalizeSortOrder(value: number | string | null | undefined): number {
 
 function isPhotoPosition(value: any): value is PhotoPosition {
   return Object.prototype.hasOwnProperty.call(PHOTO_POSITION_OBJECT_POSITION, value);
+}
+
+function getInvitationApiOrigin(): string {
+  const env = environment as any;
+  const apiUrl =
+    env.apiBaseUrl ||
+    env.apiUrl ||
+    env.baseUrl ||
+    'https://cloud-api.sena-digital.com';
+
+  return String(apiUrl)
+    .replace(/\/api\/v1\/?$/, '')
+    .replace(/\/api\/?$/, '')
+    .replace(/\/$/, '');
+}
+
+function normalizeStoragePath(value: string): string {
+  let path = String(value || '').trim();
+
+  if (!path) {
+    return '';
+  }
+
+  path = path
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/^\/+/, '')
+    .replace(/^api\/photos\//, 'storage/photos/')
+    .replace(/^photos\/photos\//, 'photos/')
+    .replace(/^storage\/photos\/photos\//, 'storage/photos/')
+    .replace(/\/storage\/photos\/photos\//, '/storage/photos/')
+    .replace(/\/{2,}/g, '/');
+
+  if (path.startsWith('assets/')) {
+    return path;
+  }
+
+  if (path.startsWith('storage/')) {
+    return path;
+  }
+
+  if (path.startsWith('photos/')) {
+    return `storage/${path}`;
+  }
+
+  if (path.startsWith('uploads/') || path.startsWith('gallery/') || path.startsWith('mempelai/')) {
+    return `storage/${path}`;
+  }
+
+  if (/^[^/]+\.(jpe?g|png|webp|gif|avif|mp3|wav|ogg|m4a)$/i.test(path)) {
+    return `storage/${path}`;
+  }
+
+  return path;
 }

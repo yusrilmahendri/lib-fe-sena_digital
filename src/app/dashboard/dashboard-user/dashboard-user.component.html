@@ -240,10 +240,6 @@
 
       <!-- User Profile Section -->
       <div class="user-profile" (click)="toggleDropdown($event)" tabindex="0" role="button">
-        <img class="user-avatar"
-             [src]="getProfilePhotoUrl()"
-             [alt]="getUserDisplayName() + ' Avatar'"
-             onerror="this.src='assets/logos.png'" />
         <span class="user-name">{{ getUserDisplayName() }}</span>
         <i class="fas fa-caret-down" aria-hidden="true"></i>
 

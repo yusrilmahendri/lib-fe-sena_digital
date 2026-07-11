@@ -57,13 +57,37 @@ export class MusicCatalogComponent implements OnInit {
     this.uploadError = '';
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
+
+    if (!file) {
+      this.uploadFile = null;
+      return;
+    }
+
+    const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
+    const maxSizeInBytes = 10 * 1024 * 1024;
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
+    if (!allowedExtensions.includes(fileExtension)) {
+      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
+      input.value = '';
+      this.uploadFile = null;
+      return;
+    }
+
+    if (file.size > maxSizeInBytes) {
+      this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
+      input.value = '';
+      this.uploadFile = null;
+      return;
+    }
+
     this.uploadFile = file;
   }
 
   uploadMusic(): void {
     if (this.isUploading) return;
     if (!this.uploadFile) {
-      this.uploadError = 'Pilih file musik terlebih dahulu.';
+      this.uploadError = 'File musik wajib dipilih.';
       return;
     }
 
@@ -75,14 +99,14 @@ export class MusicCatalogComponent implements OnInit {
       artist: this.uploadArtist,
       subtitle: this.uploadSubtitle,
     }).subscribe({
-      next: () => {
-        this.notyf.success('Musik katalog berhasil diunggah.');
+      next: (res) => {
+        this.notyf.success(this.resolveUploadMessage(res, 'Musik katalog berhasil diunggah.'));
         this.resetUploadForm();
         this.isUploading = false;
         this.loadCatalog();
       },
-      error: () => {
-        this.notyf.error('Gagal mengunggah musik katalog.');
+      error: (err) => {
+        this.notyf.error(this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.'));
         this.isUploading = false;
       },
     });
@@ -226,5 +250,17 @@ export class MusicCatalogComponent implements OnInit {
     this.uploadSubtitle = '';
     const input = document.getElementById('admin-music-upload') as HTMLInputElement | null;
     if (input) input.value = '';
+  }
+
+  private resolveUploadMessage(response: any, fallback: string): string {
+    return this.firstString([
+      response?.message,
+      response?.errors?.musik?.[0],
+    ]) || fallback;
+  }
+
+  private firstString(values: unknown[]): string | null {
+    const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
+    return typeof value === 'string' ? value : null;
   }
 }

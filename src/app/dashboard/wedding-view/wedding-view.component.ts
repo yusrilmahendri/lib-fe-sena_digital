@@ -4,7 +4,8 @@ import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
-import { MusicTrack, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
+import { MusicTrack, resolveInvitationMusicSourceType, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
+import { normalizeInvitationMediaUrl } from '../../shared/user-photo.model';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
@@ -125,6 +126,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   // Audio management properties
   private audioElement: HTMLAudioElement | null = null;
   private audioInitialized: boolean = false;
+  private currentMusicUrl: string | null = null;
   isAudioLoading: boolean = false;
   audioError: string | null = null;
   currentVolume: number = 0.7; // Default volume (70%)
@@ -754,6 +756,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       (this.weddingData as any)?.photo_pria_url ||
       (this.weddingData as any)?.mempelai?.photo_pria_url ||
       (this.weddingData as any)?.mempelai?.pria?.photo_url ||
+      (this.weddingData as any)?.mempelai?.pria?.image_url ||
+      (this.weddingData as any)?.mempelai?.pria?.preview_url ||
       (this.weddingData as any)?.photo_pria ||
       (this.weddingData as any)?.mempelai?.photo_pria ||
       this.weddingData?.mempelai?.pria?.photo
@@ -769,6 +773,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       (this.weddingData as any)?.photo_wanita_url ||
       (this.weddingData as any)?.mempelai?.photo_wanita_url ||
       (this.weddingData as any)?.mempelai?.wanita?.photo_url ||
+      (this.weddingData as any)?.mempelai?.wanita?.image_url ||
+      (this.weddingData as any)?.mempelai?.wanita?.preview_url ||
       (this.weddingData as any)?.photo_wanita ||
       (this.weddingData as any)?.mempelai?.photo_wanita ||
       this.weddingData?.mempelai?.wanita?.photo
@@ -789,63 +795,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   normalizeMediaUrl(value: any): string {
-    if (!value) {
-      return '';
-    }
-
-    const raw = String(value).trim();
-
-    if (!raw || raw === 'null' || raw === 'undefined') {
-      return '';
-    }
-
-    if (raw.startsWith('data:')) {
-      return raw;
-    }
-
-    const origin = this.getApiOrigin();
-
-    if (/^https?:\/\//i.test(raw)) {
-      try {
-        const url = new URL(raw);
-        if (url.pathname.startsWith('/api/photos/')) {
-          const filename = url.pathname.replace('/api/photos/', '').replace(/^\/+/, '');
-          return `${origin}/storage/${filename}`;
-        }
-
-        if (url.hostname === 'sena-digital.com' && url.pathname.startsWith('/storage/')) {
-          return `${origin}${url.pathname}`;
-        }
-      } catch {
-        return raw;
-      }
-
-      return raw;
-    }
-
-    if (raw.startsWith('/storage/')) {
-      return `${origin}${raw}`;
-    }
-
-    if (raw.startsWith('storage/')) {
-      return `${origin}/${raw}`;
-    }
-
-    if (raw.startsWith('/api/photos/')) {
-      const filename = raw.replace('/api/photos/', '').replace(/^\/+/, '');
-      return `${origin}/storage/${filename}`;
-    }
-
-    if (raw.startsWith('api/photos/')) {
-      const filename = raw.replace('api/photos/', '').replace(/^\/+/, '');
-      return `${origin}/storage/${filename}`;
-    }
-
-    if (raw.startsWith('/')) {
-      return `${origin}${raw}`;
-    }
-
-    return `${origin}/storage/${raw}`;
+    return normalizeInvitationMediaUrl(value);
   }
 
   /**
@@ -853,25 +803,41 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * Sets up HTML5 Audio element with proper event listeners
    */
   private initializeAudio(): void {
-    // Don't reinitialize if already done
-    if (this.audioInitialized) {
-      return;
-    }
-
     if (!this.weddingData?.settings) {
       console.warn('No wedding settings available for audio initialization');
       return;
     }
 
     const musicUrl = resolveInvitationMusicUrl(this.weddingData);
+    const sourceType = resolveInvitationMusicSourceType(this.weddingData);
 
     if (!musicUrl) {
-      console.warn('No music URL available in wedding settings');
+      console.warn('[InvitationAudio] No valid music URL available in wedding settings', {
+        sourceType,
+        settings: this.weddingData?.settings,
+      });
       return;
     }
 
+    if (this.audioInitialized && this.audioElement && this.currentMusicUrl === musicUrl) {
+      this.audioElement.volume = this.currentVolume;
+      this.audioElement.muted = this.isMuted;
+      console.log('[InvitationAudio] Audio already initialized with current URL', {
+        musicUrl,
+        sourceType,
+      });
+      return;
+    }
+
+    if (this.audioElement) {
+      this.cleanupAudio();
+    }
+
     try {
-      console.log('Initializing audio with URL:', musicUrl);
+      console.log('[InvitationAudio] Initializing audio', {
+        resolvedMusicUrl: musicUrl,
+        sourceType,
+      });
       this.isAudioLoading = true;
       this.audioError = null;
 
@@ -885,6 +851,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Set the audio source
       this.audioElement.src = musicUrl;
+      this.currentMusicUrl = musicUrl;
 
       // Add event listeners for audio management
       this.setupAudioEventListeners();
@@ -892,10 +859,11 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       // Mark as initialized
       this.audioInitialized = true;
 
-      console.log('Audio system initialized successfully');
+      this.audioElement.load();
+      console.log('[InvitationAudio] Audio system initialized successfully');
 
     } catch (error) {
-      console.error('Error initializing audio:', error);
+      console.error('[InvitationAudio] Error initializing audio:', error);
       this.audioError = 'Failed to initialize audio system';
       this.isAudioLoading = false;
     }
@@ -910,40 +878,53 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Audio loaded and ready to play
     this.audioElement.addEventListener('canplay', () => {
-      console.log('Audio can start playing');
+      console.log('[InvitationAudio] canplay', {
+        src: this.audioElement?.currentSrc || this.audioElement?.src,
+        readyState: this.audioElement?.readyState,
+      });
       this.isAudioLoading = false;
       this.audioError = null;
     });
 
     // Audio is playing
     this.audioElement.addEventListener('play', () => {
-      console.log('Audio started playing');
+      console.log('[InvitationAudio] play event');
       this.isPlaying = true;
       this.saveStateToLocalStorage();
     });
 
     // Audio is paused
     this.audioElement.addEventListener('pause', () => {
-      console.log('Audio paused');
+      console.log('[InvitationAudio] pause event');
       this.isPlaying = false;
       this.saveStateToLocalStorage();
     });
 
     // Audio loading started
     this.audioElement.addEventListener('loadstart', () => {
-      console.log('Audio loading started');
+      console.log('[InvitationAudio] loadstart', {
+        src: this.audioElement?.src,
+      });
       this.isAudioLoading = true;
     });
 
     // Audio metadata loaded
     this.audioElement.addEventListener('loadedmetadata', () => {
-      console.log('Audio metadata loaded, duration:', this.audioElement?.duration);
+      console.log('[InvitationAudio] loadedmetadata', {
+        duration: this.audioElement?.duration,
+        src: this.audioElement?.currentSrc || this.audioElement?.src,
+      });
     });
 
     // Audio loading error
     this.audioElement.addEventListener('error', (event) => {
       const error = this.audioElement?.error;
-      console.error('Audio loading error:', error);
+      console.error('[InvitationAudio] error event', {
+        error,
+        src: this.audioElement?.currentSrc || this.audioElement?.src,
+        networkState: this.audioElement?.networkState,
+        readyState: this.audioElement?.readyState,
+      });
 
       let errorMessage = 'Audio loading failed';
       if (error) {
@@ -979,25 +960,25 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Audio ended (shouldn't happen with loop=true)
     this.audioElement.addEventListener('ended', () => {
-      console.log('Audio ended');
+      console.log('[InvitationAudio] ended');
       this.isPlaying = false;
       this.saveStateToLocalStorage();
     });
 
     // Audio stalled
     this.audioElement.addEventListener('stalled', () => {
-      console.warn('Audio loading stalled');
+      console.warn('[InvitationAudio] stalled');
     });
 
     // Audio waiting for data
     this.audioElement.addEventListener('waiting', () => {
-      console.log('Audio waiting for data');
+      console.log('[InvitationAudio] waiting');
       this.isAudioLoading = true;
     });
 
     // Audio can play through
     this.audioElement.addEventListener('canplaythrough', () => {
-      console.log('Audio can play through');
+      console.log('[InvitationAudio] canplaythrough');
       this.isAudioLoading = false;
     });
   }
@@ -1028,6 +1009,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       this.audioElement = null;
 
       this.audioInitialized = false;
+      this.currentMusicUrl = null;
       this.isPlaying = false;
       this.isAudioLoading = false;
     }
@@ -1104,8 +1086,22 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   togglePlay(): void {
-    if (!this.audioElement) {
-      console.warn('Audio not initialized, cannot toggle play');
+    const latestMusicUrl = resolveInvitationMusicUrl(this.weddingData);
+
+    if (!latestMusicUrl) {
+      console.warn('[InvitationAudio] Play requested but no valid music URL is available', {
+        sourceType: resolveInvitationMusicSourceType(this.weddingData),
+        settings: this.weddingData?.settings,
+      });
+      this.audioError = 'URL musik tidak tersedia.';
+      return;
+    }
+
+    if (!this.audioElement || this.currentMusicUrl !== latestMusicUrl) {
+      console.warn('[InvitationAudio] Audio not initialized or URL changed, initializing before play', {
+        latestMusicUrl,
+        currentMusicUrl: this.currentMusicUrl,
+      });
       this.initializeAudio();
       if (!this.audioElement) {
         return;
@@ -1113,33 +1109,79 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (this.audioError) {
-      console.warn('Audio error present, cannot play:', this.audioError);
+      console.warn('[InvitationAudio] Audio error present, retrying with fresh element:', this.audioError);
+      this.cleanupAudio();
+      this.audioError = null;
+      this.initializeAudio();
+      if (!this.audioElement) {
+        return;
+      }
+    }
+
+    if (!this.audioElement.src) {
+      console.warn('[InvitationAudio] Audio element has no src before play', {
+        latestMusicUrl,
+      });
+      this.audioElement.src = latestMusicUrl;
+      this.audioElement.load();
+    }
+
+    if (this.audioElement.muted && !this.isMuted) {
+      this.audioElement.muted = false;
+    }
+
+    if (this.audioElement.volume === 0 && this.currentVolume > 0) {
+      this.audioElement.volume = this.currentVolume;
+    }
+
+    if (this.audioElement.volume === 0) {
+      this.audioElement.volume = 0.7;
+      this.currentVolume = 0.7;
+    }
+
+    if (this.isMuted) {
+      console.warn('[InvitationAudio] Play requested while audio is muted');
+    }
+
+    if (!this.audioElement.src) {
+      this.audioError = 'URL musik tidak valid.';
       return;
     }
 
     try {
       if (this.isPlaying) {
         this.audioElement.pause();
-        console.log('Audio paused by user');
+        console.log('[InvitationAudio] Audio paused by user');
       } else {
         // Handle browser autoplay policies
+        console.log('[InvitationAudio] Manual play requested', {
+          src: this.audioElement.currentSrc || this.audioElement.src,
+          sourceType: resolveInvitationMusicSourceType(this.weddingData),
+          muted: this.audioElement.muted,
+          volume: this.audioElement.volume,
+          loop: this.audioElement.loop,
+          preload: this.audioElement.preload,
+        });
         const playPromise = this.audioElement.play();
 
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
-              console.log('Audio started playing successfully');
+              console.log('[InvitationAudio] play() resolved');
             })
             .catch(error => {
-              console.error('Audio play failed:', error);
-              this.audioError = 'Playback failed - please interact with the page first';
+              console.error('[InvitationAudio] play() rejected', {
+                reason: error,
+                src: this.audioElement?.currentSrc || this.audioElement?.src,
+              });
+              this.audioError = 'Pemutaran musik gagal. Ketuk tombol play sekali lagi.';
               this.isPlaying = false;
             });
         }
       }
     } catch (error) {
-      console.error('Error toggling audio play:', error);
-      this.audioError = 'Playback control failed';
+      console.error('[InvitationAudio] Error toggling audio play:', error);
+      this.audioError = 'Kontrol musik gagal dijalankan.';
     }
 
     // State will be updated by event listeners

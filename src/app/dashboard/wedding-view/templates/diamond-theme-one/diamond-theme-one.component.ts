@@ -5,6 +5,7 @@ import { ToastService } from '../../../../toast.service';
 import { BankAccount, GalleryItem, WeddingEvent, WeddingStory } from '../../../../services/wedding-data.service';
 import { RubyThemeOneComponent } from '../ruby-theme-one/ruby-theme-one.component';
 import { environment } from '../../../../../environments/environment';
+import { normalizeInvitationMediaUrl, resolveInvitationPhotoUrl } from '../../../../shared/user-photo.model';
 
 @Component({
   selector: 'wc-diamond-theme-one',
@@ -207,7 +208,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   private getGalleryCandidateUrl(item: any): string {
     const galleryItem: any = item || {};
-    return galleryItem.photo_url || galleryItem.url || galleryItem.photo || '';
+    return resolveInvitationPhotoUrl(galleryItem);
   }
 
   getOpeningPhoto(): string {
@@ -235,7 +236,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0];
 
     const preferredItem: any = preferred || {};
-    const rawUrl = preferredItem.photo_url || preferredItem.photo || preferredItem.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(preferredItem);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -557,7 +558,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -684,7 +685,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -809,7 +810,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -881,13 +882,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getBridePhotoUrl(): string {
     const bride = this.getBrideData();
     const rawUrl =
-      bride?.photo_url ||
+      resolveInvitationPhotoUrl(bride) ||
       bride?.foto_url ||
       bride?.foto_mempelai_url ||
       bride?.foto_mempelai ||
       bride?.foto ||
-      bride?.photo ||
-      bride?.image ||
       bride?.avatar ||
       bride?.photo_profile ||
       this.getBridePhoto() ||
@@ -899,13 +898,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getGroomPhotoUrl(): string {
     const groom = this.getGroomData();
     const rawUrl =
-      groom?.photo_url ||
+      resolveInvitationPhotoUrl(groom) ||
       groom?.foto_url ||
       groom?.foto_mempelai_url ||
       groom?.foto_mempelai ||
       groom?.foto ||
-      groom?.photo ||
-      groom?.image ||
       groom?.avatar ||
       groom?.photo_profile ||
       this.getGroomPhoto() ||
@@ -1223,40 +1220,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   normalizePhotoUrl(url: string | null | undefined): string {
-    if (!url) {
-      return '';
-    }
-
-    const value = String(url).trim();
-    if (!value || value === 'null' || value === 'undefined') {
-      return '';
-    }
-
-    if (value.startsWith('data:')) {
-      return value;
-    }
-
-    if (value.startsWith('http://') || value.startsWith('https://')) {
-      return value.replace('/storage/photos/photos/', '/storage/photos/');
-    }
-
-    const clean = value
-      .replace(/^\/+/, '')
-      .replace(/^storage\/photos\/photos\//, 'storage/photos/')
-      .replace(/^photos\/photos\//, 'photos/');
-
-    const baseUrl = String(this.apiBaseUrl || '')
-      .replace(/\/api\/v1\/?$/, '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
-
-    if (clean.startsWith('storage/')) {
-      return `${baseUrl}/${clean}`;
-    }
-    if (clean.startsWith('photos/')) {
-      return `${baseUrl}/storage/${clean}`;
-    }
-    return `${baseUrl}/storage/photos/${clean}`;
+    return normalizeInvitationMediaUrl(url);
   }
 
   getDetailEventVenue(event?: WeddingEvent | any): string {
@@ -1330,7 +1294,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -1364,7 +1328,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const collagePhotos: any[] = this.getCollageItems();
 
     return collagePhotos.filter((item: any) => {
-      const url = item?.photo_url || item?.photo || item?.url || item?.image || '';
+      const url = resolveInvitationPhotoUrl(item);
       return Boolean(url);
     });
   }
@@ -1395,13 +1359,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMomentPhotoUrl(item: any): string {
-    const rawUrl =
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
-      item?.foto ||
-      '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -1509,7 +1467,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -1532,7 +1490,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       gallery[0] ||
       null;
 
-    const rawUrl = item?.photo_url || item?.photo || item?.url || '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }

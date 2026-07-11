@@ -4,6 +4,7 @@ import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
 import { DiamondThemeOneComponent } from '../diamond-theme-one/diamond-theme-one.component';
+import { normalizeInvitationMediaUrl, resolveInvitationPhotoUrl } from '../../../../shared/user-photo.model';
 
 interface DiamondGardenGalleryItem {
   photoUrl: string;
@@ -191,28 +192,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override getBridePhotoUrl(): string {
     const bride = this.getBrideData();
-    const rawUrl =
-      bride?.photo_url ||
-      bride?.foto_url ||
-      bride?.photo ||
-      bride?.foto ||
-      bride?.image ||
-      bride?.avatar ||
-      '';
+    const rawUrl = resolveInvitationPhotoUrl(bride) || bride?.foto_url || bride?.foto || bride?.avatar || '';
 
     return this.normalizeGardenPhotoUrl(rawUrl) || super.getBridePhotoUrl();
   }
 
   override getGroomPhotoUrl(): string {
     const groom = this.getGroomData();
-    const rawUrl =
-      groom?.photo_url ||
-      groom?.foto_url ||
-      groom?.photo ||
-      groom?.foto ||
-      groom?.image ||
-      groom?.avatar ||
-      '';
+    const rawUrl = resolveInvitationPhotoUrl(groom) || groom?.foto_url || groom?.foto || groom?.avatar || '';
 
     return this.normalizeGardenPhotoUrl(rawUrl) || super.getGroomPhotoUrl();
   }
@@ -271,18 +258,13 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     const gallery: any[] = this.getGalleryItems();
 
     return gallery.filter((item: any) => {
-      return Boolean(item?.photo_url || item?.photo || item?.url || item?.image);
+      return Boolean(resolveInvitationPhotoUrl(item));
     });
   }
 
   getGardenHeroImage(index: number): string {
     const item = this.getGardenHeroItem(index);
-    const rawUrl =
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
-      '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     const portraitFallback = [
       this.getBridePortrait(),
@@ -356,10 +338,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       null;
 
     const rawUrl =
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
+      resolveInvitationPhotoUrl(item) ||
       (this.weddingData as any)?.cover_url ||
       (this.weddingData as any)?.cover ||
       '';
@@ -371,12 +350,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     const gallery: any[] = this.getCollageItems();
 
     return gallery.filter((item: any) => {
-      return Boolean(
-        item?.photo_url ||
-        item?.photo ||
-        item?.url ||
-        item?.image
-      );
+      return Boolean(resolveInvitationPhotoUrl(item));
     });
   }
 
@@ -412,13 +386,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenGalleryPhotoUrl(item: any): string {
-    const raw = String(
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
-      ''
-    ).trim();
+    const raw = resolveInvitationPhotoUrl(item);
 
     if (!raw) return '';
 
@@ -430,13 +398,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentPhotoUrl(item: any): string {
-    const rawUrl =
-      item?.photo_url ||
-      item?.photo ||
-      item?.url ||
-      item?.image ||
-      item?.foto ||
-      '';
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(1);
   }
@@ -519,29 +481,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   normalizeGardenPhotoUrl(rawUrl: any): string {
-    if (!rawUrl) return '';
-
-    let url = String(rawUrl).trim();
-    if (!url) return '';
-
-    url = url.replace('/storage/photos/photos/', '/storage/photos/');
-    url = url.replace('/storage/photos//', '/storage/photos/');
-
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
-
-    url = url.replace(/^\/+/, '');
-    url = url.replace(/^storage\/photos\/photos\//, 'storage/photos/');
-    url = url.replace(/^photos\/photos\//, 'photos/');
-
-    const baseUrl = String(this.apiBaseUrl || (this as any).BASE_URL_API || '')
-      .replace(/\/api\/v1\/?$/, '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
-
-    if (url.startsWith('storage/')) return `${baseUrl}/${url}`;
-    if (url.startsWith('photos/')) return `${baseUrl}/storage/${url}`;
-
-    return `${baseUrl}/storage/photos/${url}`;
+    return normalizeInvitationMediaUrl(rawUrl);
   }
 
   onGardenImageError(event: Event): void {
@@ -1143,15 +1083,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
     if (Array.isArray(galleries) && galleries.length) {
       const selected =
-        galleries.find((item: any) => item?.photo_url || item?.photo || item?.image_url) ||
+        galleries.find((item: any) => resolveInvitationPhotoUrl(item)) ||
         galleries[0];
 
-      const raw =
-        selected?.photo_url ||
-        selected?.photo ||
-        selected?.image_url ||
-        selected?.url ||
-        '';
+      const raw = resolveInvitationPhotoUrl(selected);
 
       if (raw) {
         return this.normalizeGardenPhotoUrl(raw);

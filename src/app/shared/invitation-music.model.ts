@@ -1,3 +1,5 @@
+import { normalizeInvitationMediaUrl } from './user-photo.model';
+
 export interface MusicTrack {
   id: number;
   title: string;
@@ -7,6 +9,8 @@ export interface MusicTrack {
   duration_label?: string | null;
   source_type?: MusicSourceType | string | null;
   audio_url?: string | null;
+  stream_url?: string | null;
+  url?: string | null;
   thumbnail_url?: string | null;
   is_active?: boolean;
   is_default?: boolean;
@@ -25,6 +29,7 @@ export interface CustomMusicInfo {
   size_label?: string | null;
   url?: string | null;
   audio_url?: string | null;
+  stream_url?: string | null;
   uploaded_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -52,14 +57,44 @@ export interface UserMusicSelection {
 }
 
 export function resolveInvitationMusicUrl(data: any): string | null {
-  return firstNonEmptyString([
+  const url = firstNonEmptyString([
     data?.settings?.resolved_music_url,
     data?.resolved_music_url,
+    data?.settings?.custom_music?.url,
+    data?.settings?.custom_music?.stream_url,
+    data?.settings?.custom_music?.audio_url,
+    data?.custom_music?.url,
+    data?.custom_music?.stream_url,
+    data?.custom_music?.audio_url,
     data?.settings?.custom_music_url,
+    data?.custom_music_url,
+    data?.settings?.selected_music?.stream_url,
     data?.settings?.selected_music?.audio_url,
+    data?.settings?.selected_music?.url,
+    data?.selected_music?.stream_url,
+    data?.selected_music?.audio_url,
+    data?.selected_music?.url,
+    data?.settings?.default_music?.stream_url,
     data?.settings?.default_music?.audio_url,
+    data?.settings?.default_music?.url,
+    data?.default_music?.stream_url,
+    data?.default_music?.audio_url,
+    data?.default_music?.url,
+    data?.settings?.music_stream_url,
+    data?.music_stream_url,
     data?.settings?.musik,
   ]);
+
+  return url ? normalizeInvitationMediaUrl(url) || url : null;
+}
+
+export function resolveInvitationMusicSourceType(data: any): string {
+  return firstNonEmptyString([
+    data?.settings?.music_source_type,
+    data?.music_source_type,
+    data?.settings?.active_music?.source_type,
+    data?.active_music?.source_type,
+  ]) || 'unknown';
 }
 
 function firstNonEmptyString(values: unknown[]): string | null {

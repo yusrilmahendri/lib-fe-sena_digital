@@ -3,7 +3,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
-import { environment } from '../../../../../environments/environment';
+import {
+  logInvitationImageError,
+  normalizeInvitationMediaUrl,
+  resolveInvitationPhotoUrl,
+} from '../../../../shared/user-photo.model';
 
 interface WishForm {
   nama: string;
@@ -131,10 +135,14 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       (this.weddingData as any)?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.pria?.photo_url,
+      (this.weddingData as any)?.mempelai?.pria?.image_url,
+      (this.weddingData as any)?.mempelai?.pria?.preview_url,
       this.getGroom()?.photo,
       (this.weddingData as any)?.photo_wanita_url,
       (this.weddingData as any)?.mempelai?.photo_wanita_url,
       (this.weddingData as any)?.mempelai?.wanita?.photo_url,
+      (this.weddingData as any)?.mempelai?.wanita?.image_url,
+      (this.weddingData as any)?.mempelai?.wanita?.preview_url,
       this.getBride()?.photo,
     ], 'assets/landing/template-1.png');
   }
@@ -144,6 +152,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       (this.weddingData as any)?.photo_wanita_url,
       (this.weddingData as any)?.mempelai?.photo_wanita_url,
       (this.weddingData as any)?.mempelai?.wanita?.photo_url,
+      (this.weddingData as any)?.mempelai?.wanita?.image_url,
+      (this.weddingData as any)?.mempelai?.wanita?.preview_url,
       (this.weddingData as any)?.photo_wanita,
       (this.weddingData as any)?.mempelai?.photo_wanita,
       this.getBride()?.photo,
@@ -155,6 +165,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       (this.weddingData as any)?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.photo_pria_url,
       (this.weddingData as any)?.mempelai?.pria?.photo_url,
+      (this.weddingData as any)?.mempelai?.pria?.image_url,
+      (this.weddingData as any)?.mempelai?.pria?.preview_url,
       (this.weddingData as any)?.photo_pria,
       (this.weddingData as any)?.mempelai?.photo_pria,
       this.getGroom()?.photo,
@@ -185,22 +197,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   override getGalleryPhotoUrl(item: any): string {
-    const resolved = this.normalizeMediaUrl(
-      item?.photo_url ||
-      item?.image_url ||
-      item?.preview_url ||
-      item?.url ||
-      item?.file_url ||
-      item?.path_url ||
-      item?.image ||
-      item?.photo ||
-      item?.file_path ||
-      item?.path ||
-      item?.foto ||
-      item
-    );
+    const resolved = resolveInvitationPhotoUrl(item);
 
     console.log('[ImageUrlDebug]', {
+      context: 'ruby-theme-two',
       raw: item,
       resolved
     });
@@ -210,8 +210,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   override onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
+    logInvitationImageError(event, 'ruby-theme-two');
     img.style.display = 'none';
-    img.closest('.gallery-card')?.classList.add('is-image-missing');
   }
 
   // ─── Parents ─────────────────────────────────────────────────────────
@@ -606,77 +606,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     return fallback;
   }
 
-  private getApiOrigin(): string {
-    const env = environment as any;
-    const apiUrl =
-      env.apiUrl ||
-      env.baseUrl ||
-      'https://cloud-api.sena-digital.com';
-
-    return String(apiUrl)
-      .replace(/\/api\/v1\/?$/, '')
-      .replace(/\/api\/?$/, '')
-      .replace(/\/$/, '');
-  }
-
   override normalizeMediaUrl(value: any): string {
-    if (!value) {
-      return '';
-    }
-
-    const raw = String(value).trim();
-
-    if (!raw || raw === 'null' || raw === 'undefined') {
-      return '';
-    }
-
-    if (raw.startsWith('data:')) {
-      return raw;
-    }
-
-    const origin = this.getApiOrigin();
-
-    if (/^https?:\/\//i.test(raw)) {
-      try {
-        const url = new URL(raw);
-        if (url.pathname.startsWith('/api/photos/')) {
-          const filename = url.pathname.replace('/api/photos/', '').replace(/^\/+/, '');
-          return `${origin}/storage/${filename}`;
-        }
-
-        if (url.hostname === 'sena-digital.com' && url.pathname.startsWith('/storage/')) {
-          return `${origin}${url.pathname}`;
-        }
-      } catch {
-        return raw;
-      }
-
-      return raw;
-    }
-
-    if (raw.startsWith('/storage/')) {
-      return `${origin}${raw}`;
-    }
-
-    if (raw.startsWith('storage/')) {
-      return `${origin}/${raw}`;
-    }
-
-    if (raw.startsWith('/api/photos/')) {
-      const filename = raw.replace('/api/photos/', '').replace(/^\/+/, '');
-      return `${origin}/storage/${filename}`;
-    }
-
-    if (raw.startsWith('api/photos/')) {
-      const filename = raw.replace('api/photos/', '').replace(/^\/+/, '');
-      return `${origin}/storage/${filename}`;
-    }
-
-    if (raw.startsWith('/')) {
-      return `${origin}${raw}`;
-    }
-
-    return `${origin}/storage/${raw}`;
+    return normalizeInvitationMediaUrl(value);
   }
 
   private isUnsafeThemeImage(value: string | null | undefined): boolean {

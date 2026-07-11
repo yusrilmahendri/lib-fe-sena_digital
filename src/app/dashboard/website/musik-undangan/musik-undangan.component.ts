@@ -118,13 +118,12 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'];
     const allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
     const maxSizeInBytes = 10 * 1024 * 1024;
     const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
 
-    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
-      this.uploadError = 'Jenis file tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
+    if (!allowedExtensions.includes(fileExtension)) {
+      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';
@@ -132,7 +131,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }
 
     if (file.size > maxSizeInBytes) {
-      this.uploadError = 'Ukuran file terlalu besar. Maksimal 10 MB.';
+      this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';
@@ -147,7 +146,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     if (this.isUploadingMusic || !this.canUploadCustomMusic()) return;
 
     if (!this.selectedMusicFile) {
-      this.uploadError = 'Pilih file musik terlebih dahulu.';
+      this.uploadError = 'File musik wajib dipilih.';
       return;
     }
 
