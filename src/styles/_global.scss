@@ -294,3 +294,44 @@ ul {
     }
   }
 }
+
+// Prevent invisible overlays/backdrops from blocking clicks
+.sidebar-backdrop:not(.active),
+.sidebar-overlay:not(.active),
+.mobile-backdrop:not(.active),
+.lp-navbar__backdrop:not(.is-open),
+.modal-backdrop:not(.show),
+.overlay:not(.active) {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+// Keep important controls clickable above preview/overlay layers
+.mobile-menu-button,
+.menu-toggle,
+.lp-navbar__toggle,
+.profile-dropdown-toggle,
+.user-profile,
+.theme-select-button,
+.btn-pilih-tema,
+.preview-button,
+.theme-card__preview {
+  position: relative;
+  z-index: 1001;
+  pointer-events: auto;
+}
+
+// Let preview wrappers pass clicks through to buttons beneath
+.theme-preview-wrapper,
+.template-preview-wrapper,
+.theme-preview-container,
+.preview-container,
+.theme-card__media {
+  pointer-events: auto;
+}
+
+// Preview iframe/frame layers should not steal clicks from card actions
+.theme-preview-frame,
+.preview-iframe {
+  pointer-events: none;
+}
