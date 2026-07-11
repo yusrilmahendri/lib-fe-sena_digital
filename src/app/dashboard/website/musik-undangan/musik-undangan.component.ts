@@ -21,7 +21,11 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   isUploadingMusic = false;
   previewingMusicId: number | 'custom' | 'default' | null = null;
   selectedMusicId: number | null = null;
+  selectedMusicSourceHint: MusicSourceType = 'default';
   musicOptions: MusicTrack[] = [];
+  userUploadTracks: MusicTrack[] = [];
+  adminCatalogTracks: MusicTrack[] = [];
+  globalCatalogTracks: MusicTrack[] = [];
   musicSelection: UserMusicSelection | null = null;
   uploadError = '';
   loadError = '';
@@ -56,13 +60,21 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: ({ options, selection, profile }: { options: any; selection: any; profile: ProfileResponse | null }) => {
         const normalizedSelection = this.normalizeMusicSelection(selection);
+        const catalogSections = this.extractCatalogSections(options, selection);
         const optionsFromMusicOptions = this.normalizeMusicOptions(options);
         const optionsFromMusicSelection = this.normalizeMusicOptions(selection);
+        const fallbackCatalogTracks = this.mergeMusicOptions(optionsFromMusicOptions, optionsFromMusicSelection);
 
         this.userData = profile?.data ?? null;
-        this.musicOptions = this.mergeMusicOptions(optionsFromMusicOptions, optionsFromMusicSelection);
+        this.userUploadTracks = catalogSections.userUploads;
+        this.adminCatalogTracks = catalogSections.hasCatalogSections
+          ? catalogSections.adminCatalog
+          : fallbackCatalogTracks;
+        this.globalCatalogTracks = catalogSections.globalCatalog;
+        this.musicOptions = this.mergeMusicOptions(this.adminCatalogTracks, this.globalCatalogTracks);
         this.musicSelection = normalizedSelection;
         this.selectedMusicId = normalizedSelection?.selected_music_id ?? null;
+        this.selectedMusicSourceHint = this.resolveSourceTypeByTrackId(this.selectedMusicId);
         this.isLoadingMusic = false;
       },
       error: (err: any) => {
@@ -72,9 +84,10 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectMusic(musicId: number | null): void {
+  selectMusic(musicId: number | null, sourceType?: MusicSourceType): void {
     if (this.isSavingMusic || this.isLoadingMusic) return;
     this.selectedMusicId = musicId;
+    this.selectedMusicSourceHint = sourceType ?? this.resolveSourceTypeByTrackId(musicId);
   }
 
   saveMusicSelection(): void {
@@ -280,7 +293,8 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   getPendingSourceType(): MusicSourceType {
-    return this.selectedMusicId === null ? 'default' : 'catalog';
+    if (this.selectedMusicId === null) return 'default';
+    return this.selectedMusicSourceHint;
   }
 
   getSourceTypeLabel(sourceType: MusicSourceType): string {
@@ -289,9 +303,30 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         return 'Custom';
       case 'catalog':
         return 'Katalog';
+      case 'global_catalog':
+        return 'Global';
       default:
         return 'Default';
     }
+  }
+
+  getTrackDurationLabel(music: MusicTrack): string | null {
+    const explicitLabel = this.firstString([
+      music.duration_label,
+      typeof music.duration === 'string' ? music.duration : null,
+    ]);
+    if (explicitLabel) return explicitLabel;
+
+    const durationInSeconds = Number(music.duration);
+    if (!Number.isFinite(durationInSeconds) || durationInSeconds <= 0) return null;
+
+    const minutes = Math.floor(durationInSeconds / 60);
+    const seconds = Math.floor(durationInSeconds % 60);
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  isMusicSaved(track: MusicTrack, sourceType: MusicSourceType): boolean {
+    return this.musicSelection?.selected_music_id === track.id && this.getActiveSourceType() === sourceType;
   }
 
   getCustomMusicSizeLabel(): string | null {
@@ -366,6 +401,52 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         const orderB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
         return orderA - orderB;
       });
+  }
+
+  private extractCatalogSections(optionsResponse: any, selectionResponse: any): {
+    userUploads: MusicTrack[];
+    adminCatalog: MusicTrack[];
+    globalCatalog: MusicTrack[];
+    hasCatalogSections: boolean;
+  } {
+    const sectionRoots = [
+      ...this.findCatalogSectionRoots(optionsResponse),
+      ...this.findCatalogSectionRoots(selectionResponse),
+    ];
+
+    const userUploads = this.mergeMusicOptions(
+      ...sectionRoots.map((section) => this.normalizeMusicOptions(section?.user_uploads))
+    );
+    const adminCatalog = this.mergeMusicOptions(
+      ...sectionRoots.map((section) => this.normalizeMusicOptions(section?.admin_catalog))
+    );
+    const globalCatalog = this.mergeMusicOptions(
+      ...sectionRoots.map((section) => this.normalizeMusicOptions(section?.global_catalog))
+    );
+
+    return {
+      userUploads,
+      adminCatalog,
+      globalCatalog,
+      hasCatalogSections: sectionRoots.length > 0,
+    };
+  }
+
+  private findCatalogSectionRoots(response: any): any[] {
+    const candidates = [
+      response?.catalog_sections,
+      response?.data?.catalog_sections,
+      response?.setting?.catalog_sections,
+      response?.data?.setting?.catalog_sections,
+      response?.music_selection?.catalog_sections,
+      response?.selection?.catalog_sections,
+      response?.user_music_selection?.catalog_sections,
+      response?.data?.music_selection?.catalog_sections,
+      response?.data?.selection?.catalog_sections,
+      response?.data?.user_music_selection?.catalog_sections,
+    ];
+
+    return candidates.filter((candidate) => candidate && typeof candidate === 'object');
   }
 
   private findMusicArray(source: any): any[] {
@@ -473,9 +554,12 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
     return {
       id,
-      title: String(item.title ?? item.name ?? item.judul ?? `Musik ${id}`),
+      title: String(this.firstString([item.title, item.name, item.judul]) || `Musik ${id}`),
       artist: item.artist ?? item.penyanyi ?? null,
       description: this.firstString([item.description, item.deskripsi, item.caption, item.keterangan]),
+      duration: item.duration ?? item.length ?? item.duration_seconds ?? item.seconds ?? null,
+      duration_label: this.firstString([item.duration_label, item.duration_text, item.formatted_duration, item.duration_human]),
+      source_type: this.firstString([item.source_type, item.music_source_type, item.section_type, item.catalog_type]),
       audio_url: this.firstString([item.audio_url, item.url, item.music_url, item.musik_url, item.file_url, item.path]),
       thumbnail_url: this.firstString([item.thumbnail_url, item.cover_url, item.image_url, item.thumbnail, item.cover]),
       is_active: this.toBoolean(item.is_active),
@@ -542,6 +626,31 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     return this.musicOptions.find((music) => music.id === this.selectedMusicId) || null;
   }
 
+  private resolveSourceTypeByTrackId(musicId: number | null): MusicSourceType {
+    if (musicId === null) return 'default';
+
+    const inGlobalCatalog = this.globalCatalogTracks.some((music) => music.id === musicId);
+    const inAdminCatalog = this.adminCatalogTracks.some((music) => music.id === musicId);
+    const activeSourceType = this.getActiveSourceType();
+
+    if (inGlobalCatalog && inAdminCatalog) {
+      if (activeSourceType === 'global_catalog' || activeSourceType === 'catalog') return activeSourceType;
+      return this.selectedMusicSourceHint === 'global_catalog' ? 'global_catalog' : 'catalog';
+    }
+
+    if (inGlobalCatalog) {
+      return 'global_catalog';
+    }
+
+    if (inAdminCatalog) {
+      return 'catalog';
+    }
+
+    if (activeSourceType === 'global_catalog') return 'global_catalog';
+    if (activeSourceType === 'catalog') return 'catalog';
+    return 'catalog';
+  }
+
   private firstString(values: unknown[]): string | null {
     const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
     return typeof value === 'string' ? value : null;
@@ -573,6 +682,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   private normalizeSourceType(value: string | null): MusicSourceType {
     const normalized = String(value || '').toLowerCase().trim();
     if (normalized === 'custom' || normalized === 'custom_music' || normalized === 'personal') return 'custom';
+    if (normalized === 'global_catalog' || normalized === 'global' || normalized === 'global_music') return 'global_catalog';
     if (normalized === 'catalog' || normalized === 'catalog_music' || normalized === 'admin' || normalized === 'music') return 'catalog';
     return 'default';
   }

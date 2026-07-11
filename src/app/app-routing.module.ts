@@ -43,6 +43,7 @@ import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
+import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -104,6 +105,7 @@ const routes: Routes = [
       { path: 'gateway', component: GatewayComponent },
       { path: 'testimoni', component: TestimoniesComponent },
       { path: 'website', component: WebsiteComponent },
+      { path: 'music-catalog', component: MusicCatalogComponent },
       { path: 'video', component: VideoComponent },
       {
         path: 'pengaturan',

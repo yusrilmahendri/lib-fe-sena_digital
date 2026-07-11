@@ -1,208 +1,211 @@
-<!-- <body>
-    <div class="container my-5">
+<div class="users-admin-container">
+  <div class="content-card">
+    <div class="header-section">
+      <div class="title-group">
+        <div class="pink-bar"></div>
+        <h2>Data Pengguna</h2>
+      </div>
 
-        <div class="card table-card">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="text-pink table-title">Data Pengguna</span>
-                <input type="text" class="form-control search-input" placeholder="Cari pengguna..." (input)="onSearch($event)">
-            </div>
-            <div class="card-body">
-                <wc-table
-                    [rows]="filteredRows"
-                    [columns]="columns"
-                    [actionTitle]="'Action'"
-                    (confirmClicked)="onConfirmClicked($event)"
-                    (editClicked)="onEditClicked($event)"
-                    (deleteClicked)="onDeleteClicked($event)">
-                </wc-table>
-            </div>
+      <p class="load-message" *ngIf="loadSuccessMessage && !isLoading">{{ loadSuccessMessage }}</p>
+
+      <div class="toolbar">
+        <div class="search-group">
+          <label for="searchUser">Search</label>
+          <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input
+              id="searchUser"
+              type="text"
+              class="form-control"
+              placeholder="Cari nama, email, domain, paket..."
+              [ngModel]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+            />
+          </div>
         </div>
+
+        <div class="filter-group">
+          <label for="statusFilter">Filter Status</label>
+          <select
+            id="statusFilter"
+            class="form-select"
+            [ngModel]="selectedFilter"
+            (ngModelChange)="onFilterChange($event)"
+          >
+            <option value="all">Semua</option>
+            <option value="active">Active</option>
+            <option value="expiring">Akan Expired</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+      </div>
     </div>
-</body> -->
 
-
-
-
-
-<!-- <body>
-  <div class="container-fluid bg-white rounded-3 p-3 p-sm-4 shadow-sm">
-    <div
-      class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-3 mb-sm-4">
-      <h1 class="mb-3 mb-sm-0">Data Pengguna</h1>
-      <form class="d-flex align-items-center gap-2 w-100 w-sm-auto">
-        <label for="search" class="mb-0">Cari :</label>
-        <input id="search" type="text" class="form-control rounded-3" style="max-width: 250px" placeholder="Cari..." />
-      </form>
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="loading-spinner"></div>
+      <p>Memuat data pengguna...</p>
     </div>
 
-    <div class="table-responsive">
-      <table class="table align-middle mb-0" style="min-width: 700px;">
-        <thead>
-          <tr>
-            <th scope="col">Email</th>
-            <th scope="col">Domain</th>
-            <th scope="col">Exp Date</th>
-            <th scope="col">Status</th>
-            <th scope="col">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>fahmash.12@gmail.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">nikahboongan.haha</a></td>
-            <td>19-11-2024 01:46 AM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit fahmash.12@gmail.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete fahmash.12@gmail.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+    <div *ngIf="!isLoading" class="table-wrapper">
+      <div class="table-responsive desktop-table">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Nama User</th>
+              <th>Email</th>
+              <th>Domain</th>
+              <th>Paket</th>
+              <th>Status Akun</th>
+              <th>Tanggal Expired</th>
+              <th>Sisa Hari</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of paginatedUsers">
+              <td>{{ row.name }}</td>
+              <td>{{ row.email }}</td>
+              <td>{{ row.domain }}</td>
+              <td>{{ row.packageName }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(row.computedStatus)">
+                  {{ getStatusLabel(row.computedStatus) }}
+                </span>
+              </td>
+              <td>{{ formatDate(row.expirationDate) }}</td>
+              <td>
+                <span class="remaining-days" [class.remaining-days--expired]="row.computedStatus === 'expired'">
+                  {{ getSisaHariText(row) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="btn btn-soft-delete"
+                    (click)="onSoftDelete(row)"
+                    [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+                  >
+                    <span *ngIf="isSoftDeleteLoading(row)" class="btn-loading-spinner"></span>
+                    Soft Delete Data
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-hard-delete"
+                    (click)="onHardDelete(row)"
+                    [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row)"
+                  >
+                    <span *ngIf="isHardDeleteLoading(row)" class="btn-loading-spinner"></span>
+                    Hard Delete Akun
+                  </button>
+                </div>
+              </td>
+            </tr>
 
-          <tr>
-            <td>johndoe@gmail.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">johnandlana</a></td>
-            <td>12-02-2025 15:06 AM</td>
-            <td>
-              <span class="status-active">
-                <span class="status-dot"></span> Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit johndoe@gmail.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete johndoe@gmail.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+            <tr *ngIf="paginatedUsers.length === 0">
+              <td colspan="8" class="empty-cell">
+                <div class="empty-state">
+                  <i class="fas fa-users-slash"></i>
+                  <h4>Tidak ada data pengguna.</h4>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-          <tr>
-            <td>zayn.malek@gmail.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">zaynmarrywgigi</a></td>
-            <td>05-12-2024 04:00 PM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit zayn.malek@gmail.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete zayn.malek@gmail.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+      <div class="mobile-cards">
+        <article class="user-card" *ngFor="let row of paginatedUsers">
+          <div class="card-head">
+            <h4>{{ row.name }}</h4>
+            <span class="status-badge" [ngClass]="getStatusClass(row.computedStatus)">
+              {{ getStatusLabel(row.computedStatus) }}
+            </span>
+          </div>
 
-          <tr>
-            <td>lanalana@gmail.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">pernikahanlana</a></td>
-            <td>09-10-2024 08:34 AM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit lanalana@gmail.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete lanalana@gmail.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+          <div class="card-field"><strong>Email:</strong> {{ row.email }}</div>
+          <div class="card-field"><strong>Domain:</strong> {{ row.domain }}</div>
+          <div class="card-field"><strong>Paket:</strong> {{ row.packageName }}</div>
+          <div class="card-field"><strong>Tanggal Expired:</strong> {{ formatDate(row.expirationDate) }}</div>
+          <div class="card-field">
+            <strong>Sisa Hari:</strong>
+            <span class="remaining-days" [class.remaining-days--expired]="row.computedStatus === 'expired'">
+              {{ getSisaHariText(row) }}
+            </span>
+          </div>
 
-          <tr>
-            <td>user1@yahoo.co.id</td>
-            <td><a href="#" class="text-primary text-decoration-none">loremipsumsidolor</a></td>
-            <td>01-10-2024 09:04 AM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit user1@yahoo.co.id" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete user1@yahoo.co.id" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+          <div class="card-actions">
+            <button
+              type="button"
+              class="btn btn-soft-delete"
+              (click)="onSoftDelete(row)"
+              [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+            >
+              <span *ngIf="isSoftDeleteLoading(row)" class="btn-loading-spinner"></span>
+              Soft Delete Data
+            </button>
+            <button
+              type="button"
+              class="btn btn-hard-delete"
+              (click)="onHardDelete(row)"
+              [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row)"
+            >
+              <span *ngIf="isHardDeleteLoading(row)" class="btn-loading-spinner"></span>
+              Hard Delete Akun
+            </button>
+          </div>
+        </article>
 
-          <tr>
-            <td>user2@rocketmail.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">loremipsumsidolor</a></td>
-            <td>28-08-2024 07:55 AM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit user2@rocketmail.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete user2@rocketmail.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+        <div class="mobile-empty" *ngIf="paginatedUsers.length === 0">
+          <i class="fas fa-users-slash"></i>
+          <h4>Tidak ada data pengguna.</h4>
+        </div>
+      </div>
 
-          <tr>
-            <td>user3@yahoo.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">loremipsumsidolor</a></td>
-            <td>14-08-2024 12:34 AM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit user3@yahoo.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete user3@yahoo.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
+      <div class="pagination-section" *ngIf="filteredUsers.length > 0">
+        <div class="pagination-meta">
+          <div class="per-page-control">
+            <label for="itemsPerPage">Tampilkan</label>
+            <select
+              id="itemsPerPage"
+              class="form-select"
+              [ngModel]="itemsPerPage"
+              (ngModelChange)="onItemsPerPageChange($event)"
+            >
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+            </select>
+            <span>data</span>
+          </div>
+          <div class="counter-text">
+            Menampilkan {{ startItemNumber }} - {{ endItemNumber }} dari {{ filteredUsers.length }} data
+          </div>
+        </div>
 
-          <tr>
-            <td>user4@yahoo.com</td>
-            <td><a href="#" class="text-primary text-decoration-none">loremipsumsidolor</a></td>
-            <td>10-09-2024 05:31 PM</td>
-            <td>
-              <span class="status-inactive">
-                <span class="status-dot"></span> Tidak Aktif
-              </span>
-            </td>
-            <td class="d-flex gap-2 justify-content-center">
-              <button aria-label="Edit user4@yahoo.com" class="btn-edit">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button aria-label="Delete user4@yahoo.com" class="btn-delete">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <ul class="pagination-list" *ngIf="totalPages > 1">
+          <li>
+            <button type="button" (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </li>
+          <li *ngFor="let page of getPageNumbers()">
+            <button
+              type="button"
+              [class.active]="page === currentPage"
+              (click)="onPageChange(page)"
+            >
+              {{ page }}
+            </button>
+          </li>
+          <li>
+            <button type="button" (click)="onPageChange(currentPage + 1)" [disabled]="currentPage === totalPages">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
-</body> -->
-
-
-
+</div>

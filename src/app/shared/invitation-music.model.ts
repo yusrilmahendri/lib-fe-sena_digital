@@ -3,6 +3,9 @@ export interface MusicTrack {
   title: string;
   artist?: string | null;
   description?: string | null;
+  duration?: string | number | null;
+  duration_label?: string | null;
+  source_type?: MusicSourceType | string | null;
   audio_url?: string | null;
   thumbnail_url?: string | null;
   is_active?: boolean;
@@ -10,7 +13,7 @@ export interface MusicTrack {
   sort_order?: number | null;
 }
 
-export type MusicSourceType = 'default' | 'catalog' | 'custom';
+export type MusicSourceType = 'default' | 'catalog' | 'custom' | 'global_catalog';
 
 export interface CustomMusicInfo {
   id?: number | null;

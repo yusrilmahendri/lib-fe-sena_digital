@@ -1,0 +1,105 @@
+<section class="music-catalog-page">
+  <header class="music-catalog-header">
+    <div>
+      <p class="eyebrow">Admin Musik</p>
+      <h2>Music Catalog</h2>
+      <p>Kelola upload, status, default, hapus, dan urutan lagu katalog untuk user.</p>
+    </div>
+  </header>
+
+  <div class="music-catalog-card">
+    <h3>Upload Musik Katalog</h3>
+    <div class="upload-grid">
+      <div class="field">
+        <label for="admin-music-upload">File Musik</label>
+        <input id="admin-music-upload" type="file" class="form-control" accept="audio/*,.mp3,.wav,.m4a,.ogg" (change)="onUploadFileSelected($event)" [disabled]="isUploading" />
+      </div>
+      <div class="field">
+        <label>Judul</label>
+        <input type="text" class="form-control" [(ngModel)]="uploadTitle" [disabled]="isUploading" placeholder="Judul lagu" />
+      </div>
+      <div class="field">
+        <label>Artist</label>
+        <input type="text" class="form-control" [(ngModel)]="uploadArtist" [disabled]="isUploading" placeholder="Nama artist" />
+      </div>
+      <div class="field">
+        <label>Subtitle</label>
+        <input type="text" class="form-control" [(ngModel)]="uploadSubtitle" [disabled]="isUploading" placeholder="Keterangan singkat (opsional)" />
+      </div>
+    </div>
+    <div class="upload-actions">
+      <button type="button" class="btn btn-sky" (click)="uploadMusic()" [disabled]="isUploading || !uploadFile">
+        <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        {{ isUploading ? 'Mengunggah...' : 'Upload Musik Katalog' }}
+      </button>
+      <small *ngIf="uploadError" class="text-danger">{{ uploadError }}</small>
+    </div>
+  </div>
+
+  <div class="music-catalog-card mt-4">
+    <div class="list-header">
+      <h3>Daftar Musik Katalog</h3>
+      <small *ngIf="isSavingSort">Menyimpan urutan...</small>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-box">
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      Memuat data musik katalog...
+    </div>
+
+    <div *ngIf="!isLoading && !items.length" class="empty-box">
+      Tidak ada musik katalog.
+    </div>
+
+    <div *ngIf="!isLoading && items.length" cdkDropList class="catalog-list" (cdkDropListDropped)="dropSort($event)">
+      <article class="catalog-item" *ngFor="let item of items; let index = index; trackBy: trackByMusicId" cdkDrag>
+        <ng-container *ngIf="editState[item.id] as editor">
+        <div class="drag-handle" cdkDragHandle title="Geser untuk ubah urutan">
+          <i class="fa fa-bars" aria-hidden="true"></i>
+        </div>
+
+        <div class="catalog-main">
+          <div class="meta-grid">
+            <div class="field">
+              <label>Judul</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="editor.title" />
+            </div>
+            <div class="field">
+              <label>Artist</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="editor.artist" />
+            </div>
+            <div class="field">
+              <label>Subtitle</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="editor.subtitle" />
+            </div>
+          </div>
+
+          <div class="status-row">
+            <span class="status-pill" [class.active]="item.is_active" [class.inactive]="!item.is_active">
+              {{ item.is_active ? 'Aktif' : 'Nonaktif' }}
+            </span>
+            <span class="status-pill default" *ngIf="item.is_default">Default</span>
+            <span class="status-pill order">Urutan: {{ item.sort_order ?? index + 1 }}</span>
+            <span class="status-pill duration">Durasi: {{ getDuration(item) }}</span>
+          </div>
+        </div>
+
+        <div class="catalog-actions">
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="saveMetadata(item)" [disabled]="editor.isSaving">
+            {{ editor.isSaving ? 'Menyimpan...' : 'Simpan Metadata' }}
+          </button>
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="toggleActive(item)">
+            {{ item.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+          </button>
+          <button type="button" class="btn btn-outline-success btn-sm" (click)="setAsDefault(item)" [disabled]="item.is_default">
+            Jadikan Default
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteItem(item)">
+            Hapus
+          </button>
+        </div>
+        </ng-container>
+      </article>
+    </div>
+  </div>
+</section>
