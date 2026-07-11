@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { Notyf } from 'notyf';
-import { DashboardService } from 'src/app/dashboard.service';
+import { DashboardService, ProfileData, ProfileResponse } from 'src/app/dashboard.service';
+import { resolvePackageTier } from 'src/app/theme-package-access.util';
 import {
   CustomMusicInfo,
   MusicSourceType,
@@ -26,6 +27,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   loadError = '';
   selectedMusicFile: File | null = null;
   selectedMusicFileName = '';
+  userData: ProfileData | null = null;
 
   private previewAudio: HTMLAudioElement | null = null;
   private readonly notyf = new Notyf({
@@ -50,11 +52,17 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     forkJoin({
       options: this.dashboardSvc.getMusicOptions(),
       selection: this.dashboardSvc.getMusicSelection(),
+      profile: this.dashboardSvc.getProfile().pipe(catchError(() => of(null))),
     }).subscribe({
-      next: ({ options, selection }: { options: any; selection: any }) => {
-        this.musicOptions = this.normalizeMusicOptions(options);
-        this.musicSelection = this.normalizeMusicSelection(selection);
-        this.selectedMusicId = this.musicSelection?.selected_music_id ?? null;
+      next: ({ options, selection, profile }: { options: any; selection: any; profile: ProfileResponse | null }) => {
+        const normalizedSelection = this.normalizeMusicSelection(selection);
+        const optionsFromMusicOptions = this.normalizeMusicOptions(options);
+        const optionsFromMusicSelection = this.normalizeMusicOptions(selection);
+
+        this.userData = profile?.data ?? null;
+        this.musicOptions = this.mergeMusicOptions(optionsFromMusicOptions, optionsFromMusicSelection);
+        this.musicSelection = normalizedSelection;
+        this.selectedMusicId = normalizedSelection?.selected_music_id ?? null;
         this.isLoadingMusic = false;
       },
       error: (err: any) => {
@@ -137,13 +145,13 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     this.uploadError = '';
     this.dashboardSvc.uploadCustomMusic(formData).subscribe({
       next: (res: any) => {
-        this.notyf.success(res?.message || 'Musik pribadi berhasil diunggah');
+        this.notyf.success(this.resolveUploadMessage(res, 'Musik pribadi berhasil diunggah.'));
         this.isUploadingMusic = false;
         this.resetUploadInput();
         this.loadMusicData();
       },
       error: (err: any) => {
-        this.uploadError = err?.error?.message || 'Gagal mengunggah musik pribadi.';
+        this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
         this.isUploadingMusic = false;
       },
     });
@@ -189,7 +197,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   playCustomPreview(): void {
-    const audioUrl = this.getCustomMusicUrl();
+    const audioUrl =
+      this.getCustomMusicUrl() ||
+      (this.getActiveSourceType() === 'custom' ? this.musicSelection?.resolved_music_url || '' : '');
     if (!audioUrl) {
       this.notyf.error('Musik pribadi belum tersedia');
       return;
@@ -212,7 +222,12 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   canUploadCustomMusic(): boolean {
-    return this.musicSelection?.can_upload_custom_music === true;
+    if (this.musicSelection?.can_upload_custom_music !== undefined) {
+      return this.musicSelection.can_upload_custom_music === true;
+    }
+
+    const tier = resolvePackageTier(this.userData?.package_info ?? null);
+    return tier === 'diamond';
   }
 
   getCurrentMusicLabel(): string {
@@ -303,10 +318,14 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   getCustomMusicUrl(): string {
+    const fallbackResolvedUrl = this.getActiveSourceType() === 'custom' ? this.musicSelection?.resolved_music_url : null;
     return this.firstString([
       this.musicSelection?.custom_music?.audio_url,
       this.musicSelection?.custom_music?.url,
+      (this.musicSelection?.active_music as any)?.audio_url,
+      (this.musicSelection?.active_music as any)?.url,
       this.musicSelection?.custom_music_url,
+      fallbackResolvedUrl,
     ]) || '';
   }
 
@@ -355,6 +374,10 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
     const keys = [
       'music_options',
+      'catalog',
+      'catalogs',
+      'catalog_music',
+      'catalog_music_tracks',
       'musics',
       'music',
       'music_tracks',
@@ -366,6 +389,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       'records',
       'results',
       'list',
+      'options',
       'settings',
       'setting',
     ];
@@ -379,7 +403,16 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   private normalizeMusicSelection(response: any): UserMusicSelection {
-    const source = response?.music_selection || response?.selection || response?.data?.music_selection || response?.data || response?.setting || {};
+    const source =
+      response?.music_selection ||
+      response?.selection ||
+      response?.user_music_selection ||
+      response?.data?.music_selection ||
+      response?.data?.selection ||
+      response?.data?.user_music_selection ||
+      response?.data ||
+      response?.setting ||
+      {};
     const setting = response?.setting || response?.data?.setting || {};
     const selectedMusic = this.normalizeMusicItem(source?.selected_music ?? source?.selected_catalog_music ?? source?.catalog_music);
     const defaultMusic = this.normalizeMusicItem(source?.default_music);
@@ -416,10 +449,19 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         setting?.music_stream_url,
         setting?.musik,
       ]),
-      can_upload_custom_music:
-        source?.can_upload_custom_music === true ||
-        response?.data?.can_upload_custom_music === true ||
-        response?.can_upload_custom_music === true,
+      can_upload_custom_music: this.toOptionalBoolean(
+        source?.can_upload_custom_music ??
+        source?.permissions?.can_upload_custom_music ??
+        source?.access?.can_upload_custom_music ??
+        source?.can_upload_custom ??
+        source?.can_upload ??
+        response?.data?.selection?.can_upload_custom_music ??
+        response?.data?.user_music_selection?.can_upload_custom_music ??
+        response?.data?.permissions?.can_upload_custom_music ??
+        response?.data?.access?.can_upload_custom_music ??
+        response?.data?.can_upload_custom_music ??
+        response?.can_upload_custom_music
+      ),
     };
   }
 
@@ -462,6 +504,39 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     };
   }
 
+  private mergeMusicOptions(...collections: MusicTrack[][]): MusicTrack[] {
+    const merged = new Map<number, MusicTrack>();
+
+    for (const collection of collections) {
+      for (const track of collection) {
+        const existing = merged.get(track.id);
+        if (!existing) {
+          merged.set(track.id, track);
+          continue;
+        }
+
+        merged.set(track.id, {
+          ...existing,
+          ...track,
+          title: track.title || existing.title,
+          artist: track.artist ?? existing.artist,
+          description: track.description ?? existing.description,
+          audio_url: track.audio_url ?? existing.audio_url,
+          thumbnail_url: track.thumbnail_url ?? existing.thumbnail_url,
+          is_active: track.is_active ?? existing.is_active,
+          is_default: track.is_default ?? existing.is_default,
+          sort_order: track.sort_order ?? existing.sort_order,
+        });
+      }
+    }
+
+    return Array.from(merged.values()).sort((a, b) => {
+      const orderA = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const orderB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      return orderA - orderB;
+    });
+  }
+
   private getSelectedCatalogMusic(): MusicTrack | null {
     if (this.selectedMusicId === null) return null;
     return this.musicOptions.find((music) => music.id === this.selectedMusicId) || null;
@@ -481,6 +556,18 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   private toBoolean(value: unknown): boolean | undefined {
     if (value === null || value === undefined) return undefined;
     return value === true || value === 1 || value === '1' || value === 'true';
+  }
+
+  private toOptionalBoolean(value: unknown): boolean | undefined {
+    if (value === null || value === undefined || value === '') return undefined;
+    return this.toBoolean(value) === true;
+  }
+
+  private resolveUploadMessage(response: any, fallback: string): string {
+    return this.firstString([
+      response?.message,
+      response?.errors?.musik?.[0],
+    ]) || fallback;
   }
 
   private normalizeSourceType(value: string | null): MusicSourceType {

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 import {
   VideoCategory,
   CategoryListResponse,
@@ -29,7 +30,7 @@ import {
   providedIn: 'root'
 })
 export class VideoCategoryService {
-  private readonly baseUrl = '/api/admin/video-categories';
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/video-categories`;
   private readonly maxImageSize = 2 * 1024 * 1024; // 2MB
   private readonly allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
 

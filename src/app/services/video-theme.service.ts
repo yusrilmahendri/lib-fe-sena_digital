@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface VideoTheme {
   id: number;
@@ -43,7 +44,7 @@ export interface ThemeListParams {
   providedIn: 'root'
 })
 export class VideoThemeService {
-  private readonly baseUrl = '/api/admin/video-categories'; // Use same endpoint as categories
+  private readonly baseUrl = `${environment.apiBaseUrl}/admin/video-categories`; // Use same endpoint as categories
 
   // State management
   private themesSubject = new BehaviorSubject<VideoTheme[]>([]);

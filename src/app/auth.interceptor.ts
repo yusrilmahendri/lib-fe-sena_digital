@@ -89,6 +89,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return (
       /\/v1\/testimoni\/public\b/.test(url) ||
       /\/v1\/wedding-profile\/public\b/.test(url) ||
+      /\/v1\/paket-undangan\b/.test(url) ||
       /\/themes\/(categories|theme|popular)\b/.test(url)
     );
   }
