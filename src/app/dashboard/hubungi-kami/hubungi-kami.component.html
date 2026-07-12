@@ -1,1 +1,181 @@
-<p>hubungi-kami works!</p>
+<div class="dashboard-page contact-page">
+  <section class="contact-hero">
+    <div class="contact-hero__content">
+      <span class="contact-hero__icon" aria-hidden="true">
+        <i class="fas fa-headset"></i>
+      </span>
+      <h1>Butuh Bantuan?</h1>
+      <p>Tim Horuzt Invitation siap membantu terkait pengaturan undangan, pembayaran, tema, dan kendala teknis.</p>
+      <div class="contact-hero__actions">
+        <a class="btn-action btn-action--light" [href]="whatsappHref" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp" aria-hidden="true"></i>
+          Hubungi via WhatsApp
+        </a>
+        <a class="btn-action btn-action--outline" [href]="emailHref">
+          <i class="fas fa-envelope" aria-hidden="true"></i>
+          Kirim Email
+        </a>
+      </div>
+    </div>
+    <div class="contact-hero__art" aria-hidden="true">
+      <i class="fas fa-comment-dots"></i>
+    </div>
+  </section>
+
+  <section class="method-grid" aria-label="Metode kontak">
+    <article class="method-card" *ngFor="let method of contactMethods">
+      <span class="method-card__icon" aria-hidden="true">
+        <i class="fas" [ngClass]="method.icon"></i>
+      </span>
+      <h2>{{ method.title }}</h2>
+      <p>{{ method.description }}</p>
+      <a class="method-card__link" [href]="method.href" [attr.target]="method.external ? '_blank' : null" [attr.rel]="method.external ? 'noopener' : null">
+        {{ method.actionLabel }}
+        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </a>
+    </article>
+  </section>
+
+  <section class="contact-layout">
+    <div class="dashboard-card message-card">
+      <div class="section-heading">
+        <span class="section-heading__icon" aria-hidden="true">
+          <i class="fas fa-paper-plane"></i>
+        </span>
+        <div>
+          <h2>Kirim Pesan</h2>
+          <p>Form ini akan membuka WhatsApp dengan pesan yang sudah tersusun dari isian Anda.</p>
+        </div>
+      </div>
+
+      <form [formGroup]="contactForm" (ngSubmit)="submitContact()" novalidate>
+        <div class="form-grid">
+          <div class="field-group">
+            <label for="contact-name">Nama</label>
+            <input
+              type="text"
+              id="contact-name"
+              formControlName="name"
+              autocomplete="name"
+              placeholder="Nama Anda"
+              [class.is-invalid]="isInvalid('name')"
+            />
+            <div *ngIf="isInvalid('name')" class="field-error">Nama wajib diisi</div>
+          </div>
+
+          <div class="field-group">
+            <label for="contact-email">Email</label>
+            <input
+              type="email"
+              id="contact-email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="nama@email.com"
+              [class.is-invalid]="isInvalid('email')"
+            />
+            <div *ngIf="isInvalid('email')" class="field-error">Format email tidak valid</div>
+          </div>
+
+          <div class="field-group">
+            <label for="contact-whatsapp">Nomor WhatsApp</label>
+            <input
+              type="tel"
+              id="contact-whatsapp"
+              formControlName="whatsapp"
+              autocomplete="tel"
+              placeholder="08xxxxxxxxxx"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="contact-category">Subjek/kategori</label>
+            <select id="contact-category" formControlName="category">
+              <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="contact-message">Pesan</label>
+          <textarea
+            id="contact-message"
+            rows="5"
+            formControlName="message"
+            placeholder="Ceritakan kendala atau pertanyaan Anda"
+            [class.is-invalid]="isInvalid('message')"
+          ></textarea>
+          <div *ngIf="isInvalid('message')" class="field-error">Pesan wajib diisi</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-action btn-action--primary">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i>
+            Kirim Pesan
+          </button>
+          <a class="btn-action btn-action--ghost" [href]="buildFormEmailUrl()">
+            <i class="fas fa-envelope" aria-hidden="true"></i>
+            Kirim via Email
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <aside class="dashboard-card support-card" id="service-hours">
+      <div class="section-heading">
+        <span class="section-heading__icon" aria-hidden="true">
+          <i class="fas fa-clock"></i>
+        </span>
+        <div>
+          <h2>Jam Layanan</h2>
+          <p>Waktu operasional bantuan pelanggan.</p>
+        </div>
+      </div>
+
+      <ul class="hours-list">
+        <li *ngFor="let hour of contact.serviceHours">
+          <span>{{ hour.label }}</span>
+          <strong>{{ hour.value }}</strong>
+        </li>
+      </ul>
+
+      <div class="contact-line">
+        <span>WhatsApp</span>
+        <strong>{{ contact.whatsappDisplay }}</strong>
+      </div>
+      <div class="contact-line">
+        <span>Email</span>
+        <strong>{{ contact.email }}</strong>
+      </div>
+    </aside>
+  </section>
+
+  <section class="dashboard-card faq-card">
+    <div class="section-heading">
+      <span class="section-heading__icon" aria-hidden="true">
+        <i class="fas fa-question-circle"></i>
+      </span>
+      <div>
+        <h2>FAQ Singkat</h2>
+        <p>Jawaban cepat untuk alur yang paling sering digunakan.</p>
+      </div>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item" *ngFor="let faq of faqs; let i = index">
+        <button
+          type="button"
+          class="faq-item__button"
+          (click)="toggleFaq(i)"
+          [attr.aria-expanded]="faq.isOpen"
+          [attr.aria-controls]="'faq-answer-' + i"
+        >
+          <span>{{ faq.question }}</span>
+          <i class="fas fa-chevron-down" [class.is-open]="faq.isOpen" aria-hidden="true"></i>
+        </button>
+        <div class="faq-item__answer" [id]="'faq-answer-' + i" [class.is-open]="faq.isOpen">
+          <p>{{ faq.answer }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

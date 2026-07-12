@@ -1,165 +1,149 @@
-<div class="container-fluid px-2 px-md-4 py-2">
-  <div class="row g-4 flex-wrap">
-    <!-- Domain dan Token -->
-    <!-- <div class="col-12 col-md-6 position-relative mb-4 mb-md-0 d-flex flex-column">
-      <div class="card d-flex flex-column justify-content-between">
-        <div class="section-bar"></div>
-        <h2>Domain dan Token</h2>
-        <form [formGroup]="domainTokenForm" (ngSubmit)="saveDomainToken()" class="w-100">
-          <label for="domain" class="form-label visually-hidden">Domain</label>
-          <div class="input-group mb-3">
-            <span class="input-group-text pink-bg">undangan.horuzt.com/</span>
-            <input type="text" id="domain" class="form-control" placeholder="Domain here..." aria-label="Domain here"
-              formControlName="domain" [disabled]="isLoadingDomain" />
+<div class="dashboard-page settings-page">
+  <header class="page-header">
+    <div class="page-header__icon" aria-hidden="true">
+      <i class="fas fa-cog"></i>
+    </div>
+    <div>
+      <h1>Pengaturan Undangan</h1>
+      <p>Kelola musik, pesan pembuka, serta bagian yang ingin ditampilkan pada undangan.</p>
+    </div>
+  </header>
+
+  <div class="settings-grid">
+    <div class="settings-grid__left">
+      <section class="dashboard-card music-card">
+        <div class="card-title-row">
+          <span class="card-icon" aria-hidden="true">
+            <i class="fas fa-music"></i>
+          </span>
+          <div>
+            <h2>Musik Undangan</h2>
+            <p>Atur musik default, katalog, atau musik pribadi untuk undangan Anda.</p>
+          </div>
+        </div>
+
+        <div class="music-status">
+          <span>Status saat ini</span>
+          <strong>{{ getMusicStatusLabel() }}</strong>
+        </div>
+
+        <a class="btn-action btn-action--cyan" routerLink="/dashboard/website/musik-undangan">
+          <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+          Kelola Musik Undangan
+        </a>
+      </section>
+
+      <section class="dashboard-card filter-card">
+        <div class="card-title-row">
+          <span class="card-icon" aria-hidden="true">
+            <i class="fas fa-sliders-h"></i>
+          </span>
+          <div>
+            <h2>Filter Undangan</h2>
+            <p>Pilih bagian yang akan tampil di halaman undangan.</p>
+          </div>
+        </div>
+
+        <form [formGroup]="filterForm" (ngSubmit)="saveFilter()">
+          <div class="filter-list">
+            <div class="filter-row" *ngFor="let item of filterItems">
+              <span class="filter-row__icon" aria-hidden="true">
+                <i class="fas" [ngClass]="item.icon"></i>
+              </span>
+              <label class="filter-row__label" [for]="item.id">
+                <span>{{ item.title }}</span>
+                <small>{{ item.description }}</small>
+              </label>
+              <div class="form-check form-switch filter-row__switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  [id]="item.id"
+                  [attr.aria-label]="item.title"
+                  [formControlName]="item.control"
+                  [disabled]="isLoadingFilter"
+                />
+              </div>
+            </div>
           </div>
 
-          <label for="token" class="form-label fw-semibold">Token</label>
-          <input type="text" id="token" class="form-control mb-1" placeholder="Masukkan Token WhatsApp gateway Anda"
-            aria-describedby="tokenHelp" formControlName="token" [disabled]="isLoadingDomain" />
-          <div id="tokenHelp" class="form-text fst-italic text-muted mb-4">
-            Kosongkan jika tidak memiliki token WhatsApp gateway atau
-            <a href="#">klik disini.</a>
-          </div>
-
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-sky" [disabled]="isLoadingDomain || !domainTokenForm.valid">
-              <span *ngIf="isLoadingDomain" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ isLoadingDomain ? 'Menyimpan...' : 'Simpan' }}
+          <div class="card-actions">
+            <button type="submit" class="btn-action btn-action--primary" [disabled]="isLoadingFilter">
+              <span *ngIf="isLoadingFilter" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <i *ngIf="!isLoadingFilter" class="fas fa-save" aria-hidden="true"></i>
+              {{ isLoadingFilter ? 'Menyimpan...' : 'Simpan Filter' }}
             </button>
           </div>
         </form>
-      </div>
-    </div> -->
+      </section>
+    </div>
 
-    <!-- Musik -->
-    <div class="col-12 col-md-6 position-relative mb-4 mb-md-0 d-flex flex-column">
-      <div class="card h-100 d-flex flex-column justify-content-between">
-        <div class="section-bar"></div>
-        <h2 class="px-3">Musik</h2>
-        <div class="px-3">
-          <p class="text-muted mb-4">
-            Pengaturan musik katalog, musik default, preview, dan upload musik pribadi sekarang tersedia di halaman Musik Undangan.
-          </p>
-          <a class="btn btn-sky mb-3 text-white text-decoration-none" routerLink="/dashboard/website/musik-undangan">
-            Buka Musik Undangan
-          </a>
+    <section class="dashboard-card message-card">
+      <div class="card-title-row">
+        <span class="card-icon" aria-hidden="true">
+          <i class="fas fa-comment-dots"></i>
+        </span>
+        <div>
+          <h2>Pesan Undangan dan WhatsApp</h2>
+          <p>Sesuaikan kalimat yang muncul di undangan dan pesan saat dibagikan.</p>
         </div>
       </div>
-    </div>
 
-    <!-- Salam Pembuka -->
-    <div class="col-12 col-md-6 position-relative mb-4 mb-md-0 d-flex flex-column">
-      <div class="card h-100 d-flex flex-column justify-content-between">
-        <div class="section-bar"></div>
-        <h2>Salam Pembuka</h2>
-        <form [formGroup]="salamForm" (ngSubmit)="saveSalam()" class="w-100">
-          <label for="salam-pembuka" class="form-label fw-semibold">Salam Pembuka Undangan</label>
-          <textarea id="salam-pembuka" rows="4" class="form-control salam-textarea mb-4" formControlName="salam_pembuka"
-            [disabled]="isLoadingSalam"></textarea>
+      <form [formGroup]="salamForm" (ngSubmit)="saveSalam()">
+        <div class="field-group">
+          <label for="salam-pembuka">Pesan pembuka undangan</label>
+          <p id="salam-pembuka-help">Teks ini tampil pada bagian pembuka undangan digital.</p>
+          <textarea
+            id="salam-pembuka"
+            rows="5"
+            formControlName="salam_pembuka"
+            [disabled]="isLoadingSalam"
+            aria-describedby="salam-pembuka-help salam-pembuka-count"
+          ></textarea>
+          <small id="salam-pembuka-count" class="char-count">{{ getControlLength('salam_pembuka') }} karakter</small>
+        </div>
 
-          <label for="salam-atas" class="form-label fw-semibold">Salam Pembuka WhatsApp (atas)</label>
-          <textarea id="salam-atas" rows="4" class="form-control salam-textarea mb-4" formControlName="salam_atas"
-            [disabled]="isLoadingSalam"></textarea>
+        <div class="field-group">
+          <label for="salam-atas">Salam pembuka WhatsApp</label>
+          <p id="salam-atas-help">Teks ini muncul pada bagian awal pesan saat undangan dibagikan.</p>
+          <textarea
+            id="salam-atas"
+            rows="5"
+            formControlName="salam_atas"
+            [disabled]="isLoadingSalam"
+            aria-describedby="salam-atas-help salam-atas-count"
+          ></textarea>
+          <small id="salam-atas-count" class="char-count">{{ getControlLength('salam_atas') }} karakter</small>
+        </div>
 
-          <label for="salam-bawah" class="form-label fw-semibold">Salam Pembuka WhatsApp (bawah)</label>
-          <textarea id="salam-bawah" rows="4" class="form-control salam-textarea mb-5" formControlName="salam_bawah"
-            [disabled]="isLoadingSalam"></textarea>
+        <div class="field-group">
+          <label for="salam-bawah">Pesan penutup WhatsApp</label>
+          <p id="salam-bawah-help">Teks ini tampil setelah link undangan pada pesan WhatsApp.</p>
+          <textarea
+            id="salam-bawah"
+            rows="5"
+            formControlName="salam_bawah"
+            [disabled]="isLoadingSalam"
+            aria-describedby="salam-bawah-help salam-bawah-count"
+          ></textarea>
+          <small id="salam-bawah-count" class="char-count">{{ getControlLength('salam_bawah') }} karakter</small>
+        </div>
 
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-sky" [disabled]="isLoadingSalam || !salamForm.valid">
-              <span *ngIf="isLoadingSalam" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ isLoadingSalam ? 'Menyimpan...' : 'Simpan' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Filter Undangan with toggles -->
-    <div class="col-12 col-md-6 position-relative mb-4 mb-md-0 d-flex flex-column">
-      <div class="card h-100 d-flex flex-column justify-content-between">
-        <div class="section-bar"></div>
-        <h2>Filter Undangan</h2>
-        <form [formGroup]="filterForm" (ngSubmit)="saveFilter()" class="w-100 px-0 px-md-4">
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-sampul"
-              aria-label="Halaman sampul" formControlName="halaman_sampul" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-sampul">Halaman sampul</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-mempelai"
-              aria-label="Halaman Mempelai" formControlName="halaman_mempelai" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-mempelai">Halaman Mempelai</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-acara" aria-label="Halaman Acara"
-              formControlName="halaman_acara" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-acara">Halaman Acara</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-ucapan"
-              aria-label="Halaman Ucapan" formControlName="halaman_ucapan" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-ucapan">Halaman Ucapan</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-galery"
-              aria-label="Halaman Gallery/Album" formControlName="halaman_galery" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-galery">Halaman Gallery/Album</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-cerita"
-              aria-label="Halaman Cerita" formControlName="halaman_cerita" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-cerita">Halaman Cerita</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-lokasi"
-              aria-label="Halaman Lokasi" formControlName="halaman_lokasi" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-lokasi">Halaman Lokasi</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-prokes"
-              aria-label="Halaman Prokes" formControlName="halaman_prokes" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-prokes">Halaman Prokes</label>
-          </div>
-
-          <div class="form-check form-switch mb-3 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-send-gift"
-              aria-label="Halaman Kirim Hadiah" formControlName="halaman_send_gift" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-send-gift">Halaman Kirim Hadiah</label>
-          </div>
-
-          <div class="form-check form-switch mb-5 d-flex align-items-center">
-            <input class="form-check-input" type="checkbox" role="switch" id="halaman-qoute" aria-label="Halaman Quote"
-              formControlName="halaman_qoute" [disabled]="isLoadingFilter" />
-            <label class="form-check-label" for="halaman-qoute">Halaman Quote</label>
-          </div>
-
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-sky" [disabled]="isLoadingFilter">
-              <span *ngIf="isLoadingFilter" class="spinner-border spinner-border-sm me-2" role="status"></span>
-              {{ isLoadingFilter ? 'Menyimpan...' : 'Terapkan' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div class="card-actions card-actions--right">
+          <button type="submit" class="btn-action btn-action--primary" [disabled]="isLoadingSalam || !salamForm.valid">
+            <span *ngIf="isLoadingSalam" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <i *ngIf="!isLoadingSalam" class="fas fa-save" aria-hidden="true"></i>
+            {{ isLoadingSalam ? 'Menyimpan...' : 'Simpan Pesan' }}
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 
-  <!-- Loading Overlay -->
-  <div *ngIf="isInitialLoading"
-    class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-light bg-opacity-75"
-    style="z-index: 9999;">
-    <div class="text-center">
-      <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-        <span class="visually-hidden">Loading...</span>
-      </div>
+  <div *ngIf="isInitialLoading" class="loading-overlay" role="status" aria-live="polite">
+    <div class="loading-card">
+      <div class="spinner-border" aria-hidden="true"></div>
       <p>Memuat data pengaturan...</p>
     </div>
   </div>

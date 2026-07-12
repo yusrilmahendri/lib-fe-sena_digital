@@ -41,6 +41,79 @@ export class PengaturanComponent implements OnInit {
   filterData: any;
   isFilterExisting = false;
 
+  readonly filterItems = [
+    {
+      control: 'halaman_sampul',
+      id: 'halaman-sampul',
+      title: 'Halaman Sampul',
+      description: 'Tampilkan cover pembuka sebelum isi undangan.',
+      icon: 'fa-image',
+    },
+    {
+      control: 'halaman_mempelai',
+      id: 'halaman-mempelai',
+      title: 'Halaman Mempelai',
+      description: 'Tampilkan informasi kedua mempelai.',
+      icon: 'fa-heart',
+    },
+    {
+      control: 'halaman_acara',
+      id: 'halaman-acara',
+      title: 'Halaman Acara',
+      description: 'Tampilkan informasi akad dan resepsi.',
+      icon: 'fa-calendar-alt',
+    },
+    {
+      control: 'halaman_ucapan',
+      id: 'halaman-ucapan',
+      title: 'Halaman Ucapan',
+      description: 'Tampilkan form serta daftar ucapan tamu.',
+      icon: 'fa-comments',
+    },
+    {
+      control: 'halaman_galery',
+      id: 'halaman-galery',
+      title: 'Halaman Gallery/Album',
+      description: 'Tampilkan album foto pada undangan.',
+      icon: 'fa-images',
+    },
+    {
+      control: 'halaman_cerita',
+      id: 'halaman-cerita',
+      title: 'Halaman Cerita',
+      description: 'Tampilkan cerita perjalanan pasangan.',
+      icon: 'fa-book-open',
+    },
+    {
+      control: 'halaman_lokasi',
+      id: 'halaman-lokasi',
+      title: 'Halaman Lokasi',
+      description: 'Tampilkan peta dan alamat acara.',
+      icon: 'fa-map-marker-alt',
+    },
+    {
+      control: 'halaman_prokes',
+      id: 'halaman-prokes',
+      title: 'Halaman Prokes',
+      description: 'Tampilkan informasi protokol kesehatan.',
+      icon: 'fa-shield-alt',
+    },
+    {
+      control: 'halaman_send_gift',
+      id: 'halaman-send-gift',
+      title: 'Halaman Kirim Hadiah',
+      description: 'Tampilkan informasi hadiah dan rekening.',
+      icon: 'fa-gift',
+    },
+    {
+      control: 'halaman_qoute',
+      id: 'halaman-qoute',
+      title: 'Halaman Quote',
+      description: 'Tampilkan kutipan atau doa pilihan.',
+      icon: 'fa-quote-left',
+    },
+  ];
+
   constructor(
     private fb: FormBuilder,
     private dashboardSvc: DashboardService,
@@ -183,6 +256,38 @@ export class PengaturanComponent implements OnInit {
 
   private normalizeSalamValue(value: unknown, fallback: string): string {
     return normalizeSalamValue(value, fallback);
+  }
+
+  getMusicStatusLabel(): string {
+    const source = String(
+      this.settingData?.music_source_type ||
+      this.settingData?.music_info?.music_source_type ||
+      this.settingData?.music_info?.source ||
+      this.settingData?.active_music?.source_type ||
+      ''
+    ).toLowerCase();
+
+    if (source === 'custom' || source === 'private' || source === 'pribadi') {
+      return 'Musik pribadi';
+    }
+
+    if (source === 'catalog' || source === 'global_catalog') {
+      return 'Musik katalog';
+    }
+
+    if (source === 'default') {
+      return 'Musik default';
+    }
+
+    if (this.settingData?.musik || this.settingData?.music || this.settingData?.selected_music_id) {
+      return 'Musik katalog';
+    }
+
+    return 'Belum dipilih';
+  }
+
+  getControlLength(controlName: string): number {
+    return String(this.salamForm.get(controlName)?.value || '').length;
   }
 
   saveSalam(): void {
