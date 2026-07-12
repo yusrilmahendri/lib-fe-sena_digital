@@ -1,0 +1,153 @@
+<div class="religion-page">
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Dashboard User</p>
+      <h2>Penyesuaian Agama</h2>
+      <p class="subtitle">
+        Atur salam, pesan WhatsApp, quote, doa, dan berkat agar konten undangan mengikuti agama yang dipilih.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="loadContent()"
+        [disabled]="isLoading || isSaving">
+        <i class="fas fa-refresh" aria-hidden="true"></i>
+        Muat Ulang
+      </button>
+      <button
+        type="button"
+        class="btn btn-danger"
+        (click)="confirmResetAll()"
+        [disabled]="isLoading || isSaving || isResettingAll">
+        <span *ngIf="isResettingAll" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Reset Semua
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Memuat...</span>
+    </div>
+    <span>Memuat konten agama...</span>
+  </div>
+
+  <form *ngIf="!isLoading" [formGroup]="form" (ngSubmit)="saveChanges()" class="religion-form">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <h3>Pilih Agama</h3>
+          <p>Template default akan mengikuti pilihan ini saat disimpan.</p>
+        </div>
+        <span class="selected-pill">{{ getSelectedReligionLabel() }}</span>
+      </div>
+
+      <div class="religion-options" role="radiogroup" aria-label="Pilihan agama">
+        <button
+          *ngFor="let option of religionOptions"
+          type="button"
+          class="religion-option"
+          [class.active]="form.get('religion_code')?.value === option.code"
+          (click)="chooseReligion(option.code)"
+          [attr.aria-pressed]="form.get('religion_code')?.value === option.code">
+          <span class="radio-dot"></span>
+          <span>{{ option.label }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <article class="field-card" *ngFor="let field of fields; trackBy: trackByField">
+        <div class="field-card-header">
+          <div>
+            <h3>{{ field.label }}</h3>
+            <p>{{ field.helper }}</p>
+          </div>
+          <span class="status-badge" [class.custom]="isCustom(field.key)">
+            {{ isCustom(field.key) ? 'Custom' : 'Default' }}
+          </span>
+        </div>
+
+        <div class="comparison-grid">
+          <div class="value-box">
+            <div class="value-label">Default</div>
+            <p>{{ getDefault(field.key) }}</p>
+          </div>
+          <div class="value-box resolved">
+            <div class="value-label">Resolved final</div>
+            <p>{{ getResolved(field.key) }}</p>
+          </div>
+        </div>
+
+        <label class="custom-label" [for]="field.key">Konten custom</label>
+        <textarea
+          class="form-control"
+          [id]="field.key"
+          [rows]="field.rows"
+          [formControl]="getControl(field.key)"
+          [placeholder]="'Kosongkan untuk memakai default'"
+          [disabled]="isSaving || resettingField === field.key">
+        </textarea>
+
+        <div class="field-actions">
+          <small>
+            {{ isCustom(field.key) ? 'Field ini memakai konten custom.' : 'Field ini memakai template default.' }}
+          </small>
+          <button
+            type="button"
+            class="btn btn-light reset-field"
+            (click)="resetField(field.key)"
+            [disabled]="isSaving || resettingField === field.key || !isCustom(field.key)">
+            <span *ngIf="resettingField === field.key" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Reset Field
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <section class="preview-panel">
+      <div class="panel-heading">
+        <div>
+          <h3>Preview Hasil Akhir</h3>
+          <p>Konten berikut adalah resolved content yang akan dipakai setelah custom dan default digabung.</p>
+        </div>
+      </div>
+
+      <div class="preview-layout">
+        <div class="invitation-preview">
+          <span class="preview-kicker">{{ getSelectedReligionLabel() }}</span>
+          <h4>{{ getResolved('opening_greeting') }}</h4>
+          <p>{{ getResolved('invitation_intro') }}</p>
+          <blockquote>
+            {{ getResolved('quote_text') }}
+            <cite>{{ getResolved('quote_source') }}</cite>
+          </blockquote>
+          <p>{{ getResolved('prayer_text') }}</p>
+          <p>{{ getResolved('blessing_text') }}</p>
+          <strong>{{ getResolved('closing_greeting') }}</strong>
+        </div>
+
+        <div class="whatsapp-preview">
+          <div class="phone-bar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="chat-bubble">
+            {{ getResolved('whatsapp_message') }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sticky-actions">
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving || isLoading">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+        {{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
+      </button>
+    </div>
+  </form>
+</div>

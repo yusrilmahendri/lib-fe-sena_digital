@@ -1,0 +1,446 @@
+:host {
+  display: block;
+  color: #1f2937;
+}
+
+.religion-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0 80px;
+}
+
+.page-header,
+.panel,
+.field-card,
+.preview-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+
+  h2 {
+    margin: 4px 0 8px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+  }
+}
+
+.eyebrow {
+  margin: 0;
+  color: #ff6b9d;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.subtitle,
+.panel-heading p,
+.field-card-header p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 260px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.religion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel,
+.preview-panel {
+  padding: 22px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+  }
+}
+
+.selected-pill,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.selected-pill {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.religion-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.religion-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #ff6b9d;
+    background: #fff7fb;
+  }
+
+  &.active {
+    border-color: #ff6b9d;
+    background: #fff0f6;
+    box-shadow: 0 8px 18px rgba(255, 107, 157, 0.18);
+
+    .radio-dot {
+      border-color: #ff6b9d;
+
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
+}
+
+.radio-dot {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #94a3b8;
+  border-radius: 50%;
+  flex: 0 0 auto;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: #ff6b9d;
+    opacity: 0;
+  }
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.field-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+}
+
+.field-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+
+  h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+  }
+}
+
+.status-badge {
+  background: #f1f5f9;
+  color: #475569;
+
+  &.custom {
+    background: #dcfce7;
+    color: #166534;
+  }
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.value-box {
+  min-height: 112px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+
+  &.resolved {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.value-label,
+.custom-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.custom-label {
+  margin-bottom: -8px;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 86px;
+  color: #1f2937;
+  border-color: #dbe3ec;
+  font-size: 14px;
+  line-height: 1.6;
+
+  &:focus {
+    border-color: #ff6b9d;
+    box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.14);
+  }
+}
+
+.field-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  small {
+    color: #64748b;
+  }
+}
+
+.reset-field {
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.preview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  gap: 18px;
+}
+
+.invitation-preview,
+.whatsapp-preview {
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fbfdff;
+}
+
+.invitation-preview {
+  padding: 22px;
+
+  h4 {
+    margin: 8px 0 14px;
+    color: #111827;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: pre-wrap;
+  }
+
+  p,
+  strong {
+    display: block;
+    margin: 0 0 14px;
+    color: #334155;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  blockquote {
+    margin: 16px 0;
+    padding: 16px;
+    border-left: 4px solid #ff6b9d;
+    background: #fff7fb;
+    color: #334155;
+    white-space: pre-wrap;
+
+    cite {
+      display: block;
+      margin-top: 10px;
+      color: #64748b;
+      font-style: normal;
+      font-weight: 700;
+    }
+  }
+}
+
+.preview-kicker {
+  color: #0369a1;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.whatsapp-preview {
+  padding: 14px;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f8fafc 100%);
+}
+
+.phone-bar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 18px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+}
+
+.chat-bubble {
+  margin-left: auto;
+  max-width: 92%;
+  padding: 14px;
+  border-radius: 8px 8px 2px 8px;
+  background: #dcf8c6;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 0 0;
+  background: linear-gradient(180deg, rgba(249, 250, 251, 0), #f9fafb 35%);
+
+  .btn {
+    min-width: 190px;
+    border: none;
+    background: #0ea5e9;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(14, 165, 233, 0.22);
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+  .content-grid,
+  .preview-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .religion-page {
+    padding-top: 56px;
+  }
+
+  .page-header,
+  .panel-heading,
+  .field-card-header,
+  .field-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .page-header,
+  .panel,
+  .field-card,
+  .preview-panel {
+    padding: 16px;
+  }
+
+  .page-header h2 {
+    font-size: 24px;
+  }
+
+  .header-actions,
+  .header-actions .btn,
+  .sticky-actions .btn {
+    width: 100%;
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-actions {
+    position: static;
+  }
+}

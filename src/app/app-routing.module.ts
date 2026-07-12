@@ -44,6 +44,7 @@ import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admi
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
+import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -65,6 +66,7 @@ const routes: Routes = [
       { path: 'bill', component: BillUserComponent },
       { path: 'overview', component: OverviewComponent },
       { path: 'bagi-undangan', component: BagiUndanganComponent },
+      { path: 'penyesuaian-agama', component: PenyesuaianAgamaComponent },
       { path: 'scan-kehadiran', component: ScanKehadiranComponent },
       {
         path: 'website',

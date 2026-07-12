@@ -181,6 +181,8 @@ export enum DashboardServiceType {
   THEME_USER_SELECTED,
   USER_PHOTOS,
   USER_PHOTOS_SORT,
+  USER_RELIGION_CONTENT,
+  USER_RELIGION_CONTENT_RESET,
   DELETE_REKENING_ADMIN,
   UPDATE_REKENING_ADMIN,
 }
@@ -589,6 +591,10 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/user/photos`;
       case DashboardServiceType.USER_PHOTOS_SORT:
         return `${this.BASE_URL_API}/v1/user/photos/sort`;
+      case DashboardServiceType.USER_RELIGION_CONTENT:
+        return `${this.BASE_URL_API}/v1/user/religion-content`;
+      case DashboardServiceType.USER_RELIGION_CONTENT_RESET:
+        return `${this.BASE_URL_API}/v1/user/religion-content/reset`;
 
       default:
         return '';
@@ -780,6 +786,19 @@ export class DashboardService {
     return this.httpSvc.delete(this.getUrl(DashboardServiceType.USER_CUSTOM_MUSIC));
   }
 
+  getReligionContent(): Observable<ReligionContentResponse> {
+    return this.httpSvc.get<ReligionContentResponse>(this.getUrl(DashboardServiceType.USER_RELIGION_CONTENT));
+  }
+
+  updateReligionContent(payload: ReligionContentUpdatePayload): Observable<ReligionContentResponse> {
+    return this.httpSvc.put<ReligionContentResponse>(this.getUrl(DashboardServiceType.USER_RELIGION_CONTENT), payload);
+  }
+
+  resetReligionContent(field?: string): Observable<ReligionContentResponse> {
+    const payload = field ? { field } : {};
+    return this.httpSvc.post<ReligionContentResponse>(this.getUrl(DashboardServiceType.USER_RELIGION_CONTENT_RESET), payload);
+  }
+
   updateRekening(id: number | string, payload: {
     kode_bank: any;
     nomor_rekening: any;
@@ -962,6 +981,39 @@ export interface UcapanStatisticsResponse {
 
 export interface UcapanDeleteResponse {
   message: string;
+}
+
+export interface ReligionContentMap {
+  [key: string]: string | null | undefined;
+}
+
+export interface ReligionContentFlags {
+  [key: string]: boolean | string | number | null | undefined;
+}
+
+export interface ReligionContentData {
+  religion_code?: string | null;
+  religion_label?: string | null;
+  defaults?: ReligionContentMap | null;
+  custom?: ReligionContentMap | null;
+  resolved?: ReligionContentMap | null;
+  flags?: ReligionContentFlags | null;
+  quote?: string | null;
+  message?: string | null;
+  whatsapp_text?: string | null;
+  salam?: string | null;
+  [key: string]: any;
+}
+
+export interface ReligionContentResponse {
+  data?: ReligionContentData;
+  message?: string;
+  [key: string]: any;
+}
+
+export interface ReligionContentUpdatePayload {
+  religion_code: string;
+  custom: ReligionContentMap;
 }
 
 // Riwayat (Visitor History) API interfaces

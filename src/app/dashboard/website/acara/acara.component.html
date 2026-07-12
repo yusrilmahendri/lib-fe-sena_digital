@@ -1,6 +1,5 @@
-<!-- responsive card -->
-<body class="bg-light">
-  <div class="container-fluid p-4">
+<body class="bg-light acara-page">
+  <div class="container-fluid acara-page__container">
     <!-- Loading Overlay -->
     <div class="loading-overlay" *ngIf="isLoading">
       <div class="spinner-container">
@@ -14,18 +13,24 @@
 
         <!-- Static Event Form (Countdown) -->
         <div class="col-12 mb-4">
-          <div class="card-custom">
-            <h2 class="title-border">Pengaturan Acara</h2>
-            <form class="row g-3 align-items-end" [formGroup]="staticEventForm" (ngSubmit)="onStaticSubmitClicked()">
-              <div class="col-12 col-lg">
+          <div class="card-custom countdown-card">
+            <div class="section-heading">
+              <span class="section-heading__icon"><i class="far fa-calendar-check"></i></span>
+              <div>
+                <h2 class="title-border">Pengaturan Acara</h2>
+                <p class="section-heading__copy">Pilih nama acara yang akan digunakan sebagai countdown utama undangan.</p>
+              </div>
+            </div>
+            <form class="countdown-form" [formGroup]="staticEventForm" (ngSubmit)="onStaticSubmitClicked()">
+              <div class="countdown-form__field">
                 <label for="event" class="form-label">Sebagai countdown acara</label>
                 <input type="text" id="event" class="form-control"
                   placeholder="Masukkan nama countdown acara"
                   formControlName="selectedEvent"
                   [value]="countdownData?.name_countdown || ''" />
               </div>
-              <div class="col-12 col-lg-auto">
-                <div class="d-flex gap-2 flex-wrap">
+              <div class="countdown-form__action">
+                <div class="action-stack">
                   <button type="button" class="btn btn-simpan" (click)="onStaticUpdateClicked()" *ngIf="hasExistingData()" [disabled]="isLoading">
                     Update Countdown
                   </button>
@@ -45,14 +50,17 @@
               <div *ngFor="let eventForm of dynamicEvents.controls; let i = index" [formGroupName]="i" class="form-container">
 
                 <div class="card-header-responsive">
-                  <h2 class="title mb-0">Acara #{{ i + 1 }}</h2>
+                  <div class="event-card-title">
+                    <span class="event-card-title__number">{{ i + 1 }}</span>
+                    <h2 class="title mb-0">Acara #{{ i + 1 }}</h2>
+                  </div>
                   <div class="card-action-buttons">
-                    <button type="button" class="btn btn-link text-dark fs-2 fw-bold p-0 m-0"
-                      (click)="addDynamicEvent()" aria-label="Add" [disabled]="isLoading">
+                    <button type="button" class="btn event-action-button event-action-button--add"
+                      (click)="addDynamicEvent()" aria-label="Tambah acara" title="Tambah acara" [disabled]="isLoading">
                       <i class="fa fa-plus"></i>
                     </button>
-                    <button type="button" class="btn btn-link text-danger fs-2 fw-bold p-0 m-0"
-                      (click)="deleteDynamicEvent(i)" *ngIf="dynamicEvents.length > 1" aria-label="Delete"
+                    <button type="button" class="btn event-action-button event-action-button--delete"
+                      (click)="deleteDynamicEvent(i)" *ngIf="dynamicEvents.length > 1" aria-label="Hapus acara" title="Hapus acara"
                       [disabled]="isLoading">
                       <i class="fa fa-trash"></i>
                     </button>
@@ -65,7 +73,7 @@
                 <input type="hidden" formControlName="link_maps" />
                 <input type="hidden" formControlName="place_id" />
 
-                <div class="mb-4">
+                <div class="form-field">
                   <label for="namaAcara{{i}}" class="form-label fw-semibold">Nama Acara</label>
                   <input type="text" class="form-control text-secondary" id="namaAcara{{i}}"
                     placeholder="Contoh: Pernikahan Andra dan Mega"
@@ -76,7 +84,7 @@
                   </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="form-field">
                   <label for="tanggal{{i}}" class="form-label fw-semibold">Tanggal</label>
                   <div class="input-icon">
                     <input type="text" class="form-control text-secondary pe-5" id="tanggal{{i}}"
@@ -90,8 +98,8 @@
                   </div>
                 </div>
 
-                <div class="responsive-form-row mb-4">
-                  <div>
+                <div class="responsive-form-row form-field">
+                  <div class="form-field">
                     <label for="waktuMulai{{i}}" class="form-label fw-semibold">Waktu Mulai</label>
                     <div class="input-icon">
                       <input type="time" class="form-control text-secondary pe-5" id="waktuMulai{{i}}"
@@ -103,7 +111,7 @@
                       Waktu mulai wajib diisi
                     </div>
                   </div>
-                  <div>
+                  <div class="form-field">
                     <label for="waktuSelesai{{i}}" class="form-label fw-semibold">Waktu Selesai</label>
                     <div class="input-icon">
                       <input type="time" class="form-control text-secondary pe-5" id="waktuSelesai{{i}}"
@@ -117,7 +125,7 @@
                   </div>
                 </div>
 
-                <div class="mb-4">
+                <div class="form-field">
                   <label for="alamat{{i}}" class="form-label fw-semibold">Alamat</label>
                   <textarea class="form-control text-secondary" id="alamat{{i}}" rows="3"
                     formControlName="address" placeholder="Masukkan alamat lengkap acara"

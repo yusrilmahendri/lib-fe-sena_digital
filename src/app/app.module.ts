@@ -107,6 +107,7 @@ import { CreateInvitationModalComponent } from './components/create-invitation-m
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
+import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
 @NgModule({
   declarations: [
     AppComponent,
@@ -201,6 +202,7 @@ import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-cat
     ResetPasswordComponent,
     ThemePreviewComponent,
     MusicCatalogComponent,
+    PenyesuaianAgamaComponent,
   ],
   imports: [
     BrowserModule,

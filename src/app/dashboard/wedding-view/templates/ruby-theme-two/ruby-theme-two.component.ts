@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
-import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
+import { BankAccount, GalleryItem, GuestWish, WeddingData, WeddingEvent } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
 import {
   logInvitationImageError,
@@ -21,6 +21,8 @@ interface WishForm {
   styleUrls: ['./ruby-theme-two.component.scss'],
 })
 export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
+  @Input() override weddingData: WeddingData | null = null;
+  @Input() override invitationOpened = false;
 
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
   isSubmittingWish = false;
