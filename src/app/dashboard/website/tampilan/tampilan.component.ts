@@ -679,60 +679,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
   /**
    * Resolve the preview URL for a theme card.
    *
-   * Priority:
-   *   1. demo_url   — primary demo URL (may be the root domain; validated below)
-   *   2. url_thema  — dedicated preview URL stored on the theme record
-   *   3. slug       — derive path as /themes/{slug} relative to the frontend origin
-   *
-   * A URL that is exactly the root origin (e.g. "https://sena-digital.com") without
-   * any further path is considered invalid and skipped.
+   * Dashboard preview must stay on the frontend-only preview route so it never
+   * opens a user's public wedding domain or backend-provided demo URL.
    */
   private resolvePreviewUrl(theme: ThemeCard): string | null {
-    const slug = theme.slug?.trim().toLowerCase();
-    if (slug === 'soft-ivory') {
-      return '/themes/soft-ivory';
-    }
-
-    const candidates = [
-      theme.demo_url?.trim(),
-      theme.url_thema?.trim(),
-    ];
-
-    for (const raw of candidates) {
-      if (!raw) continue;
-      const normalized = this.normalizePreviewUrl(raw);
-      if (normalized && !this.isRootOnlyUrl(normalized)) {
-        return normalized;
-      }
-    }
-
     const fallbackSlug = theme.slug?.trim();
     if (fallbackSlug) {
-      return `/themes/${fallbackSlug}`;
+      return `/preview-theme/${fallbackSlug}?preview=true`;
     }
 
     return null;
-  }
-
-  private normalizePreviewUrl(url: string): string | null {
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (url.startsWith('/')) {
-      return `${window.location.origin}${url}`;
-    }
-    return `${window.location.origin}/${url}`;
-  }
-
-  /** Returns true when the URL has no meaningful path beyond the origin root. */
-  private isRootOnlyUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url);
-      return parsed.pathname === '/' || parsed.pathname === '';
-    } catch {
-      return false;
-    }
   }
 
   private toSlug(name: string): string {

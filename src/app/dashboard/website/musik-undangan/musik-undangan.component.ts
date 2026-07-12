@@ -16,8 +16,8 @@ import {
   styleUrls: ['./musik-undangan.component.scss'],
 })
 export class MusikUndanganComponent implements OnInit, OnDestroy {
-  private readonly allowedMusicExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
-  private readonly maxMusicUploadSizeInBytes = 10 * 1024 * 1024;
+  private readonly allowedMusicExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
+  private readonly maxMusicUploadSizeInBytes = 20 * 1024 * 1024;
 
   isLoadingMusic = false;
   isSavingMusic = false;
@@ -81,6 +81,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.isLoadingMusic = false;
       },
       error: (err: any) => {
+        this.logHttpError('Gagal memuat data musik undangan', err);
         this.loadError = err?.error?.message || 'Gagal memuat data musik undangan.';
         this.isLoadingMusic = false;
       },
@@ -104,6 +105,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.loadMusicData();
       },
       error: (err: any) => {
+        this.logHttpError('Gagal menyimpan pilihan musik', err);
         this.notyf.error(err?.error?.message || 'Gagal menyimpan pilihan musik');
         this.isSavingMusic = false;
       },
@@ -124,7 +126,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     const fileExtension = this.getMusicFileExtension(file);
 
     if (!this.allowedMusicExtensions.includes(fileExtension)) {
-      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
+      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, M4A, AAC, atau OGG.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';
@@ -132,7 +134,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }
 
     if (file.size > this.maxMusicUploadSizeInBytes) {
-      this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
+      this.uploadError = 'Ukuran file musik melebihi batas maksimum 20 MB.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';
@@ -164,7 +166,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.loadMusicData();
       },
       error: (err: any) => {
+        this.logHttpError('Gagal mengunggah musik pribadi', err);
         this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
+        this.notyf.error(this.uploadError);
         this.isUploadingMusic = false;
       },
     });
@@ -182,6 +186,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.loadMusicData();
       },
       error: (err: any) => {
+        this.logHttpError('Gagal menghapus musik pribadi', err);
         this.notyf.error(err?.error?.message || 'Gagal menghapus musik pribadi');
         this.isUploadingMusic = false;
       },
@@ -674,8 +679,8 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
   private resolveUploadMessage(response: any, fallback: string): string {
     return this.firstString([
-      response?.message,
       response?.errors?.musik?.[0],
+      response?.message,
     ]) || fallback;
   }
 
@@ -707,5 +712,13 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     } catch (_error) {
       return '';
     }
+  }
+
+  private logHttpError(context: string, error: any): void {
+    console.error('[MusikUndangan]', context, {
+      status: error?.status,
+      url: error?.url,
+      error: error?.error,
+    });
   }
 }

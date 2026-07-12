@@ -1673,7 +1673,8 @@
   cursor: pointer;
 }
 
-.diamond-garden-moments__featured img {
+.diamond-garden-moments__featured img,
+.diamond-garden-moments__featured video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1713,7 +1714,8 @@
   box-shadow: none;
 }
 
-.diamond-garden-moments__item img {
+.diamond-garden-moments__item img,
+.diamond-garden-moments__item video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2323,7 +2325,8 @@
   background: transparent !important;
 }
 
-.diamond-garden-moments__featured img {
+.diamond-garden-moments__featured img,
+.diamond-garden-moments__featured video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
@@ -2362,7 +2365,8 @@
   border: 0 !important;
 }
 
-.diamond-garden-moments__slider .diamond-garden-moments__item img {
+.diamond-garden-moments__slider .diamond-garden-moments__item img,
+.diamond-garden-moments__slider .diamond-garden-moments__item video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;

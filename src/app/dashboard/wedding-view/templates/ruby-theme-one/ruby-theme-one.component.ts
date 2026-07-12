@@ -17,6 +17,10 @@ import {
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
 } from '../../../../shared/user-photo.model';
+import {
+  appendPreviewGuestWish,
+  isThemePreviewWeddingData,
+} from '../../../../shared/data/theme-preview-dummy.data';
 
 interface AttendanceRequest {
   user_id: number;
@@ -95,10 +99,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     this.isOpening = true;
+    super.openInvitation();
+    this.hasOpened = true;
 
     this.openingTimer = setTimeout(() => {
-      super.openInvitation();
-      this.hasOpened = true;
       this.isOpening = false;
 
       this.openingTimer2 = setTimeout(() => {
@@ -427,19 +431,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       return;
     }
 
-    if (!this.weddingData?.user_info?.id) {
-      this.toastService.showToast('Data undangan belum lengkap untuk mengirim ucapan.', 'error');
-      return;
-    }
-
     this.isSubmittingWish = true;
 
     const payload: AttendanceRequest = {
-      user_id: this.weddingData.user_info.id,
+      user_id: this.weddingData?.user_info?.id || 0,
       nama: this.wishForm.nama.trim(),
       kehadiran: this.wishForm.kehadiran as 'hadir' | 'mungkin' | 'tidak_hadir',
       pesan: this.wishForm.pesan.trim(),
     };
+
+    if (isThemePreviewWeddingData(this.weddingData)) {
+      this.weddingData = appendPreviewGuestWish(this.weddingData!, payload);
+      this.toastService.showToast('Ucapan preview ditambahkan', 'success');
+      this.wishForm = { nama: '', kehadiran: '', pesan: '' };
+      this.isSubmittingWish = false;
+      return;
+    }
+
+    if (!this.weddingData?.user_info?.id) {
+      this.toastService.showToast('Data undangan belum lengkap untuk mengirim ucapan.', 'error');
+      this.isSubmittingWish = false;
+      return;
+    }
 
     const attendanceSubscription = this.dashboardService.create(
       DashboardServiceType.ATTENDANCE,

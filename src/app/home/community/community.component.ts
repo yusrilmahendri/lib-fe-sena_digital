@@ -8,7 +8,6 @@ import {
   PublicTheme,
   ThemeService,
 } from 'src/app/dashboard.service';
-import { LandingModalService } from '../../landing-modal.service';
 import {
   buildThemeAccessMap,
   FALLBACK_THEME_ACCESS_MAP,
@@ -148,8 +147,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private dashboardService: DashboardService,
-    private landingModal: LandingModalService
+    private dashboardService: DashboardService
   ) {
     this.themeService = new ThemeService(this.dashboardService);
   }
@@ -161,6 +159,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
     this.clearShareMessageTimer();
+    document.body.classList.remove('theme-preview-open');
   }
 
   @HostListener('document:keydown.escape')
@@ -232,6 +231,10 @@ export class CommunityComponent implements OnInit, OnDestroy {
     }
   }
 
+  openThemeDetail(theme: ThemeCard): void {
+    this.openPreviewModal(theme);
+  }
+
   openPreviewModal(theme: ThemeCard): void {
     this.previewState = {
       isOpen: true,
@@ -240,6 +243,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
       shareMessage: '',
       theme,
     };
+    document.body.classList.add('theme-preview-open');
 
     if (!theme.id) {
       this.previewState.isLoading = false;
@@ -304,22 +308,41 @@ export class CommunityComponent implements OnInit, OnDestroy {
       theme: null,
     };
     this.clearShareMessageTimer();
+    document.body.classList.remove('theme-preview-open');
   }
 
   useTheme(theme: ThemeCard): void {
+    sessionStorage.setItem('selected_theme_slug', theme.slug);
     this.closePreviewModal();
-    this.landingModal.openCreateInvitation({
-      id: theme.id,
-      slug: theme.slug,
-      name: theme.name,
-      tier: theme.tier,
-      image: theme.image,
-      fallbackImage: theme.fallbackImage,
+
+    if (this.isLoggedIn()) {
+      this.router.navigate(['/dashboard/website/tampilan'], {
+        queryParams: { theme: theme.slug },
+      });
+      return;
+    }
+
+    this.router.navigate(['/register'], {
+      queryParams: { theme: theme.slug },
+    });
+  }
+
+  openFullThemePreview(theme: ThemeCard | null): void {
+    if (!theme?.slug) {
+      return;
+    }
+
+    this.closePreviewModal();
+    this.router.navigate(['/preview-theme', theme.slug], {
+      queryParams: {
+        preview: 'true',
+        source: 'landing',
+      },
     });
   }
 
   async shareTheme(theme: ThemeCard): Promise<void> {
-    const shareUrl = theme.shareUrl || this.getThemeFallbackShareUrl(theme);
+    const shareUrl = this.getThemePreviewShareUrl(theme);
     const payload = {
       title: `${theme.name} - Sena Digital`,
       text: `Lihat preview tema ${theme.name} di Sena Digital.`,
@@ -524,12 +547,18 @@ export class CommunityComponent implements OnInit, OnDestroy {
   }
 
   private getThemeFallbackShareUrl(theme: Partial<ThemeCard>): string {
-    const url = new URL(window.location.href);
-    url.hash = 'tema';
-    if (theme?.slug) {
-      url.searchParams.set('previewTema', theme.slug);
-    }
+    return this.getThemePreviewShareUrl(theme);
+  }
+
+  private getThemePreviewShareUrl(theme: Partial<ThemeCard>): string {
+    const slug = theme?.slug || 'soft-ivory';
+    const url = new URL(`/preview-theme/${slug}`, window.location.origin);
+    url.searchParams.set('preview', 'true');
     return url.toString();
+  }
+
+  private isLoggedIn(): boolean {
+    return !!localStorage.getItem('access_token');
   }
 
   private async copyToClipboard(value: string): Promise<boolean> {

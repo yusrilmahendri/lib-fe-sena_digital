@@ -4,7 +4,13 @@ import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
 import { DiamondThemeOneComponent } from '../diamond-theme-one/diamond-theme-one.component';
-import { normalizeInvitationMediaUrl, resolveInvitationPhotoUrl } from '../../../../shared/user-photo.model';
+import {
+  isInvitationVideoMedia,
+  normalizeInvitationMediaUrl,
+  resolveInvitationMediaUrlFromItem,
+  resolveInvitationPhotoUrl,
+  resolveInvitationVideoUrl,
+} from '../../../../shared/user-photo.model';
 
 interface DiamondGardenGalleryItem {
   photoUrl: string;
@@ -347,10 +353,12 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentGallery(): any[] {
-    const gallery: any[] = this.getCollageItems();
+    const collagePhotos: any[] = this.getCollageItems();
+    const galleryPhotos: any[] = this.getGalleryItems();
+    const source = collagePhotos.length ? collagePhotos : galleryPhotos;
 
-    return gallery.filter((item: any) => {
-      return Boolean(resolveInvitationPhotoUrl(item));
+    return source.filter((item: any) => {
+      return Boolean(this.getGardenMomentMediaUrl(item));
     });
   }
 
@@ -403,6 +411,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(1);
   }
 
+  getGardenMomentMediaUrl(item: any): string {
+    const rawUrl = this.isGardenMomentVideo(item)
+      ? resolveInvitationVideoUrl(item)
+      : resolveInvitationMediaUrlFromItem(item);
+
+    return this.normalizeGardenPhotoUrl(rawUrl);
+  }
+
   getGardenMomentAlt(item: any, index: number): string {
     return String(
       item?.nama_foto ||
@@ -413,18 +429,16 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   hasGardenMomentVideo(item: any): boolean {
-    return Boolean(
-      item?.url_video ||
-      item?.video_url ||
-      item?.link_video
-    );
+    return this.isGardenMomentVideo(item);
+  }
+
+  isGardenMomentVideo(item: any): boolean {
+    return isInvitationVideoMedia(item) || Boolean(resolveInvitationVideoUrl(item));
   }
 
   openGardenMomentVideo(item: any): void {
     const videoUrl = String(
-      item?.url_video ||
-      item?.video_url ||
-      item?.link_video ||
+      resolveInvitationVideoUrl(item) ||
       ''
     ).trim();
 
@@ -489,6 +503,12 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     if (!target) return;
 
     target.style.visibility = 'hidden';
+  }
+
+  onGardenVideoError(event: Event, item?: any): void {
+    const target = event.target as HTMLVideoElement | null;
+    if (!target || !item) return;
+    target.style.display = 'none';
   }
 
   getGardenEvents(): any[] {

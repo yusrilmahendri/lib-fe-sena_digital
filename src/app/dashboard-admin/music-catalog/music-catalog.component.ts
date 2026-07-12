@@ -49,7 +49,8 @@ export class MusicCatalogComponent implements OnInit {
         this.syncEditState();
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
+        this.logHttpError('Gagal memuat musik katalog', err);
         this.items = [];
         this.isLoading = false;
       },
@@ -107,6 +108,7 @@ export class MusicCatalogComponent implements OnInit {
         this.loadCatalog();
       },
       error: (err) => {
+        this.logHttpError('Gagal mengunggah musik katalog', err);
         this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
         this.notyf.error(this.uploadError);
         this.isUploading = false;
@@ -120,8 +122,9 @@ export class MusicCatalogComponent implements OnInit {
       next: () => {
         this.loadCatalog();
       },
-      error: () => {
-        this.notyf.error('Gagal memperbarui status musik katalog.');
+      error: (err) => {
+        this.logHttpError('Gagal memperbarui status musik katalog', err);
+        this.notyf.error(err?.error?.message || 'Gagal memperbarui status musik katalog.');
       },
     });
   }
@@ -132,8 +135,9 @@ export class MusicCatalogComponent implements OnInit {
         this.notyf.success('Musik default berhasil diperbarui.');
         this.loadCatalog();
       },
-      error: () => {
-        this.notyf.error('Gagal memperbarui musik default.');
+      error: (err) => {
+        this.logHttpError('Gagal memperbarui musik default', err);
+        this.notyf.error(err?.error?.message || 'Gagal memperbarui musik default.');
       },
     });
   }
@@ -153,9 +157,10 @@ export class MusicCatalogComponent implements OnInit {
         state.isSaving = false;
         this.loadCatalog();
       },
-      error: () => {
+      error: (err) => {
+        this.logHttpError('Gagal memperbarui metadata musik katalog', err);
         state.isSaving = false;
-        this.notyf.error('Gagal memperbarui metadata musik katalog.');
+        this.notyf.error(err?.error?.message || 'Gagal memperbarui metadata musik katalog.');
       },
     });
   }
@@ -182,7 +187,8 @@ export class MusicCatalogComponent implements OnInit {
         this.notyf.success('Musik katalog berhasil dihapus.');
         this.loadCatalog();
       },
-      error: () => {
+      error: (err) => {
+        this.logHttpError('Gagal menghapus musik katalog', err);
         this.notyf.error('Gagal menghapus musik katalog.');
       },
     });
@@ -206,9 +212,10 @@ export class MusicCatalogComponent implements OnInit {
       next: () => {
         this.notyf.success('Urutan musik katalog berhasil disimpan.');
       },
-      error: () => {
+      error: (err) => {
+        this.logHttpError('Gagal menyimpan urutan musik katalog', err);
         this.items = previous;
-        this.notyf.error('Gagal menyimpan urutan musik katalog.');
+        this.notyf.error(err?.error?.message || 'Gagal menyimpan urutan musik katalog.');
       },
       complete: () => {
         this.isSavingSort = false;
@@ -257,6 +264,8 @@ export class MusicCatalogComponent implements OnInit {
   private resolveUploadMessage(response: any, fallback: string): string {
     return this.firstString([
       response?.message,
+      response?.errors?.music?.[0],
+      response?.errors?.file?.[0],
       response?.errors?.musik?.[0],
     ]) || fallback;
   }
@@ -269,5 +278,13 @@ export class MusicCatalogComponent implements OnInit {
   private firstString(values: unknown[]): string | null {
     const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
     return typeof value === 'string' ? value : null;
+  }
+
+  private logHttpError(context: string, error: any): void {
+    console.error('[AdminMusicCatalog]', context, {
+      status: error?.status,
+      url: error?.url,
+      error: error?.error,
+    });
   }
 }

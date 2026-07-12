@@ -69,6 +69,8 @@ export interface GalleryItem {
   photo: string;
   photo_type?: 'gallery' | 'collage' | string | null;
   photo_url?: string | null;
+  video_url?: string | null;
+  media_type?: string | null;
   image_url?: string | null;
   preview_url?: string | null;
   description?: string | null;
@@ -120,6 +122,10 @@ export interface WeddingSettings {
   music_stream_url?: string;
   music_info?: {
     has_music: boolean;
+    source?: string | null;
+    music_source_type?: string | null;
+    url?: string | null;
+    music_stream_url?: string | null;
     supports_streaming: boolean;
     supports_range_requests: boolean;
     format_support: string[];

@@ -159,8 +159,8 @@
 
         <div class="upload-box" [class.disabled]="!canUploadCustomMusic()">
           <label for="custom-music-upload" class="form-label">Upload file musik</label>
-          <input id="custom-music-upload" type="file" class="form-control" accept="audio/*,.mp3,.wav,.m4a,.ogg" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
-          <small class="selected-file-name">{{ selectedMusicFileName || 'Format MP3, WAV, OGG, M4A. Maksimal 10 MB.' }}</small>
+          <input id="custom-music-upload" type="file" class="form-control" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg" [disabled]="isUploadingMusic || !canUploadCustomMusic()" (change)="onUploadFileSelected($event)" />
+          <small class="selected-file-name">{{ selectedMusicFileName || 'Format MP3, WAV, M4A, AAC, OGG. Maksimal 20 MB.' }}</small>
         </div>
 
         <div *ngIf="uploadError" class="alert alert-danger mt-3" role="alert">
@@ -168,7 +168,7 @@
         </div>
 
         <div class="side-actions">
-          <button type="button" class="btn btn-sky" (click)="uploadCustomMusic()" [disabled]="isUploadingMusic || !selectedMusicFile || !canUploadCustomMusic()">
+          <button type="button" class="btn btn-sky" (click)="uploadCustomMusic()" [disabled]="isUploadingMusic || !selectedMusicFile">
             <span *ngIf="isUploadingMusic" class="spinner-border spinner-border-sm me-2" role="status"></span>
             {{ isUploadingMusic ? 'Mengunggah...' : 'Upload' }}
           </button>

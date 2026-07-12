@@ -5,7 +5,13 @@ import { ToastService } from '../../../../toast.service';
 import { BankAccount, GalleryItem, WeddingEvent, WeddingStory } from '../../../../services/wedding-data.service';
 import { RubyThemeOneComponent } from '../ruby-theme-one/ruby-theme-one.component';
 import { environment } from '../../../../../environments/environment';
-import { normalizeInvitationMediaUrl, resolveInvitationPhotoUrl } from '../../../../shared/user-photo.model';
+import {
+  isInvitationVideoMedia,
+  normalizeInvitationMediaUrl,
+  resolveInvitationMediaUrlFromItem,
+  resolveInvitationPhotoUrl,
+  resolveInvitationVideoUrl,
+} from '../../../../shared/user-photo.model';
 
 @Component({
   selector: 'wc-diamond-theme-one',
@@ -1356,9 +1362,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getMomentCollageItems(): any[] {
     const collagePhotos: any[] = this.getCollageItems();
+    const galleryPhotos: any[] = this.getGalleryItems();
+    const source = collagePhotos.length ? collagePhotos : galleryPhotos;
 
-    return collagePhotos.filter((item: any) => {
-      const url = resolveInvitationPhotoUrl(item);
+    return source.filter((item: any) => {
+      const url = this.getMomentMediaUrl(item);
       return Boolean(url);
     });
   }
@@ -1373,7 +1381,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
     if (!collagePhotos.length) return [];
 
-    const remaining = collagePhotos.slice(1);
+    const remaining = this.getMomentFeaturedItem() ? collagePhotos.slice(1) : collagePhotos;
 
     return remaining.slice(0, 4);
   }
@@ -1383,7 +1391,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
     if (!collagePhotos.length) return [];
 
-    const remaining = collagePhotos.slice(1);
+    const remaining = this.getMomentFeaturedItem() ? collagePhotos.slice(1) : collagePhotos;
 
     return remaining.slice(4, 10);
   }
@@ -1392,6 +1400,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
+  }
+
+  getMomentMediaUrl(item: any): string {
+    const rawUrl = this.isMomentVideo(item)
+      ? resolveInvitationVideoUrl(item)
+      : resolveInvitationMediaUrlFromItem(item);
+
+    return this.normalizePhotoUrl(rawUrl);
   }
 
   getMomentAlt(item: any, index: number): string {
@@ -1405,18 +1421,16 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   hasMomentVideo(item: any): boolean {
-    return Boolean(
-      item?.url_video ||
-      item?.video_url ||
-      item?.link_video
-    );
+    return this.isMomentVideo(item);
+  }
+
+  isMomentVideo(item: any): boolean {
+    return isInvitationVideoMedia(item) || Boolean(resolveInvitationVideoUrl(item));
   }
 
   openMomentVideo(item: any): void {
     const videoUrl = String(
-      item?.url_video ||
-      item?.video_url ||
-      item?.link_video ||
+      resolveInvitationVideoUrl(item) ||
       ''
     ).trim();
 
@@ -1427,9 +1441,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getMomentsBackgroundUrl(index: number): string {
     const gallery = this.getMomentCollageItems();
-    const item = gallery[index + 1] || gallery[index] || gallery[0];
+    const photoItems = gallery.filter((item: any) => !this.isMomentVideo(item));
+    const item = photoItems[index] || photoItems[0];
 
-    return this.getMomentPhotoUrl(item) || this.getCoverPhotoUrl();
+    return item ? this.getMomentPhotoUrl(item) : this.getCoverPhotoUrl();
   }
 
   onMomentImageError(event: Event): void {
@@ -1441,6 +1456,12 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (fallback && target.src !== fallback) {
       target.src = fallback;
     }
+  }
+
+  onMomentVideoError(event: Event, item?: any): void {
+    const target = event.target as HTMLVideoElement | null;
+    if (!target || !item) return;
+    target.style.display = 'none';
   }
 
   getLiveStreamingData(): any {

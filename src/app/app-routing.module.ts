@@ -48,7 +48,8 @@ import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesu
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
-  { path: 'themes/:slug', component: ThemePreviewComponent },
+  { path: 'preview-theme/:slug', component: ThemePreviewComponent, data: { preview: true } },
+  { path: 'themes/:slug', component: ThemePreviewComponent, data: { preview: true } },
   { path: 'wedding/:coupleName/checkin', component: GuestCheckinLandingComponent },
   { path: 'wedding/:coupleName', component: WeddingViewComponent },
   { path: 'wedding', component: WeddingViewComponent }, // Fallback route without parameter

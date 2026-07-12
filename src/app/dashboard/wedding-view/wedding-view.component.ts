@@ -224,9 +224,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Load basic state
       const savedCurrentView = localStorage.getItem(this.STORAGE_KEYS.CURRENT_VIEW) as ContentView;
-      const savedInvitationOpened = localStorage.getItem(this.STORAGE_KEYS.INVITATION_OPENED);
       const savedSideIconsVisible = localStorage.getItem(this.STORAGE_KEYS.SIDE_ICONS_VISIBLE);
-      const savedIsPlaying = localStorage.getItem(this.STORAGE_KEYS.IS_PLAYING);
       const savedIsMuted = localStorage.getItem(this.STORAGE_KEYS.IS_MUTED);
       const savedDomain = localStorage.getItem(this.STORAGE_KEYS.DOMAIN);
       const savedWeddingData = localStorage.getItem(this.STORAGE_KEYS.WEDDING_DATA);
@@ -237,18 +235,16 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('Restored current view from localStorage:', savedCurrentView);
       }
 
-      if (savedInvitationOpened !== null) {
-        this.invitationOpened = savedInvitationOpened === 'true';
-        console.log('Restored invitation opened state:', this.invitationOpened);
-      }
+      this.invitationOpened = false;
+      this.currentView = ContentView.MAIN;
+      localStorage.removeItem(this.STORAGE_KEYS.INVITATION_OPENED);
+      localStorage.removeItem(this.STORAGE_KEYS.IS_PLAYING);
 
       if (savedSideIconsVisible !== null) {
         this.sideIconsVisible = savedSideIconsVisible === 'true';
       }
 
-      if (savedIsPlaying !== null) {
-        this.isPlaying = savedIsPlaying === 'true';
-      }
+      this.isPlaying = false;
 
       if (savedIsMuted !== null) {
         this.isMuted = savedIsMuted === 'true';
@@ -475,6 +471,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           console.log('[WeddingView] jenis_thema from API:', raw.jenis_thema ?? 'TIDAK ADA');
           console.log('[WeddingView] theme_slug from API:', raw.theme_slug ?? 'TIDAK ADA');
           console.log('[WeddingView] selected_theme_slug from API:', raw.selected_theme_slug ?? 'TIDAK ADA');
+          console.log('[WeddingViewMedia] raw response media:', {
+            gallery: raw.gallery,
+            galleries: raw.galleries,
+            photos: raw.photos,
+            metadata: raw.metadata,
+          });
 
           this.weddingData = this.applyGuestNameToWeddingData(response.data);
           this.weddingDataService.setWeddingData(this.weddingData);
@@ -811,6 +813,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     const musicUrl = resolveInvitationMusicUrl(this.weddingData);
     const sourceType = resolveInvitationMusicSourceType(this.weddingData);
 
+    console.log('[Invitation Music] raw info', this.weddingData?.settings?.music_info || (this.weddingData as any)?.music_info);
+    console.log('[Invitation Music] resolved URL', musicUrl);
+
     if (!musicUrl) {
       console.warn('[InvitationAudio] No valid music URL available in wedding settings', {
         sourceType,
@@ -860,6 +865,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       this.audioInitialized = true;
 
       this.audioElement.load();
+      console.log('[Invitation Music] audio src', this.audioElement.src);
+      console.log('[Invitation Music] paused', this.audioElement.paused);
       console.log('[InvitationAudio] Audio system initialized successfully');
 
     } catch (error) {
@@ -1085,7 +1092,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     return musicInfo?.format_support || [];
   }
 
-  togglePlay(): void {
+  togglePlay(forceAudible: boolean = false): void {
     const latestMusicUrl = resolveInvitationMusicUrl(this.weddingData);
 
     if (!latestMusicUrl) {
@@ -1130,6 +1137,13 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       this.audioElement.muted = false;
     }
 
+    if (forceAudible) {
+      this.isMuted = false;
+      this.currentVolume = 1;
+      this.audioElement.muted = false;
+      this.audioElement.volume = 1;
+    }
+
     if (this.audioElement.volume === 0 && this.currentVolume > 0) {
       this.audioElement.volume = this.currentVolume;
     }
@@ -1162,6 +1176,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           loop: this.audioElement.loop,
           preload: this.audioElement.preload,
         });
+        console.log('[Invitation Music] opened', this.invitationOpened);
+        console.log('[Invitation Music] audio src', this.audioElement.src);
+        console.log('[Invitation Music] paused', this.audioElement.paused);
         const playPromise = this.audioElement.play();
 
         if (playPromise !== undefined) {
@@ -1170,6 +1187,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
               console.log('[InvitationAudio] play() resolved');
             })
             .catch(error => {
+              console.error('[Invitation Music] play rejected', {
+                error,
+                src: this.audioElement?.src,
+                readyState: this.audioElement?.readyState,
+                networkState: this.audioElement?.networkState
+              });
               console.error('[InvitationAudio] play() rejected', {
                 reason: error,
                 src: this.audioElement?.currentSrc || this.audioElement?.src,
@@ -1215,15 +1238,15 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     // remains rendered and shows its full scrollable content.
     this.setCurrentView(ContentView.MAIN);
 
+    if (!this.isPlaying) {
+      this.togglePlay(true);
+    }
+
     // Track invitation view via attendance API
     this.submitAttendanceView();
 
     // Save state immediately after opening invitation
     this.saveStateToLocalStorage();
-
-    if (!this.isPlaying) {
-      this.togglePlay();
-    }
   }
 
   /**

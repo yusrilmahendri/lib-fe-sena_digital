@@ -280,12 +280,26 @@
           </div>
 
           <div class="diamond-garden-moments__featured" *ngIf="getGardenFeaturedPhotoItem() as featuredPhoto">
-            <img
+            <video
+              *ngIf="isGardenMomentVideo(featuredPhoto); else diamondGardenFeaturedImage"
+              [src]="getGardenMomentMediaUrl(featuredPhoto)"
+              autoplay
+              muted
+              loop
+              playsinline
+              [style.object-fit]="getPhotoObjectFit(featuredPhoto)"
+              [style.object-position]="getPhotoObjectPosition(featuredPhoto)"
+              (error)="onGardenVideoError($event, featuredPhoto)">
+            </video>
+
+            <ng-template #diamondGardenFeaturedImage>
+              <img
               [src]="getGardenGalleryPhotoUrl(featuredPhoto)"
               alt="Moment utama"
               [style.object-fit]="getPhotoObjectFit(featuredPhoto)"
               [style.object-position]="getPhotoObjectPosition(featuredPhoto)"
               (error)="onGardenImageError($event)" />
+            </ng-template>
           </div>
 
           <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length">
@@ -293,23 +307,51 @@
               <div
                 class="diamond-garden-moments__item"
                 *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto">
-                <img
+                <video
+                  *ngIf="isGardenMomentVideo(photo); else diamondGardenMomentImage"
+                  [src]="getGardenMomentMediaUrl(photo)"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  [style.object-fit]="getPhotoObjectFit(photo)"
+                  [style.object-position]="getPhotoObjectPosition(photo)"
+                  (error)="onGardenVideoError($event, photo)">
+                </video>
+
+                <ng-template #diamondGardenMomentImage>
+                  <img
                   [src]="getGardenGalleryPhotoUrl(photo)"
                   alt="Moment pernikahan"
                   [style.object-fit]="getPhotoObjectFit(photo)"
                   [style.object-position]="getPhotoObjectPosition(photo)"
                   (error)="onGardenImageError($event)" />
+                </ng-template>
               </div>
 
               <div
                 class="diamond-garden-moments__item"
                 *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto">
-                <img
+                <video
+                  *ngIf="isGardenMomentVideo(photo); else diamondGardenMomentDuplicateImage"
+                  [src]="getGardenMomentMediaUrl(photo)"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  [style.object-fit]="getPhotoObjectFit(photo)"
+                  [style.object-position]="getPhotoObjectPosition(photo)"
+                  (error)="onGardenVideoError($event, photo)">
+                </video>
+
+                <ng-template #diamondGardenMomentDuplicateImage>
+                  <img
                   [src]="getGardenGalleryPhotoUrl(photo)"
                   alt="Moment pernikahan"
                   [style.object-fit]="getPhotoObjectFit(photo)"
                   [style.object-position]="getPhotoObjectPosition(photo)"
                   (error)="onGardenImageError($event)" />
+                </ng-template>
               </div>
             </div>
           </div>

@@ -24,6 +24,7 @@ export class PenggunaComponent implements OnInit {
 
   currentPage = 1;
   itemsPerPage = 10;
+  pagination: AdminUsersPagination | null = null;
 
   processingSoftDeleteUserId: number | null = null;
   processingHardDeleteUserId: number | null = null;
@@ -67,14 +68,17 @@ export class PenggunaComponent implements OnInit {
   private fetchUsers(): void {
     this.dashboardSvc.getParam(DashboardServiceType.ADM_IDX_DASHBOARD, '').subscribe({
       next: (res) => {
-        const apiUsers = res?.users?.data ?? [];
+        const apiUsers = Array.isArray(res?.data) ? res.data : [];
+        this.pagination = res?.pagination ?? null;
         this.users = apiUsers.map((user: any) => this.mapUserToRow(user));
         this.applyFilterAndSearch();
         this.isLoading = false;
         this.loadSuccessMessage = 'Data pengguna berhasil dimuat.';
       },
-      error: () => {
+      error: (error) => {
+        this.logHttpError('Gagal memuat data pengguna', error);
         this.users = [];
+        this.pagination = null;
         this.applyFilterAndSearch();
         this.isLoading = false;
         this.notyf.error('Gagal memuat data pengguna.');
@@ -351,6 +355,7 @@ export class PenggunaComponent implements OnInit {
         await firstValueFrom(request$);
         return;
       } catch (error: any) {
+        this.logHttpError(`Gagal menjalankan ${action} delete pengguna`, error);
         lastError = error;
         const statusCode = error?.status;
         if (statusCode && statusCode !== 404 && statusCode !== 405) {
@@ -393,6 +398,14 @@ export class PenggunaComponent implements OnInit {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+  private logHttpError(context: string, error: any): void {
+    console.error('[Pengguna]', context, {
+      status: error?.status,
+      url: error?.url,
+      error: error?.error,
+    });
+  }
 }
 
 type UserStatusFilter = 'all' | 'active' | 'expiring' | 'expired';
@@ -408,4 +421,12 @@ interface AdminUserRow {
   computedStatus: UserComputedStatus;
   expirationDate: string | null;
   daysRemaining: number | null;
+}
+
+interface AdminUsersPagination {
+  current_page?: number;
+  per_page?: number;
+  total?: number;
+  last_page?: number;
+  [key: string]: any;
 }

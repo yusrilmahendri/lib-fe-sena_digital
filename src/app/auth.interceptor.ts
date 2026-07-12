@@ -21,14 +21,21 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('access_token');
+    const isApiRequest = this.isApiRequest(req.url);
 
     const shouldAttachAuthHeader = !!token && this.shouldAttachAuthHeader(req.url);
 
-    const authReq = shouldAttachAuthHeader
+    const headers: Record<string, string> = {};
+    if (isApiRequest) {
+      headers['Accept'] = 'application/json';
+    }
+    if (shouldAttachAuthHeader) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const authReq = Object.keys(headers).length
       ? req.clone({
-          setHeaders: {
-            Authorization: `Bearer ${token}`,
-          },
+          setHeaders: headers,
         })
       : req;
 

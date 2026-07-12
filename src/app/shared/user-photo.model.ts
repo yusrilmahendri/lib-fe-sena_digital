@@ -19,6 +19,8 @@ export interface UserPhoto {
   id: number;
   photo_type: PhotoType;
   photo_url: string;
+  video_url?: string | null;
+  media_type?: string | null;
   image_url?: string | null;
   preview_url?: string | null;
   photo?: string | null;
@@ -107,6 +109,67 @@ export function resolveInvitationPhotoUrl(photo: any): string {
   );
 }
 
+export function resolveInvitationMediaUrlFromItem(photo: any): string {
+  if (!photo) {
+    return '';
+  }
+
+  return normalizeInvitationMediaUrl(
+    photo?.photo_url ||
+    photo?.video_url ||
+    photo?.image_url ||
+    photo?.preview_url ||
+    photo?.url ||
+    photo?.file_url ||
+    photo?.path_url ||
+    photo?.image ||
+    photo?.photo ||
+    photo?.file_path ||
+    photo?.path ||
+    photo?.foto ||
+    photo
+  );
+}
+
+export function resolveInvitationVideoUrl(photo: any): string {
+  if (!photo) {
+    return '';
+  }
+
+  return normalizeInvitationMediaUrl(
+    photo?.video_url ||
+    photo?.url_video ||
+    photo?.link_video ||
+    (isInvitationVideoMedia(photo) ? (
+      photo?.url ||
+      photo?.file_url ||
+      photo?.path_url ||
+      photo?.file_path ||
+      photo?.path
+    ) : '')
+  );
+}
+
+export function isInvitationVideoMedia(photo: any): boolean {
+  if (!photo) {
+    return false;
+  }
+
+  const mediaType = String(photo?.media_type || photo?.type || '').toLowerCase().trim();
+  const url = String(
+    photo?.video_url ||
+    photo?.url_video ||
+    photo?.link_video ||
+    photo?.url ||
+    photo?.file_url ||
+    photo?.path ||
+    photo?.file_path ||
+    ''
+  ).toLowerCase();
+
+  return mediaType === 'video' || /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/.test(url);
+}
+
 export function logInvitationImageError(event: Event, context: string, raw?: any, resolved?: string): void {
   const img = event.target as HTMLImageElement | null;
   console.error('[InvitationImageError]', {
@@ -184,18 +247,31 @@ function getOrderedPhotosByType<T extends PhotoLike>(photos: T[] | null | undefi
 
   return photos
     .filter((photo) => {
-      const photoType = (photo as any)?.photo_type;
+      const photoType = String((photo as any)?.photo_type ?? '').trim().toLowerCase();
       return type === 'gallery' ? !photoType || photoType === 'gallery' : photoType === type;
     })
     .slice()
     .sort((a, b) => {
-      const featuredDiff = Number(Boolean((b as any)?.is_featured)) - Number(Boolean((a as any)?.is_featured));
+      const featuredDiff = Number(normalizeFeaturedFlag((b as any)?.is_featured)) - Number(normalizeFeaturedFlag((a as any)?.is_featured));
       if (featuredDiff !== 0) {
         return featuredDiff;
       }
 
       return normalizeSortOrder((a as any)?.sort_order) - normalizeSortOrder((b as any)?.sort_order);
     });
+}
+
+function normalizeFeaturedFlag(value: unknown): boolean {
+  if (value === true || value === 1) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  }
+
+  return false;
 }
 
 function normalizePhotoNumber(value: number | string | null | undefined): number | null {

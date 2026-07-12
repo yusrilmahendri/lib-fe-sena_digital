@@ -3,6 +3,11 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
+import {
+  getStatusDataFromNormalized,
+  normalizeAdminDashboardResponse,
+  normalizePaymentStatus,
+} from '../admin-payment-response.util';
 
 @Component({
   selector: 'wc-dashboard',
@@ -20,6 +25,7 @@ export class DashboardComponent implements OnInit {
   salary: any;
   total_users: any;
   pending_req: any;
+  pagination: any = null;
 
   // Modal and form properties
   modalRef?: BsModalRef;
@@ -60,74 +66,57 @@ export class DashboardComponent implements OnInit {
 
   getPaketUndangan() {
     this.isLoading = true;
-    this.dashboardSvc.list(DashboardServiceType.MNL_MD_PACK_INVITATION,).subscribe(res => {
-      this.paketList = res?.data ?? [];
-      this.getDetailUser();
+    this.dashboardSvc.list(DashboardServiceType.MNL_MD_PACK_INVITATION,).subscribe({
+      next: (res) => {
+        console.log('[DashboardAdmin] Raw paket-undangan response:', res);
+        this.paketList = res?.data ?? [];
+        this.getDetailUser();
+      },
+      error: (error) => {
+        console.error('[DashboardAdmin] Error paket-undangan response:', {
+          status: error?.status,
+          url: error?.url,
+          error: error?.error,
+        });
+        this.paketList = [];
+        this.getDetailUser();
+      }
     });
   }
 
   getDetailUser() {
-    this.dashboardSvc.getParam(DashboardServiceType.ADM_IDX_DASHBOARD, '').subscribe(res => {
-      const users = res?.users?.data ?? [];
-      const activeUsers = users.filter((user: any) => user.kd_status === 'SB');
-      this.salary = activeUsers.reduce((total: number, user: any) => {
-        const paket = this.paketList.find(p => p.id == user.paket_undangan_id);
-        const harga = paket ? parseFloat(paket.price) : 0;
-        return total + harga;
-      }, 0);
+    this.isLoading = true;
+    this.dashboardSvc.getParam(DashboardServiceType.ADM_IDX_DASHBOARD, '').subscribe({
+      next: (res) => {
+        console.log('[DashboardAdmin] Raw get-users response:', res);
+        const normalized = normalizeAdminDashboardResponse(res, this.paketList);
 
-      this.total_users = res?.total_users ?? 0;
-      this.pending_req = (res?.jumlah_belum_lunas_dan_pending?.BL ?? 0) +
-        (res?.jumlah_belum_lunas_dan_pending?.MK ?? 0);
+        this.salary = normalized.metrics.totalRevenue;
+        this.total_users = normalized.metrics.totalUsers;
+        this.pending_req = normalized.metrics.pendingRequests;
+        this.pagination = normalized.metrics.pagination;
+        this.rows = normalized.rows;
 
-      this.rows = users.map((user: any) => ({
-        id: user.id,
-        invoice: user.kode_pemesanan ?? '–',
-        pengguna: user.email ?? '–',
-        domain: user.domain ?? '–',
-        statusCode: user.kd_status,
-        statusData: this.getStatusData(user.kd_status),
-        konfirmasiAktif: user.kd_status !== 'SB', // Disabled when already paid (SB)
-        originalData: user
-      }));
-
-      this.isLoading = false;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('[DashboardAdmin] Error get-users response:', {
+          status: error?.status,
+          url: error?.url,
+          error: error?.error,
+        });
+        this.salary = 0;
+        this.total_users = 0;
+        this.pending_req = 0;
+        this.pagination = null;
+        this.rows = [];
+        this.isLoading = false;
+      }
     });
   }
 
   getStatusData(code: string | null): {text: string, class: string, ariaLabel: string} {
-    switch (code) {
-      case 'SB':
-        return {
-          text: 'Aktif',
-          class: 'aktif',
-          ariaLabel: 'Status Aktif'
-        };
-      case 'MK':
-        return {
-          text: 'Menunggu Konfirmasi',
-          class: 'waiting',
-          ariaLabel: 'Status Menunggu Konfirmasi'
-        };
-      case 'BL':
-        return {
-          text: 'Belum Lunas',
-          class: 'unpaid',
-          ariaLabel: 'Status Belum Lunas'
-        };
-      case 'EX':
-        return {
-          text: 'Expired',
-          class: 'expired',
-          ariaLabel: 'Status Expired'
-        };
-      default:
-        return {
-          text: 'Belum selesai',
-          class: 'pending',
-          ariaLabel: 'Status Belum selesai'
-        };
-    }
+    return getStatusDataFromNormalized(normalizePaymentStatus(code));
   }
 
   onConfirmClicked(row: any, template: TemplateRef<any>) {

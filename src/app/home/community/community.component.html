@@ -55,9 +55,9 @@
         *ngFor="let theme of filteredThemes; trackBy: trackByTheme"
         role="button"
         tabindex="0"
-        (click)="openPreviewModal(theme)"
-        (keydown.enter)="openPreviewModal(theme)"
-        (keydown.space)="openPreviewModal(theme); $event.preventDefault()"
+        (click)="openThemeDetail(theme)"
+        (keydown.enter)="openThemeDetail(theme)"
+        (keydown.space)="openThemeDetail(theme); $event.preventDefault()"
       >
         <div class="theme-card__media">
           <span class="theme-card__badge">{{ theme.badge }}</span>
@@ -69,7 +69,7 @@
             (error)="onThemeImgError(theme)"
           />
           <span class="theme-card__preview">
-            Preview tema
+            Preview Tema
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </span>
         </div>
@@ -82,9 +82,9 @@
             <button
               class="theme-btn theme-btn--ghost"
               type="button"
-              (click)="openPreviewModal(theme); $event.stopPropagation()"
+              (click)="openThemeDetail(theme); $event.stopPropagation()"
             >
-              Preview
+              Preview Tema
             </button>
             <button
               class="theme-btn theme-btn--primary"
@@ -169,10 +169,17 @@
             <button
               type="button"
               class="theme-btn theme-btn--primary theme-btn--large"
+              (click)="openFullThemePreview(theme)"
+            >
+              Preview Tema
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button
+              type="button"
+              class="theme-btn theme-btn--secondary theme-btn--large"
               (click)="useTheme(theme)"
             >
               Gunakan Tema Ini
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
             <button
               type="button"

@@ -1,4 +1,4 @@
-import { normalizeInvitationMediaUrl } from './user-photo.model';
+import { environment } from '../../environments/environment';
 
 export interface MusicTrack {
   id: number;
@@ -58,6 +58,12 @@ export interface UserMusicSelection {
 
 export function resolveInvitationMusicUrl(data: any): string | null {
   const url = firstNonEmptyString([
+    data?.settings?.music_info?.music_stream_url,
+    data?.music_info?.music_stream_url,
+    data?.settings?.music_stream_url,
+    data?.music_stream_url,
+    data?.settings?.music_info?.url,
+    data?.music_info?.url,
     data?.settings?.resolved_music_url,
     data?.resolved_music_url,
     data?.settings?.custom_music?.url,
@@ -80,16 +86,19 @@ export function resolveInvitationMusicUrl(data: any): string | null {
     data?.default_music?.stream_url,
     data?.default_music?.audio_url,
     data?.default_music?.url,
-    data?.settings?.music_stream_url,
-    data?.music_stream_url,
     data?.settings?.musik,
+    data?.musik,
   ]);
 
-  return url ? normalizeInvitationMediaUrl(url) || url : null;
+  return url ? normalizeInvitationMusicUrl(url) || url : null;
 }
 
 export function resolveInvitationMusicSourceType(data: any): string {
   return firstNonEmptyString([
+    data?.settings?.music_info?.music_source_type,
+    data?.music_info?.music_source_type,
+    data?.settings?.music_info?.source,
+    data?.music_info?.source,
     data?.settings?.music_source_type,
     data?.music_source_type,
     data?.settings?.active_music?.source_type,
@@ -100,4 +109,66 @@ export function resolveInvitationMusicSourceType(data: any): string {
 function firstNonEmptyString(values: unknown[]): string | null {
   const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
   return typeof value === 'string' ? value : null;
+}
+
+function normalizeInvitationMusicUrl(value: unknown): string {
+  const rawUrl = String(value || '').trim();
+
+  if (!rawUrl || rawUrl === 'null' || rawUrl === 'undefined') {
+    return '';
+  }
+
+  if (rawUrl.startsWith('data:') || rawUrl.startsWith('blob:')) {
+    return rawUrl;
+  }
+
+  if (/^\/?assets\//i.test(rawUrl)) {
+    return rawUrl.replace(/^\/+/, '');
+  }
+
+  const apiBase = getInvitationApiOrigin();
+
+  if (/^https?:\/\/(127\.0\.0\.1|localhost):8000/i.test(rawUrl)) {
+    return rawUrl.replace(/^https?:\/\/(127\.0\.0\.1|localhost):8000/i, apiBase);
+  }
+
+  if (/^https?:\/\//i.test(rawUrl)) {
+    return rawUrl;
+  }
+
+  if (rawUrl.startsWith('/storage/')) {
+    return `${apiBase}${rawUrl}`;
+  }
+
+  if (rawUrl.startsWith('storage/')) {
+    return `${apiBase}/${rawUrl}`;
+  }
+
+  if (rawUrl.startsWith('/api/')) {
+    return `${apiBase}${rawUrl}`;
+  }
+
+  if (rawUrl.startsWith('api/')) {
+    return `${apiBase}/${rawUrl}`;
+  }
+
+  if (/^[^/]+\.(mp3|wav|ogg|m4a|aac)(\?.*)?$/i.test(rawUrl)) {
+    return `${apiBase}/storage/music/${rawUrl}`;
+  }
+
+  return rawUrl;
+}
+
+function getInvitationApiOrigin(): string {
+  const env = environment as any;
+  const apiUrl =
+    env.apiBaseUrl ||
+    env.apiUrl ||
+    env.baseUrl ||
+    'https://cloud-api.sena-digital.com';
+
+  return String(apiUrl)
+    .replace(/\/api\/v1\/?$/, '')
+    .replace(/\/api\/?$/, '')
+    .replace(/\/$/, '');
 }

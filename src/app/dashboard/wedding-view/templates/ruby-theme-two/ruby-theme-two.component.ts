@@ -8,6 +8,10 @@ import {
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
 } from '../../../../shared/user-photo.model';
+import {
+  appendPreviewGuestWish,
+  isThemePreviewWeddingData,
+} from '../../../../shared/data/theme-preview-dummy.data';
 
 interface WishForm {
   nama: string;
@@ -54,10 +58,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     }
 
     this.isOpening = true;
+    super.openInvitation();
+    this.hasOpened = true;
 
     this.openingTimer = setTimeout(() => {
-      super.openInvitation();
-      this.hasOpened = true;
       this.isOpening = false;
     }, 650);
   }
@@ -388,15 +392,22 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   submitWish(): void {
     if (!this.wishForm.nama?.trim() || !this.wishForm.pesan?.trim()) { return; }
     const userId = (this.weddingData as any)?.user_info?.id;
-    if (!userId) { return; }
-
-    this.isSubmittingWish = true;
     const payload = {
-      user_id: userId,
+      user_id: userId || 0,
       nama: this.wishForm.nama.trim(),
       pesan: this.wishForm.pesan.trim(),
       kehadiran: this.wishForm.kehadiran || 'hadir',
     };
+
+    if (isThemePreviewWeddingData(this.weddingData)) {
+      this.weddingData = appendPreviewGuestWish(this.weddingData as WeddingData, payload);
+      this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
+      return;
+    }
+
+    if (!userId) { return; }
+
+    this.isSubmittingWish = true;
 
     this.svc.create(DashboardServiceType.ATTENDANCE, payload).subscribe({
       next: () => {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import {
@@ -14,7 +14,7 @@ import {
   providedIn: 'root',
 })
 export class AdminMusicCatalogService {
-  private readonly baseUrl = `${environment.apiBaseUrl}/v1/admin/music-catalog`;
+  private readonly musicBaseUrl = `${this.apiOrigin}/api/music`;
 
   constructor(private http: HttpClient) {}
 
@@ -25,7 +25,7 @@ export class AdminMusicCatalogService {
     if (params?.page) queryParams = queryParams.set('page', String(params.page));
     if (params?.per_page) queryParams = queryParams.set('per_page', String(params.per_page));
 
-    return this.http.get<any>(this.baseUrl, { params: queryParams }).pipe(
+    return this.http.get<any>(`${this.musicBaseUrl}/tracks`, { params: queryParams }).pipe(
       map((response) => ({
         items: this.normalizeCatalogItems(response),
       }))
@@ -34,31 +34,49 @@ export class AdminMusicCatalogService {
 
   uploadCatalogMusic(file: File, payload: AdminMusicCatalogPayload): Observable<any> {
     const formData = new FormData();
-    formData.append('musik', file);
+    formData.append('music', file, file.name);
     if (payload.title?.trim()) formData.append('title', payload.title.trim());
     if (payload.artist?.trim()) formData.append('artist', payload.artist.trim());
     if (payload.subtitle?.trim()) formData.append('subtitle', payload.subtitle.trim());
-    return this.http.post(this.baseUrl, formData);
+    return this.http.post(`${this.musicBaseUrl}/upload`, formData);
   }
 
   updateCatalogMusic(id: number, payload: AdminMusicCatalogPayload): Observable<any> {
-    return this.http.put(`${this.baseUrl}/${id}`, payload);
+    return this.unsupportedEndpoint('Update metadata musik belum tersedia pada kontrak endpoint backend.');
   }
 
   toggleCatalogMusic(id: number, isActive: boolean): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/${id}/toggle`, { is_active: isActive });
+    if (!isActive) {
+      return this.http.post(`${this.musicBaseUrl}/clear-selection`, {});
+    }
+
+    return this.http.post(`${this.musicBaseUrl}/select-track`, { music_id: id, track_id: id });
   }
 
   setDefaultCatalogMusic(id: number): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/${id}/set-default`, {});
+    return this.http.post(`${this.musicBaseUrl}/select-track`, { music_id: id, track_id: id });
   }
 
   deleteCatalogMusic(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/${id}`);
+    return this.http.delete(`${this.musicBaseUrl}/delete`, {
+      body: { music_id: id, track_id: id },
+    });
   }
 
   sortCatalogMusic(items: AdminMusicCatalogSortPayload[]): Observable<any> {
-    return this.http.patch(`${this.baseUrl}/sort-order`, { items });
+    return this.unsupportedEndpoint('Pengurutan musik belum tersedia pada kontrak endpoint backend.');
+  }
+
+  private get apiOrigin(): string {
+    return environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  }
+
+  private unsupportedEndpoint(message: string): Observable<never> {
+    return throwError(() => ({
+      status: 0,
+      url: this.musicBaseUrl,
+      error: { message },
+    }));
   }
 
   private normalizeCatalogItems(response: any): AdminMusicCatalogItem[] {

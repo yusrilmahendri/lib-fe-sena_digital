@@ -1426,10 +1426,12 @@
   cursor: pointer;
 }
 
-.diamond-moments__featured img {
+.diamond-moments__featured img,
+.diamond-moments__featured video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .diamond-moments__play {
@@ -1463,10 +1465,12 @@
   box-shadow: 0 12px 24px rgba(0,0,0,.22);
 }
 
-.diamond-moments__item img {
+.diamond-moments__item img,
+.diamond-moments__item video {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .diamond-moments__section--two {

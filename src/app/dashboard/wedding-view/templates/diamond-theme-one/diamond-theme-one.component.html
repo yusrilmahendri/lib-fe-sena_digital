@@ -383,12 +383,26 @@
               class="diamond-moments__featured"
               *ngIf="getMomentFeaturedItem() as featured"
               (click)="openMomentVideo(featured)">
-              <img
+              <video
+                *ngIf="isMomentVideo(featured); else diamondMomentFeaturedImage"
+                [src]="getMomentMediaUrl(featured)"
+                autoplay
+                muted
+                loop
+                playsinline
+                [style.object-fit]="getPhotoObjectFit(featured)"
+                [style.object-position]="getPhotoObjectPosition(featured)"
+                (error)="onMomentVideoError($event, featured)">
+              </video>
+
+              <ng-template #diamondMomentFeaturedImage>
+                <img
                 [src]="getMomentPhotoUrl(featured)"
                 [alt]="getMomentAlt(featured, 0)"
                 [style.object-fit]="getPhotoObjectFit(featured)"
                 [style.object-position]="getPhotoObjectPosition(featured)"
                 (error)="onMomentImageError($event)" />
+              </ng-template>
 
               <button
                 type="button"
@@ -403,12 +417,26 @@
               <div
                 class="diamond-moments__item"
                 *ngFor="let item of getMomentPhotosPartOne(); let i = index">
-                <img
+                <video
+                  *ngIf="isMomentVideo(item); else diamondMomentPartOneImage"
+                  [src]="getMomentMediaUrl(item)"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  [style.object-fit]="getPhotoObjectFit(item)"
+                  [style.object-position]="getPhotoObjectPosition(item)"
+                  (error)="onMomentVideoError($event, item)">
+                </video>
+
+                <ng-template #diamondMomentPartOneImage>
+                  <img
                   [src]="getMomentPhotoUrl(item)"
                   [alt]="getMomentAlt(item, i)"
                   [style.object-fit]="getPhotoObjectFit(item)"
                   [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onMomentImageError($event)" />
+                </ng-template>
               </div>
             </div>
           </div>
@@ -431,12 +459,26 @@
               <div
                 class="diamond-moments__item"
                 *ngFor="let item of getMomentPhotosPartTwo(); let i = index">
-                <img
+                <video
+                  *ngIf="isMomentVideo(item); else diamondMomentPartTwoImage"
+                  [src]="getMomentMediaUrl(item)"
+                  autoplay
+                  muted
+                  loop
+                  playsinline
+                  [style.object-fit]="getPhotoObjectFit(item)"
+                  [style.object-position]="getPhotoObjectPosition(item)"
+                  (error)="onMomentVideoError($event, item)">
+                </video>
+
+                <ng-template #diamondMomentPartTwoImage>
+                  <img
                   [src]="getMomentPhotoUrl(item)"
                   [alt]="getMomentAlt(item, i)"
                   [style.object-fit]="getPhotoObjectFit(item)"
                   [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onMomentImageError($event)" />
+                </ng-template>
               </div>
             </div>
           </div>

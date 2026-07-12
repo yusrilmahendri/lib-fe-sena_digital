@@ -334,6 +334,17 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
   }
 
+  &--secondary {
+    border: 1px solid rgba(92, 45, 78, 0.18);
+    background: #f8eef4;
+    color: $lp-primary;
+
+    &:hover {
+      border-color: rgba(92, 45, 78, 0.32);
+      background: #f2e2ec;
+    }
+  }
+
   &--large {
     min-height: 52px;
     padding: 0.9rem 1.35rem;

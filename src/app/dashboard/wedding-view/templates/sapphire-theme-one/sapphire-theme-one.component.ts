@@ -8,6 +8,10 @@ import {
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
 } from '../../../../shared/user-photo.model';
+import {
+  appendPreviewGuestWish,
+  isThemePreviewWeddingData,
+} from '../../../../shared/data/theme-preview-dummy.data';
 
 interface WishForm {
   nama: string;
@@ -57,9 +61,9 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
 
     this.isOpening = true;
+    super.openInvitation();
 
     this.openingTimer = setTimeout(() => {
-      super.openInvitation();
       this.isOpening = false;
 
       this.scrollTimer = setTimeout(() => {
@@ -425,17 +429,24 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
 
     const userId = (this.weddingData as any)?.user_info?.id;
+    const payload = {
+      user_id: userId || 0,
+      nama: this.wishForm.nama.trim(),
+      pesan: this.wishForm.pesan.trim(),
+      kehadiran: this.wishForm.kehadiran || 'hadir',
+    };
+
+    if (isThemePreviewWeddingData(this.weddingData)) {
+      this.weddingData = appendPreviewGuestWish(this.weddingData as any, payload);
+      this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
+      return;
+    }
+
     if (!userId) {
       return;
     }
 
     this.isSubmittingWish = true;
-    const payload = {
-      user_id: userId,
-      nama: this.wishForm.nama.trim(),
-      pesan: this.wishForm.pesan.trim(),
-      kehadiran: this.wishForm.kehadiran || 'hadir',
-    };
 
     this.svc.create(DashboardServiceType.ATTENDANCE, payload).subscribe({
       next: () => {
