@@ -108,6 +108,11 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
 import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
+import { RevealDirective } from './shared/animations/reveal.directive';
+import { RevealScopeDirective } from './shared/animations/reveal-scope.directive';
+import { RevealStaggerDirective } from './shared/animations/reveal-stagger.directive';
+import { FloatingDecorationDirective } from './shared/animations/floating-decoration.directive';
+import { ParallaxDirective } from './shared/animations/parallax.directive';
 @NgModule({
   declarations: [
     AppComponent,
@@ -203,6 +208,11 @@ import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesu
     ThemePreviewComponent,
     MusicCatalogComponent,
     PenyesuaianAgamaComponent,
+    RevealDirective,
+    RevealScopeDirective,
+    RevealStaggerDirective,
+    FloatingDecorationDirective,
+    ParallaxDirective,
   ],
   imports: [
     BrowserModule,

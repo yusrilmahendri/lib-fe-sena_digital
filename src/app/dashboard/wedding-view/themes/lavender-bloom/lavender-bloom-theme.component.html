@@ -1,14 +1,15 @@
-<section class="lavender-theme" *ngIf="weddingData as data">
+<section class="lavender-theme" appRevealScope="lavender-bloom" *ngIf="weddingData as data">
   <div class="cover-card" *ngIf="!invitationOpened">
     <div
       class="cover-photo"
+      [appParallax]="6"
       [style.background-image]="'url(' + getCoverPhoto() + ')'"
       [style.background-size]="getCoverPhotoObjectFit()"
       [style.background-position]="getCoverPhotoObjectPosition()">
       <div class="cover-overlay"></div>
       <div class="cover-flower cover-flower--top-left"></div>
       <div class="cover-flower cover-flower--bottom-right"></div>
-      <div class="cover-content">
+      <div class="cover-content" appRevealStagger>
         <p class="cover-kicker">The Wedding Of</p>
         <h1 class="cover-title">{{ getGroomNickname() }}<span>&amp;</span>{{ getBrideNickname() }}</h1>
         <p class="cover-date">{{ getOpeningDate() }}</p>
@@ -25,6 +26,7 @@
     <section class="hero-panel">
       <div
         class="hero-photo"
+        [appParallax]="5"
         [style.background-image]="'url(' + getCoverPhoto() + ')'"
         [style.background-size]="getCoverPhotoObjectFit()"
         [style.background-position]="getCoverPhotoObjectPosition()"></div>

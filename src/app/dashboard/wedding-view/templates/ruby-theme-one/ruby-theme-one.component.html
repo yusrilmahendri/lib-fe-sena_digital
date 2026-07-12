@@ -1,4 +1,4 @@
-<section class="ruby-theme-one" *ngIf="weddingData as data">
+<section class="ruby-theme-one" appRevealScope="soft-ivory" *ngIf="weddingData as data">
   <article class="ruby-shell">
     <section class="ruby-cover"
              [class.ruby-cover--opening]="isOpening"
@@ -6,6 +6,7 @@
       <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
         <div
           class="ruby-cover__media ruby-cover__bg"
+          [appParallax]="8"
           [style.background-image]="'url(' + coverPhoto + ')'"
           [style.background-size]="getCoverPhotoObjectFit()"
           [style.background-position]="getCoverPhotoObjectPosition()"></div>
@@ -17,6 +18,7 @@
 
       <img
         class="ruby-cover-frame"
+        appFloatingDecoration="floral"
         src="assets/thema-1/frame-1.png"
         alt=""
         aria-hidden="true"
@@ -24,7 +26,7 @@
 
       <div class="ruby-opening-veil" *ngIf="isOpening" aria-hidden="true"></div>
 
-      <div class="ruby-cover__content">
+      <div class="ruby-cover__content" appRevealStagger>
         <h1 class="ruby-cover__names">
           <span>{{ getPrimaryDisplayName() }}</span>
           <em>&amp;</em>

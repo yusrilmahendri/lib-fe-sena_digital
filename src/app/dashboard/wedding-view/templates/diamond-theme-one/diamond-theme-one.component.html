@@ -1,11 +1,11 @@
-<section class="diamond-theme diamond-theme-one" *ngIf="weddingData">
+<section class="diamond-theme diamond-theme-one" appRevealScope="champagne-rose" *ngIf="weddingData">
   <article class="diamond-shell">
 
     <section class="diamond-opening" *ngIf="!isInvitationOpened">
-      <img class="diamond-opening__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
+      <img class="diamond-opening__bg" [appParallax]="9" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
       <div class="diamond-opening__overlay"></div>
 
-      <div class="diamond-opening__content">
+      <div class="diamond-opening__content" appRevealStagger>
         <p class="diamond-opening__eyebrow">THE WEDDING OF</p>
 
         <h1 class="diamond-opening__names">{{ getCoupleNames() }}</h1>
@@ -23,7 +23,7 @@
     <main class="diamond-main" *ngIf="isInvitationOpened">
       <!-- HERO -->
       <section class="diamond-hero">
-        <img class="diamond-hero__bg" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
+        <img class="diamond-hero__bg" [appParallax]="8" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
         <div class="diamond-hero__overlay"></div>
 
         <div class="diamond-hero__content">

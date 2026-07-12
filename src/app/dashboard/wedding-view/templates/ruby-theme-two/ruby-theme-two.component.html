@@ -1,4 +1,4 @@
-<section class="ruby-theme-two" *ngIf="weddingData">
+<section class="ruby-theme-two" appRevealScope="lavender-bloom" *ngIf="weddingData">
   <article class="ruby-two-shell">
     <section
       class="ruby-two-cover"
@@ -6,11 +6,12 @@
       [class.ruby-two-cover--opening]="isOpening">
       <div
         class="ruby-two-cover__media"
+        [appParallax]="7"
         [style.background-image]="'url(' + getCoverPhoto() + ')'"
         [style.background-size]="getCoverPhotoObjectFit()"
         [style.background-position]="getCoverPhotoObjectPosition()"></div>
       <div class="ruby-two-cover__overlay"></div>
-      <div class="ruby-two-cover__content">
+      <div class="ruby-two-cover__content" appRevealStagger>
         <p class="ruby-two-cover__eyebrow">THE WEDDING OF</p>
         <h1 class="ruby-two-cover__names">
           <span>{{ getPrimaryDisplayName() }}</span>
@@ -42,6 +43,7 @@
       <section class="ruby-two-hero">
         <div
           class="ruby-two-hero__media"
+          [appParallax]="6"
           [style.background-image]="'url(' + getCoverPhoto() + ')'"
           [style.background-size]="getCoverPhotoObjectFit()"
           [style.background-position]="getCoverPhotoObjectPosition()"></div>

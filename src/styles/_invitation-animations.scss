@@ -1,0 +1,502 @@
+.ia-scope {
+  --ia-duration: 820ms;
+  --ia-distance: 28px;
+  --ia-blur: 12px;
+  --ia-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  overflow-x: clip;
+}
+
+.ia-package-ruby {
+  --ia-duration: 760ms;
+  --ia-distance: 22px;
+}
+
+.ia-package-sapphire {
+  --ia-duration: 820ms;
+  --ia-distance: 24px;
+  --ia-blur: 14px;
+}
+
+.ia-package-diamond {
+  --ia-duration: 980ms;
+  --ia-distance: 36px;
+  --ia-blur: 16px;
+}
+
+.ia-reveal {
+  opacity: 0;
+  transform: translate3d(0, var(--ia-distance), 0);
+  transition:
+    opacity var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms),
+    transform var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms),
+    filter var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms),
+    clip-path var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms);
+  will-change: opacity, transform, filter, clip-path;
+}
+
+.ia-reveal--fade-left {
+  transform: translate3d(var(--ia-distance), 0, 0);
+}
+
+.ia-reveal--fade-right {
+  transform: translate3d(calc(var(--ia-distance) * -1), 0, 0);
+}
+
+.ia-reveal--zoom-soft {
+  transform: translate3d(0, 16px, 0) scale(0.965);
+}
+
+.ia-reveal--clip-reveal {
+  clip-path: inset(14% 0 14% 0 round 18px);
+  transform: translate3d(0, 18px, 0);
+}
+
+.ia-reveal--blur-reveal {
+  filter: blur(var(--ia-blur));
+  transform: translate3d(0, 22px, 0);
+}
+
+.ia-reveal--cinematic {
+  filter: blur(10px);
+  clip-path: inset(18% 0 18% 0);
+  transform: translate3d(0, 36px, 0) scale(1.025);
+}
+
+.ia-reveal--depth {
+  transform: perspective(900px) translate3d(0, 34px, 0) rotateX(5deg) scale(0.985);
+}
+
+.ia-reveal--visible {
+  opacity: 1;
+  filter: blur(0);
+  clip-path: inset(0 0 0 0 round 0);
+  transform: translate3d(0, 0, 0) scale(1) rotateX(0);
+}
+
+.ia-stagger-item {
+  transition:
+    opacity 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms),
+    transform 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms),
+    filter 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms);
+}
+
+.ia-stagger-group > .ia-stagger-item {
+  animation: iaOpeningStagger 760ms var(--ia-ease) var(--ia-stagger-delay, 80ms) both;
+}
+
+.ia-reveal:not(.ia-reveal--visible) .ia-stagger-item {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translate3d(0, 14px, 0);
+}
+
+.ia-reveal--visible .ia-stagger-item {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0);
+}
+
+.ia-floating-decoration {
+  animation: iaFloat 8s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.ia-floating-decoration--floral {
+  animation-duration: 10s;
+}
+
+.ia-floating-decoration--light,
+.ia-floating-decoration--glint {
+  animation-name: iaLightFloat;
+  animation-duration: 7s;
+}
+
+.ia-parallax {
+  transform: translate3d(0, var(--ia-parallax-y, 0), 0);
+  will-change: transform;
+}
+
+.ia-theme-soft-ivory {
+  .ruby-cover__media,
+  .ruby-two-cover__media {
+    animation: iaRubyWarmZoom 6s var(--ia-ease) both;
+  }
+}
+
+.ia-theme-lavender-bloom {
+  .ruby-two-cover__media,
+  .lavender-cover__image,
+  .ruby-cover-frame,
+  .ruby-quote-frame,
+  .ruby-location-frame {
+    animation: iaFloralDrift 9s ease-in-out infinite;
+  }
+}
+
+.ia-theme-garden-whisper {
+  .sapphire-opening,
+  .sapphire-post-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sapphire-opening::before,
+  .sapphire-post-hero::before {
+    content: "";
+    position: absolute;
+    inset: -20% auto -20% -30%;
+    z-index: 1;
+    width: 36%;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+    animation: iaSapphireSweep 4.8s ease-in-out infinite;
+  }
+
+  .sapphire-opening__content,
+  .sapphire-post-hero__content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .sapphire-opening__names,
+  .sapphire-post-hero__names {
+    animation: iaBlurToSharp 1200ms var(--ia-ease) 220ms both;
+  }
+}
+
+.ia-theme-champagne-rose,
+.ia-theme-diamond-garden {
+  .diamond-opening__names,
+  .diamond-garden-opening__content h1 {
+    animation: iaDiamondLetters 1300ms var(--ia-ease) 260ms both;
+  }
+
+  .diamond-opening__button,
+  .diamond-garden-opening__button {
+    animation: iaPremiumPulse 2.8s ease-in-out infinite;
+  }
+}
+
+.ia-theme-champagne-rose {
+  .diamond-opening,
+  .diamond-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .diamond-opening::after,
+  .diamond-hero::after {
+    content: "";
+    position: absolute;
+    inset: -35% auto -35% -40%;
+    z-index: 2;
+    width: 30%;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 15%, rgba(255, 232, 190, 0.34), transparent 78%);
+    animation: iaDiamondGlint 3.8s ease-in-out infinite;
+  }
+
+  .diamond-opening__content,
+  .diamond-hero__content {
+    position: relative;
+    z-index: 3;
+  }
+}
+
+.ia-theme-diamond-garden {
+  .diamond-garden-opening__stack,
+  .theme-five-hero {
+    animation: iaCinematicZoom 5.8s var(--ia-ease) both;
+  }
+}
+
+.ruby-cover--opening,
+.ruby-two-cover--opening {
+  animation: iaRubyCardOpen 920ms var(--ia-ease) both;
+}
+
+.sapphire-opening--exiting {
+  animation: iaSapphireGlassExit 1000ms var(--ia-ease) both;
+}
+
+.diamond-main,
+.diamond-garden-main.open,
+.sapphire-content--reveal,
+.ruby-main--visible,
+.ruby-two-main--visible {
+  animation: iaMainArrive 920ms var(--ia-ease) both;
+}
+
+.gallery-card,
+.sapphire-gallery-item,
+.ruby-gallery-thumb,
+.ruby-two-gallery-item,
+.diamond-gallery-item,
+.diamond-garden-gallery-item {
+  backface-visibility: hidden;
+}
+
+.ia-reveal--visible .gallery-card,
+.ia-reveal--visible .sapphire-gallery-item,
+.ia-reveal--visible .ruby-gallery-thumb,
+.ia-reveal--visible .ruby-two-gallery-item,
+.ia-reveal--visible .diamond-gallery-item,
+.ia-reveal--visible .diamond-garden-gallery-item {
+  animation: iaGalleryDepth 760ms var(--ia-ease) both;
+}
+
+.ia-reveal--visible .ruby-countdown-box strong,
+.ia-reveal--visible .ruby-two-countdown__card strong,
+.ia-reveal--visible .sapphire-countdown__box strong,
+.ia-reveal--visible .diamond-countdown__box strong,
+.ia-reveal--visible .diamond-garden-countdown__box strong {
+  animation: iaCountdownFlip 680ms var(--ia-ease) both;
+}
+
+.ruby-gallery-play,
+.ruby-two-gallery-featured__play,
+.sapphire-gallery-play,
+.diamond-gallery-play {
+  animation: iaPlayPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes iaRubyWarmZoom {
+  from {
+    transform: scale(1.055);
+    filter: saturate(0.95) brightness(0.95);
+  }
+  to {
+    transform: scale(1);
+    filter: saturate(1.03) brightness(1);
+  }
+}
+
+@keyframes iaOpeningStagger {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes iaRubyCardOpen {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(1.015);
+    clip-path: inset(0 50% 0 50%);
+  }
+}
+
+@keyframes iaSapphireGlassExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    clip-path: inset(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -34px, 0);
+    clip-path: inset(0 0 100% 0);
+  }
+}
+
+@keyframes iaMainArrive {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes iaFloralDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(1.2deg);
+  }
+}
+
+@keyframes iaFloat {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0) rotate(1deg);
+  }
+}
+
+@keyframes iaLightFloat {
+  0%, 100% {
+    opacity: 0.74;
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(8px, -6px, 0);
+  }
+}
+
+@keyframes iaSapphireSweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  45%, 70% {
+    opacity: 0.42;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(120%) skewX(-18deg);
+  }
+}
+
+@keyframes iaBlurToSharp {
+  from {
+    opacity: 0;
+    filter: blur(16px);
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes iaDiamondLetters {
+  from {
+    opacity: 0;
+    letter-spacing: 0.16em;
+    filter: blur(10px);
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: inherit;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+@keyframes iaPremiumPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 232, 180, 0), 0 12px 28px rgba(0, 0, 0, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(255, 232, 180, 0.4), 0 18px 36px rgba(0, 0, 0, 0.22);
+  }
+}
+
+@keyframes iaDiamondGlint {
+  0% {
+    opacity: 0;
+    transform: translate3d(-140%, 0, 0) rotate(18deg);
+  }
+  38%, 58% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(140%, 0, 0) rotate(18deg);
+  }
+}
+
+@keyframes iaCinematicZoom {
+  from {
+    transform: scale(1.04);
+    filter: brightness(0.86) saturate(0.95);
+  }
+  to {
+    transform: scale(1);
+    filter: brightness(1) saturate(1);
+  }
+}
+
+@keyframes iaGalleryDepth {
+  from {
+    opacity: 0;
+    transform: perspective(800px) translate3d(0, 18px, -18px) rotateX(4deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(800px) translate3d(0, 0, 0) rotateX(0);
+  }
+}
+
+@keyframes iaCountdownFlip {
+  from {
+    opacity: 0.2;
+    transform: perspective(420px) rotateX(68deg);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(420px) rotateX(0);
+  }
+}
+
+@keyframes iaPlayPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+@media (max-width: 767px) {
+  .ia-scope {
+    --ia-duration: 620ms;
+    --ia-distance: 16px;
+    --ia-blur: 8px;
+  }
+
+  .ia-parallax {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ia-scope,
+  .ia-scope *,
+  .ia-reveal,
+  .ia-stagger-item,
+  .ia-floating-decoration,
+  .ia-parallax,
+  .ruby-cover--opening,
+  .ruby-two-cover--opening,
+  .sapphire-opening--exiting,
+  .diamond-main,
+  .diamond-garden-main.open,
+  .sapphire-content--reveal,
+  .ruby-main--visible,
+  .ruby-two-main--visible {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .ia-reveal,
+  .ia-stagger-item {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}

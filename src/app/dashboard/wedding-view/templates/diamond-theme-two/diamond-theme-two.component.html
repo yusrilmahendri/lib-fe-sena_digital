@@ -1,7 +1,7 @@
-<section class="diamond-garden-theme" *ngIf="weddingData">
+<section class="diamond-garden-theme" appRevealScope="diamond-garden" *ngIf="weddingData">
   <article class="diamond-garden-shell">
     <section class="diamond-garden-opening" *ngIf="!isInvitationOpened">
-      <div class="diamond-garden-opening__stack">
+      <div class="diamond-garden-opening__stack" [appParallax]="8">
         <img
           class="diamond-garden-opening__image diamond-garden-opening__image--top"
           [src]="getGardenHeroImage(0)"
@@ -29,7 +29,7 @@
 
       <div class="diamond-garden-opening__overlay"></div>
 
-      <div class="diamond-garden-opening__content">
+      <div class="diamond-garden-opening__content" appRevealStagger>
         <p class="diamond-garden-opening__eyebrow">THE WEDDING OF</p>
 
         <h1>
@@ -59,7 +59,7 @@
     </section>
 
     <div class="diamond-garden-main" [class.open]="isInvitationOpened">
-      <section class="theme-five-hero" id="mainContent">
+      <section class="theme-five-hero" id="mainContent" [appParallax]="7">
         <div class="hero-panel hero-top">
           <img
             [src]="getHeroImage(0)"

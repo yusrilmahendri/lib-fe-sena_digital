@@ -1,13 +1,14 @@
-<div class="sapphire-theme-one" *ngIf="weddingData" [class.sapphire-theme-one--opened]="invitationOpened">
+<div class="sapphire-theme-one" appRevealScope="garden-whisper" *ngIf="weddingData" [class.sapphire-theme-one--opened]="invitationOpened">
 
   <section
     *ngIf="!invitationOpened"
     class="sapphire-opening"
+    [appParallax]="6"
     [class.sapphire-opening--exiting]="isOpening"
     [style.background-image]="'url(' + getCoverPhoto() + ')'"
     [style.background-size]="getCoverPhotoObjectFit()"
     [style.background-position]="getCoverPhotoObjectPosition()">
-    <div class="sapphire-opening__content">
+    <div class="sapphire-opening__content" appRevealStagger>
       <p class="sapphire-opening__eyebrow">THE WEDDING OF</p>
       <h1 class="sapphire-opening__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h1>
       <div class="sapphire-opening__date">
@@ -30,6 +31,7 @@
 
     <section
       class="sapphire-post-hero"
+      [appParallax]="5"
       [style.background-image]="'url(' + getCoverPhoto() + ')'"
       [style.background-size]="getCoverPhotoObjectFit()"
       [style.background-position]="getCoverPhotoObjectPosition()">
