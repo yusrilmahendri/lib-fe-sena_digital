@@ -2,7 +2,7 @@
   <article class="ruby-shell">
     <section class="ruby-cover"
              [class.ruby-cover--opening]="isOpening"
-             [class.ruby-cover--opened]="invitationOpened">
+             [class.ruby-cover--opened]="hasOpened || invitationOpened">
       <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
         <div
           class="ruby-cover__media ruby-cover__bg"
@@ -40,11 +40,11 @@
         </div>
 
         <button
-          *ngIf="!invitationOpened"
+          *ngIf="!(hasOpened || invitationOpened)"
           class="ruby-button ruby-button--primary ruby-cover__button"
           type="button"
           [disabled]="isOpening"
-          (click)="openInvitation()"
+          (click)="openInvitation($event)"
         >
           <i class="far fa-envelope" aria-hidden="true"></i>
           Buka Undangan
@@ -52,7 +52,7 @@
       </div>
     </section>
 
-    <div class="ruby-main" *ngIf="invitationOpened" [class.ruby-main--visible]="hasOpened">
+    <div class="ruby-main" *ngIf="hasOpened || invitationOpened" [class.ruby-main--visible]="hasOpened || invitationOpened">
       <section class="ruby-opening-section ruby-quote-section">
         <img
           class="ruby-quote-frame"

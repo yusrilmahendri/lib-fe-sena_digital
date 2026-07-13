@@ -1,0 +1,5 @@
+<main class="auth-page"><section class="auth-card" aria-labelledby="success-title">
+  <div class="success-icon" aria-hidden="true">✓</div><h1 id="success-title">Akun Berhasil Diverifikasi</h1>
+  <p class="subtitle">Akun Anda sudah aktif. Sekarang Anda dapat melanjutkan melengkapi data undangan.</p>
+  <button class="primary" type="button" (click)="continue()" [disabled]="checking">{{ checking ? 'Memperbarui Akun…' : 'Lanjutkan Mengisi Undangan' }}</button>
+</section></main>

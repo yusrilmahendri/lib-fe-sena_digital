@@ -61,7 +61,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   };
 
   isSubmittingWish = false;
-  isOpening = false;
+  override isOpening = false;
   hasOpened = false;
 
   private readonly subscriptions = new Subscription();
@@ -78,6 +78,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override ngOnInit(): void {
+    console.log('[Soft Ivory] ngOnInit');
     super.ngOnInit();
     this.setupRubyReceptionFromEvents();
     this.initCountdown();
@@ -86,21 +87,39 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  override ngOnChanges(changes: SimpleChanges): void {
+    console.log('[Soft Ivory] ngOnChanges');
     if (changes['weddingData']) {
       this.setupRubyReceptionFromEvents();
       this.initCountdown();
     }
   }
 
-  override openInvitation(): void {
+  override openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    console.log('[Soft Ivory] open clicked');
+    console.log('[Soft Ivory] before', {
+      hasOpened: this.hasOpened,
+      isOpening: this.isOpening,
+      isInvitationOpened: this.isInvitationOpened,
+    });
+
     if (this.isOpening || this.hasOpened) {
       return;
     }
 
     this.isOpening = true;
-    super.openInvitation();
     this.hasOpened = true;
+    this.isInvitationOpened = true;
+    this.openInvitationRequested.emit();
+
+    console.log('[Soft Ivory] after', {
+      hasOpened: this.hasOpened,
+      isOpening: this.isOpening,
+      isInvitationOpened: this.isInvitationOpened,
+    });
 
     this.openingTimer = setTimeout(() => {
       this.isOpening = false;

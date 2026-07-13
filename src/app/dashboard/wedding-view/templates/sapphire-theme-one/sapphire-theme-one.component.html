@@ -1,8 +1,8 @@
-<div class="sapphire-theme-one" appRevealScope="garden-whisper" *ngIf="weddingData" [class.sapphire-theme-one--opened]="invitationOpened">
+<div class="sapphire-theme-one" appRevealScope="garden-whisper" *ngIf="weddingData" [class.sapphire-theme-one--opened]="forceOpened">
 
   <section
-    *ngIf="!invitationOpened"
-    class="sapphire-opening"
+    *ngIf="!forceOpened"
+    class="sapphire-opening theme-cover"
     [appParallax]="6"
     [class.sapphire-opening--exiting]="isOpening"
     [style.background-image]="'url(' + getCoverPhoto() + ')'"
@@ -20,14 +20,14 @@
         <span class="sapphire-opening__guest-label">Kepada Yth. Bapak/Ibu/Saudara/i</span>
         <strong class="sapphire-opening__guest-name">{{ getGuestName() }}</strong>
       </div>
-      <button type="button" class="sapphire-opening__button" [disabled]="isOpening" (click)="openInvitation()">
+      <button type="button" class="sapphire-opening__button" [disabled]="isOpening" (click)="openInvitation($event)">
         <i class="fa fa-envelope-o" aria-hidden="true"></i>
         <span>Buka Undangan</span>
       </button>
     </div>
   </section>
 
-  <main *ngIf="invitationOpened" class="sapphire-content sapphire-content--reveal">
+  <main *ngIf="forceOpened" class="sapphire-content theme-content theme-content--opened sapphire-content--reveal">
 
     <section
       class="sapphire-post-hero"
@@ -129,7 +129,7 @@
         <p class="sapphire-kicker sapphire-kicker--light">Menuju Hari Bahagia</p>
         <h2 class="sapphire-title sapphire-title--light">Hitung Mundur</h2>
         <div class="sapphire-countdown__grid">
-          <div class="sapphire-countdown__box" *ngFor="let part of getCountdownParts()">
+          <div class="sapphire-countdown__box" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart">
             <strong>{{ part.value }}</strong>
             <span>{{ part.label | uppercase }}</span>
           </div>

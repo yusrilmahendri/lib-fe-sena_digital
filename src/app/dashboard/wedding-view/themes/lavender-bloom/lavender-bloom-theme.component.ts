@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import {
   GalleryItem,
   GuestWish,
@@ -40,13 +40,17 @@ type FilterKey =
   templateUrl: './lavender-bloom-theme.component.html',
   styleUrls: ['./lavender-bloom-theme.component.scss'],
 })
-export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
+export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   @Input() weddingData: WeddingData | null = null;
   @Input() invitationOpened = false;
   @Output() openInvitationRequested = new EventEmitter<void>();
 
   private countdownTimerId: number | null = null;
+  private openingTimerId: number | null = null;
   now = Date.now();
+  isOpening = false;
+  isInvitationOpened = false;
+  isCoverVisible = true;
 
   ngOnInit(): void {
     this.countdownTimerId = window.setInterval(() => {
@@ -58,10 +62,60 @@ export class LavenderBloomThemeComponent implements OnInit, OnDestroy {
     if (this.countdownTimerId !== null) {
       window.clearInterval(this.countdownTimerId);
     }
+    if (this.openingTimerId !== null) {
+      window.clearTimeout(this.openingTimerId);
+    }
   }
 
-  openInvitation(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['invitationOpened']) {
+      return;
+    }
+
+    if (this.invitationOpened && !this.isOpening && !this.isInvitationOpened) {
+      console.debug('[LavenderBloomOpening] synced opened state from parent input');
+      this.isInvitationOpened = true;
+      this.isCoverVisible = false;
+      return;
+    }
+
+    if (!this.invitationOpened && !this.isOpening && this.isInvitationOpened) {
+      console.debug('[LavenderBloomOpening] reset opened state from parent input');
+      this.isInvitationOpened = false;
+      this.isCoverVisible = true;
+    }
+  }
+
+  openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    console.debug('[LavenderBloomOpening] button clicked', {
+      parentInvitationOpened: this.invitationOpened,
+      isOpening: this.isOpening,
+      isInvitationOpened: this.isInvitationOpened,
+    });
+
+    if (this.isOpening || this.isInvitationOpened) {
+      return;
+    }
+
+    this.isOpening = true;
+    this.isCoverVisible = true;
+
+    console.debug('[LavenderBloomOpening] emitting open request to parent for audio/user gesture');
     this.openInvitationRequested.emit();
+
+    this.openingTimerId = window.setTimeout(() => {
+      this.isOpening = false;
+      this.isInvitationOpened = true;
+      this.isCoverVisible = false;
+      console.debug('[LavenderBloomOpening] animation finished');
+    }, this.getOpeningDurationMs());
+  }
+
+  protected getOpeningDurationMs(): number {
+    return 920;
   }
 
   getBride(): MempelaiPerson | null {

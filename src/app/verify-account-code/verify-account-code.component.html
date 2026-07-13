@@ -1,0 +1,12 @@
+<main class="auth-page"><section class="auth-card" aria-labelledby="otp-title">
+  <a routerLink="/" class="brand"><img src="assets/logo.svg" alt="Horuzt Invitation"></a>
+  <h1 id="otp-title">Masukkan Kode Verifikasi</h1>
+  <p class="subtitle">Kami telah mengirim kode ke {{ destination }}.</p>
+  <div class="otp" (paste)="onPaste($event)" role="group" aria-label="Kode verifikasi 6 digit">
+    <input *ngFor="let digit of digits; index as i" #digitInput type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="1" [value]="digit" [attr.aria-label]="'Digit kode ke-' + (i + 1)" (input)="onInput(i,$event)" (keydown)="onKeydown(i,$event)">
+  </div>
+  <p class="error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <button class="primary" type="button" (click)="verify()" [disabled]="submitting || digits.join('').length !== 6">{{ submitting ? 'Memverifikasi…' : 'Verifikasi Akun' }}</button>
+  <p class="resend" aria-live="polite" *ngIf="seconds">Kirim ulang tersedia dalam {{ seconds }} detik.</p>
+  <div class="actions"><button class="secondary" type="button" (click)="resend()" [disabled]="seconds > 0 || resending">{{ resending ? 'Mengirim…' : 'Kirim Ulang Kode' }}</button><button class="text-button" type="button" (click)="changeMethod()">Ganti metode verifikasi</button></div>
+</section></main>

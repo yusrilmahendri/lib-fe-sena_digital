@@ -45,6 +45,11 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
 import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
+import { VerifyAccountComponent } from './verify-account/verify-account.component';
+import { VerifyAccountCodeComponent } from './verify-account-code/verify-account-code.component';
+import { VerifyAccountSuccessComponent } from './verify-account-success/verify-account-success.component';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { AccountVerificationGuard } from './account-verification.guard';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -55,8 +60,12 @@ const routes: Routes = [
   { path: 'wedding', component: WeddingViewComponent }, // Fallback route without parameter
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'buat-undangan', component: GenerateUndanganComponent },
+  { path: 'verify-account', component: VerifyAccountComponent, canActivate: [AuthGuard] },
+  { path: 'verify-account/code', component: VerifyAccountCodeComponent, canActivate: [AuthGuard] },
+  { path: 'verify-account/success', component: VerifyAccountSuccessComponent, canActivate: [AuthGuard] },
+  { path: 'buat-undangan', component: GenerateUndanganComponent, canActivate: [AuthGuard, AccountVerificationGuard] },
   {
     path: 'dashboard',
     component: DashboardUserComponent,
@@ -66,30 +75,30 @@ const routes: Routes = [
       { path: 'profile', component: ProfileComponent },
       { path: 'bill', component: BillUserComponent },
       { path: 'overview', component: OverviewComponent },
-      { path: 'bagi-undangan', component: BagiUndanganComponent },
-      { path: 'penyesuaian-agama', component: PenyesuaianAgamaComponent },
-      { path: 'scan-kehadiran', component: ScanKehadiranComponent },
+      { path: 'bagi-undangan', component: BagiUndanganComponent, canActivate: [AccountVerificationGuard] },
+      { path: 'penyesuaian-agama', component: PenyesuaianAgamaComponent, canActivate: [AccountVerificationGuard] },
+      { path: 'scan-kehadiran', component: ScanKehadiranComponent, canActivate: [AccountVerificationGuard] },
       {
         path: 'website',
         component: WebsiteUserComponent,
         children: [
-          { path: 'tampilan', component: TampilanComponent },
-          { path: 'pengaturan', component: PengaturanComponent },
-          { path: 'data-website', component: DataWebsiteComponent },
-          { path: 'mempelai', component: MempelaiComponent },
-          { path: 'acara', component: AcaraComponent },
-          { path: 'gallery', component: GalleryComponent },
-          { path: 'musik-undangan', component: MusikUndanganComponent },
-          { path: 'cerita-quote', component: CeritaQuoteComponent },
-          { path: 'rekening', component: RekeningComponent },
+          { path: 'tampilan', component: TampilanComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'pengaturan', component: PengaturanComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'data-website', component: DataWebsiteComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'mempelai', component: MempelaiComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'acara', component: AcaraComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'gallery', component: GalleryComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'musik-undangan', component: MusikUndanganComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'cerita-quote', component: CeritaQuoteComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'rekening', component: RekeningComponent, canActivate: [AccountVerificationGuard] },
         ],
       },
       {
         path: 'pengunjung',
         component: PengunjungComponent,
         children: [
-          { path: 'riwayat', component: RiwayatComponent },
-          { path: 'ucapan', component: UcapanComponent },
+          { path: 'riwayat', component: RiwayatComponent, canActivate: [AccountVerificationGuard] },
+          { path: 'ucapan', component: UcapanComponent, canActivate: [AccountVerificationGuard] },
         ],
       },      { path: 'testimoni', component: TestimoniComponent },
       { path: 'hubungi-kami', component: HubungiKamiComponent },

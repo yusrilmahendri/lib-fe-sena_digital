@@ -14,6 +14,61 @@
   font-family: "Georgia", "Times New Roman", serif;
 }
 
+.cover-card {
+  pointer-events: auto;
+}
+
+.cover-card--opening {
+  pointer-events: none;
+}
+
+.cover-card--opening .cover-photo {
+  animation: lavenderCoverExit 920ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.cover-overlay,
+.cover-flower,
+.hero-overlay,
+.hero-flower {
+  pointer-events: none;
+}
+
+.cover-content {
+  position: relative;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.open-button {
+  position: relative;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+.open-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.theme-page {
+  pointer-events: auto;
+}
+
+@keyframes lavenderCoverExit {
+  0% {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+    clip-path: inset(0 0 0 0 round 0);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, -18px, 0) scale(1.04);
+    clip-path: inset(0 0 100% 0 round 28px);
+  }
+}
+
 .cover-guest {
   margin: 0 0 14px;
   color: #6f555d;

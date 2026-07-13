@@ -76,6 +76,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  pointer-events: auto;
 }
 
 .sapphire-opening::before {
@@ -89,10 +90,19 @@
     rgba(0, 0, 0, 0.56) 100%
   );
   z-index: 1;
+  pointer-events: none;
 }
 
 .sapphire-opening--exiting {
   animation: sapphireCoverExit 1000ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+.sapphire-theme-one--opened .sapphire-opening {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .sapphire-opening__content {
@@ -104,6 +114,7 @@
   padding: 0 28px;
   text-align: center;
   color: #fff;
+  pointer-events: none;
 }
 
 .sapphire-opening__eyebrow {
@@ -163,6 +174,9 @@
   box-shadow: 0 12px 28px rgba(80, 22, 66, 0.35);
   cursor: pointer;
   transition: transform 160ms ease, opacity 160ms ease;
+  position: relative;
+  z-index: 3;
+  pointer-events: auto;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
@@ -174,8 +188,49 @@
   }
 }
 
+.sapphire-content {
+  display: block;
+  pointer-events: auto;
+  min-height: 100vh;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
 .sapphire-theme-one--opened .sapphire-content {
   animation: sapphireCinematicReveal 1000ms ease both;
+}
+
+.sapphire-theme-one--opened .sapphire-content,
+.sapphire-theme-one--opened .sapphire-content > section:first-child {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+.theme-content--opened,
+.sapphire-content.theme-content--opened {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  min-height: 100vh !important;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.theme-cover {
+  position: relative;
+  z-index: 2;
+}
+
+.theme-cover.force-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 /* ── Post hero ───────────────────────────────────────────────── */

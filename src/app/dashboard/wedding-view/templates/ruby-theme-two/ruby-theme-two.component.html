@@ -1,8 +1,12 @@
-<section class="ruby-theme-two" appRevealScope="lavender-bloom" *ngIf="weddingData">
+<section
+  class="ruby-theme-two"
+  appRevealScope="lavender-bloom"
+  *ngIf="weddingData"
+  [class.ruby-theme-two--opened]="forceOpened">
   <article class="ruby-two-shell">
     <section
-      class="ruby-two-cover"
-      *ngIf="!hasOpened"
+      class="ruby-two-cover theme-cover"
+      *ngIf="!forceOpened"
       [class.ruby-two-cover--opening]="isOpening">
       <div
         class="ruby-two-cover__media"
@@ -32,14 +36,14 @@
           class="ruby-two-button ruby-two-button--primary"
           type="button"
           [disabled]="isOpening"
-          (click)="openRubyTwoInvitation()">
+          (click)="openInvitation($event)">
           <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
           Buka Undangan
         </button>
       </div>
     </section>
 
-    <div class="ruby-two-main" *ngIf="hasOpened" [class.ruby-two-main--visible]="hasOpened">
+    <main class="ruby-two-main theme-content theme-content--opened" *ngIf="forceOpened">
       <section class="ruby-two-hero">
         <div
           class="ruby-two-hero__media"
@@ -154,7 +158,7 @@
         <p class="ruby-two-section__eyebrow">Menuju Hari Bahagia</p>
         <h2 class="ruby-two-title">Hitung Mundur</h2>
         <div class="ruby-two-countdown">
-          <div class="ruby-two-countdown__card" *ngFor="let part of getCountdownParts()">
+          <div class="ruby-two-countdown__card" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart">
             <strong>{{ part.value }}</strong>
             <span>{{ part.label }}</span>
           </div>
@@ -307,6 +311,6 @@
           </div>
         </div>
       </section>
-    </div>
+    </main>
   </article>
 </section>

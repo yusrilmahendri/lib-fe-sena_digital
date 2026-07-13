@@ -34,7 +34,7 @@ export class RegisterComponent implements OnInit {
       this.dashboardService.create(DashboardServiceType.USER_REGISTER, formData).subscribe(
         (response) => {
           this.errorMessage = '';
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/verify-account']);
         },
         (error) => {
           this.errorMessage = 'Registration failed. Please try again.';

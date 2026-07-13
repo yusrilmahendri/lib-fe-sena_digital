@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { BankAccount, GalleryItem, GuestWish, WeddingData, WeddingEvent } from '../../../../services/wedding-data.service';
@@ -24,53 +24,108 @@ interface WishForm {
   templateUrl: './ruby-theme-two.component.html',
   styleUrls: ['./ruby-theme-two.component.scss'],
 })
-export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
+export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   @Input() override weddingData: WeddingData | null = null;
   @Input() override invitationOpened = false;
 
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
   isSubmittingWish = false;
-  isOpening = false;
+  override isOpening = false;
   hasOpened = false;
+  forceOpened = false;
 
   private readonly FALLBACK_EVENT = {} as WeddingEvent;
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
-  private openingTimer: any;
 
   constructor(
     private svc: DashboardService,
-    private sanitizer?: DomSanitizer
+    private sanitizer?: DomSanitizer,
+    private cdr?: ChangeDetectorRef
   ) {
     super();
   }
 
   override ngOnInit(): void {
+    console.log('[Lavender Bloom] ngOnInit');
     super.ngOnInit();
     if (this.invitationOpened) {
       this.hasOpened = true;
+      this.isInvitationOpened = true;
+      this.isCoverVisible = false;
+      this.forceOpened = true;
     }
     console.log('[RubyThemeTwoStories]', this.weddingData?.stories, this.getLoveStories());
   }
 
-  openRubyTwoInvitation(): void {
-    if (this.isOpening || this.hasOpened) {
+  override ngOnChanges(changes: SimpleChanges): void {
+    console.log('[Lavender Bloom] ngOnChanges');
+    super.ngOnChanges(changes);
+  }
+
+  override openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    console.log('[Lavender REAL BUTTON CLICKED]');
+    console.log('[Lavender] REAL CHILD openInvitation start');
+    console.log('[Lavender Bloom] before', {
+      hasOpened: this.hasOpened,
+      isInvitationOpened: this.isInvitationOpened,
+      isOpening: this.isOpening,
+      isCoverVisible: this.isCoverVisible,
+      forceOpened: this.forceOpened,
+    });
+
+    if (this.forceOpened) {
       return;
     }
 
-    this.isOpening = true;
-    super.openInvitation();
     this.hasOpened = true;
+    this.isInvitationOpened = true;
+    this.isCoverVisible = false;
+    this.isOpening = false;
+    this.forceOpened = true;
+    this.cleanupPreviewLocks();
 
-    this.openingTimer = setTimeout(() => {
-      this.isOpening = false;
-    }, 650);
+    this.openInvitationRequested.emit();
+    this.cdr?.markForCheck();
+
+    console.log('[Lavender] REAL CHILD openInvitation after', {
+      hasOpened: this.hasOpened,
+      isInvitationOpened: this.isInvitationOpened,
+      isOpening: this.isOpening,
+      isCoverVisible: this.isCoverVisible,
+      forceOpened: this.forceOpened,
+    });
   }
 
   override ngOnDestroy(): void {
-    if (this.openingTimer) {
-      clearTimeout(this.openingTimer);
-    }
+    this.cleanupPreviewLocks();
     super.ngOnDestroy();
+  }
+
+  private cleanupPreviewLocks(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const classes = [
+      'no-scroll',
+      'modal-open',
+      'preview-open',
+      'invitation-open',
+      'cover-active',
+      'opening-active',
+      'theme-opening-active'
+    ];
+
+    classes.forEach((className) => {
+      document.body.classList.remove(className);
+      document.documentElement.classList.remove(className);
+    });
+
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   // ─── Display helpers ─────────────────────────────────────────────────
@@ -103,6 +158,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   getHeroDateLabel(): string {
     return this.formatOpeningDate(this.getPrimaryEvent()?.tanggal_acara);
+  }
+
+  trackByCountdownPart(_index: number, part: { label: string; value: string }): string {
+    return part.label;
   }
 
   // ─── Intro / Quote ────────────────────────────────────────────────────
@@ -203,15 +262,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   override getGalleryPhotoUrl(item: any): string {
-    const resolved = resolveInvitationPhotoUrl(item);
-
-    console.log('[ImageUrlDebug]', {
-      context: 'ruby-theme-two',
-      raw: item,
-      resolved
-    });
-
-    return resolved;
+    return resolveInvitationPhotoUrl(item);
   }
 
   override onImageError(event: Event): void {

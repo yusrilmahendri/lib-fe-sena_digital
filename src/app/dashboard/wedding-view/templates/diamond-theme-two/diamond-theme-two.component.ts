@@ -60,7 +60,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
   }
 
-  override openInvitation(): void {
+  override openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     this.isInvitationOpened = true;
     this.hasOpened = true;
     this.openInvitationRequested.emit();

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
@@ -24,52 +24,96 @@ interface WishForm {
   templateUrl: './sapphire-theme-one.component.html',
   styleUrls: ['./sapphire-theme-one.component.scss'],
 })
-export class SapphireThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnDestroy {
+export class SapphireThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
   isSubmittingWish = false;
-  isOpening = false;
+  hasOpened = false;
+  forceOpened = false;
 
   private readonly FALLBACK_EVENT = {} as WeddingEvent;
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
-  private openingTimer: ReturnType<typeof setTimeout> | null = null;
-  private scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private svc: DashboardService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private cdr: ChangeDetectorRef
   ) {
     super();
   }
 
   override ngOnInit(): void {
+    console.log('[Garden Whisper] ngOnInit');
     super.ngOnInit();
   }
 
+  override ngOnChanges(changes: SimpleChanges): void {
+    console.log('[Garden Whisper] ngOnChanges');
+    super.ngOnChanges(changes);
+  }
+
   override ngOnDestroy(): void {
-    if (this.openingTimer) {
-      clearTimeout(this.openingTimer);
-    }
-    if (this.scrollTimer) {
-      clearTimeout(this.scrollTimer);
-    }
+    this.cleanupPreviewLocks();
     super.ngOnDestroy();
   }
 
-  override openInvitation(): void {
-    if (this.isOpening || this.invitationOpened) {
+  override openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    console.log('[Garden REAL BUTTON CLICKED]');
+    console.log('[Garden] REAL CHILD openInvitation start');
+    console.log('[Garden Whisper] before', {
+      hasOpened: this.hasOpened,
+      isInvitationOpened: this.isInvitationOpened,
+      isOpening: this.isOpening,
+      isCoverVisible: this.isCoverVisible,
+      forceOpened: this.forceOpened,
+    });
+    if (this.forceOpened) {
       return;
     }
 
-    this.isOpening = true;
-    super.openInvitation();
+    this.hasOpened = true;
+    this.isInvitationOpened = true;
+    this.isCoverVisible = false;
+    this.isOpening = false;
+    this.forceOpened = true;
+    this.cleanupPreviewLocks();
 
-    this.openingTimer = setTimeout(() => {
-      this.isOpening = false;
+    this.openInvitationRequested.emit();
+    this.cdr.markForCheck();
 
-      this.scrollTimer = setTimeout(() => {
-        document.querySelector('.sapphire-post-hero')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 120);
-    }, 1000);
+    console.log('[Garden] REAL CHILD openInvitation after', {
+      hasOpened: this.hasOpened,
+      isInvitationOpened: this.isInvitationOpened,
+      isOpening: this.isOpening,
+      isCoverVisible: this.isCoverVisible,
+      forceOpened: this.forceOpened,
+    });
+
+  }
+  private cleanupPreviewLocks(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const classes = [
+      'no-scroll',
+      'modal-open',
+      'preview-open',
+      'invitation-open',
+      'cover-active',
+      'opening-active',
+      'theme-opening-active'
+    ];
+
+    classes.forEach((className) => {
+      document.body.classList.remove(className);
+      document.documentElement.classList.remove(className);
+    });
+
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   getCoupleNames(): string {
@@ -88,6 +132,10 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getWeddingDate(): string {
     return `${this.getWeddingDayPart()} · ${this.getWeddingMonthPart()} · ${this.getWeddingYearPart()}`;
+  }
+
+  trackByCountdownPart(_index: number, part: { label: string; value: string }): string {
+    return part.label;
   }
 
   getWeddingDayPart(): string {

@@ -1,0 +1,16 @@
+<main class="auth-page"><section class="auth-card" aria-labelledby="verify-title">
+  <a routerLink="/" class="brand"><img src="assets/logo.svg" alt="Horuzt Invitation"></a>
+  <h1 id="verify-title">Verifikasi Akun Anda</h1>
+  <p class="subtitle">Verifikasi akun diperlukan sebelum Anda dapat mengisi data undangan.</p>
+  <div *ngIf="loading" class="status" role="status">Memuat data akun…</div>
+  <div *ngIf="!loading" class="method-list">
+    <button type="button" class="method" [class.active]="channel === 'email'" (click)="select('email')" [attr.aria-pressed]="channel === 'email'">
+      <span class="method-icon">✉</span><span><strong>Verifikasi melalui Email</strong><small>{{ maskedEmail }}</small></span><span class="radio"></span>
+    </button>
+    <button type="button" class="method" [class.active]="channel === 'whatsapp'" (click)="select('whatsapp')" [attr.aria-pressed]="channel === 'whatsapp'">
+      <span class="method-icon">☏</span><span><strong>Verifikasi melalui WhatsApp</strong><small>{{ maskedPhone }}</small></span><span class="radio"></span>
+    </button>
+  </div>
+  <p class="error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <button class="primary" type="button" (click)="send()" [disabled]="loading || submitting">{{ submitting ? 'Mengirim Kode…' : 'Kirim Kode Verifikasi' }}</button>
+</section></main>

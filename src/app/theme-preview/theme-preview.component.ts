@@ -22,6 +22,8 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
   activeThemeRenderKey: ThemeRenderKey = 'ruby-theme-one';
   previewData: WeddingData = getThemePreviewDummyData(DEFAULT_THEME_SLUG);
   invitationOpened = false;
+  isLoadingPreview = true;
+  previewError = '';
   private previewAudio: HTMLAudioElement | null = null;
   private subscriptions = new Subscription();
 
@@ -29,13 +31,44 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const sub = this.route.paramMap.subscribe((params) => {
+      this.isLoadingPreview = true;
+      this.previewError = '';
+
       const rawSlug = params.get('slug') || DEFAULT_THEME_SLUG;
-      this.slug = resolveThemeSlug(rawSlug) || DEFAULT_THEME_SLUG;
+      const resolvedSlug = resolveThemeSlug(rawSlug);
+      const previewMode = this.route.snapshot.queryParamMap.get('preview') === 'true'
+        || this.route.snapshot.data['preview'] === true;
+      console.log('[Preview Theme] slug:', rawSlug);
+      console.log('[Preview Theme] preview mode:', previewMode);
+
+      if (!resolvedSlug) {
+        this.slug = DEFAULT_THEME_SLUG;
+        this.activeThemeRenderKey = resolveThemeRenderKey(DEFAULT_THEME_SLUG);
+        this.previewData = getThemePreviewDummyData(DEFAULT_THEME_SLUG);
+        this.invitationOpened = false;
+        this.previewError = `Tema "${rawSlug}" tidak ditemukan.`;
+        this.isLoadingPreview = false;
+        console.warn('[Preview Theme] unmapped slug:', rawSlug);
+        return;
+      }
+
+      this.slug = resolvedSlug;
       this.activeThemeRenderKey = resolveThemeRenderKey(this.slug);
       this.previewData = getThemePreviewDummyData(this.slug);
       this.invitationOpened = false;
       document.body.classList.remove('theme-preview-invitation-opened');
+      console.log('[Preview Theme] mapped component:', this.getResolvedComponentName(this.activeThemeRenderKey));
+      if (this.slug === 'garden-whisper') {
+        console.log('[Garden Whisper] preview data:', this.previewData);
+        console.log('[Garden Whisper] mempelai:', this.previewData?.mempelai);
+        console.log('[Garden Whisper] events:', this.previewData?.events);
+        console.log('[Garden Whisper] gallery:', this.previewData?.gallery);
+      }
+      if (this.slug === 'lavender-bloom') {
+        console.log('[Lavender Bloom] invitation data:', this.previewData);
+      }
       this.preparePreviewMusic();
+      this.isLoadingPreview = false;
     });
     this.subscriptions.add(sub);
   }
@@ -47,9 +80,13 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
   }
 
   openInvitation(): void {
-    this.invitationOpened = true;
+    console.log('[Preview Parent] open event received', {
+      slug: this.slug,
+      mappedTheme: this.activeThemeRenderKey,
+      currentInvitationOpened: this.invitationOpened,
+      musicUrl: resolveInvitationMusicUrl(this.previewData),
+    });
     this.playPreviewMusic();
-    this.startAnimations();
   }
 
   private preparePreviewMusic(): void {
@@ -75,7 +112,10 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.previewAudio.play().catch(() => {
+    this.previewAudio.play().then(() => {
+      console.log('[Preview Music] play success');
+    }).catch((error) => {
+      console.warn('[Preview Music] gagal diputar', error);
       // Browser audio policies can still block playback; the invitation stays usable.
     });
   }
@@ -92,9 +132,16 @@ export class ThemePreviewComponent implements OnInit, OnDestroy {
     this.previewAudio = null;
   }
 
-  private startAnimations(): void {
-    requestAnimationFrame(() => {
-      document.body.classList.add('theme-preview-invitation-opened');
-    });
+  private getResolvedComponentName(renderKey: ThemeRenderKey): string {
+    const componentMap: Record<ThemeRenderKey, string> = {
+      'ruby-theme-one': 'RubyThemeOneComponent',
+      'ruby-theme-two': 'RubyThemeTwoComponent',
+      'sapphire-theme-one': 'SapphireThemeOneComponent',
+      'diamond-theme-one': 'DiamondThemeOneComponent',
+      'diamond-theme-two': 'DiamondThemeTwoComponent',
+      'lavender-bloom': 'LavenderBloomThemeComponent',
+    };
+
+    return componentMap[renderKey];
   }
 }

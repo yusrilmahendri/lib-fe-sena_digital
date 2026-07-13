@@ -213,7 +213,7 @@ export class AuthModalComponent implements OnChanges {
         if (roles.includes('admin')) {
           this.router.navigate(['/admin']);
         } else {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/verify-account']);
         }
       },
       error: () => {
@@ -235,7 +235,7 @@ export class AuthModalComponent implements OnChanges {
     const email = this.forgotForm.value.email;
     this.lastForgotPasswordEmail = email;
 
-    this.auth.forgotPassword({ email }).subscribe({
+    this.auth.forgotPassword(email, 'email').subscribe({
       next: () => {
         this.isSubmitting = false;
         this.openEmailConfirmationModal();
@@ -258,7 +258,7 @@ export class AuthModalComponent implements OnChanges {
     this.isSubmitting = true;
     this.infoMessage = '';
 
-    this.auth.forgotPassword({ email: this.lastForgotPasswordEmail }).subscribe({
+    this.auth.forgotPassword(this.lastForgotPasswordEmail, 'email').subscribe({
       next: () => {
         this.isSubmitting = false;
         this.infoMessage = 'Tautan reset telah dikirim ulang.';
@@ -287,7 +287,8 @@ export class AuthModalComponent implements OnChanges {
 
     this.auth
       .resetPassword({
-        email: this.resetEmail,
+        identifier: this.resetEmail,
+        channel: 'email',
         token: this.resetToken,
         password: this.resetForm.value.password,
         password_confirmation: this.resetForm.value.password_confirmation,

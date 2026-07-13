@@ -1,5 +1,9 @@
 <section class="lavender-theme" appRevealScope="lavender-bloom" *ngIf="weddingData as data">
-  <div class="cover-card" *ngIf="!invitationOpened">
+  <div
+    class="cover-card"
+    *ngIf="isCoverVisible"
+    [class.cover-card--opening]="isOpening"
+    [class.cover-card--opened]="isInvitationOpened">
     <div
       class="cover-photo"
       [appParallax]="6"
@@ -14,7 +18,7 @@
         <h1 class="cover-title">{{ getGroomNickname() }}<span>&amp;</span>{{ getBrideNickname() }}</h1>
         <p class="cover-date">{{ getOpeningDate() }}</p>
         <p class="cover-guest">{{ getGuestName() }}</p>
-        <button class="open-button" type="button" (click)="openInvitation()">
+        <button class="open-button" type="button" [disabled]="isOpening" (click)="openInvitation($event)">
           <i class="fas fa-envelope-open-text"></i>
           Buka Undangan
         </button>
@@ -22,7 +26,7 @@
     </div>
   </div>
 
-  <div class="theme-page" *ngIf="invitationOpened">
+  <div class="theme-page" *ngIf="isInvitationOpened">
     <section class="hero-panel">
       <div
         class="hero-photo"

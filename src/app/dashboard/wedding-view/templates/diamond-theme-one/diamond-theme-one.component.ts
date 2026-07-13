@@ -19,7 +19,7 @@ import {
   styleUrls: ['./diamond-theme-one.component.scss'],
 })
 export class DiamondThemeOneComponent extends RubyThemeOneComponent implements OnInit, OnChanges, OnDestroy {
-  isInvitationOpened = false;
+  override isInvitationOpened = false;
   readonly apiBaseUrl = (environment as any).apiBaseUrl || (environment as any).apiUrl || '';
   countdown = {
     days: '00',
@@ -67,7 +67,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     super.ngOnDestroy();
   }
 
-  override openInvitation(): void {
+  override openInvitation(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
     this.isInvitationOpened = true;
     this.openInvitationRequested.emit();
     this.hasOpened = true;

@@ -35,9 +35,52 @@
 }
 
 .ruby-two-main--visible {
-  opacity: 1;
-  transform: translateY(0);
+  display: block;
+  min-height: 100vh;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto;
   animation: rubyTwoMainEnter 620ms ease both;
+}
+
+.ruby-theme-two--opened .ruby-two-cover {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.ruby-theme-two--opened .ruby-two-main,
+.ruby-theme-two--opened .ruby-two-main > section:first-child {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+.theme-content--opened,
+.ruby-two-main.theme-content--opened {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  min-height: 100vh !important;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.theme-cover {
+  position: relative;
+  z-index: 2;
+}
+
+.theme-cover.force-hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 @keyframes rubyTwoMainEnter {

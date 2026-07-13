@@ -33,7 +33,7 @@ export class LoginPageComponent implements OnInit {
       (response: any) => {
         this.errorMessage = '';
         if (response.role.includes('user')) {
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/verify-account']);
         } else if (response.role.includes('admin')) {
           this.router.navigate(['/admin']);
         } else {

@@ -10,6 +10,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { LandingModalService } from './landing-modal.service';
 import { environment } from '../environments/environment';
+import { Router } from '@angular/router';
+import { ToastService } from './toast.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,7 +19,7 @@ import { environment } from '../environments/environment';
 export class AuthInterceptor implements HttpInterceptor {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  constructor(private landingModal: LandingModalService) {}
+  constructor(private landingModal: LandingModalService, private router: Router, private toast: ToastService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('access_token');
@@ -41,6 +43,12 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
+        if (error.status === 403 && error.error?.code === 'ACCOUNT_NOT_VERIFIED') {
+          sessionStorage.setItem('verification_intended_url', this.router.url);
+          this.toast.showToast('Verifikasi akun terlebih dahulu untuk melanjutkan.', 'warning');
+          this.router.navigate(['/verify-account']);
+          return throwError(() => error);
+        }
         // 401 = not authenticated / session expired. Prompt the landing login
         // modal (never /login). We skip auth endpoints themselves (login /
         // forgot / reset / register) so a wrong-password attempt shows its own

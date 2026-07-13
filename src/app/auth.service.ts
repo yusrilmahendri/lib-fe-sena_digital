@@ -10,13 +10,35 @@ export interface LoginPayload {
   remember?: boolean;
 }
 
-export interface ForgotPasswordPayload {
+export type VerificationChannel = 'email' | 'whatsapp';
+
+export interface ApiMessageResponse { success?: boolean; message: string; }
+export interface VerificationProfile {
   email: string;
+  phone: string;
+  email_masked?: string;
+  phone_masked?: string;
+  is_verified?: boolean;
+  account_verified?: boolean;
+  email_verified_at?: string | null;
+  verification_channel?: VerificationChannel;
+  masked_destination?: string;
+  can_resend?: boolean;
+  resend_available_in?: number;
+}
+export interface VerificationStatusResponse extends ApiMessageResponse {
+  data: VerificationProfile;
+}
+export interface ForgotPasswordPayload {
+  identifier: string;
+  channel: VerificationChannel;
 }
 
 export interface ResetPasswordPayload {
-  token: string;
-  email: string;
+  token?: string;
+  code?: string;
+  identifier: string;
+  channel: VerificationChannel;
   password: string;
   password_confirmation: string;
 }
@@ -47,11 +69,27 @@ export class AuthService {
     return this.dashboardService.login(payload.email, payload.password);
   }
 
-  forgotPassword(payload: ForgotPasswordPayload): Observable<any> {
-    return this.http.post(`${this.apiBaseUrl}/v1/forgot-password`, payload);
+  sendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/send`, { channel });
   }
 
-  resetPassword(payload: ResetPasswordPayload): Observable<any> {
-    return this.http.post(`${this.apiBaseUrl}/v1/reset-password`, payload);
+  verifyAccountCode(channel: VerificationChannel, code: string): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/verify`, { channel, code });
+  }
+
+  resendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/resend`, { channel });
+  }
+
+  getVerificationStatus(): Observable<VerificationStatusResponse> {
+    return this.http.get<VerificationStatusResponse>(`${this.apiBaseUrl}/v1/auth/verification/status`);
+  }
+
+  forgotPassword(identifier: string, channel: VerificationChannel = 'email'): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/forgot-password`, { identifier, channel });
+  }
+
+  resetPassword(payload: ResetPasswordPayload): Observable<ApiMessageResponse> {
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/reset-password`, payload);
   }
 }
