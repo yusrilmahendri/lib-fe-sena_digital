@@ -16,36 +16,54 @@
   <wc-ruby-theme-one
     *ngSwitchCase="'ruby-theme-one'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-ruby-theme-one>
   <wc-ruby-theme-two
     *ngSwitchCase="'ruby-theme-two'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-ruby-theme-two>
   <wc-sapphire-theme-one
     *ngSwitchCase="'sapphire-theme-one'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-sapphire-theme-one>
   <wc-diamond-theme-one
     *ngSwitchCase="'diamond-theme-one'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-diamond-theme-one>
   <wc-diamond-theme-two
     *ngSwitchCase="'diamond-theme-two'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-diamond-theme-two>
   <wc-lavender-bloom-theme
     *ngSwitchCase="'lavender-bloom'"
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-lavender-bloom-theme>
   <wc-ruby-theme-two
     *ngSwitchDefault
     [weddingData]="previewData"
+    [invitationOpened]="isInvitationOpened"
     (openInvitationRequested)="openInvitation()">
   </wc-ruby-theme-two>
+
+  <button
+    *ngIf="isInvitationOpened"
+    class="theme-preview-music-button"
+    type="button"
+    [class.theme-preview-music-button--attention]="isMusicPlayBlocked"
+    (click)="togglePreviewMusic()"
+    [attr.aria-pressed]="isMusicPlaying">
+    <i class="fas" [class.fa-pause]="isMusicPlaying" [class.fa-play]="!isMusicPlaying" aria-hidden="true"></i>
+    <span>{{ isMusicPlaying ? 'Pause musik' : 'Play musik' }}</span>
+  </button>
 </ng-container>

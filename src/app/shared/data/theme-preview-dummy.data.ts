@@ -4,9 +4,10 @@ import {
   ThemeRenderKey,
   ThemeSlug,
 } from '../../theme-render.registry';
+import { PREVIEW_WEDDING_MUSIC } from '../preview-wedding-music.config';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const PREVIEW_MUSIC_URL = 'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3';
+const PREVIEW_MUSIC_URL = PREVIEW_WEDDING_MUSIC.url;
 
 function toIsoDate(date: Date): string {
   return date.toISOString().slice(0, 10);

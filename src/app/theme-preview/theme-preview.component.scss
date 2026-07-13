@@ -2,6 +2,29 @@
   display: block;
 }
 
+.theme-preview-music-button {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #2f2a33;
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(31, 26, 35, 0.24);
+  font-size: 0.9rem;
+  line-height: 1.1;
+}
+
+.theme-preview-music-button--attention {
+  background: #b94d74;
+}
+
 .theme-preview-state {
   min-height: 100vh;
   display: grid;
