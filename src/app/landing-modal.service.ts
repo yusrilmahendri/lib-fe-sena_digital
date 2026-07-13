@@ -6,6 +6,7 @@ export interface CreateInvitationThemePrefill {
   slug: string;
   name?: string;
   tier?: string;
+  category?: string;
   image?: string;
   fallbackImage?: string;
 }
@@ -68,6 +69,7 @@ export class LandingModalService {
   }
 
   closeCreateInvitation(): void {
+    this.pendingCreateInvitationPrefill = null;
     this.createOpen.next(false);
   }
 }

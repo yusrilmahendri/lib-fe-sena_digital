@@ -10,7 +10,7 @@ import { IdleTimeoutService } from './core/services/idle-timeout.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'Horuzt';
+  title = 'Sena Digital';
   private routerSub?: Subscription;
 
   constructor(

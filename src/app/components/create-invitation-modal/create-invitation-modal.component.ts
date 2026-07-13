@@ -213,6 +213,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   /* ----------------------------- modal controls ----------------------------- */
   closeModal(): void {
+    this.themePrefill = null;
     this.modal.closeCreateInvitation();
   }
 

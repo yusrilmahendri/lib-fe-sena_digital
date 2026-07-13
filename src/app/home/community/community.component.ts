@@ -1,6 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { LandingModalService } from '../../landing-modal.service';
 import {
   DashboardService,
   DashboardServiceType,
@@ -147,7 +148,8 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private modal: LandingModalService
   ) {
     this.themeService = new ThemeService(this.dashboardService);
   }
@@ -311,19 +313,16 @@ export class CommunityComponent implements OnInit, OnDestroy {
     document.body.classList.remove('theme-preview-open');
   }
 
-  useTheme(theme: ThemeCard): void {
-    sessionStorage.setItem('selected_theme_slug', theme.slug);
+  openCreateInvitationModal(theme: ThemeCard): void {
     this.closePreviewModal();
-
-    if (this.isLoggedIn()) {
-      this.router.navigate(['/dashboard/website/tampilan'], {
-        queryParams: { theme: theme.slug },
-      });
-      return;
-    }
-
-    this.router.navigate(['/register'], {
-      queryParams: { theme: theme.slug },
+    this.modal.openCreateInvitation({
+      id: theme.id,
+      slug: theme.slug,
+      name: theme.name,
+      tier: theme.tier,
+      category: theme.badge,
+      image: theme.image,
+      fallbackImage: theme.fallbackImage,
     });
   }
 
@@ -555,10 +554,6 @@ export class CommunityComponent implements OnInit, OnDestroy {
     const url = new URL(`/preview-theme/${slug}`, window.location.origin);
     url.searchParams.set('preview', 'true');
     return url.toString();
-  }
-
-  private isLoggedIn(): boolean {
-    return !!localStorage.getItem('access_token');
   }
 
   private async copyToClipboard(value: string): Promise<boolean> {

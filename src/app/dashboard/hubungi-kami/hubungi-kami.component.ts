@@ -76,7 +76,7 @@ export class HubungiKamiComponent implements OnInit {
       message: ['', Validators.required],
     });
 
-    const supportMessage = 'Halo Admin Horuzt Invitation, saya butuh bantuan terkait undangan digital.';
+    const supportMessage = 'Halo Admin Sena Digital, saya butuh bantuan terkait undangan digital.';
 
     this.contactMethods = [
       {
@@ -92,7 +92,7 @@ export class HubungiKamiComponent implements OnInit {
         description: 'Cocok untuk pertanyaan yang menyertakan dokumen atau detail panjang.',
         icon: 'fa-envelope',
         actionLabel: 'Kirim Email',
-        href: buildMailtoUrl('Bantuan Horuzt Invitation', supportMessage),
+        href: buildMailtoUrl('Bantuan Sena Digital', supportMessage),
         external: false,
       },
       {
@@ -107,13 +107,13 @@ export class HubungiKamiComponent implements OnInit {
   }
 
   get whatsappHref(): string {
-    return buildWhatsappUrl('Halo Admin Horuzt Invitation, saya butuh bantuan terkait pengaturan undangan.');
+    return buildWhatsappUrl('Halo Admin Sena Digital, saya butuh bantuan terkait pengaturan undangan.');
   }
 
   get emailHref(): string {
     return buildMailtoUrl(
-      'Bantuan Horuzt Invitation',
-      'Halo Admin Horuzt Invitation, saya butuh bantuan terkait pengaturan undangan.'
+      'Bantuan Sena Digital',
+      'Halo Admin Sena Digital, saya butuh bantuan terkait pengaturan undangan.'
     );
   }
 
@@ -133,7 +133,7 @@ export class HubungiKamiComponent implements OnInit {
   buildFormWhatsappUrl(): string {
     const value = this.contactForm.value;
     const message = [
-      'Halo Admin Horuzt Invitation, saya butuh bantuan.',
+      'Halo Admin Sena Digital, saya butuh bantuan.',
       `Nama: ${value.name}`,
       value.email ? `Email: ${value.email}` : '',
       value.whatsapp ? `WhatsApp: ${value.whatsapp}` : '',
@@ -146,7 +146,7 @@ export class HubungiKamiComponent implements OnInit {
 
   buildFormEmailUrl(): string {
     const value = this.contactForm.value;
-    const subject = `Bantuan Horuzt Invitation - ${value.category || 'Lainnya'}`;
+    const subject = `Bantuan Sena Digital - ${value.category || 'Lainnya'}`;
     const body = [
       `Nama: ${value.name || ''}`,
       `Email: ${value.email || ''}`,
