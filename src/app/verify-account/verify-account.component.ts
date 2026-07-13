@@ -11,6 +11,7 @@ export class VerifyAccountComponent implements OnInit {
   loading = true;
   submitting = false;
   errorMessage = '';
+  private readonly RESEND_COOLDOWN_MS = 120000;
 
   constructor(private auth: AuthService, private dashboard: DashboardService, private router: Router) {}
   ngOnInit(): void {
@@ -32,8 +33,8 @@ export class VerifyAccountComponent implements OnInit {
     this.auth.sendAccountVerification(this.channel).subscribe({
       next: () => {
         sessionStorage.setItem('verification_channel', this.channel);
-        sessionStorage.setItem('verification_resend_at', String(Date.now() + 60000));
-        this.router.navigate(['/verify-account/code']);
+        sessionStorage.setItem('verification_resend_at', String(Date.now() + this.RESEND_COOLDOWN_MS));
+        this.router.navigate(['/verify-account/code'], { queryParams: { channel: this.channel } });
       },
       error: (error) => { this.submitting = false; this.errorMessage = error.status === 429 ? 'Terlalu banyak permintaan. Silakan tunggu sebelum mencoba lagi.' : (error.error?.message || 'Kode verifikasi gagal dikirim.'); }
     });

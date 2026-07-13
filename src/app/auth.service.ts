@@ -74,7 +74,9 @@ export class AuthService {
   }
 
   verifyAccountCode(channel: VerificationChannel, code: string): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/verify`, { channel, code });
+    const url = `${this.apiBaseUrl}/v1/auth/verification/verify`;
+    if (!environment.production) console.log('[AuthService] verify endpoint', url);
+    return this.http.post<ApiMessageResponse>(url, { channel, code });
   }
 
   resendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
