@@ -1,7 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, VerificationChannel } from '../auth.service';
-import { environment } from '../../environments/environment';
 
 @Component({ selector: 'wc-verify-account-code', templateUrl: './verify-account-code.component.html', styleUrls: ['./verify-account-code.component.scss'] })
 export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
@@ -30,35 +29,44 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   onInputFallback(index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     const value = input.value.replace(/\D/g, '');
-    if (!value) {
-      this.digits[index] = '';
-      input.value = '';
-      return;
-    }
     if (value.length > 1) {
       this.applyOtp(value);
       return;
     }
-    this.digits[index] = value.slice(-1); input.value = this.digits[index];
-    if (this.digits[index] && index < 5) this.focus(index + 1);
+    if (!value) {
+      this.digits[index] = '';
+      this.syncInputValues();
+      return;
+    }
+    this.digits[index] = value.slice(-1);
+    this.syncInputValues();
+    if (index < 5) this.focus(index + 1);
   }
   onKeydown(index: number, event: KeyboardEvent): void {
     const key = event.key;
+    if (event.ctrlKey || event.metaKey) return;
     if (/^\d$/.test(key)) {
       event.preventDefault();
       this.digits[index] = key;
+      this.syncInputValues();
       if (index < 5) this.focus(index + 1);
       return;
     }
     if (key === 'Backspace') {
       event.preventDefault();
-      if (this.digits[index]) { this.digits[index] = ''; return; }
-      if (index > 0) { this.digits[index - 1] = ''; this.focus(index - 1); }
+      if (this.digits[index]) {
+        this.digits[index] = '';
+      } else if (index > 0) {
+        this.digits[index - 1] = '';
+        this.focus(index - 1);
+      }
+      this.syncInputValues();
       return;
     }
     if (key === 'Delete') {
       event.preventDefault();
       this.digits[index] = '';
+      this.syncInputValues();
       return;
     }
     if (key === 'ArrowLeft' && index > 0) {
@@ -73,27 +81,35 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     }
     if (key === 'Enter') {
       event.preventDefault();
-      this.verifyAccount();
+      this.verify();
       return;
     }
     if (!['Tab', 'Shift'].includes(key)) event.preventDefault();
   }
   onPaste(event: ClipboardEvent): void {
-    event.preventDefault(); const code = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 6) || '';
-    this.applyOtp(code);
+    event.preventDefault();
+    this.applyOtp(event.clipboardData?.getData('text') || '');
   }
   verifyAccount(): void {
-    const code = this.otpCode;
-    this.debug('[Verify Account] button clicked', { channel: this.channel, otpCode: code, isOtpComplete: this.isOtpComplete, submitting: this.submitting });
+    this.verify();
+  }
+  verify(): void {
+    console.log('[OTP STATE]', this.digits, this.otpCode, this.isOtpComplete);
+    console.log('[VERIFY CLICK]', {
+      digits: this.digits,
+      otpCode: this.otpCode,
+      isOtpComplete: this.isOtpComplete,
+      submitting: this.submitting,
+      channel: this.channel
+    });
     if (this.submitting) return;
     if (!this.isOtpComplete) { this.errorMessage = 'Masukkan kode verifikasi 6 digit.'; return; }
     this.submitting = true; this.errorMessage = '';
-    this.debug('[Verify Account] request payload', { channel: this.channel, code });
-    this.auth.verifyAccountCode(this.channel, code).subscribe({
-      next: (response) => {
-        this.debug('[Verify Account] success', response);
+    this.auth.verifyAccountCode(this.channel, this.otpCode).subscribe({
+      next: () => {
         this.submitting = false;
         this.digits = ['', '', '', '', '', ''];
+        this.syncInputValues();
         sessionStorage.removeItem('verification_channel');
         sessionStorage.removeItem('verification_resend_at');
         this.router.navigate(['/verify-account/success']);
@@ -102,12 +118,14 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
         console.error('[Verify Account] failed', error);
         this.submitting = false;
         this.errorMessage = this.apiError(error);
-        if (this.isExpiredOtpError(error)) this.digits = ['', '', '', '', '', ''];
+        if (this.isExpiredOtpError(error)) {
+          this.digits = ['', '', '', '', '', ''];
+          this.syncInputValues();
+        }
         setTimeout(() => this.focus(0));
       }
     });
   }
-  verify(): void { this.verifyAccount(); }
   resend(): void {
     if (this.seconds || this.resending) return;
     this.resending = true; this.errorMessage = '';
@@ -116,19 +134,24 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
       error: (error) => { this.resending = false; this.errorMessage = error.status === 429 ? 'Batas pengiriman tercapai. Silakan coba beberapa saat lagi.' : 'Kode gagal dikirim ulang. Silakan coba lagi.'; }
     });
   }
-  changeMethod(): void { this.digits.fill(''); sessionStorage.removeItem('verification_channel'); this.router.navigate(['/verify-account']); }
+  changeMethod(): void { this.digits.fill(''); this.syncInputValues(); sessionStorage.removeItem('verification_channel'); this.router.navigate(['/verify-account']); }
   private applyOtp(rawCode: string): void {
     const code = rawCode.replace(/\D/g, '').slice(0, 6);
     this.digits = ['', '', '', '', '', ''];
     code.split('').forEach((digit, index) => this.digits[index] = digit);
-    const nextIndex = Math.min(code.length, 5);
-    setTimeout(() => this.focus(nextIndex));
+    this.syncInputValues();
+    setTimeout(() => this.focus(Math.min(code.length, 5)));
+  }
+  private syncInputValues(): void {
+    setTimeout(() => {
+      this.inputs?.forEach((ref, index) => {
+        ref.nativeElement.value = this.digits[index] || '';
+      });
+      console.log('[OTP STATE]', this.digits, this.otpCode, this.isOtpComplete);
+    });
   }
   private normalizeChannel(channel: string | null): VerificationChannel | null {
     return channel === 'email' || channel === 'whatsapp' ? channel : null;
-  }
-  private debug(message: string, data?: unknown): void {
-    if (!environment.production) console.log(message, data);
   }
   private startCountdown(): void {
     if (this.timer) clearInterval(this.timer);
