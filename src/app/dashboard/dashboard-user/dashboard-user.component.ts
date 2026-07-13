@@ -9,6 +9,7 @@ import {
 } from 'src/app/dashboard.service';
 import { filter } from 'rxjs/operators';
 import { IdleTimeoutService } from 'src/app/core/services/idle-timeout.service';
+import { AccountAccessStatus, resolvePaymentState } from 'src/app/shared/payment-status.util';
 
 @Component({
   selector: 'wc-dashboard-user',
@@ -53,6 +54,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   // Temporarily hide the Bill menu item (billing route/logic kept intact).
   showBillingMenu = false;
   userData: ProfileData | null = null;
+  isPaymentActive = false;
+  accountStatus: AccountAccessStatus = 'pending_payment';
 
   constructor(
     private router: Router,
@@ -99,6 +102,9 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     this.DashBoardSvc.getProfile().subscribe({
       next: (response: ProfileResponse) => {
         this.userData = response.data;
+        const paymentState = resolvePaymentState(response);
+        this.accountStatus = paymentState.accountStatus;
+        this.isPaymentActive = paymentState.accountStatus === 'active';
         console.log('User profile data:', this.userData);
       },
       error: (error) => {
@@ -169,11 +175,36 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   toggleWebsiteSubmenu(): void {
+    if (!this.isPaymentActive) {
+      this.router.navigate([this.getBlockedAccountRoute()]);
+      return;
+    }
+
     this.isWebsiteSubmenuOpen = !this.isWebsiteSubmenuOpen;
   }
 
   togglePengunjungSubmenu(): void {
+    if (!this.isPaymentActive) {
+      this.router.navigate([this.getBlockedAccountRoute()]);
+      return;
+    }
+
     this.isPengunjungSubmenuOpen = !this.isPengunjungSubmenuOpen;
+  }
+
+  onProtectedMenuClick(event: Event): void {
+    if (this.isPaymentActive) {
+      this.onMenuItemClick();
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate([this.getBlockedAccountRoute()]);
+  }
+
+  private getBlockedAccountRoute(): string {
+    return this.accountStatus === 'expired' ? '/account-expired' : '/payment-pending';
   }
 
   private syncSubmenuStateWithRoute(): void {

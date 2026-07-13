@@ -65,6 +65,8 @@ const routes: Routes = [
   { path: 'verify-account', component: VerifyAccountComponent, canActivate: [AuthGuard] },
   { path: 'verify-account/code', component: VerifyAccountCodeComponent, canActivate: [AuthGuard] },
   { path: 'verify-account/success', component: VerifyAccountSuccessComponent, canActivate: [AuthGuard] },
+  { path: 'payment-pending', component: BillUserComponent, canActivate: [AuthGuard], data: { accountStatusPage: 'pending_payment' } },
+  { path: 'account-expired', component: BillUserComponent, canActivate: [AuthGuard], data: { accountStatusPage: 'expired' } },
   { path: 'buat-undangan', component: GenerateUndanganComponent, canActivate: [AuthGuard, AccountVerificationGuard] },
   {
     path: 'dashboard',
@@ -73,8 +75,10 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       { path: 'profile', component: ProfileComponent },
-      { path: 'bill', component: BillUserComponent },
-      { path: 'overview', component: OverviewComponent },
+      { path: 'bill', component: BillUserComponent, data: { accountStatusPage: 'pending_payment' } },
+      { path: 'payment-pending', component: BillUserComponent, data: { accountStatusPage: 'pending_payment' } },
+      { path: 'account-expired', component: BillUserComponent, data: { accountStatusPage: 'expired' } },
+      { path: 'overview', component: OverviewComponent, canActivate: [AccountVerificationGuard] },
       { path: 'bagi-undangan', component: BagiUndanganComponent, canActivate: [AccountVerificationGuard] },
       { path: 'penyesuaian-agama', component: PenyesuaianAgamaComponent, canActivate: [AccountVerificationGuard] },
       { path: 'scan-kehadiran', component: ScanKehadiranComponent, canActivate: [AccountVerificationGuard] },

@@ -36,6 +36,7 @@
                   <button class="btn-konfirmasi" [disabled]="!row.konfirmasiAktif"
                     [attr.aria-disabled]="!row.konfirmasiAktif" [ngClass]="{ 'active': row.konfirmasiAktif }"
                     [attr.aria-pressed]="row.konfirmasiAktif ? 'true' : null"
+                    [attr.title]="!row.hasInvoice ? missingInvoiceMessage : null"
                     (click)="onConfirmClicked(row, confirmPaymentModal)">
                     Konfirmasi
                   </button>
@@ -73,6 +74,7 @@
               <button class="btn-konfirmasi mobile" [disabled]="!row.konfirmasiAktif"
                 [attr.aria-disabled]="!row.konfirmasiAktif" [ngClass]="{ 'active': row.konfirmasiAktif }"
                 [attr.aria-pressed]="row.konfirmasiAktif ? 'true' : null"
+                [attr.title]="!row.hasInvoice ? missingInvoiceMessage : null"
                 (click)="onConfirmClicked(row, confirmPaymentModal)">
                 Konfirmasi
               </button>
@@ -98,7 +100,10 @@
               <h6 class="mb-2">Informasi Pengguna</h6>
               <p class="mb-1"><strong>Email:</strong> {{ selectedUser?.pengguna }}</p>
               <p class="mb-1"><strong>Domain:</strong> {{ selectedUser?.domain || 'Belum ada domain' }}</p>
-              <p class="mb-0"><strong>Kode Invoice:</strong> {{ selectedUser?.invoice }}</p>
+              <p class="mb-0">
+                <strong>Kode Invoice:</strong>
+                {{ selectedUser?.hasInvoice ? selectedUser?.invoice : missingInvoiceMessage }}
+              </p>
             </div>
           </div>
         </div>
@@ -116,7 +121,7 @@
 
           <div class="col-md-6 mb-3">
             <label for="kode_pemesanan" class="form-label">Kode Pemesanan <span class="text-danger">*</span></label>
-            <input type="text" id="kode_pemesanan" class="form-control" formControlName="kode_pemesanan"
+            <input type="text" id="kode_pemesanan" class="form-control" formControlName="kode_pemesanan" readonly
               placeholder="Masukkan kode pemesanan">
             <div class="invalid-feedback"
               *ngIf="confirmPaymentForm.get('kode_pemesanan')?.invalid && confirmPaymentForm.get('kode_pemesanan')?.touched">
@@ -141,7 +146,7 @@
       <button type="button" class="btn btn-secondary" (click)="onCancelModal()">
         <i class="fas fa-times me-1"></i> Batal
       </button>
-      <button type="button" class="btn btn-primary" [disabled]="confirmPaymentForm.invalid"
+      <button type="button" class="btn btn-primary" [disabled]="!canSubmitPaymentConfirmation()"
         (click)="onSubmitPaymentConfirmation()">
         <i class="fas fa-check me-1"></i> Konfirmasi Pembayaran
       </button>

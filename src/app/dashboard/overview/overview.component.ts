@@ -9,6 +9,7 @@ import {
   DashboardMessage
 } from 'src/app/dashboard.service';
 import { forkJoin, catchError, of } from 'rxjs';
+import { PaymentState, resolvePaymentState } from 'src/app/shared/payment-status.util';
 
 
 Chart.register(...registerables);
@@ -43,6 +44,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoading = false;
   activeFilter = 'totalPengunjung';
   userData: any;
+  accountStatusState: PaymentState | null = null;
 
   // Public wedding website URL derived from the profile response domain.
   public publicWeddingUrl = '';
@@ -109,6 +111,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.DashBoardSvc.getProfile().subscribe({
       next: (response) => {
+        this.accountStatusState = resolvePaymentState(response);
         this.updatePublicWeddingUrlFromProfile(response);
       },
       error: (error) => {
@@ -119,6 +122,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe({
       next: (res) => {
         this.userData = res.data;
+        this.accountStatusState = resolvePaymentState(res);
         console.log('User profile data:', this.userData);
 
         this.updatePublicWeddingUrlFromProfile(res);
@@ -211,6 +215,26 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const domain = this.resolveDomainFromProfileResponse(response);
     this.setPublicWeddingUrl(domain);
+  }
+
+  getAccountStatusClass(): string {
+    switch (this.accountStatusState?.accountStatus) {
+      case 'active':
+        return 'account-status-card__badge--active';
+      case 'expired':
+        return 'account-status-card__badge--expired';
+      case 'pending_payment':
+        return 'account-status-card__badge--pending';
+      default:
+        return 'account-status-card__badge--muted';
+    }
+  }
+
+  getRemainingDaysText(): string {
+    const days = this.accountStatusState?.remainingDays;
+    if (days === null || days === undefined) return 'Belum tersedia';
+    if (days < 1) return 'Berakhir';
+    return `${days} hari`;
   }
 
   private loadDashboardData(): void {

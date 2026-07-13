@@ -11,7 +11,7 @@
       </div>
     </header>
 
-    <div *ngIf="userPackageTier !== 'trial'" class="theme-tabs" role="tablist" aria-label="Pilih paket tema">
+    <div class="theme-tabs" role="tablist" aria-label="Pilih paket tema">
       <button
         *ngFor="let tab of availablePackageTabs"
         type="button"
@@ -21,10 +21,6 @@
         (click)="setActiveTab(tab.tier)">
         {{ tab.label }}
       </button>
-    </div>
-
-    <div *ngIf="userPackageTier === 'trial'" class="theme-picker__trial-note" role="note">
-      Paket Trial menggunakan tema default/legacy yang sudah tersedia.
     </div>
 
     <div *ngIf="isLoading" class="theme-state theme-state--loading">
@@ -72,11 +68,12 @@
 
             <span class="theme-card__badge">{{ getPackageLabel(theme.requiredPackageTier || activeTab) }}</span>
 
-            <span *ngIf="isCurrentTheme(theme)" class="theme-card__ribbon">PAKET DIGUNAKAN</span>
+            <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__ribbon">TEMA DIGUNAKAN</span>
 
             <button
               type="button"
               class="theme-card__preview"
+              [disabled]="!canPreviewTheme(theme)"
               (click)="onPreviewClick(theme, $event)">
               <i class="far fa-eye" aria-hidden="true"></i>
               Preview
@@ -91,6 +88,26 @@
             <h3>{{ getThemeDisplayName(theme) }}</h3>
             <p>{{ getCardSubtitle(theme) }}</p>
             <small *ngIf="!theme.isConnectedToBackend" class="text-muted">Theme belum terhubung</small>
+            <div class="theme-card__actions">
+              <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__used-label">
+                Tema Digunakan
+              </span>
+              <button
+                *ngIf="shouldShowUseTheme(theme)"
+                type="button"
+                class="theme-card__action theme-card__action--use"
+                [disabled]="theme.isLoading || processingPrimaryAction"
+                (click)="onUseThemeClick(theme, $event)">
+                {{ theme.isLoading ? 'Memproses...' : 'Gunakan Tema' }}
+              </button>
+              <button
+                *ngIf="shouldShowUpgradeTheme(theme)"
+                type="button"
+                class="theme-card__action theme-card__action--upgrade"
+                (click)="onUpgradeClick(theme, $event)">
+                Upgrade Paket
+              </button>
+            </div>
           </div>
         </article>
       </div>
@@ -177,16 +194,35 @@
 
     <h2 id="upgrade-theme-title">Upgrade paket diperlukan</h2>
     <p>
-      Tema ini tersedia untuk paket {{ upgradePackageLabel }}.
-      Silakan upgrade paket Anda untuk menggunakan tema ini.
+      Tema ini tersedia untuk paket {{ upgradeTargetPackageLabel }}.
+      Silakan buat invoice upgrade untuk menggunakan tema ini.
     </p>
+
+    <dl class="theme-upgrade-summary">
+      <div>
+        <dt>Paket saat ini</dt>
+        <dd>{{ upgradeCurrentPackageLabel }}</dd>
+      </div>
+      <div>
+        <dt>Paket tujuan</dt>
+        <dd>{{ upgradeTargetPackageLabel }}</dd>
+      </div>
+      <div>
+        <dt>Harga</dt>
+        <dd>{{ upgradeTargetPackagePriceLabel }}</dd>
+      </div>
+    </dl>
 
     <div class="theme-modal__actions confirm-actions">
       <button type="button" class="theme-modal__secondary btn-back" (click)="closeUpgradeModal()">
         Kembali
       </button>
-      <button type="button" class="theme-modal__primary btn-confirm-theme" (click)="goToUpgradePackage()">
-        Upgrade Paket
+      <button
+        type="button"
+        class="theme-modal__primary btn-confirm-theme"
+        [disabled]="processingUpgradeInvoice"
+        (click)="goToUpgradePackage()">
+        {{ processingUpgradeInvoice ? 'Membuat Invoice...' : 'Buat Invoice Upgrade' }}
       </button>
     </div>
   </section>

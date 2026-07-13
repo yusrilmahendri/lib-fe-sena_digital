@@ -15,11 +15,9 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const queryChannel = this.route.snapshot.queryParamMap.get('channel');
     const stored = sessionStorage.getItem('verification_channel');
-    const channel = this.normalizeChannel(queryChannel) || this.normalizeChannel(stored);
-    if (!channel) { this.router.navigate(['/verify-account']); return; }
-    this.channel = channel;
-    sessionStorage.setItem('verification_channel', this.channel);
-    this.destination = this.channel === 'email' ? 'email Anda' : 'nomor WhatsApp Anda';
+    this.channel = this.normalizeChannel(queryChannel) || this.normalizeChannel(stored) || 'email';
+    sessionStorage.setItem('verification_channel', 'email');
+    this.destination = 'email Anda';
     this.startCountdown();
   }
   ngOnDestroy(): void { if (this.timer) clearInterval(this.timer); }
@@ -100,12 +98,14 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
       otpCode: this.otpCode,
       isOtpComplete: this.isOtpComplete,
       submitting: this.submitting,
-      channel: this.channel
+      channel: 'email'
     });
     if (this.submitting) return;
     if (!this.isOtpComplete) { this.errorMessage = 'Masukkan kode verifikasi 6 digit.'; return; }
     this.submitting = true; this.errorMessage = '';
-    this.auth.verifyAccountCode(this.channel, this.otpCode).subscribe({
+    this.channel = 'email';
+    sessionStorage.setItem('verification_channel', 'email');
+    this.auth.verifyAccountCode('email', this.otpCode).subscribe({
       next: () => {
         this.submitting = false;
         this.digits = ['', '', '', '', '', ''];
@@ -129,12 +129,14 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   resend(): void {
     if (this.seconds || this.resending) return;
     this.resending = true; this.errorMessage = '';
-    this.auth.resendAccountVerification(this.channel).subscribe({
+    this.channel = 'email';
+    sessionStorage.setItem('verification_channel', 'email');
+    this.auth.resendAccountVerification('email').subscribe({
       next: () => { this.resending = false; sessionStorage.setItem('verification_resend_at', String(Date.now() + this.RESEND_COOLDOWN_MS)); this.startCountdown(); },
       error: (error) => { this.resending = false; this.errorMessage = error.status === 429 ? 'Batas pengiriman tercapai. Silakan coba beberapa saat lagi.' : 'Kode gagal dikirim ulang. Silakan coba lagi.'; }
     });
   }
-  changeMethod(): void { this.digits.fill(''); this.syncInputValues(); sessionStorage.removeItem('verification_channel'); this.router.navigate(['/verify-account']); }
+  changeMethod(): void { this.digits.fill(''); this.syncInputValues(); sessionStorage.setItem('verification_channel', 'email'); this.router.navigate(['/verify-account']); }
   private applyOtp(rawCode: string): void {
     const code = rawCode.replace(/\D/g, '').slice(0, 6);
     this.digits = ['', '', '', '', '', ''];
@@ -151,7 +153,11 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     });
   }
   private normalizeChannel(channel: string | null): VerificationChannel | null {
-    return channel === 'email' || channel === 'whatsapp' ? channel : null;
+    if (channel === 'whatsapp') {
+      sessionStorage.setItem('verification_channel', 'email');
+      return 'email';
+    }
+    return channel === 'email' ? channel : null;
   }
   private startCountdown(): void {
     if (this.timer) clearInterval(this.timer);

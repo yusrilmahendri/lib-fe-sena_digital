@@ -4,6 +4,7 @@ import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import {
+  ADMIN_MISSING_INVOICE_MESSAGE,
   getStatusDataFromNormalized,
   normalizeAdminDashboardResponse,
   normalizePaymentStatus,
@@ -17,6 +18,7 @@ import {
 })
 
 export class PembayaranComponent implements OnInit {
+  readonly missingInvoiceMessage = ADMIN_MISSING_INVOICE_MESSAGE;
 
   rows: Array<any> = [];
   columns: Array<any> = [];
@@ -122,12 +124,17 @@ export class PembayaranComponent implements OnInit {
   }
 
   onConfirmClicked(row: any, template: TemplateRef<any>) {
+    if (!row.hasInvoice) {
+      this.notyf.error(this.missingInvoiceMessage);
+      return;
+    }
+
     this.selectedUser = row;
 
     // Populate form with selected user data
     this.confirmPaymentForm.patchValue({
       user_id: row.id,
-      kode_pemesanan: row.invoice === '–' ? '' : row.invoice
+      kode_pemesanan: row.invoicePayload
     });
 
     // Open modal with custom class for styling
@@ -140,17 +147,28 @@ export class PembayaranComponent implements OnInit {
 
   onSubmitPaymentConfirmation() {
     if (this.confirmPaymentForm.valid) {
-      const payload = this.confirmPaymentForm.value;
+      const kodePemesanan = String(this.confirmPaymentForm.value.kode_pemesanan || '').trim().replace(/^#+/, '');
+      if (!kodePemesanan || kodePemesanan === '-' || kodePemesanan === '–') {
+        this.notyf.error(this.missingInvoiceMessage);
+        return;
+      }
+
+      const payload = {
+        ...this.confirmPaymentForm.value,
+        kode_pemesanan: kodePemesanan,
+      };
 
       this.dashboardSvc.update(DashboardServiceType.RDM_CONFIRM_PAYMENT, '', payload).subscribe({
         next: (res) => {
           this.notyf.success('Berhasil konfirmasi pembayaran');
           this.modalRef?.hide();
+          this.confirmPaymentForm.reset();
+          this.selectedUser = null;
           this.getDetailUser(); // Refresh data
         },
         error: (error) => {
           console.error('Error confirming payment:', error);
-          this.notyf.error('Gagal konfirmasi pembayaran');
+          this.notyf.error(this.getPaymentConfirmationError(error));
         }
       });
     } else {
@@ -170,5 +188,18 @@ export class PembayaranComponent implements OnInit {
 
   onDeleteClicked(row: any) {
     console.log('Delete action:', row);
+  }
+
+  private getPaymentConfirmationError(error: any): string {
+    const validationMessages = error?.error?.errors?.kode_pemesanan;
+    if (Array.isArray(validationMessages) && validationMessages.length) {
+      return validationMessages[0];
+    }
+
+    return error?.error?.message || 'Gagal konfirmasi pembayaran';
+  }
+
+  canSubmitPaymentConfirmation(): boolean {
+    return this.confirmPaymentForm.valid && !!this.selectedUser?.hasInvoice;
   }
 }

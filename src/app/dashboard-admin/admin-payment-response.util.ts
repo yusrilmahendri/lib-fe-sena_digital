@@ -1,6 +1,8 @@
 export interface AdminInvoiceRow {
   id: number;
   invoice: string;
+  invoicePayload: string;
+  hasInvoice: boolean;
   pengguna: string;
   domain: string;
   statusCode: string | null;
@@ -13,6 +15,8 @@ export interface AdminInvoiceRow {
   konfirmasiAktif: boolean;
   originalData: any;
 }
+
+export const ADMIN_MISSING_INVOICE_MESSAGE = 'Invoice/tagihan pengguna belum tersedia.';
 
 export interface AdminDashboardMetrics {
   totalUsers: number;
@@ -70,18 +74,42 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
     item?.kd_status,
   ]);
   const normalizedStatus = normalizePaymentStatus(rawStatus);
-  const invoice = firstString([
+  const invoicePayload = normalizeInvoicePayload(firstString([
     item?.no_invoice,
     item?.invoice_number,
     item?.kode_invoice,
     item?.kode_pemesanan,
     item?.invoice,
     item?.order_id,
-  ]) || '–';
+    item?.tagihan?.kode_pemesanan,
+    item?.tagihan?.kode_invoice,
+    item?.tagihan?.no_invoice,
+    item?.tagihan?.invoice_number,
+    item?.tagihan?.order_id,
+    item?.invoice_data?.kode_pemesanan,
+    item?.invoice_data?.kode_invoice,
+    item?.invoice_data?.no_invoice,
+    item?.invoice_data?.invoice_number,
+    item?.invoice_data?.order_id,
+    item?.invoice?.kode_pemesanan,
+    item?.invoice?.kode_invoice,
+    item?.invoice?.no_invoice,
+    item?.invoice?.invoice_number,
+    item?.invoice?.order_id,
+    item?.user?.kode_pemesanan,
+    item?.user?.kode_invoice,
+    item?.user?.no_invoice,
+    item?.user?.invoice_number,
+    item?.user?.order_id,
+    item?.transaksi_id,
+  ]));
+  const invoice = invoicePayload ? formatInvoiceDisplay(invoicePayload) : ADMIN_MISSING_INVOICE_MESSAGE;
 
   return {
     id: toNumber(item?.id ?? item?.user_id ?? item?.user?.id),
     invoice,
+    invoicePayload,
+    hasInvoice: !!invoicePayload,
     pengguna: firstString([
       item?.nama,
       item?.user_name,
@@ -98,9 +126,24 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
     statusCode: rawStatus === null || rawStatus === undefined ? null : String(rawStatus),
     normalizedStatus,
     statusData: getStatusDataFromNormalized(normalizedStatus),
-    konfirmasiAktif: !isPaidStatus(normalizedStatus),
+    konfirmasiAktif: !!invoicePayload && !isPaidStatus(normalizedStatus),
     originalData: item,
   };
+}
+
+export function normalizeInvoicePayload(value: unknown): string {
+  const invoice = String(value ?? '').trim();
+
+  if (!invoice || invoice === '-' || invoice === '–') {
+    return '';
+  }
+
+  return invoice.replace(/^#+/, '');
+}
+
+export function formatInvoiceDisplay(value: unknown): string {
+  const invoice = normalizeInvoicePayload(value);
+  return invoice ? `#${invoice}` : ADMIN_MISSING_INVOICE_MESSAGE;
 }
 
 export function normalizePaymentStatus(value: unknown): string {

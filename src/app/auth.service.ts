@@ -20,7 +20,15 @@ export interface VerificationProfile {
   phone_masked?: string;
   is_verified?: boolean;
   account_verified?: boolean;
+  account_status?: string | null;
   email_verified_at?: string | null;
+  whatsapp_verified_at?: string | null;
+  status_bayar?: string | null;
+  payment_status?: string | null;
+  is_paid?: boolean;
+  paket_status?: string | null;
+  is_payment_confirmed?: boolean;
+  status_tagihan?: string | null;
   verification_channel?: VerificationChannel;
   masked_destination?: string;
   can_resend?: boolean;
@@ -70,17 +78,24 @@ export class AuthService {
   }
 
   sendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/send`, { channel });
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/send`, {
+      channel: this.accountVerificationChannel(channel),
+    });
   }
 
   verifyAccountCode(channel: VerificationChannel, code: string): Observable<ApiMessageResponse> {
     const url = `${this.apiBaseUrl}/v1/auth/verification/verify`;
     if (!environment.production) console.log('[AuthService] verify endpoint', url);
-    return this.http.post<ApiMessageResponse>(url, { channel, code });
+    return this.http.post<ApiMessageResponse>(url, {
+      channel: this.accountVerificationChannel(channel),
+      code,
+    });
   }
 
   resendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/resend`, { channel });
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/resend`, {
+      channel: this.accountVerificationChannel(channel),
+    });
   }
 
   getVerificationStatus(): Observable<VerificationStatusResponse> {
@@ -93,5 +108,11 @@ export class AuthService {
 
   resetPassword(payload: ResetPasswordPayload): Observable<ApiMessageResponse> {
     return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/reset-password`, payload);
+  }
+
+  private accountVerificationChannel(_channel: VerificationChannel): VerificationChannel {
+    // WhatsApp account verification is temporarily disabled. Keep the channel
+    // type intact so it can be re-enabled without removing the existing flow.
+    return 'email';
   }
 }

@@ -179,6 +179,7 @@ export enum DashboardServiceType {
   THEME_PUBLIC_POPULAR_THEMES,
   THEME_USER_SELECT,
   THEME_USER_SELECTED,
+  THEME_USER_UPGRADE_INVOICE,
   USER_PHOTOS,
   USER_PHOTOS_SORT,
   USER_RELIGION_CONTENT,
@@ -587,6 +588,8 @@ export class DashboardService {
         return `${this.BASE_URL_API}/themes/select`;
       case DashboardServiceType.THEME_USER_SELECTED:
         return `${this.BASE_URL_API}/themes/selected`;
+      case DashboardServiceType.THEME_USER_UPGRADE_INVOICE:
+        return `${this.BASE_URL_API}/themes/upgrade-invoice`;
       case DashboardServiceType.USER_PHOTOS:
         return `${this.BASE_URL_API}/v1/user/photos`;
       case DashboardServiceType.USER_PHOTOS_SORT:
@@ -1133,6 +1136,30 @@ export interface ProfileData {
   kode_pemesanan: string;
   package_info: ProfilePackageInfo;
   domain_info: ProfileDomainInfo;
+  is_verified?: boolean;
+  account_verified?: boolean;
+  account_status?: string | null;
+  email_verified_at?: string | null;
+  whatsapp_verified_at?: string | null;
+  status_bayar?: string | null;
+  payment_status?: string | null;
+  package_name?: string | null;
+  package_code?: string | null;
+  active_until?: string | null;
+  remaining_days?: number | string | null;
+  is_paid?: boolean;
+  paket_status?: string | null;
+  is_payment_confirmed?: boolean;
+  is_expired?: boolean;
+  feature_access?: any;
+  status_tagihan?: string | null;
+  no_invoice?: string | null;
+  invoice_number?: string | null;
+  kode_invoice?: string | null;
+  order_id?: string | null;
+  transaksi_id?: string | null;
+  tanggal_transaksi?: string | null;
+  transaction_date?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1350,6 +1377,11 @@ export interface PublicTheme {
   url_thema?: string;
   demo_url: string;
   is_active?: boolean;
+  can_preview?: boolean;
+  can_use?: boolean;
+  is_current_theme?: boolean;
+  upgrade_required?: boolean;
+  target_package?: string | null;
   features: string[];
   description?: string;
 }
@@ -1415,6 +1447,17 @@ export interface ThemeSelectionResponse {
     theme: Theme;
     selection: ThemeSelection;
   };
+}
+
+export interface ThemeUpgradeInvoiceRequest {
+  theme_id: number;
+  target_package?: string | null;
+}
+
+export interface ThemeUpgradeInvoiceResponse {
+  status?: boolean;
+  message?: string;
+  data?: any;
 }
 
 export interface UserSelectedThemeResponse {
@@ -1758,6 +1801,13 @@ export class ThemeService {
   getSelectedTheme(): Observable<UserSelectedThemeResponse> {
     return this.dashboardService.httpSvc.get<UserSelectedThemeResponse>(
       this.dashboardService.getUrl(DashboardServiceType.THEME_USER_SELECTED)
+    );
+  }
+
+  createUpgradeInvoice(request: ThemeUpgradeInvoiceRequest): Observable<ThemeUpgradeInvoiceResponse> {
+    return this.dashboardService.httpSvc.post<ThemeUpgradeInvoiceResponse>(
+      this.dashboardService.getUrl(DashboardServiceType.THEME_USER_UPGRADE_INVOICE),
+      request
     );
   }
 }

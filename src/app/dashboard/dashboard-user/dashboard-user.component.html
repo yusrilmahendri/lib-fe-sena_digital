@@ -59,6 +59,7 @@
       <div class="menu-section">
         <div class="menu-item dropdown-toggle"
              [class.active]="isActiveRoute('website')"
+             [class.menu-item--disabled]="!isPaymentActive"
              (click)="toggleWebsiteSubmenu()"
              tabindex="0"
              role="button"
@@ -77,63 +78,74 @@
         <div class="submenu"
              [@submenuExpand]="isWebsiteSubmenuOpen ? 'expanded' : 'collapsed'">
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/tampilan"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Tampilan</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/pengaturan"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Pengaturan</span>
           </a>
           <a class="submenu-item"
-             (click)="onMenuItemClick()"
+             [class.submenu-item--disabled]="!isPaymentActive"
+             routerLink="website/data-website"
+             routerLinkActive="active"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Data Website</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/mempelai"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Mempelai</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/acara"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Acara</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/gallery"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Gallery</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/musik-undangan"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Musik Undangan</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/cerita-quote"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Cerita & Quote</span>
           </a>
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/rekening"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Rekening</span>
           </a>
@@ -144,6 +156,7 @@
       <div class="menu-section">
         <div class="menu-item dropdown-toggle"
              [class.active]="isActiveRoute('pengunjung')"
+             [class.menu-item--disabled]="!isPaymentActive"
              (click)="togglePengunjungSubmenu()"
              tabindex="0"
              role="button"
@@ -162,16 +175,18 @@
         <div class="submenu"
              [@submenuExpand]="isPengunjungSubmenuOpen ? 'expanded' : 'collapsed'">
           <a class="submenu-item"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="pengunjung/ucapan"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <span>Riwayat & Ucapan</span>
           </a>
           <a class="submenu-item submenu-item--with-icon"
+             [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="scan-kehadiran"
              routerLinkActive="active"
-             (click)="onMenuItemClick()"
+             (click)="onProtectedMenuClick($event)"
              tabindex="0">
             <i class="fas fa-qrcode" aria-hidden="true"></i>
             <span>Scan Kehadiran</span>
@@ -181,9 +196,10 @@
 
       <div class="menu-section">
         <a class="menu-item"
+            [class.menu-item--disabled]="!isPaymentActive"
             routerLink="bagi-undangan"
             routerLinkActive="active"
-            (click)="onMenuItemClick()"
+            (click)="onProtectedMenuClick($event)"
             tabindex="0">
             <i class="fas fa-share-alt" aria-hidden="true"></i>
             <span>Bagi Undangan</span>
@@ -192,9 +208,10 @@
 
       <div class="menu-section">
         <a class="menu-item"
+            [class.menu-item--disabled]="!isPaymentActive"
             routerLink="penyesuaian-agama"
             routerLinkActive="active"
-            (click)="onMenuItemClick()"
+            (click)="onProtectedMenuClick($event)"
             tabindex="0">
             <i class="fas fa-book" aria-hidden="true"></i>
             <span>Penyesuaian Agama</span>

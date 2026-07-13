@@ -1,9 +1,86 @@
-<p *ngIf="paymentStatusMessage; else defaultBillText" role="status">
-  {{ paymentStatusMessage }}
-</p>
+<section class="payment-pending">
+  <div class="payment-card">
+    <div class="payment-card__icon" [class.payment-card__icon--expired]="statusPage === 'expired'" aria-hidden="true">
+      <i class="fas fa-credit-card"></i>
+    </div>
 
-<ng-template #defaultBillText>
-<p>
-  bill-user works!
-</p>
-</ng-template>
+    <div class="payment-card__content">
+      <p class="payment-card__eyebrow">Status akun</p>
+      <h2>{{ statusPage === 'expired' ? 'Masa Aktif Paket Berakhir' : 'Pembayaran Belum Terkonfirmasi' }}</h2>
+
+      <p class="payment-card__lead" *ngIf="statusPage === 'pending_payment'">
+        Akun Anda sudah berhasil diverifikasi, namun pembayaran paket undangan belum selesai atau belum dikonfirmasi oleh admin. Silakan lakukan pembayaran terlebih dahulu. Jika Anda sudah membayar tetapi status belum aktif, silakan hubungi admin Sena Digital.
+      </p>
+      <p class="payment-card__lead" *ngIf="statusPage === 'expired'">
+        Masa aktif paket Anda telah berakhir. Silakan perpanjang atau upgrade paket untuk melanjutkan penggunaan fitur.
+      </p>
+
+      <p class="payment-card__message" *ngIf="paymentStatusMessage" role="status">
+        {{ paymentStatusMessage }}
+      </p>
+      <p class="payment-card__error" *ngIf="errorMessage" role="alert">
+        {{ errorMessage }}
+      </p>
+
+      <dl class="invoice-details" *ngIf="paymentState as state">
+        <div *ngIf="state.packageName">
+          <dt>Paket</dt>
+          <dd>{{ state.packageName }}</dd>
+        </div>
+        <div *ngIf="state.packageCode">
+          <dt>Kode Paket</dt>
+          <dd>{{ state.packageCode }}</dd>
+        </div>
+        <div *ngIf="state.domain">
+          <dt>Domain</dt>
+          <dd>{{ state.domain }}</dd>
+        </div>
+        <div *ngIf="state.invoiceCode">
+          <dt>Kode Invoice</dt>
+          <dd>{{ state.invoiceCode }}</dd>
+        </div>
+        <div *ngIf="state.paymentStatus">
+          <dt>Status Pembayaran</dt>
+          <dd>{{ state.paymentStatus }}</dd>
+        </div>
+        <div *ngIf="state.transactionDate">
+          <dt>Tanggal Transaksi</dt>
+          <dd>{{ state.transactionDate }}</dd>
+        </div>
+        <div *ngIf="state.activeUntil">
+          <dt>Tanggal Expired</dt>
+          <dd>{{ state.activeUntil }}</dd>
+        </div>
+        <div *ngIf="state.remainingDays !== null">
+          <dt>Sisa Masa Aktif</dt>
+          <dd>{{ state.remainingDays }} hari</dd>
+        </div>
+      </dl>
+
+      <div class="payment-actions" *ngIf="statusPage === 'pending_payment'">
+        <button type="button" class="btn btn-primary" (click)="openPaymentInstruction()">
+          Lihat Instruksi Pembayaran
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="contactAdmin()">
+          Hubungi Admin
+        </button>
+        <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="refreshStatus()">
+          <span *ngIf="!isLoading">Refresh Status</span>
+          <span *ngIf="isLoading">Memuat...</span>
+        </button>
+      </div>
+
+      <div class="payment-actions" *ngIf="statusPage === 'expired'">
+        <button type="button" class="btn btn-primary" (click)="renewPackage()">
+          Perpanjang Paket
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="upgradePackage()">
+          Upgrade Paket
+        </button>
+        <button type="button" class="btn btn-light" (click)="contactAdmin()">
+          Hubungi Admin
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

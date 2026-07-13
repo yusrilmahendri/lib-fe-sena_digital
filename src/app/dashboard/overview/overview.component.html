@@ -18,6 +18,36 @@
         </a>
       </div>
     </div>
+    <section class="account-status-card mb-4" *ngIf="accountStatusState as accountState" aria-label="Status akun">
+      <div class="account-status-card__header">
+        <div>
+          <p class="account-status-card__eyebrow">Status Akun</p>
+          <h2>Status Akun</h2>
+        </div>
+        <span class="account-status-card__badge" [ngClass]="getAccountStatusClass()">
+          {{ accountState.accountStatusLabel }}
+        </span>
+      </div>
+
+      <div class="account-status-card__grid">
+        <div>
+          <span>Status</span>
+          <strong>{{ accountState.accountStatusLabel }}</strong>
+        </div>
+        <div>
+          <span>Paket</span>
+          <strong>{{ accountState.packageName || accountState.packageCode || 'Belum tersedia' }}</strong>
+        </div>
+        <div>
+          <span>Sisa masa aktif</span>
+          <strong>{{ getRemainingDaysText() }}</strong>
+        </div>
+        <div>
+          <span>Tanggal expired</span>
+          <strong>{{ accountState.activeUntil || 'Belum tersedia' }}</strong>
+        </div>
+      </div>
+    </section>
     <div class="row g-3 mb-4">
       <div class="col-12 col-sm-6 col-md-3" *ngFor="let card of dashboardCards">
         <div class="card p-3 h-100 d-flex flex-column justify-content-between cursor-pointer position-relative"

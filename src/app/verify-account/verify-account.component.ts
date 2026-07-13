@@ -15,6 +15,7 @@ export class VerifyAccountComponent implements OnInit {
 
   constructor(private auth: AuthService, private dashboard: DashboardService, private router: Router) {}
   ngOnInit(): void {
+    this.forceEmailVerificationChannel();
     forkJoin({ status: this.auth.getVerificationStatus(), profile: this.dashboard.getProfile() }).subscribe({
       next: ({ status, profile }) => {
         this.profile = { ...status.data, email: profile.data.email, phone: profile.data.phone };
@@ -24,20 +25,33 @@ export class VerifyAccountComponent implements OnInit {
       error: () => { this.loading = false; this.errorMessage = 'Status akun tidak dapat dimuat. Silakan coba lagi.'; }
     });
   }
-  select(channel: VerificationChannel): void { if (!this.submitting) this.channel = channel; }
+  select(channel: VerificationChannel): void {
+    if (this.submitting) return;
+    this.channel = channel === 'whatsapp' ? 'email' : channel;
+    sessionStorage.setItem('verification_channel', 'email');
+  }
   get maskedEmail(): string { return this.profile.email_masked || this.maskEmail(this.profile.email); }
   get maskedPhone(): string { return this.profile.phone_masked || this.maskPhone(this.profile.phone); }
   send(): void {
     if (this.submitting) return;
     this.submitting = true; this.errorMessage = '';
-    this.auth.sendAccountVerification(this.channel).subscribe({
+    this.channel = 'email';
+    sessionStorage.setItem('verification_channel', 'email');
+    this.auth.sendAccountVerification('email').subscribe({
       next: () => {
-        sessionStorage.setItem('verification_channel', this.channel);
+        sessionStorage.setItem('verification_channel', 'email');
         sessionStorage.setItem('verification_resend_at', String(Date.now() + this.RESEND_COOLDOWN_MS));
-        this.router.navigate(['/verify-account/code'], { queryParams: { channel: this.channel } });
+        this.router.navigate(['/verify-account/code'], { queryParams: { channel: 'email' } });
       },
       error: (error) => { this.submitting = false; this.errorMessage = error.status === 429 ? 'Terlalu banyak permintaan. Silakan tunggu sebelum mencoba lagi.' : (error.error?.message || 'Kode verifikasi gagal dikirim.'); }
     });
+  }
+  private forceEmailVerificationChannel(): void {
+    const stored = sessionStorage.getItem('verification_channel');
+    if (!stored || stored === 'whatsapp') {
+      sessionStorage.setItem('verification_channel', 'email');
+    }
+    this.channel = 'email';
   }
   private maskEmail(value: string): string { const [name = '', domain = ''] = (value || '').split('@'); return domain ? `${name.slice(0, 2)}${'*'.repeat(Math.max(2, name.length - 2))}@${domain}` : 'Email akun Anda'; }
   private maskPhone(value: string): string { const clean = value || ''; return clean.length > 7 ? `${clean.slice(0, 4)}****${clean.slice(-3)}` : 'Nomor WhatsApp akun Anda'; }
