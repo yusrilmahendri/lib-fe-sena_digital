@@ -1379,6 +1379,7 @@ export interface PublicTheme {
   is_active?: boolean;
   can_preview?: boolean;
   can_use?: boolean;
+  locked?: boolean;
   is_current_theme?: boolean;
   upgrade_required?: boolean;
   target_package?: string | null;

@@ -23,6 +23,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   isSavingMusic = false;
   isUploadingMusic = false;
   previewingMusicId: number | 'custom' | 'default' | null = null;
+  currentPreviewId: number | 'custom' | 'default' | null = null;
+  isPreviewLoading = false;
+  previewError: string | null = null;
   selectedMusicId: number | null = null;
   selectedMusicSourceHint: MusicSourceType = 'default';
   musicOptions: MusicTrack[] = [];
@@ -37,6 +40,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   userData: ProfileData | null = null;
 
   private previewAudio: HTMLAudioElement | null = null;
+  private lastPreviewErrorAt = 0;
   private readonly notyf = new Notyf({
     duration: 3000,
     position: { x: 'right', y: 'top' },
@@ -49,7 +53,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.stopPreview();
+    this.destroyPreviewAudio();
   }
 
   loadMusicData(): void {
@@ -197,7 +201,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   playPreview(music: MusicTrack): void {
     const audioUrl = music.audio_url || '';
     if (!audioUrl) {
-      this.notyf.error('Preview musik belum tersedia');
+      this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
     }
 
@@ -208,7 +212,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     const defaultMusic = this.musicSelection?.default_music;
     const audioUrl = defaultMusic?.audio_url || (this.getActiveSourceType() === 'default' ? this.musicSelection?.resolved_music_url : '') || '';
     if (!audioUrl) {
-      this.notyf.error('Musik default belum tersedia');
+      this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
     }
 
@@ -220,7 +224,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       this.getCustomMusicUrl() ||
       (this.getActiveSourceType() === 'custom' ? this.musicSelection?.resolved_music_url || '' : '');
     if (!audioUrl) {
-      this.notyf.error('Musik pribadi belum tersedia');
+      this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
     }
 
@@ -230,14 +234,16 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   stopPreview(): void {
     if (!this.previewAudio) {
       this.previewingMusicId = null;
+      this.currentPreviewId = null;
+      this.isPreviewLoading = false;
       return;
     }
 
     this.previewAudio.pause();
     this.previewAudio.currentTime = 0;
-    this.previewAudio.src = '';
-    this.previewAudio = null;
     this.previewingMusicId = null;
+    this.currentPreviewId = null;
+    this.isPreviewLoading = false;
   }
 
   canUploadCustomMusic(): boolean {
@@ -379,21 +385,116 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   private playAudio(audioUrl: string, previewId: number | 'custom' | 'default'): void {
-    this.stopPreview();
+    const normalizedUrl = String(audioUrl || '').trim();
+    if (!normalizedUrl) {
+      this.setPreviewError('Preview musik tidak tersedia.', true);
+      return;
+    }
 
-    this.previewAudio = new Audio(audioUrl);
+    if (this.previewAudio && this.currentPreviewId === previewId && !this.previewAudio.paused) {
+      this.previewAudio.pause();
+      this.previewingMusicId = null;
+      this.isPreviewLoading = false;
+      return;
+    }
+
+    const audio = this.ensurePreviewAudio();
+    if (this.currentPreviewId !== previewId || audio.src !== normalizedUrl) {
+      audio.pause();
+      audio.src = normalizedUrl;
+      audio.load();
+    }
+
+    this.currentPreviewId = previewId;
+    this.previewingMusicId = previewId;
+    this.isPreviewLoading = true;
+    this.previewError = null;
+
+    audio.play()
+      .then(() => {
+        this.previewingMusicId = previewId;
+        this.isPreviewLoading = false;
+        this.previewError = null;
+      })
+      .catch((error) => {
+        this.previewingMusicId = null;
+        this.isPreviewLoading = false;
+
+        const errorName = String(error?.name || '').trim();
+        if (errorName === 'NotAllowedError' || errorName === 'AbortError') {
+          this.setPreviewError('Klik play sekali lagi untuk memutar preview.');
+          return;
+        }
+
+        this.setPreviewError('Preview musik tidak tersedia.', true);
+      });
+  }
+
+  private ensurePreviewAudio(): HTMLAudioElement {
+    if (this.previewAudio) {
+      return this.previewAudio;
+    }
+
+    this.previewAudio = new Audio();
+    this.previewAudio.preload = 'metadata';
     this.previewAudio.addEventListener('ended', () => {
       this.previewingMusicId = null;
+      this.currentPreviewId = null;
+      this.isPreviewLoading = false;
+    });
+    this.previewAudio.addEventListener('pause', () => {
+      this.previewingMusicId = null;
+      this.isPreviewLoading = false;
+    });
+    this.previewAudio.addEventListener('playing', () => {
+      this.previewingMusicId = this.currentPreviewId;
+      this.isPreviewLoading = false;
+      this.previewError = null;
     });
     this.previewAudio.addEventListener('error', () => {
-      this.notyf.error('Gagal memuat preview musik');
-      this.stopPreview();
-    });
-    this.previewingMusicId = previewId;
-    this.previewAudio.play().catch(() => {
       this.previewingMusicId = null;
-      this.notyf.error('Preview ditolak browser. Coba klik tombol play sekali lagi.');
+      this.isPreviewLoading = false;
+      this.setPreviewError('Preview musik tidak tersedia.', true);
     });
+
+    return this.previewAudio;
+  }
+
+  private setPreviewError(message: string, allowGlobalToast = false): void {
+    this.isPreviewLoading = false;
+    this.previewingMusicId = null;
+
+    const now = Date.now();
+    if (this.previewError === message && now - this.lastPreviewErrorAt < 3000) {
+      return;
+    }
+
+    this.previewError = message;
+    this.lastPreviewErrorAt = now;
+
+    if (!allowGlobalToast) {
+      return;
+    }
+
+    // Preview errors stay inline by design. The timestamp above keeps repeated
+    // invalid-source errors from re-rendering or becoming noisy.
+  }
+
+  private destroyPreviewAudio(): void {
+    if (!this.previewAudio) {
+      this.previewingMusicId = null;
+      this.currentPreviewId = null;
+      this.isPreviewLoading = false;
+      return;
+    }
+
+    this.previewAudio.pause();
+    this.previewAudio.removeAttribute('src');
+    this.previewAudio.load();
+    this.previewAudio = null;
+    this.previewingMusicId = null;
+    this.currentPreviewId = null;
+    this.isPreviewLoading = false;
   }
 
   private normalizeMusicOptions(response: any): MusicTrack[] {

@@ -30,10 +30,15 @@
             <h3>Daftar Lagu Sena Digital</h3>
             <p>Pilih satu lagu yang akan dipakai sebagai musik undangan.</p>
           </div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="stopPreview()" [disabled]="!previewingMusicId">
+          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="stopPreview()" [disabled]="!previewingMusicId || isPreviewLoading">
             <i class="fa fa-stop" aria-hidden="true"></i>
             Stop
           </button>
+        </div>
+
+        <div *ngIf="previewError" class="preview-inline-message" role="status">
+          <i class="fa fa-info-circle" aria-hidden="true"></i>
+          <span>{{ previewError }}</span>
         </div>
 
         <label class="default-option" [class.selected]="selectedMusicId === null">
@@ -45,7 +50,7 @@
           </span>
           <span *ngIf="getActiveSourceType() === 'default'" class="selected-badge">Aktif</span>
           <button type="button" class="icon-button" (click)="playDefaultPreview(); $event.preventDefault()" [disabled]="!musicSelection?.resolved_music_url && !musicSelection?.default_music?.audio_url" title="Preview musik default">
-            <i class="fa" [class.fa-play]="previewingMusicId !== 'default'" [class.fa-pause]="previewingMusicId === 'default'" aria-hidden="true"></i>
+            <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'default'" [class.fa-play]="previewingMusicId !== 'default' && !(isPreviewLoading && currentPreviewId === 'default')" [class.fa-pause]="previewingMusicId === 'default' && !(isPreviewLoading && currentPreviewId === 'default')" aria-hidden="true"></i>
           </button>
         </label>
 
@@ -67,7 +72,7 @@
                 {{ isMusicSaved(music, 'catalog') ? 'Aktif' : 'Terpilih' }}
               </span>
               <button type="button" class="icon-button" (click)="playPreview(music); $event.preventDefault()" [disabled]="!music.audio_url" title="Preview lagu">
-                <i class="fa" [class.fa-play]="previewingMusicId !== music.id" [class.fa-pause]="previewingMusicId === music.id" aria-hidden="true"></i>
+                <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === music.id" [class.fa-play]="previewingMusicId !== music.id && !(isPreviewLoading && currentPreviewId === music.id)" [class.fa-pause]="previewingMusicId === music.id && !(isPreviewLoading && currentPreviewId === music.id)" aria-hidden="true"></i>
               </button>
             </label>
           </div>
@@ -120,7 +125,7 @@
           </div>
           <span *ngIf="isCustomMusicActive()" class="selected-badge">Aktif</span>
           <button type="button" class="icon-button" (click)="playCustomPreview()" title="Preview musik pribadi">
-            <i class="fa" [class.fa-play]="previewingMusicId !== 'custom'" [class.fa-pause]="previewingMusicId === 'custom'" aria-hidden="true"></i>
+            <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'custom'" [class.fa-play]="previewingMusicId !== 'custom' && !(isPreviewLoading && currentPreviewId === 'custom')" [class.fa-pause]="previewingMusicId === 'custom' && !(isPreviewLoading && currentPreviewId === 'custom')" aria-hidden="true"></i>
           </button>
         </div>
 
