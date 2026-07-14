@@ -36,7 +36,6 @@ export class AuthModalComponent implements OnChanges {
   infoMessage = '';
 
   lastForgotPasswordEmail = '';
-  isResetPasswordDemo = false;
 
   loginForm: FormGroup;
   forgotForm: FormGroup;
@@ -87,7 +86,7 @@ export class AuthModalComponent implements OnChanges {
 
   /** Reset link is broken when on the standalone route without token/email. */
   get resetLinkInvalid(): boolean {
-    return this.standalone && !this.isResetPasswordDemo && (!this.resetToken || !this.resetEmail);
+    return this.standalone && (!this.resetToken || !this.resetEmail);
   }
 
   private resetTransientState(): void {
@@ -115,19 +114,9 @@ export class AuthModalComponent implements OnChanges {
   }
 
   openResetPasswordModal(): void {
-    this.isResetPasswordDemo = false;
     this.currentMode = 'reset-password';
     this.resetForm.reset({ password: '', password_confirmation: '' });
     this.resetTransientState();
-  }
-
-  /** Demo preview from the forgot-password modal: no token/email, no API call. */
-  openResetPasswordDemoModal(): void {
-    this.isResetPasswordDemo = true;
-    this.currentMode = 'reset-password';
-    this.resetForm.reset({ password: '', password_confirmation: '' });
-    this.resetTransientState();
-    this.infoMessage = 'Mode demo — hanya untuk pratinjau tampilan, tidak dikirim ke server.';
   }
 
   /* aliases used by template back-links */
@@ -178,7 +167,6 @@ export class AuthModalComponent implements OnChanges {
     // Clear any reset-flow state before returning to login.
     this.resetToken = '';
     this.resetEmail = '';
-    this.isResetPasswordDemo = false;
     this.resetForm.reset({ password: '', password_confirmation: '' });
 
     if (this.standalone) {
@@ -277,18 +265,11 @@ export class AuthModalComponent implements OnChanges {
       return;
     }
 
-    // Demo mode: preview only, never hit the backend.
-    if (this.isResetPasswordDemo) {
-      this.infoMessage = 'Mode demo hanya untuk melihat tampilan reset password.';
-      return;
-    }
-
     this.isSubmitting = true;
 
     this.auth
       .resetPassword({
-        identifier: this.resetEmail,
-        channel: 'email',
+        email: this.resetEmail,
         token: this.resetToken,
         password: this.resetForm.value.password,
         password_confirmation: this.resetForm.value.password_confirmation,
@@ -296,6 +277,13 @@ export class AuthModalComponent implements OnChanges {
       .subscribe({
         next: () => {
           this.isSubmitting = false;
+          if (this.standalone) {
+            this.modal.requestLogin('Kata sandi berhasil diperbarui. Silakan masuk menggunakan kata sandi baru.');
+            this.closeAuthModal();
+            this.router.navigate(['/'], { queryParams: { auth: 'login' } });
+            return;
+          }
+
           this.currentMode = 'reset-success';
         },
         error: (err: any) => {

@@ -132,11 +132,6 @@
         </button>
       </form>
 
-      <p class="auth-modal__foot">
-        <a class="auth-link auth-link--muted" role="button" tabindex="0" (click)="openResetPasswordDemoModal()" (keydown.enter)="openResetPasswordDemoModal()">
-          (Demo) Lihat halaman buat kata sandi baru
-        </a>
-      </p>
     </ng-container>
 
     <!-- ====================== EMAIL CONFIRMATION ====================== -->
@@ -174,7 +169,7 @@
       <p class="auth-modal__subtitle">Masukkan kata sandi baru untuk akun mu.</p>
 
       <p class="auth-form__error" *ngIf="resetLinkInvalid">
-        Tautan reset kata sandi tidak valid.
+        Link reset kata sandi tidak valid.
       </p>
       <p class="auth-form__info" *ngIf="infoMessage && !resetLinkInvalid">{{ infoMessage }}</p>
 
@@ -240,7 +235,7 @@
           class="auth-btn auth-btn--primary"
           [disabled]="resetForm.invalid || isSubmitting || resetLinkInvalid"
         >
-          {{ isSubmitting ? 'Menyimpan…' : 'Simpan Kata Sandi' }}
+          {{ isSubmitting ? 'Menyimpan...' : 'Simpan Kata Sandi' }}
         </button>
       </form>
 

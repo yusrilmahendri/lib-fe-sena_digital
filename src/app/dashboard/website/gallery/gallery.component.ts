@@ -12,6 +12,7 @@ import {
   PhotoPosition,
   PhotoType,
   UserPhoto,
+  resolveInvitationPhotoUrl,
 } from 'src/app/shared/user-photo.model';
 
 type PhotoFormValue = {
@@ -647,6 +648,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     this.youtubeCoverOriginalSize = file.size;
     this.youtubeCoverCompressedSize = null;
+    this.youtubeCoverFile = file;
     this.previewUrlForYoutubeCover = URL.createObjectURL(file);
     this.isCompressing = true;
 
@@ -753,6 +755,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     const youtubeUrl = String(value.url_video || '').trim();
 
     formData.append('photo_type', 'gallery');
+    formData.append('media_type', 'video');
     formData.append('description', String(value.description || 'Video YouTube').trim());
     formData.append('position', 'center');
     formData.append('display_mode', 'cover');
@@ -760,6 +763,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     if (youtubeUrl) {
       formData.append('url_video', youtubeUrl);
+      formData.append('video_url', youtubeUrl);
+      formData.append('link_video', youtubeUrl);
     }
 
     if (image) {
@@ -784,13 +789,25 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   private normalizePhoto(photo: any): UserPhoto {
+    const urlVideo = photo?.url_video ?? photo?.video_url ?? photo?.link_video ?? null;
+    const normalizedPhotoUrl = resolveInvitationPhotoUrl({
+      ...photo,
+      url_video: urlVideo,
+      video_url: photo?.video_url ?? urlVideo,
+      link_video: photo?.link_video ?? urlVideo,
+    });
+
     return {
       id: Number(photo?.id),
       photo_type: photo?.photo_type === 'collage' ? 'collage' : 'gallery',
-      photo_url: String(photo?.photo_url || photo?.image_url || photo?.preview_url || this.getYoutubeThumbnailUrl(photo?.url_video || photo?.video_url || photo?.link_video) || ''),
-      url_video: photo?.url_video ?? photo?.video_url ?? photo?.link_video ?? null,
-      video_url: photo?.video_url ?? photo?.url_video ?? photo?.link_video ?? null,
-      link_video: photo?.link_video ?? photo?.url_video ?? photo?.video_url ?? null,
+      photo_url: normalizedPhotoUrl,
+      url_video: urlVideo,
+      video_url: photo?.video_url ?? urlVideo,
+      link_video: photo?.link_video ?? urlVideo,
+      media_type: photo?.media_type ?? null,
+      image_url: photo?.image_url ?? null,
+      preview_url: photo?.preview_url ?? null,
+      photo: photo?.photo ?? null,
       description: photo?.description ?? null,
       position: this.isPhotoPosition(photo?.position) ? photo.position : 'center',
       display_mode: photo?.display_mode === 'contain' ? 'contain' : 'cover',
@@ -862,7 +879,6 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.clearPreviewUrl();
 
     if (!blob) {
-      this.logPreviewState();
       return;
     }
 
@@ -872,7 +888,6 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
         : new File([blob], fallbackName, { type: blob.type || 'image/jpeg' });
 
     this.previewUrl = URL.createObjectURL(file);
-    this.logPreviewState();
   }
 
   private clearPreviewUrl(): void {
@@ -988,20 +1003,20 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return String(fileName || '').split('.').pop()?.toLowerCase() || '';
   }
 
-  onPreviewImageLoad(): void {
-    console.log('[Gallery Preview] image loaded for URL', this.previewUrl);
+  onPreviewImageLoad(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    image?.classList.remove('is-hidden');
   }
 
   onPreviewImageError(event: Event): void {
-    console.error('[Gallery Preview] render failed for URL', this.previewUrl, event);
+    const image = event.target as HTMLImageElement | null;
+    image?.classList.add('is-hidden');
   }
 
-  private logPreviewState(): void {
-    console.log('[Gallery Preview] previewUrl raw =', this.previewUrl);
-    console.log('[Gallery Preview] type of previewUrl =', typeof this.previewUrl);
-    console.log('[Gallery Preview] selectedFile', this.selectedFile?.name);
-    console.log('[Gallery Preview] compressedFile', this.compressedFile?.name || this.compressedFile?.type);
-    console.log('[Gallery Preview] previewSessionId', this.previewSessionId);
+  onPhotoImageError(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    image?.classList.add('is-hidden');
+    image?.closest('.thumb')?.classList.add('is-image-missing');
   }
 
   private getUserPackageName(): string {

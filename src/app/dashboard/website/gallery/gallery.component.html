@@ -201,7 +201,7 @@
           class="photo-preview-image"
           [style.object-fit]="uploadForm.value.display_mode || 'cover'"
           [style.object-position]="getPreviewObjectPosition(uploadForm.value)"
-          (load)="onPreviewImageLoad()"
+          (load)="onPreviewImageLoad($event)"
           (error)="onPreviewImageError($event)" />
         <ng-template #previewEmpty>
         <div class="preview-empty photo-preview-empty">
@@ -257,12 +257,14 @@
           <i class="fas fa-grip-vertical"></i>
         </button>
 
-        <div class="thumb">
+        <div class="thumb" [class.is-image-missing]="!photo.photo_url">
           <img
+            *ngIf="photo.photo_url"
             [src]="photo.photo_url"
             [alt]="photo.description || 'Foto undangan'"
             [style.object-fit]="photo.display_mode"
-            [style.object-position]="getPhotoObjectPosition(photo)" />
+            [style.object-position]="getPhotoObjectPosition(photo)"
+            (error)="onPhotoImageError($event)" />
           <span *ngIf="photo.is_featured" class="featured-badge">Featured</span>
           <button *ngIf="hasPhotoVideo(photo)" type="button" class="video-play-badge" (click)="openPhotoVideo(photo)" title="Buka video YouTube">
             <i class="fas fa-play"></i>

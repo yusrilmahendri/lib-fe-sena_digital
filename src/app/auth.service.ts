@@ -45,8 +45,9 @@ export interface ForgotPasswordPayload {
 export interface ResetPasswordPayload {
   token?: string;
   code?: string;
-  identifier: string;
-  channel: VerificationChannel;
+  identifier?: string;
+  email?: string;
+  channel?: VerificationChannel;
   password: string;
   password_confirmation: string;
 }
