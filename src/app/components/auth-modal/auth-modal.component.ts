@@ -213,7 +213,7 @@ export class AuthModalComponent implements OnChanges {
         if (roles.includes('admin')) {
           this.router.navigate(['/admin']);
         } else {
-          this.router.navigate(['/verify-account']);
+          this.router.navigate(['/dashboard']);
         }
       },
       error: () => {

@@ -1,5 +1,6 @@
 export interface AdminInvoiceRow {
   id: number;
+  user_id: number;
   invoice: string;
   invoicePayload: string;
   hasInvoice: boolean;
@@ -75,6 +76,11 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
   ]);
   const normalizedStatus = normalizePaymentStatus(rawStatus);
   const invoicePayload = normalizeInvoicePayload(firstString([
+    item?.kode_pemesanan,
+    item?.invoice_code,
+    item?.kode_invoice,
+    item?.no_invoice,
+    item?.order_id,
     item?.no_invoice,
     item?.invoice_number,
     item?.kode_invoice,
@@ -82,21 +88,25 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
     item?.invoice,
     item?.order_id,
     item?.tagihan?.kode_pemesanan,
+    item?.tagihan?.invoice_code,
     item?.tagihan?.kode_invoice,
     item?.tagihan?.no_invoice,
     item?.tagihan?.invoice_number,
     item?.tagihan?.order_id,
     item?.invoice_data?.kode_pemesanan,
+    item?.invoice_data?.invoice_code,
     item?.invoice_data?.kode_invoice,
     item?.invoice_data?.no_invoice,
     item?.invoice_data?.invoice_number,
     item?.invoice_data?.order_id,
     item?.invoice?.kode_pemesanan,
+    item?.invoice?.invoice_code,
     item?.invoice?.kode_invoice,
     item?.invoice?.no_invoice,
     item?.invoice?.invoice_number,
     item?.invoice?.order_id,
     item?.user?.kode_pemesanan,
+    item?.user?.invoice_code,
     item?.user?.kode_invoice,
     item?.user?.no_invoice,
     item?.user?.invoice_number,
@@ -104,9 +114,17 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
     item?.transaksi_id,
   ]));
   const invoice = invoicePayload ? formatInvoiceDisplay(invoicePayload) : ADMIN_MISSING_INVOICE_MESSAGE;
+  const userId = toNumber(firstValue([
+    item?.user_id,
+    item?.user?.id,
+    item?.customer_id,
+    item?.pengguna_id,
+    item?.id,
+  ]));
 
   return {
     id: toNumber(item?.id ?? item?.user_id ?? item?.user?.id),
+    user_id: userId,
     invoice,
     invoicePayload,
     hasInvoice: !!invoicePayload,
@@ -126,7 +144,7 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
     statusCode: rawStatus === null || rawStatus === undefined ? null : String(rawStatus),
     normalizedStatus,
     statusData: getStatusDataFromNormalized(normalizedStatus),
-    konfirmasiAktif: !!invoicePayload && !isPaidStatus(normalizedStatus),
+    konfirmasiAktif: !!userId && !!invoicePayload && isConfirmablePaymentStatus(normalizedStatus),
     originalData: item,
   };
 }
@@ -147,15 +165,28 @@ export function formatInvoiceDisplay(value: unknown): string {
 }
 
 export function normalizePaymentStatus(value: unknown): string {
-  const normalized = String(value ?? '').trim().toLowerCase();
+  const normalized = String(value ?? '').trim().toLowerCase().replace(/[_-]+/g, ' ');
 
-  if (['sb', 'paid', 'settlement', 'capture', 'success', 'sukses', 'lunas', 'aktif'].includes(normalized)) {
+  if (['sb', 'paid', 'settlement', 'capture', 'success', 'sukses', 'lunas', 'aktif', 'active', 'confirmed', 'terkonfirmasi'].includes(normalized)) {
     return 'paid';
   }
-  if (['mk', 'pending', 'menunggu', 'menunggu konfirmasi', 'challenge', 'process', 'processing'].includes(normalized)) {
+  if ([
+    'mk',
+    'pending',
+    'pending payment',
+    'belum selesai',
+    'menunggu',
+    'menunggu konfirmasi',
+    'menunggu pembayaran',
+    'waiting payment',
+    'waiting',
+    'challenge',
+    'process',
+    'processing',
+  ].includes(normalized)) {
     return 'pending';
   }
-  if (['bl', 'unpaid', 'belum lunas', 'belum_lunas', 'not_paid'].includes(normalized)) {
+  if (['bl', 'unpaid', 'belum lunas', 'not paid'].includes(normalized)) {
     return 'unpaid';
   }
   if (['ex', 'expired', 'expire', 'kedaluwarsa', 'cancel', 'cancelled', 'canceled', 'deny', 'failure', 'failed'].includes(normalized)) {
@@ -279,6 +310,10 @@ function computeRevenue(records: any[], rows: AdminInvoiceRow[], paketList: any[
 
 function isPaidStatus(status: string): boolean {
   return status === 'paid';
+}
+
+function isConfirmablePaymentStatus(status: string): boolean {
+  return ['pending', 'unpaid', 'unknown'].includes(status);
 }
 
 function firstValue(values: unknown[]): unknown {

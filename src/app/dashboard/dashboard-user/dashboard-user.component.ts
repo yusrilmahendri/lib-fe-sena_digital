@@ -203,14 +203,20 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     this.router.navigate([this.getBlockedAccountRoute()]);
   }
 
+  getLockedMenuBadge(): string {
+    if (this.accountStatus === 'pending_payment') return 'Menunggu Pembayaran';
+    if (this.accountStatus === 'expired') return 'Expired';
+    return 'Terkunci';
+  }
+
   private getBlockedAccountRoute(): string {
     switch (this.accountStatus) {
       case 'unverified':
         return '/verify-account';
       case 'pending_payment':
-        return '/payment-pending';
+        return '/dashboard/payment-pending';
       case 'expired':
-        return '/account-expired';
+        return '/dashboard/account-expired';
       default:
         return '/buat-undangan';
     }

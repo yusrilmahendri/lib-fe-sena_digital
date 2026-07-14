@@ -133,8 +133,8 @@ export class PembayaranComponent implements OnInit {
 
     // Populate form with selected user data
     this.confirmPaymentForm.patchValue({
-      user_id: row.id,
-      kode_pemesanan: row.invoicePayload
+      user_id: row.user_id || row.id,
+      kode_pemesanan: this.normalizeKodePemesanan(row.invoicePayload || row.invoice)
     });
 
     // Open modal with custom class for styling
@@ -147,14 +147,14 @@ export class PembayaranComponent implements OnInit {
 
   onSubmitPaymentConfirmation() {
     if (this.confirmPaymentForm.valid) {
-      const kodePemesanan = String(this.confirmPaymentForm.value.kode_pemesanan || '').trim().replace(/^#+/, '');
+      const kodePemesanan = this.normalizeKodePemesanan(this.confirmPaymentForm.value.kode_pemesanan);
       if (!kodePemesanan || kodePemesanan === '-' || kodePemesanan === '–') {
         this.notyf.error(this.missingInvoiceMessage);
         return;
       }
 
       const payload = {
-        ...this.confirmPaymentForm.value,
+        user_id: this.selectedUser?.user_id || this.selectedUser?.id || this.confirmPaymentForm.value.user_id,
         kode_pemesanan: kodePemesanan,
       };
 
@@ -200,6 +200,13 @@ export class PembayaranComponent implements OnInit {
   }
 
   canSubmitPaymentConfirmation(): boolean {
-    return this.confirmPaymentForm.valid && !!this.selectedUser?.hasInvoice;
+    const userId = this.selectedUser?.user_id || this.selectedUser?.id || this.confirmPaymentForm.value.user_id;
+    const kodePemesanan = this.normalizeKodePemesanan(this.confirmPaymentForm.value.kode_pemesanan);
+    return this.confirmPaymentForm.valid && !!userId && !!kodePemesanan && kodePemesanan !== '-' && kodePemesanan !== '–';
+  }
+
+  private normalizeKodePemesanan(value: unknown): string {
+    const kode = String(value ?? '').trim().replace(/^#+/, '');
+    return kode === '-' || kode === '–' ? '' : kode;
   }
 }

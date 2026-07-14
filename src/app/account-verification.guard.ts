@@ -34,10 +34,10 @@ export class AccountVerificationGuard implements CanActivate {
               return state.url === this.onboardingRoute ? true : this.router.createUrlTree([this.onboardingRoute]);
             }
             if (paymentState.accountStatus === 'expired') {
-              return this.router.createUrlTree(['/account-expired']);
+              return this.router.createUrlTree(['/dashboard/account-expired']);
             }
             if (paymentState.accountStatus === 'pending_payment') {
-              return this.router.createUrlTree(['/payment-pending']);
+              return this.router.createUrlTree(['/dashboard/payment-pending']);
             }
 
             return this.router.createUrlTree([this.onboardingRoute]);

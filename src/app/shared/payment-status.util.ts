@@ -38,10 +38,12 @@ const PENDING_STATUSES = [
   'pending',
   'menunggu',
   'menunggu konfirmasi',
+  'menunggu pembayaran',
   'waiting',
   'unpaid',
   'belum lunas',
   'belum_lunas',
+  'belum selesai',
   'not_paid',
   'bl',
   'mk',
@@ -101,14 +103,17 @@ export function resolvePaymentState(profile: any): PaymentState {
   const invoiceCode = firstText([
     data.no_invoice,
     data.invoice_number,
+    data.invoice_code,
     data.kode_invoice,
     data.kode_pemesanan,
     data.order_id,
     data.transaksi_id,
     data.tagihan?.no_invoice,
+    data.tagihan?.invoice_code,
     data.tagihan?.kode_invoice,
     data.tagihan?.kode_pemesanan,
     data.invoice?.no_invoice,
+    data.invoice?.invoice_code,
     data.invoice?.kode_invoice,
     data.invoice?.kode_pemesanan,
   ]);
@@ -221,10 +226,9 @@ function resolveStatus(state: {
   if (state.accountStatusRaw === 'onboarding') return 'onboarding';
   if (state.isPaymentConfirmed) return 'active';
   if (
-    state.hasInvoice &&
-    (state.accountStatusRaw === 'pending_payment' ||
-      PENDING_STATUSES.includes(state.accountStatusRaw) ||
-      PENDING_STATUSES.includes(state.paymentStatusRaw))
+    state.accountStatusRaw === 'pending_payment' ||
+    PENDING_STATUSES.includes(state.accountStatusRaw) ||
+    PENDING_STATUSES.includes(state.paymentStatusRaw)
   ) {
     return 'pending_payment';
   }

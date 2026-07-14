@@ -68,6 +68,7 @@
           <div class="menu-item-content">
             <i class="fas fa-globe" aria-hidden="true"></i>
             <span>Website</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </div>
           <i class="fas fa-chevron-right dropdown-icon"
              [class.rotated]="isWebsiteSubmenuOpen"
@@ -82,72 +83,81 @@
              routerLink="website/tampilan"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Tampilan</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/pengaturan"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Pengaturan</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/data-website"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Data Website</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/mempelai"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Mempelai</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/acara"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Acara</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/gallery"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Gallery</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/musik-undangan"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Musik Undangan</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/cerita-quote"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Cerita & Quote</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item"
              [class.submenu-item--disabled]="!isPaymentActive"
              routerLink="website/rekening"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Rekening</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
         </div>
       </div>
@@ -165,6 +175,7 @@
           <div class="menu-item-content">
             <i class="fas fa-chart-line" aria-hidden="true"></i>
             <span>Pengunjung</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </div>
           <i class="fas fa-chevron-right dropdown-icon"
              [class.rotated]="isPengunjungSubmenuOpen"
@@ -179,8 +190,9 @@
              routerLink="pengunjung/ucapan"
              routerLinkActive="active"
              (click)="onProtectedMenuClick($event)"
-             tabindex="0">
+            tabindex="0">
             <span>Riwayat & Ucapan</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
           <a class="submenu-item submenu-item--with-icon"
              [class.submenu-item--disabled]="!isPaymentActive"
@@ -190,6 +202,7 @@
              tabindex="0">
             <i class="fas fa-qrcode" aria-hidden="true"></i>
             <span>Scan Kehadiran</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
         </div>
       </div>
@@ -203,6 +216,7 @@
             tabindex="0">
             <i class="fas fa-share-alt" aria-hidden="true"></i>
             <span>Bagi Undangan</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
       </div>
 
@@ -215,6 +229,7 @@
             tabindex="0">
             <i class="fas fa-book" aria-hidden="true"></i>
             <span>Penyesuaian Agama</span>
+            <small class="locked-menu-badge" *ngIf="!isPaymentActive">{{ getLockedMenuBadge() }}</small>
           </a>
       </div>
 

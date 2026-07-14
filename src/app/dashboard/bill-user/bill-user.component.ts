@@ -62,7 +62,7 @@ export class BillUserComponent implements OnInit {
 
         if (
           this.statusPage === 'pending_payment' &&
-          (!this.paymentState.hasInvoice || this.paymentState.accountStatus !== 'pending_payment')
+          this.paymentState.accountStatus !== 'pending_payment'
         ) {
           this.router.navigateByUrl(this.onboardingRoute);
           return;
@@ -80,11 +80,41 @@ export class BillUserComponent implements OnInit {
   }
 
   openPaymentInstruction(): void {
-    this.router.navigate(['/dashboard/bill']);
+    this.refreshStatus();
   }
 
   contactAdmin(): void {
     this.router.navigate(['/dashboard/hubungi-kami']);
+  }
+
+  copyInvoiceCode(): void {
+    const invoiceCode = this.paymentState?.invoiceCode || '';
+    if (!invoiceCode) {
+      this.errorMessage = 'Kode pemesanan belum tersedia.';
+      return;
+    }
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(invoiceCode)
+        .then(() => this.paymentStatusMessage = 'Kode pemesanan berhasil disalin.')
+        .catch(() => this.copyInvoiceCodeFallback(invoiceCode));
+      return;
+    }
+
+    this.copyInvoiceCodeFallback(invoiceCode);
+  }
+
+  private copyInvoiceCodeFallback(invoiceCode: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = invoiceCode;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    this.paymentStatusMessage = 'Kode pemesanan berhasil disalin.';
   }
 
   renewPackage(): void {
