@@ -55,7 +55,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   showBillingMenu = false;
   userData: ProfileData | null = null;
   isPaymentActive = false;
-  accountStatus: AccountAccessStatus = 'pending_payment';
+  accountStatus: AccountAccessStatus = 'onboarding';
 
   constructor(
     private router: Router,
@@ -204,7 +204,16 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   private getBlockedAccountRoute(): string {
-    return this.accountStatus === 'expired' ? '/account-expired' : '/payment-pending';
+    switch (this.accountStatus) {
+      case 'unverified':
+        return '/verify-account';
+      case 'pending_payment':
+        return '/payment-pending';
+      case 'expired':
+        return '/account-expired';
+      default:
+        return '/buat-undangan';
+    }
   }
 
   private syncSubmenuStateWithRoute(): void {

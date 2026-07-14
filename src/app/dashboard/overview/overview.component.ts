@@ -224,6 +224,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'expired':
         return 'account-status-card__badge--expired';
       case 'pending_payment':
+      case 'onboarding':
         return 'account-status-card__badge--pending';
       default:
         return 'account-status-card__badge--muted';

@@ -8,6 +8,8 @@ import { isAccountVerified, resolvePaymentState } from './shared/payment-status.
 
 @Injectable({ providedIn: 'root' })
 export class AccountVerificationGuard implements CanActivate {
+  private readonly onboardingRoute = '/buat-undangan';
+
   constructor(
     private auth: AuthService,
     private dashboardService: DashboardService,
@@ -28,15 +30,21 @@ export class AccountVerificationGuard implements CanActivate {
             const paymentState = resolvePaymentState(profileResponse);
 
             if (paymentState.accountStatus === 'active') return true;
+            if (paymentState.accountStatus === 'onboarding') {
+              return state.url === this.onboardingRoute ? true : this.router.createUrlTree([this.onboardingRoute]);
+            }
             if (paymentState.accountStatus === 'expired') {
               return this.router.createUrlTree(['/account-expired']);
             }
+            if (paymentState.accountStatus === 'pending_payment') {
+              return this.router.createUrlTree(['/payment-pending']);
+            }
 
-            return this.router.createUrlTree(['/payment-pending']);
+            return this.router.createUrlTree([this.onboardingRoute]);
           }),
           catchError(() => {
             sessionStorage.setItem('payment_intended_url', state.url);
-            return of(this.router.createUrlTree(['/payment-pending']));
+            return of(this.router.createUrlTree([this.onboardingRoute]));
           })
         );
       }),

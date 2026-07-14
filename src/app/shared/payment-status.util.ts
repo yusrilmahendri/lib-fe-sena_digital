@@ -14,9 +14,10 @@ export interface PaymentState {
   domain: string;
   invoiceCode: string;
   transactionDate: string;
+  hasInvoice: boolean;
 }
 
-export type AccountAccessStatus = 'unverified' | 'pending_payment' | 'expired' | 'active';
+export type AccountAccessStatus = 'unverified' | 'onboarding' | 'pending_payment' | 'expired' | 'active';
 
 const PAID_STATUSES = [
   'sb',
@@ -64,7 +65,7 @@ export function isAccountVerified(profile: any): boolean {
     data.account_verified ||
     data.email_verified_at ||
     data.whatsapp_verified_at ||
-    ['active', 'pending_payment', 'expired'].includes(accountStatus)
+    ['onboarding', 'active', 'pending_payment', 'expired'].includes(accountStatus)
   );
 }
 
@@ -97,6 +98,30 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.payment_status,
   ]);
   const paymentStatusRaw = normalizeStatus(paymentStatus);
+  const invoiceCode = firstText([
+    data.no_invoice,
+    data.invoice_number,
+    data.kode_invoice,
+    data.kode_pemesanan,
+    data.order_id,
+    data.transaksi_id,
+    data.tagihan?.no_invoice,
+    data.tagihan?.kode_invoice,
+    data.tagihan?.kode_pemesanan,
+    data.invoice?.no_invoice,
+    data.invoice?.kode_invoice,
+    data.invoice?.kode_pemesanan,
+  ]);
+  const transactionDate = firstText([
+    data.tanggal_transaksi,
+    data.transaction_date,
+    data.created_at,
+    data.tagihan?.tanggal_transaksi,
+    data.tagihan?.created_at,
+    data.invoice?.tanggal_transaksi,
+    data.invoice?.created_at,
+  ]);
+  const hasInvoice = resolveHasInvoice(data, invoiceCode);
   const activeUntil = firstText([
     data.active_until,
     data.domain_info?.expires_at,
@@ -134,6 +159,7 @@ export function resolvePaymentState(profile: any): PaymentState {
     isPaymentConfirmed,
     accountStatusRaw,
     paymentStatusRaw,
+    hasInvoice,
   });
 
   return {
@@ -175,29 +201,9 @@ export function resolvePaymentState(profile: any): PaymentState {
       data.website_domain,
       data.wedding_profile?.domain,
     ]),
-    invoiceCode: firstText([
-      data.no_invoice,
-      data.invoice_number,
-      data.kode_invoice,
-      data.kode_pemesanan,
-      data.order_id,
-      data.transaksi_id,
-      data.tagihan?.no_invoice,
-      data.tagihan?.kode_invoice,
-      data.tagihan?.kode_pemesanan,
-      data.invoice?.no_invoice,
-      data.invoice?.kode_invoice,
-      data.invoice?.kode_pemesanan,
-    ]),
-    transactionDate: firstText([
-      data.tanggal_transaksi,
-      data.transaction_date,
-      data.created_at,
-      data.tagihan?.tanggal_transaksi,
-      data.tagihan?.created_at,
-      data.invoice?.tanggal_transaksi,
-      data.invoice?.created_at,
-    ]),
+    invoiceCode,
+    transactionDate,
+    hasInvoice,
   };
 }
 
@@ -207,17 +213,23 @@ function resolveStatus(state: {
   isPaymentConfirmed: boolean;
   accountStatusRaw: string;
   paymentStatusRaw: string;
+  hasInvoice: boolean;
 }): AccountAccessStatus {
   if (!state.isVerified) return 'unverified';
   if (state.isExpired) return 'expired';
   if (state.accountStatusRaw === 'active') return 'active';
-  if (state.accountStatusRaw === 'pending_payment') return 'pending_payment';
+  if (state.accountStatusRaw === 'onboarding') return 'onboarding';
   if (state.isPaymentConfirmed) return 'active';
-  if (PENDING_STATUSES.includes(state.accountStatusRaw) || PENDING_STATUSES.includes(state.paymentStatusRaw)) {
+  if (
+    state.hasInvoice &&
+    (state.accountStatusRaw === 'pending_payment' ||
+      PENDING_STATUSES.includes(state.accountStatusRaw) ||
+      PENDING_STATUSES.includes(state.paymentStatusRaw))
+  ) {
     return 'pending_payment';
   }
 
-  return 'pending_payment';
+  return 'onboarding';
 }
 
 function accountStatusLabel(status: AccountAccessStatus): string {
@@ -228,9 +240,25 @@ function accountStatusLabel(status: AccountAccessStatus): string {
       return 'Expired';
     case 'pending_payment':
       return 'Menunggu Pembayaran';
+    case 'onboarding':
+      return 'Onboarding';
     default:
       return 'Belum Verifikasi';
   }
+}
+
+function resolveHasInvoice(data: any, invoiceCode: string): boolean {
+  if (data.has_invoice === false || data.invoice_exists === false || data.has_tagihan === false) return false;
+  if (data.has_invoice === true || data.invoice_exists === true || data.has_tagihan === true) return true;
+  if (invoiceCode) return true;
+  if (hasObjectValue(data.invoice) || hasObjectValue(data.tagihan)) return true;
+
+  return false;
+}
+
+function hasObjectValue(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  return Object.keys(value as Record<string, unknown>).length > 0;
 }
 
 function firstNumber(values: unknown[]): number | null {

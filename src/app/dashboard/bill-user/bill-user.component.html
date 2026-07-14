@@ -23,11 +23,11 @@
       </p>
 
       <dl class="invoice-details" *ngIf="paymentState as state">
-        <div *ngIf="state.packageName">
+        <div *ngIf="state.hasInvoice && state.packageName">
           <dt>Paket</dt>
           <dd>{{ state.packageName }}</dd>
         </div>
-        <div *ngIf="state.packageCode">
+        <div *ngIf="state.hasInvoice && state.packageCode">
           <dt>Kode Paket</dt>
           <dd>{{ state.packageCode }}</dd>
         </div>
@@ -35,15 +35,15 @@
           <dt>Domain</dt>
           <dd>{{ state.domain }}</dd>
         </div>
-        <div *ngIf="state.invoiceCode">
+        <div *ngIf="state.hasInvoice && state.invoiceCode">
           <dt>Kode Invoice</dt>
           <dd>{{ state.invoiceCode }}</dd>
         </div>
-        <div *ngIf="state.paymentStatus">
+        <div *ngIf="state.hasInvoice && state.paymentStatus">
           <dt>Status Pembayaran</dt>
           <dd>{{ state.paymentStatus }}</dd>
         </div>
-        <div *ngIf="state.transactionDate">
+        <div *ngIf="state.hasInvoice && state.transactionDate">
           <dt>Tanggal Transaksi</dt>
           <dd>{{ state.transactionDate }}</dd>
         </div>

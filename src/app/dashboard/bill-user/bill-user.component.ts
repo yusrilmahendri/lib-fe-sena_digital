@@ -15,6 +15,7 @@ export class BillUserComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
   statusPage: Extract<AccountAccessStatus, 'pending_payment' | 'expired'> = 'pending_payment';
+  private readonly onboardingRoute = '/buat-undangan';
 
   constructor(
     private dashboardService: DashboardService,
@@ -42,6 +43,11 @@ export class BillUserComponent implements OnInit {
           return;
         }
 
+        if (this.paymentState.accountStatus === 'onboarding') {
+          this.router.navigateByUrl(this.onboardingRoute);
+          return;
+        }
+
         if (this.paymentState.accountStatus === 'active') {
           const intendedUrl = sessionStorage.getItem('payment_intended_url') || '/dashboard/overview';
           sessionStorage.removeItem('payment_intended_url');
@@ -51,6 +57,14 @@ export class BillUserComponent implements OnInit {
 
         if (this.paymentState.accountStatus === 'expired' && this.statusPage !== 'expired') {
           this.router.navigate(['/account-expired']);
+          return;
+        }
+
+        if (
+          this.statusPage === 'pending_payment' &&
+          (!this.paymentState.hasInvoice || this.paymentState.accountStatus !== 'pending_payment')
+        ) {
+          this.router.navigateByUrl(this.onboardingRoute);
           return;
         }
 
