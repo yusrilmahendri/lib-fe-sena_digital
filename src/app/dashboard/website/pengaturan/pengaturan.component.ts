@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
 import {
   DEFAULT_SALAM_ATAS,
@@ -247,7 +248,7 @@ export class PengaturanComponent implements OnInit {
         this.isLoadingDomain = false;
       },
       error: (err) => {
-        this.notyf.error(err?.error?.message || 'Gagal menyimpan data domain dan token');
+        this.notyf.error(getFriendlyErrorMessage(err));
 
         this.isLoadingDomain = false;
       }
@@ -328,7 +329,7 @@ export class PengaturanComponent implements OnInit {
         this.isLoadingSalam = false;
       },
       error: (err) => {
-        this.notyf.error(err?.error?.message || 'Gagal menyimpan data salam');
+        this.notyf.error(getFriendlyErrorMessage(err));
 
         this.isLoadingSalam = false;
       }
@@ -367,7 +368,7 @@ export class PengaturanComponent implements OnInit {
         this.loadInitialData();
       },
       error: (err) => {
-        this.notyf.error(err?.error?.message || 'Gagal menyimpan pengaturan filter');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isLoadingFilter = false;
       }
     });

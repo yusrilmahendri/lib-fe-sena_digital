@@ -14,8 +14,8 @@ import { AdminMusicCatalogService } from 'src/app/services/admin-music-catalog.s
   styleUrls: ['./music-catalog.component.scss'],
 })
 export class MusicCatalogComponent implements OnInit {
-  private readonly allowedMusicExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
-  private readonly maxMusicUploadSizeInBytes = 10 * 1024 * 1024;
+  private readonly allowedMusicExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
+  private readonly maxMusicUploadSizeInBytes = 20 * 1024 * 1024;
 
   items: AdminMusicCatalogItem[] = [];
   isLoading = false;
@@ -70,14 +70,14 @@ export class MusicCatalogComponent implements OnInit {
     const fileExtension = this.getMusicFileExtension(file);
 
     if (!this.allowedMusicExtensions.includes(fileExtension)) {
-      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, OGG, atau M4A.';
+      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, M4A, AAC, atau OGG.';
       input.value = '';
       this.uploadFile = null;
       return;
     }
 
     if (file.size > this.maxMusicUploadSizeInBytes) {
-      this.uploadError = 'Ukuran file musik melebihi batas maksimum 10 MB.';
+      this.uploadError = 'Ukuran file maksimal 20 MB.';
       input.value = '';
       this.uploadFile = null;
       return;
@@ -109,7 +109,7 @@ export class MusicCatalogComponent implements OnInit {
       },
       error: (err) => {
         this.logHttpError('Gagal mengunggah musik katalog', err);
-        this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
+        this.uploadError = this.resolveUploadErrorMessage(err);
         this.notyf.error(this.uploadError);
         this.isUploading = false;
       },
@@ -268,6 +268,22 @@ export class MusicCatalogComponent implements OnInit {
       response?.errors?.file?.[0],
       response?.errors?.musik?.[0],
     ]) || fallback;
+  }
+
+  private resolveUploadErrorMessage(error: any): string {
+    if (error?.status === 403) {
+      return 'Akun admin ini belum memiliki izin upload katalog musik. Silakan periksa role/permission admin di backend.';
+    }
+
+    if (error?.status === 413) {
+      return 'Ukuran file terlalu besar.';
+    }
+
+    if (error?.status === 422) {
+      return this.resolveUploadMessage(error?.error, 'File musik tidak valid. Periksa format atau ukuran file.');
+    }
+
+    return this.resolveUploadMessage(error?.error, 'Gagal mengunggah file musik.');
   }
 
   private getMusicFileExtension(file: File): string {

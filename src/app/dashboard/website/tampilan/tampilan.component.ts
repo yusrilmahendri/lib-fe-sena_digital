@@ -28,6 +28,7 @@ import {
   ThemePackageTier,
 } from '../../../theme-package-access.util';
 import { normalizeThemeSlug } from '../../../theme-render.registry';
+import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
 
 type PaidPackageTier = PaidThemePackageTier;
 
@@ -227,7 +228,27 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    return this.canUseTheme(theme);
+    if (theme.isLoading || this.processingPrimaryAction || this.processingUpgradeInvoice) {
+      return false;
+    }
+
+    if (this.isCurrentTheme(theme) || theme.isLegacy) {
+      return false;
+    }
+
+    if (!this.hasValidBackendThemeConnection(theme)) {
+      return false;
+    }
+
+    if (!this.isAccountActive) {
+      return false;
+    }
+
+    if (this.isThemeInactiveByAdmin(theme)) {
+      return false;
+    }
+
+    return this.canUseTheme(theme) || theme.upgradeRequired === true;
   }
 
   get isPreviewOnlyTab(): boolean {
@@ -283,11 +304,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    if (!this.hasValidBackendThemeConnection(theme)) {
-      return true;
-    }
-
-    return !this.canUseTheme(theme);
+    return !this.canSubmitSelectedTheme;
   }
 
   get primaryButtonLabel(): string {
@@ -313,15 +330,23 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Tema belum terhubung';
     }
 
-    if (!this.canUseTheme(theme) && theme.is_active === false) {
+    if (!this.isAccountActive) {
+      return 'Menunggu Konfirmasi Pembayaran';
+    }
+
+    if (this.isThemeInactiveByAdmin(theme)) {
       return 'Tema belum aktif';
     }
 
-    if (!this.canUseTheme(theme) && theme.category_is_active === false) {
-      return 'Kategori belum aktif';
+    if (this.canUseTheme(theme)) {
+      return 'Pilih Tema';
     }
 
-    return this.canUseTheme(theme) ? 'Gunakan Tema' : 'Upgrade Paket';
+    if (theme.upgradeRequired) {
+      return 'Upgrade Paket';
+    }
+
+    return 'Pilih tema';
   }
 
   get confirmThemeButtonLabel(): string {
@@ -347,6 +372,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Tema tersedia';
     }
 
+    if (theme.upgradeRequired) {
+      return `Upgrade ke ${theme.targetPackageLabel}`;
+    }
+
     return `${this.getPackageLabel(theme.requiredPackageTier || this.activeTab)} template`;
   }
 
@@ -357,6 +386,19 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     return this.getPackageLabel(this.resolveRequiredPackageTier(theme));
+  }
+
+  private resolveUpgradeTargetPackage(theme: ThemeCard | null | undefined): string {
+    if (!theme) {
+      return '';
+    }
+
+    const targetPackage =
+      theme?.targetPackage ||
+      theme?.requiredPackageTier ||
+      this.resolveRequiredPackageTier(theme);
+
+    return String(targetPackage || '').trim().toLowerCase();
   }
 
   /**
@@ -670,7 +712,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.selectedThemeId = theme.id;
     this.selectedThemeSlug = theme.slug;
     this.selectedThemeForSubmit = theme;
-    this.pendingThemeForConfirmation = theme;
+    this.pendingThemeForConfirmation = this.canUseTheme(theme) ? theme : null;
+    this.pendingThemeForUpgrade = theme.upgradeRequired ? theme : null;
     this.logThemeSubmitState();
   }
 
@@ -709,7 +752,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     this.selectedThemeSlug = selectedSlug;
     this.selectedThemeForSubmit = theme;
-    this.pendingThemeForConfirmation = theme;
+    this.pendingThemeForConfirmation = theme && this.canUseTheme(theme) ? theme : null;
+    this.pendingThemeForUpgrade = theme?.upgradeRequired ? theme : null;
     this.selectedThemeId = theme?.id ?? null;
 
     console.log('[MobileThemeOptionChange]', {
@@ -774,19 +818,25 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (!this.isAccountActive) {
+      this.toastService.showToast('Menunggu konfirmasi pembayaran.', 'info');
+      return;
+    }
+
     // Use canUseTheme as the source of truth so an API can_use=true or Diamond
     // fallback access is not blocked by a separate presentation status.
-    if (!this.canUseTheme(theme) && theme.is_active === false) {
+    if (this.isThemeInactiveByAdmin(theme)) {
       this.toastService.showToast('Tema ini belum aktif. Silakan hubungi admin.', 'info');
       return;
     }
-    if (!this.canUseTheme(theme) && theme.category_is_active === false) {
-      this.toastService.showToast('Kategori tema ini belum aktif. Silakan hubungi admin.', 'info');
+
+    if (!this.canUseTheme(theme) && theme.upgradeRequired) {
+      this.onUpgradeClick(theme);
       return;
     }
 
     if (!this.canUseTheme(theme)) {
-      this.onUpgradeClick(theme);
+      this.toastService.showToast('Tema belum tersedia untuk akun Anda.', 'info');
       return;
     }
 
@@ -848,14 +898,20 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   createUpgradeInvoice(): void {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
-    if (!theme?.backendThemeId || this.processingUpgradeInvoice) {
+    if (!theme || this.processingUpgradeInvoice) {
+      return;
+    }
+
+    const targetPackage = this.resolveUpgradeTargetPackage(theme);
+    if (!targetPackage || !theme.slug) {
+      this.toastService.showToast('Data upgrade paket belum lengkap. Silakan pilih tema kembali.', 'error');
       return;
     }
 
     this.processingUpgradeInvoice = true;
     const upgradeSubscription = this.themeService.createUpgradeInvoice({
-      theme_id: theme.backendThemeId,
-      target_package: theme.targetPackage,
+      target_package: targetPackage,
+      theme_slug: theme.slug,
     }).pipe(
       finalize(() => {
         this.processingUpgradeInvoice = false;
@@ -884,7 +940,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         });
       },
       error: (error) => {
-        const message = error?.error?.message || 'Invoice upgrade gagal dibuat. Silakan coba lagi.';
+        const message = getFriendlyErrorMessage(error);
         this.toastService.showToast(message, 'error');
         this.showThemeFeedback('error', message);
       }
@@ -1036,6 +1092,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return theme.canUse === true;
   }
 
+  private isThemeInactiveByAdmin(theme: ThemeCard): boolean {
+    return theme.inactiveByAdmin === true ||
+      theme.adminIsActive === false ||
+      theme.is_active === false ||
+      theme.category_is_active === false;
+  }
+
   private canUseThemeByTier(themeSlug: string, requiredTier?: PaidPackageTier | null): boolean {
     if (!themeSlug) {
       return false;
@@ -1103,6 +1166,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
   get upgradeTargetPackageLabel(): string {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
     return theme?.targetPackageLabel || this.upgradePackageLabel;
+  }
+
+  get upgradeTargetPackageCode(): string {
+    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
+    return this.resolveUpgradeTargetPackage(theme);
+  }
+
+  get upgradeThemeName(): string {
+    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
+    return theme ? this.getThemeDisplayName(theme) : '-';
   }
 
   get upgradeTargetPackagePriceLabel(): string {
@@ -1416,10 +1489,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
         if (error?.status === 403) {
           this.closeSelectConfirmationModal();
           const errorCode = this.resolveThemeErrorCode(error);
-          const message = error?.error?.message || 'Paket Anda belum mendukung tema ini. Silakan upgrade paket.';
+          const message = getFriendlyErrorMessage(error);
 
           if (errorCode === 'PAYMENT_NOT_CONFIRMED') {
-            const paymentMessage = error?.error?.message || 'Pembayaran paket Anda belum dikonfirmasi.';
+            const paymentMessage = getFriendlyErrorMessage(error);
             this.showThemeFeedback('error', paymentMessage);
             this.toastService.showToast(paymentMessage, 'info');
             return;
@@ -1433,7 +1506,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           }
 
           if (errorCode === 'THEME_INACTIVE') {
-            const inactiveMessage = error?.error?.message || 'Tema belum aktif oleh admin.';
+            const inactiveMessage = getFriendlyErrorMessage(error);
             this.showThemeFeedback('error', inactiveMessage);
             this.toastService.showToast(inactiveMessage, 'info');
             return;
@@ -1444,16 +1517,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
           return;
         }
 
-        const message =
-          error?.error?.message ||
-          error?.response?.message ||
-          (error.status === 401
-            ? 'Sesi telah habis. Silakan login kembali.'
-            : error.status === 422
-              ? 'Data tema tidak valid.'
-              : error.status === 500
-                ? 'Terjadi kesalahan server. Silakan coba beberapa saat lagi.'
-                : 'Gagal menggunakan theme');
+        const message = getFriendlyErrorMessage(error);
 
         this.closeSelectConfirmationModal();
         this.showThemeFeedback('error', message);

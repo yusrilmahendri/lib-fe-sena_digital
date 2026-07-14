@@ -7,6 +7,7 @@ import {
   ProfileResponse,
   ValidationError
 } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 
 @Component({
   selector: 'wc-profile',
@@ -292,7 +293,7 @@ export class ProfileComponent implements OnInit {
         }
       }
     } else {
-      this.notyf.error(error.error?.message || 'Terjadi kesalahan sistem');
+      this.notyf.error(getFriendlyErrorMessage(error));
     }
   }
 

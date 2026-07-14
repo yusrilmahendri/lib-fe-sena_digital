@@ -7,6 +7,7 @@ import {
   ReligionContentData,
   ReligionContentMap,
 } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
 
 type ReligionFieldKey =
@@ -172,7 +173,7 @@ export class PenyesuaianAgamaComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        this.notyf.error(error?.error?.message || 'Gagal memuat konten agama.');
+        this.notyf.error(getFriendlyErrorMessage(error));
         this.isLoading = false;
       },
     });
@@ -202,7 +203,7 @@ export class PenyesuaianAgamaComponent implements OnInit {
         this.isSaving = false;
       },
       error: (error) => {
-        this.notyf.error(error?.error?.message || 'Gagal menyimpan perubahan.');
+        this.notyf.error(getFriendlyErrorMessage(error));
         this.isSaving = false;
       },
     });
@@ -218,7 +219,7 @@ export class PenyesuaianAgamaComponent implements OnInit {
         this.resettingField = null;
       },
       error: (error) => {
-        this.notyf.error(error?.error?.message || 'Gagal mereset field.');
+        this.notyf.error(getFriendlyErrorMessage(error));
         this.resettingField = null;
       },
     });
@@ -246,7 +247,7 @@ export class PenyesuaianAgamaComponent implements OnInit {
         this.isResettingAll = false;
       },
       error: (error) => {
-        this.notyf.error(error?.error?.message || 'Gagal mereset semua konten custom.');
+        this.notyf.error(getFriendlyErrorMessage(error));
         this.isResettingAll = false;
       },
     });

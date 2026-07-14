@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Html5Qrcode } from 'html5-qrcode';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 
 interface GuestInvitation {
@@ -685,7 +686,6 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       error?.error?.status ||
       ''
     ).trim().toUpperCase();
-    const message = String(error?.error?.message || error?.message || '').trim();
 
     if (code === 'GUEST_NOT_FOUND') {
       return 'Data tamu tidak ditemukan. Pastikan tamu sudah dibuat atau link undangan benar.';
@@ -695,7 +695,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return 'QR tidak valid untuk undangan ini.';
     }
 
-    return message || fallback;
+    return getFriendlyErrorMessage(error) || fallback;
   }
 
   private createGuestSlug(name: string): string {

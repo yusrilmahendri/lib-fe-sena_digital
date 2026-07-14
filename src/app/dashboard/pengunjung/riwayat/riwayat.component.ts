@@ -5,6 +5,7 @@ import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { ModalComponent } from '../../../shared/modal/modal.component';
 import { Notyf } from 'notyf';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 
 @Component({
   selector: 'wc-riwayat',
@@ -174,7 +175,7 @@ handleCancelClicked() {
         this.showTable();
       },
       error: (err) => {
-        this.notyf.error(err?.message || 'Any error system');
+        this.notyf.error(getFriendlyErrorMessage(err));
         console.error('Error deleting visitor:', err);
       },
     });
@@ -188,7 +189,7 @@ handleCancelClicked() {
         this.showTable();
       },
       error: (err) => {
-        this.notyf.error(err?.message || 'Any error system');
+        this.notyf.error(getFriendlyErrorMessage(err));
         console.error('Error deleting all visitors:', err);
       },
     });

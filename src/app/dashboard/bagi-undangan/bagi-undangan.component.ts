@@ -6,6 +6,7 @@ import {
   GuestInvitationRecord,
   normalizeGuestRecord,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
 import * as XLSX from 'xlsx';
 
@@ -64,8 +65,8 @@ export class BagiUndanganComponent implements OnInit {
           this.showNotice('Domain undangan belum tersedia.');
         }
       },
-      error: () => {
-        this.showNotice('Gagal mengambil domain undangan.');
+      error: (error: any) => {
+        this.showNotice(getFriendlyErrorMessage(error));
       }
     });
   }

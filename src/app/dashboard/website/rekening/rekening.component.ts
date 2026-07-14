@@ -5,6 +5,7 @@ import { Notyf } from 'notyf';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from '../../../dashboard.service';
 import { BankAccount } from '../../../services/wedding-data.service';
+import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
 import { ModalComponent } from '../../../shared/modal/modal.component';
 
 interface Bank {
@@ -88,7 +89,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading bank list:', err);
-        this.notyf.error('Gagal memuat daftar bank');
+        this.notyf.error(getFriendlyErrorMessage(err));
       }
     });
   }
@@ -103,7 +104,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading bank accounts:', err);
-        this.notyf.error('Gagal memuat data rekening');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isLoading = false;
       }
     });
@@ -467,9 +468,9 @@ export class RekeningComponent implements OnInit, OnDestroy {
         }
       });
     } else if (err?.error?.message) {
-      this.notyf.error(err.error.message);
+      this.notyf.error(getFriendlyErrorMessage(err));
     } else {
-      this.notyf.error('Terjadi kesalahan pada sistem');
+      this.notyf.error(getFriendlyErrorMessage(err));
     }
   }
 

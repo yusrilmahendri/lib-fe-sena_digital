@@ -14,6 +14,7 @@ import {
   UserPhoto,
   resolveInvitationPhotoUrl,
 } from 'src/app/shared/user-photo.model';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 
 type PhotoFormValue = {
   description?: string | null;
@@ -255,8 +256,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     const formValue = this.youtubeForm.value as YoutubeVideoFormValue;
     const youtubeUrl = String(formValue.url_video || '').trim();
 
-    if (!youtubeUrl && !this.youtubeCoverFile) {
-      this.youtubeErrorMessage = 'Isi link YouTube atau upload cover video terlebih dahulu.';
+    if (!youtubeUrl) {
+      this.youtubeErrorMessage = 'Link YouTube wajib diisi.';
       return;
     }
 
@@ -275,7 +276,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
         this.loadPhotos('gallery');
       },
       error: (err) => {
-        this.youtubeErrorMessage = this.resolveErrorMessage(err, 'Gagal menyimpan video YouTube.');
+        this.youtubeErrorMessage = this.resolveYoutubeVideoErrorMessage(err);
         this.notyf.error(this.youtubeErrorMessage);
       },
       complete: () => {
@@ -528,7 +529,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   private createYoutubeForm(): FormGroup {
     return new FormGroup({
-      url_video: new FormControl('', [this.youtubeUrlValidator.bind(this)]),
+      url_video: new FormControl('', [Validators.required, this.youtubeUrlValidator.bind(this)]),
       description: new FormControl('Video YouTube'),
     });
   }
@@ -664,6 +665,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       this.youtubeErrorMessage = 'Gagal kompresi cover. Coba gunakan file JPG, PNG, atau WEBP lain.';
       this.notyf.error(this.youtubeErrorMessage);
       this.youtubeCoverFile = null;
+      this.clearYoutubeCoverPreview();
     } finally {
       this.isCompressing = false;
     }
@@ -758,16 +760,13 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     formData.append('media_type', 'video');
     formData.append('description', String(value.description || 'Video YouTube').trim());
     formData.append('position', 'center');
+    formData.append('object_position', this.mapPosition('center'));
     formData.append('display_mode', 'cover');
     formData.append('is_featured', '0');
 
-    if (youtubeUrl) {
-      formData.append('url_video', youtubeUrl);
-      formData.append('video_url', youtubeUrl);
-      formData.append('link_video', youtubeUrl);
-    }
+    formData.append('url_video', youtubeUrl);
 
-    if (image) {
+    if (image instanceof File) {
       formData.append('image', image, image.name);
     }
 
@@ -1056,11 +1055,15 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.status === 401) {
-      return 'Sesi login habis. Silakan masuk kembali.';
+    return getFriendlyErrorMessage(error) || fallback;
+  }
+
+  private resolveYoutubeVideoErrorMessage(error: any): string {
+    if (error?.status >= 500) {
+      return 'Video belum berhasil disimpan. Silakan coba lagi.';
     }
 
-    return error?.error?.message || error?.message || fallback;
+    return this.resolveErrorMessage(error, 'Video belum berhasil disimpan. Silakan coba lagi.');
   }
 
   private showError(message: string): void {

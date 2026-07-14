@@ -131,7 +131,7 @@
         <button
           type="button"
           class="theme-picker__submit btn-pilih-tema"
-          [class.theme-picker__submit--upgrade]="selectedThemeForSubmit && !canSubmitFocusedTheme && !selectedThemeForSubmit.isLegacy && !isCurrentTheme(selectedThemeForSubmit) && selectedThemeForSubmit.is_active && selectedThemeForSubmit.category_is_active"
+          [class.theme-picker__submit--upgrade]="selectedThemeForSubmit?.upgradeRequired && !canUseTheme(selectedThemeForSubmit)"
           [disabled]="!canSubmitSelectedTheme"
           (click)="confirmSelectedTheme()">
           <i class="far fa-window-restore" aria-hidden="true"></i>
@@ -200,12 +200,20 @@
 
     <dl class="theme-upgrade-summary">
       <div>
+        <dt>Tema yang dipilih</dt>
+        <dd>{{ upgradeThemeName }}</dd>
+      </div>
+      <div>
         <dt>Paket saat ini</dt>
         <dd>{{ upgradeCurrentPackageLabel }}</dd>
       </div>
       <div>
         <dt>Paket tujuan</dt>
         <dd>{{ upgradeTargetPackageLabel }}</dd>
+      </div>
+      <div>
+        <dt>Kode paket tujuan</dt>
+        <dd>{{ upgradeTargetPackageCode || '-' }}</dd>
       </div>
       <div>
         <dt>Harga</dt>

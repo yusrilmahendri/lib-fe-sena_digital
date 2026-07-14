@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { Notyf } from 'notyf';
 import { DashboardService, ProfileData, ProfileResponse } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { resolvePackageTier } from 'src/app/theme-package-access.util';
 import {
   CustomMusicInfo,
@@ -87,7 +88,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.logHttpError('Gagal memuat data musik undangan', err);
-        this.loadError = err?.error?.message || 'Gagal memuat data musik undangan.';
+        this.loadError = getFriendlyErrorMessage(err);
         this.isLoadingMusic = false;
       },
     });
@@ -111,7 +112,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.logHttpError('Gagal menyimpan pilihan musik', err);
-        this.notyf.error(err?.error?.message || 'Gagal menyimpan pilihan musik');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isSavingMusic = false;
       },
     });
@@ -172,7 +173,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.logHttpError('Gagal mengunggah musik pribadi', err);
-        this.uploadError = this.resolveUploadMessage(err?.error, 'Gagal mengunggah file musik.');
+        this.uploadError = getFriendlyErrorMessage(err);
         this.notyf.error(this.uploadError);
         this.isUploadingMusic = false;
       },
@@ -192,7 +193,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.logHttpError('Gagal menghapus musik pribadi', err);
-        this.notyf.error(err?.error?.message || 'Gagal menghapus musik pribadi');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isUploadingMusic = false;
       },
     });

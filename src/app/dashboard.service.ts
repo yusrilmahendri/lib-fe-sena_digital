@@ -592,7 +592,7 @@ export class DashboardService {
       case DashboardServiceType.THEME_USER_SELECTED:
         return `${this.BASE_URL_API}/themes/selected`;
       case DashboardServiceType.THEME_USER_UPGRADE_INVOICE:
-        return `${this.BASE_URL_API}/themes/upgrade-invoice`;
+        return `${this.BASE_URL_API}/v1/packages/upgrade`;
       case DashboardServiceType.USER_PHOTOS:
         return `${this.BASE_URL_API}/v1/user/photos`;
       case DashboardServiceType.USER_PHOTOS_SORT:
@@ -1458,8 +1458,8 @@ export interface ThemeSelectionResponse {
 }
 
 export interface ThemeUpgradeInvoiceRequest {
-  theme_id: number;
-  target_package?: string | null;
+  target_package: string;
+  theme_slug: string;
 }
 
 export interface ThemeUpgradeInvoiceResponse {

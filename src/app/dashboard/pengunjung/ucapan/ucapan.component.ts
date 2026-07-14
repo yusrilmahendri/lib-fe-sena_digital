@@ -12,6 +12,7 @@ import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { ModalComponent } from '../../../shared/modal/modal.component';
 import { catchError, of, forkJoin } from 'rxjs';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 
 
 @Component({
@@ -217,7 +218,7 @@ handleDeleteAllClicked(data: any) {
         this.loadData(); // Refresh the data after a successful deletion
       },
       error: (err) => {
-        this.notyf.error(err?.message || 'Ada kesalahan dalam sistem');
+        this.notyf.error(getFriendlyErrorMessage(err));
         console.error('Error while deleting entry:', err);
       }
     });

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardService } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { AccountAccessStatus, PaymentState, resolvePaymentState } from 'src/app/shared/payment-status.util';
 
 @Component({
@@ -74,7 +75,7 @@ export class BillUserComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error?.error?.message || 'Gagal memuat status pembayaran.';
+        this.errorMessage = getFriendlyErrorMessage(error);
       }
     });
   }

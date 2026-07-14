@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
 
 @Component({
@@ -81,7 +82,7 @@ export class MempelaiComponent implements OnInit {
       },
       error: (err) => {
         console.error('Gagal mendapatkan data mempelai:', err);
-        this.notyf.error('Gagal memuat data mempelai');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isLoading = false;
       },
     });
@@ -259,7 +260,7 @@ export class MempelaiComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error updating cover photo:', err);
-        this.notyf.error(err?.message || 'Gagal memperbarui cover photo');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isUpdating = false;
       }
     });
@@ -294,7 +295,7 @@ export class MempelaiComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error updating mempelai data:', err);
-        this.notyf.error(err?.message || 'Gagal memperbarui data mempelai');
+        this.notyf.error(getFriendlyErrorMessage(err));
         this.isUpdating = false;
       }
     });

@@ -4,6 +4,7 @@ import { BsDatepickerConfig } from 'ngx-bootstrap/datepicker';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
+import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
 
 interface Acara {
@@ -161,7 +162,7 @@ export class AcaraComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.notyf.error(err?.error?.message ?? 'Gagal menghapus acara.');
+        this.notyf.error(getFriendlyErrorMessage(err));
       }
     });
   }
@@ -192,7 +193,7 @@ export class AcaraComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.notyf.error('Gagal memuat data acara');
+        this.notyf.error(getFriendlyErrorMessage(err));
         if (this.dynamicEvents.length === 0) {
           this.dynamicEvents.push(this.createDynamicEventForm());
         }
@@ -278,7 +279,7 @@ export class AcaraComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading = false;
-          this.notyf.error(err?.error?.message ?? 'Gagal menyimpan countdown.');
+          this.notyf.error(getFriendlyErrorMessage(err));
         },
       });
     }
@@ -300,7 +301,7 @@ export class AcaraComponent implements OnInit {
           },
           error: (err) => {
             this.isLoading = false;
-            this.notyf.error(err?.error?.message ?? 'Gagal memperbarui countdown.');
+            this.notyf.error(getFriendlyErrorMessage(err));
           },
         });
     }
@@ -396,7 +397,7 @@ submitDynamicEventForm(): void {
           },
           error: (err) => {
             this.isLoading = false;
-            this.notyf.error(err?.error?.message ?? 'Gagal menyimpan/memperbarui data acara.');
+            this.notyf.error(getFriendlyErrorMessage(err));
           }
         });
       });
