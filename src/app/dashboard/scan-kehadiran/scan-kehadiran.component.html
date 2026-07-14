@@ -7,15 +7,15 @@
   <div class="scan-attendance__header">
     <div>
       <h1>Scan Kehadiran</h1>
-      <p>Scan QR undangan personal tamu untuk mencatat kehadiran. Data sementara tersimpan di browser ini.</p>
+      <p>Scan QR undangan personal tamu untuk mencatat kehadiran ke sistem.</p>
     </div>
   </div>
 
   <section class="scan-attendance__notice-card scan-attendance__notice-card--warning">
     <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
     <p>
-      Fitur scan kehadiran ini sementara tersimpan di browser. Jika panitia memakai perangkat berbeda,
-      browser berbeda, cache dihapus, atau data tamu belum di-import, sistem tidak dapat menemukan tamu.
+      Hasil scan akan divalidasi dan disimpan ke backend. Pastikan QR berasal dari link undangan Sena Digital
+      dan memiliki kode tamu.
     </p>
   </section>
 
@@ -99,15 +99,12 @@
     <div class="attendance-card__header">
       <div>
         <h3>List tamu hadir</h3>
-        <p>{{ checkedGuests.length }} tamu hadir</p>
+        <p>{{ isAttendanceLoading ? 'Memuat data...' : (attendanceTotal + ' tamu hadir') }}</p>
       </div>
 
       <div class="attendance-card__actions">
         <button type="button" class="btn-outline" (click)="exportPresentGuestsToExcel()">
           Export Excel Tamu Hadir
-        </button>
-        <button type="button" class="btn-danger" (click)="resetAllAttendance()">
-          Reset Semua Kehadiran
         </button>
       </div>
     </div>
@@ -123,7 +120,6 @@
             <th>Waktu Hadir</th>
             <th>Jumlah Scan</th>
             <th>Scan Terakhir</th>
-            <th>Aksi</th>
           </tr>
         </thead>
 
@@ -139,7 +135,7 @@
               </a>
             </td>
             <td data-label="Status">
-              <span class="status-badge status-badge--success">Hadir</span>
+              <span class="status-badge status-badge--success">{{ getAttendanceStatusLabel(guest) }}</span>
             </td>
             <td data-label="Waktu Hadir">
               {{ formatDateTime(getCheckedInAt(guest)) }}
@@ -149,11 +145,6 @@
             </td>
             <td data-label="Scan Terakhir">
               {{ formatDateTime(getLastScanAt(guest)) }}
-            </td>
-            <td data-label="Aksi">
-              <button type="button" class="btn-reset-small" (click)="resetAttendance(guest)">
-                Reset
-              </button>
             </td>
           </tr>
         </tbody>

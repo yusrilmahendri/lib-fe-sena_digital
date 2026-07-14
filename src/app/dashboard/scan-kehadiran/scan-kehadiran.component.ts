@@ -1,8 +1,7 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { Html5Qrcode } from 'html5-qrcode';
-import { DashboardService, ProfileResponse } from 'src/app/dashboard.service';
+import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
-import * as XLSX from 'xlsx';
 
 interface GuestInvitation {
   id?: string;
@@ -27,6 +26,12 @@ interface ScanResult {
   isError: boolean;
 }
 
+interface ParsedInvitationQr {
+  domain: string;
+  to: string;
+  isValidInvitationUrl: boolean;
+}
+
 @Component({
   selector: 'wc-scan-kehadiran',
   templateUrl: './scan-kehadiran.component.html',
@@ -39,11 +44,14 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public lastScanResult: ScanResult | null = null;
   public allGuests: GuestInvitation[] = [];
   public attendanceList: GuestInvitation[] = [];
+  public attendanceTotal = 0;
   public isScanning = false;
+  public isAttendanceLoading = false;
 
   private readonly scannerElementId = 'scan-kehadiran-reader';
   private scanner?: Html5Qrcode;
   private isScanPaused = false;
+  private isSubmittingScan = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -64,7 +72,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public onManualDomainChange(): void {
-    this.reloadGuestsFromStorage();
+    this.loadAttendanceListFromBackend();
   }
 
   public async startScan(): Promise<void> {
@@ -127,7 +135,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   }
 
   public handleScanResult(decodedText: string): void {
-    if (this.isScanPaused) {
+    if (this.isScanPaused || this.isSubmittingScan) {
       return;
     }
 
@@ -135,11 +143,11 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     const parsed = this.parseInvitationUrl(decodedText);
     const domain = parsed.domain;
 
-    if (!domain) {
+    if (!parsed.isValidInvitationUrl || !domain) {
       this.setScanResult({
         guestName: '-',
         invitationUrl: decodedText,
-        status: 'QR tidak valid karena domain undangan tidak ditemukan.',
+        status: 'QR tidak valid untuk undangan ini.',
         scannedAt,
         isError: true,
       });
@@ -151,7 +159,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       this.setScanResult({
         guestName: '-',
         invitationUrl: decodedText,
-        status: 'QR ini tidak memiliki nama tamu undangan.',
+        status: 'QR tidak valid untuk undangan ini.',
         scannedAt,
         isError: true,
       });
@@ -185,79 +193,10 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.reloadGuestsFromStorage(activeDomain);
-
-    const guestSlug = String(parsed.to || '').trim();
-    const guestIndex = this.allGuests.findIndex((guest) => String(guest.slug || '').trim() === guestSlug);
-
-    if (guestIndex < 0) {
-      this.setScanResult({
-        guestName: '-',
-        invitationUrl: decodedText,
-        status: 'Data tamu tidak ditemukan di browser ini. Pastikan nama tamu sudah dibuat atau di-import di perangkat scanner.',
-        scannedAt,
-        isError: true,
-      });
-      this.pauseScannerBriefly();
-      return;
-    }
-
-    const guest = { ...this.allGuests[guestIndex] };
-    const alreadyCheckedIn = !!this.getCheckedInAt(guest);
-
-    guest.checkedInAt = scannedAt;
-    guest.lastScannedAt = scannedAt;
-    guest.checkinCount = this.getCheckinCount(guest) + 1;
-
-    const updatedGuests = this.allGuests.map((item, index) => index === guestIndex ? guest : item);
-    this.saveGuests(activeDomain, updatedGuests);
-    this.reloadGuestsFromStorage(activeDomain);
-    this.loadAttendanceList();
-
-    this.setScanResult({
-      guestName: this.getGuestName(guest),
-      invitationUrl: this.getGuestInvitationUrl(guest),
-      status: alreadyCheckedIn ? 'Sudah Pernah Scan' : 'Berhasil',
-      scannedAt,
-      isError: false,
-    });
-    this.pauseScannerBriefly();
+    this.submitAttendanceScan(decodedText, domain, parsed.to, scannedAt);
   }
 
   public exportPresentGuestsToExcel(): void {
-    const rows = this.attendanceList.map((guest) => ({
-      Nama: this.getGuestName(guest),
-      Slug: guest.slug || '',
-      Link: this.getGuestInvitationUrl(guest),
-      'Waktu Hadir': this.getCheckedInAt(guest) || '',
-      'Jumlah Scan': this.getCheckinCount(guest),
-    }));
-
-    if (!rows.length) {
-      rows.push({
-        Nama: 'Belum ada tamu hadir',
-        Slug: '',
-        Link: '',
-        'Waktu Hadir': '',
-        'Jumlah Scan': 0,
-      });
-    }
-
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    worksheet['!cols'] = [
-      { wch: 28 },
-      { wch: 28 },
-      { wch: 64 },
-      { wch: 24 },
-      { wch: 12 },
-    ];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tamu Hadir');
-    XLSX.writeFile(workbook, `tamu-hadir-${this.resolvedDomain || 'undangan'}.xlsx`);
-    this.showNotice('Data tamu hadir berhasil diekspor.');
-  }
-
-  public resetAllAttendance(): void {
     const domain = this.resolvedDomain;
 
     if (!domain) {
@@ -265,35 +204,33 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmed = window.confirm('Reset semua data kehadiran pada domain aktif?');
+    const exportUrl = `${this.dashboardService.getUrl(DashboardServiceType.ATTENDANCE)}/export`;
+    this.dashboardService.httpSvc.get(exportUrl, {
+      params: { domain },
+      responseType: 'blob',
+    }).subscribe({
+      next: (blob) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = `tamu-hadir-${domain}.xlsx`;
+        link.click();
+        window.URL.revokeObjectURL(objectUrl);
+        this.showNotice('Data tamu hadir berhasil diekspor.');
+      },
+      error: (error) => {
+        console.error('[ATTENDANCE_EXPORT_ERROR]', error);
+        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal mengekspor data tamu hadir.'));
+      }
+    });
+  }
 
-    if (!confirmed) {
-      return;
-    }
-
-    const guests = this.allGuests.length ? this.allGuests : this.loadGuests(domain);
-    const resetGuests = guests.map((guest) => this.resetGuestAttendanceFields(guest));
-    this.saveGuests(domain, resetGuests);
-    this.reloadGuestsFromStorage(domain);
-    this.lastScanResult = null;
-    this.showNotice('Semua data kehadiran berhasil direset.');
+  public resetAllAttendance(): void {
+    this.showNotice('Reset kehadiran belum tersedia di backend final.');
   }
 
   public resetGuestAttendance(guestToReset: GuestInvitation): void {
-    const domain = this.resolvedDomain;
-    const guestKey = this.getGuestIdentityKey(guestToReset);
-
-    if (!domain || !guestKey) {
-      this.showNotice('Data tamu tidak valid.');
-      return;
-    }
-
-    const updatedGuests = this.allGuests.map((guest) =>
-      this.getGuestIdentityKey(guest) === guestKey ? this.resetGuestAttendanceFields(guest) : guest
-    );
-    this.saveGuests(domain, updatedGuests);
-    this.reloadGuestsFromStorage(domain);
-    this.showNotice('Status hadir tamu berhasil direset.');
+    this.showNotice('Reset kehadiran belum tersedia di backend final.');
   }
 
   public resetAttendance(guest: GuestInvitation): void {
@@ -364,7 +301,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       next: (response: ProfileResponse) => {
         this.activeDomain = this.getActiveDomainFromProfile(response);
         this.manualDomain = this.activeDomain;
-        this.reloadGuestsFromStorage();
+        this.loadAttendanceListFromBackend();
       },
       error: () => {
         this.showNotice('Gagal mengambil domain aktif. Silakan isi domain manual.');
@@ -386,20 +323,71 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     );
   }
 
-  private parseInvitationUrl(decodedText: string): { domain: string; to: string } {
+  private parseInvitationUrl(decodedText: string): ParsedInvitationQr {
     try {
       const url = new URL(decodedText);
       const segments = url.pathname.split('/').filter(Boolean);
       const weddingIndex = segments.indexOf('wedding');
       const domain = weddingIndex >= 0 ? segments[weddingIndex + 1] || '' : '';
+      const host = url.hostname.toLowerCase();
+      const isAllowedHost =
+        host === 'sena-digital.com' ||
+        host === 'www.sena-digital.com' ||
+        host === window.location.hostname.toLowerCase() ||
+        host === 'localhost' ||
+        host === '127.0.0.1';
 
       return {
         domain: this.normalizeWeddingDomain(domain),
         to: String(url.searchParams.get('to') || '').trim(),
+        isValidInvitationUrl: isAllowedHost && weddingIndex >= 0 && !!domain,
       };
     } catch {
-      return { domain: '', to: '' };
+      return { domain: '', to: '', isValidInvitationUrl: false };
     }
+  }
+
+  private submitAttendanceScan(scannedUrl: string, domain: string, guestCode: string, scannedAt: string): void {
+    this.isSubmittingScan = true;
+    this.isScanPaused = true;
+
+    try {
+      this.scanner?.pause(true);
+    } catch {
+      // Scanner can already be paused between camera frames.
+    }
+
+    const payload = {
+      url: scannedUrl,
+      domain,
+      guest_code: guestCode,
+    };
+
+    console.log('[ATTENDANCE_SCAN]', payload);
+
+    this.dashboardService.createParam(DashboardServiceType.ATTENDANCE, payload, '/scan').subscribe({
+      next: (response) => {
+        const scan = this.normalizeScanResponse(response, scannedUrl, guestCode, scannedAt);
+        this.setScanResult(scan);
+        this.showNotice(scan.status);
+        this.loadAttendanceListFromBackend(domain);
+        this.releaseScannerAfterDelay();
+      },
+      error: (error) => {
+        console.error('[ATTENDANCE_SCAN_ERROR]', error);
+        this.setScanResult({
+          guestName: '-',
+          invitationUrl: scannedUrl,
+          status: this.resolveBackendErrorMessage(
+            error,
+            'Gagal mencatat kehadiran. Silakan coba lagi.'
+          ),
+          scannedAt,
+          isError: true,
+        });
+        this.releaseScannerAfterDelay();
+      }
+    });
   }
 
   private pauseScannerBriefly(): void {
@@ -423,6 +411,21 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     }, 1500);
   }
 
+  private releaseScannerAfterDelay(): void {
+    this.isSubmittingScan = false;
+    window.setTimeout(() => {
+      this.isScanPaused = false;
+      if (this.isScanning) {
+        try {
+          this.scanner?.resume();
+        } catch {
+          // Resuming is best-effort; the Scan Ulang button can recover manually.
+        }
+      }
+      this.cdr.detectChanges();
+    }, 1500);
+  }
+
   private setScanResult(result: ScanResult): void {
     this.lastScanResult = result;
   }
@@ -432,6 +435,40 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     this.allGuests = domain ? this.loadGuests(domain) : [];
     this.loadAttendanceList();
     this.cdr.detectChanges();
+  }
+
+  private loadAttendanceListFromBackend(domainParam?: string): void {
+    const domain = this.normalizeWeddingDomain(domainParam || this.resolvedDomain);
+
+    if (!domain) {
+      this.attendanceList = [];
+      this.attendanceTotal = 0;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.isAttendanceLoading = true;
+    this.dashboardService.getParam(DashboardServiceType.ATTENDANCE, '/list', { domain }).subscribe({
+      next: (response) => {
+        this.attendanceList = this.extractAttendanceRows(response)
+          .map((guest) => this.normalizeBackendAttendance(guest, domain))
+          .sort((a, b) => {
+            const timeA = new Date(this.getLastScanAt(a) || this.getCheckedInAt(a) || 0).getTime();
+            const timeB = new Date(this.getLastScanAt(b) || this.getCheckedInAt(b) || 0).getTime();
+            return timeB - timeA;
+          });
+        this.attendanceTotal = this.resolveAttendanceTotal(response, this.attendanceList.length);
+        this.allGuests = [...this.attendanceList];
+        this.isAttendanceLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('[ATTENDANCE_LIST_ERROR]', error);
+        this.isAttendanceLoading = false;
+        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal memuat list tamu hadir.'));
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private loadGuests(domain: string): GuestInvitation[] {
@@ -476,10 +513,106 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   private extractAttendanceRows(response: any): GuestInvitation[] {
     if (Array.isArray(response)) return response;
     if (Array.isArray(response?.data?.data)) return response.data.data;
+    if (Array.isArray(response?.data?.attendances)) return response.data.attendances;
+    if (Array.isArray(response?.data?.attendance)) return response.data.attendance;
+    if (Array.isArray(response?.data?.guests)) return response.data.guests;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
     if (Array.isArray(response?.data)) return response.data;
     if (Array.isArray(response?.result)) return response.result;
     if (Array.isArray(response?.attendances)) return response.attendances;
+    if (Array.isArray(response?.attendance)) return response.attendance;
+    if (Array.isArray(response?.guests)) return response.guests;
     return [];
+  }
+
+  private resolveAttendanceTotal(response: any, fallback: number): number {
+    const total = Number(
+      response?.total ??
+      response?.data?.total ??
+      response?.meta?.total ??
+      response?.data?.meta?.total ??
+      fallback
+    );
+
+    return Number.isFinite(total) ? total : fallback;
+  }
+
+  private normalizeScanResponse(response: any, scannedUrl: string, guestCode: string, fallbackScannedAt: string): ScanResult {
+    const data = response?.data?.attendance ||
+      response?.data?.scan ||
+      response?.data?.guest ||
+      response?.data ||
+      response?.attendance ||
+      response?.guest ||
+      response ||
+      {};
+
+    const guestName = String(
+      data?.guest_name ||
+      data?.nama_tamu ||
+      data?.name ||
+      data?.nama ||
+      data?.guest?.name ||
+      data?.guest?.nama ||
+      response?.guest_name ||
+      response?.nama_tamu ||
+      ''
+    ).trim() || 'Tamu Undangan';
+
+    const scannedAt = String(
+      data?.scanned_at ||
+      data?.scan_time ||
+      data?.checked_in_at ||
+      data?.attended_at ||
+      data?.created_at ||
+      response?.scanned_at ||
+      fallbackScannedAt
+    );
+
+    const statusCode = this.normalizeStatus(String(
+      data?.status ||
+      data?.scan_status ||
+      data?.attendance_status ||
+      response?.status ||
+      response?.code ||
+      ''
+    ));
+    const alreadyScanned = data?.already_scanned === true ||
+      data?.is_duplicate === true ||
+      data?.duplicate === true ||
+      ['already_scanned', 'duplicate', 'sudah pernah discan', 'sudah hadir'].includes(statusCode);
+
+    return {
+      guestName,
+      invitationUrl: String(data?.invitation_url || data?.invitation_link || data?.url || scannedUrl || '').trim(),
+      status: alreadyScanned ? 'Sudah pernah discan' : 'Hadir',
+      scannedAt,
+      isError: false,
+    };
+  }
+
+  private normalizeBackendAttendance(raw: GuestInvitation, domain: string): GuestInvitation {
+    const nestedGuest: any = raw.guest || {};
+    const guestCode = String(
+      raw.slug ||
+      raw['guest_code'] ||
+      raw['kode_tamu'] ||
+      raw['to'] ||
+      nestedGuest.slug ||
+      ''
+    ).trim();
+    const name = this.getGuestName(raw);
+
+    return {
+      ...raw,
+      id: raw.id || raw['attendance_id'] || raw['guest_id'] || guestCode || name,
+      name,
+      slug: guestCode || this.createGuestSlug(name),
+      url: this.getGuestInvitationUrl(raw) || (guestCode ? this.buildGuestInvitationUrl(domain, guestCode) : ''),
+      checkedInAt: this.getAttendanceTime(raw),
+      lastScannedAt: this.getLastScanAt(raw),
+      checkinCount: this.getCheckinCount(raw) || 1,
+    };
   }
 
   private isPresentGuest(guest: GuestInvitation): boolean {
@@ -530,6 +663,39 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
       this.getAttendanceTime(guest);
 
     return value ? String(value) : null;
+  }
+
+  public getAttendanceStatusLabel(guest: GuestInvitation): string {
+    const status = this.normalizeStatus(this.getAttendanceStatus(guest));
+    if (['already_scanned', 'duplicate', 'sudah pernah discan', 'sudah hadir'].includes(status)) {
+      return 'Sudah pernah discan';
+    }
+
+    if (status && !['success', 'berhasil', 'present'].includes(status)) {
+      return guest['status_label'] || guest['kehadiran_label'] || status;
+    }
+
+    return 'Hadir';
+  }
+
+  private resolveBackendErrorMessage(error: any, fallback: string): string {
+    const code = String(
+      error?.error?.code ||
+      error?.error?.error_code ||
+      error?.error?.status ||
+      ''
+    ).trim().toUpperCase();
+    const message = String(error?.error?.message || error?.message || '').trim();
+
+    if (code === 'GUEST_NOT_FOUND') {
+      return 'Data tamu tidak ditemukan. Pastikan tamu sudah dibuat atau link undangan benar.';
+    }
+
+    if (code === 'INVALID_QR' || code === 'INVALID_INVITATION_QR') {
+      return 'QR tidak valid untuk undangan ini.';
+    }
+
+    return message || fallback;
   }
 
   private createGuestSlug(name: string): string {

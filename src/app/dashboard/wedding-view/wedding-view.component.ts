@@ -534,6 +534,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.error('[PUBLIC_WEDDING_ERROR]', error?.status, error?.error || error);
 
         if (!isBackgroundUpdate) {
+          if (this.resolvePublicWeddingErrorCode(error) === 'PAYMENT_NOT_CONFIRMED') {
+            this.errorMessage = 'Undangan belum aktif karena pembayaran belum dikonfirmasi.';
+            this.isLoading = false;
+            return;
+          }
+
           if (cleanGuestCode && this.shouldRetryWithoutGuest(error)) {
             console.warn('Guest code failed to load, retrying public wedding without guest code:', cleanGuestCode);
             this.guestName = 'Tamu Undangan';
@@ -552,7 +558,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
           // Enhanced error handling for domain-based requests
           if (error.status === 404) {
-            this.handleDataNotFound(`Wedding invitation not found for domain: ${cleanDomain}`);
+            this.handleDataNotFound('Undangan tidak ditemukan.');
           } else {
             this.handleAPIError(error);
           }
@@ -590,7 +596,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
    * @param reason - Reason for data not being found
    */
   private handleDataNotFound(reason: string): void {
-    this.errorMessage = `Wedding invitation not found. ${reason}`;
+    this.errorMessage = reason === 'Undangan tidak ditemukan.'
+      ? reason
+      : `Wedding invitation not found. ${reason}`;
     this.isLoading = false;
 
     console.warn('Wedding data not found:', reason);
@@ -655,10 +663,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     let errorMsg = 'Unable to load wedding invitation.';
 
-    if (error.status === 401) {
+    if (this.resolvePublicWeddingErrorCode(error) === 'PAYMENT_NOT_CONFIRMED') {
+      errorMsg = 'Undangan belum aktif karena pembayaran belum dikonfirmasi.';
+    } else if (error.status === 401) {
       errorMsg = 'Authentication required to access this wedding invitation.';
     } else if (error.status === 404) {
-      errorMsg = 'Wedding invitation not found. Please check the domain.';
+      errorMsg = 'Undangan tidak ditemukan.';
     } else if (error.status === 500) {
       errorMsg = 'Server error occurred. Please try again later.';
     }
@@ -898,6 +908,16 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private shouldRetryLegacyPublicEndpoint(error: any): boolean {
     return [0, 404, 405].includes(Number(error?.status));
+  }
+
+  private resolvePublicWeddingErrorCode(error: any): string {
+    return String(
+      error?.error?.code ||
+      error?.error?.error_code ||
+      error?.error?.status_code ||
+      error?.error?.type ||
+      ''
+    ).trim().toUpperCase();
   }
 
   private resolveGuestNameFromWeddingData(data: any): string {
