@@ -103,6 +103,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   selectedThemeId: number | null = null;
   selectedThemeSlug = '';
   public selectedThemeForSubmit: ThemeCard | null = null;
+
   userPackageTier: ThemePackageTier = 'trial';
   activeTab: ThemeFilterTier = 'ruby';
   showSelectConfirmationModal = false;
@@ -164,6 +165,22 @@ export class TampilanComponent implements OnInit, OnDestroy {
         theme.category !== 'Legacy' &&
         this.isThemeVisibleInTab(this.activeTab, theme)
     );
+  }
+
+  public get selectedThemeActionTarget(): ThemeCard | null {
+    return (
+      this.selectedThemeForSubmit ||
+      this.pendingThemeForUpgrade ||
+      this.pendingThemeForConfirmation ||
+      this.selectedTheme ||
+      null
+    );
+  }
+
+  public isSelectedThemeUpgradeAction(): boolean {
+    const theme = this.selectedThemeActionTarget;
+
+    return !!theme && theme.upgradeRequired === true && !this.canUseTheme(theme);
   }
 
   /**

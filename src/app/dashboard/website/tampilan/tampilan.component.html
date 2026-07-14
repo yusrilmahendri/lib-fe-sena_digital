@@ -122,21 +122,23 @@
       <footer class="theme-picker__footer">
         <div class="theme-picker__selection">
           <span class="theme-picker__selection-label">
-            {{ selectedThemeForSubmit || selectedTheme ? 'Tema dipilih' : 'Belum memilih tema' }}
+            {{ selectedThemeActionTarget ? 'Tema dipilih' : 'Belum memilih tema' }}
           </span>
-          <strong>{{ selectedThemeForSubmit || selectedTheme || currentTheme ? getThemeDisplayName(selectedThemeForSubmit || selectedTheme || currentTheme) : 'Belum ada tema dipilih' }}</strong>
+          <strong>
+            {{ selectedThemeActionTarget || currentTheme ? getThemeDisplayName(selectedThemeActionTarget || currentTheme) : 'Belum ada tema dipilih' }}
+          </strong>
           <small>{{ focusedThemeSubtitle }}</small>
         </div>
 
-        <button
-          type="button"
-          class="theme-picker__submit btn-pilih-tema"
-          [class.theme-picker__submit--upgrade]="selectedThemeForSubmit?.upgradeRequired && !canUseTheme(selectedThemeForSubmit)"
-          [disabled]="!canSubmitSelectedTheme"
-          (click)="confirmSelectedTheme()">
-          <i class="far fa-window-restore" aria-hidden="true"></i>
-          {{ primaryButtonLabel }}
-        </button>
+      <button
+        type="button"
+        class="theme-picker__submit btn-pilih-tema"
+        [class.theme-picker__submit--upgrade]="isSelectedThemeUpgradeAction()"
+        [disabled]="!canSubmitSelectedTheme"
+        (click)="confirmSelectedTheme()">
+        <i class="far fa-window-restore" aria-hidden="true"></i>
+        {{ primaryButtonLabel }}
+      </button>
       </footer>
     </ng-container>
   </div>
