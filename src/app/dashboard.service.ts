@@ -129,6 +129,7 @@ export enum DashboardServiceType {
   // === Wedding View Endpoints ===
   // Public and couple-specific wedding profile views.
   WEDDING_VIEW_CORE,
+  WEDDING_PUBLIC_BY_DOMAIN,
   WEDDING_VIEW_COUPLE,
   ATTENDANCE,
 
@@ -496,6 +497,8 @@ export class DashboardService {
       // wedding viewe
       case DashboardServiceType.WEDDING_VIEW_CORE:
         return `${this.BASE_URL_API}/v1/wedding-profile/public`;
+      case DashboardServiceType.WEDDING_PUBLIC_BY_DOMAIN:
+        return `${this.BASE_URL_API}/v1/wedding`;
       case DashboardServiceType.WEDDING_VIEW_COUPLE:
         return `${this.BASE_URL_API}/v1/wedding-profile/couple`;
       case DashboardServiceType.ATTENDANCE:

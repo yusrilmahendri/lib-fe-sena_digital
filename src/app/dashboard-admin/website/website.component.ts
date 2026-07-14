@@ -15,6 +15,7 @@ import {
 
 interface ThemePreset {
   key: string;
+  adminSlug: string;
   name: string;
   category: ThemeCategoryName;
   fallbackImage: string;
@@ -66,10 +67,11 @@ type PackageTier = 'Ruby' | 'Sapphire' | 'Diamond';
 })
 export class WebsiteComponent implements OnInit, OnDestroy {
   private readonly storageKey = 'admin-website-theme-order';
-  // Slug aliases removed — preset keys match backend slugs exactly.
-  // Each preset.key (e.g. 'soft-ivory') is looked up directly in adminThemesMap.
+  // Keep the public preset key stable, but allow admin master slugs to differ
+  // when the backend uses the real theme slug (e.g. Champagne Rose).
   private readonly themePresets: ThemePreset[] = PUBLIC_THEME_PRESETS.map((preset) => ({
     key: preset.slug,
+    adminSlug: preset.slug === 'diamond' ? 'champagne-rose' : preset.slug,
     name: preset.name,
     category: preset.category,
     fallbackImage: preset.fallbackImage,
@@ -160,9 +162,14 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
         this.adminThemesMap.clear();
         themes.forEach((theme: AdminTheme) => {
-          const slug = this.normalizeSlug(theme.slug);
+          const slug = this.normalizeSlug(this.resolveMasterThemeSlug(theme));
           if (slug) {
             this.adminThemesMap.set(slug, theme);
+          }
+
+          const legacySlug = this.normalizeSlug(theme.slug);
+          if (legacySlug && legacySlug !== slug && !this.isPackageSlug(legacySlug)) {
+            this.adminThemesMap.set(legacySlug, theme);
           }
         });
 
@@ -393,13 +400,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       item?.theme_id,
       item?.id,
     ]);
-    const masterThemeSlug = String(this.firstPresent([
-      item?.master_theme_slug,
-      item?.masterThemeSlug,
-      item?.slug_master,
-      item?.slug,
-      theme.key,
-    ]) || '').trim();
+    const masterThemeSlug = this.resolveMasterThemeSlug(item, theme);
     const categoryUserId = this.firstPresent([
       item?.category_user_id,
       item?.categoryUserId,
@@ -416,13 +417,15 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       categoryData?.slug,
       this.normalizeKey(category?.name || ''),
     ]) || '').trim();
-    const packageRequired = String(this.firstPresent([
+    const packageRequired = this.resolvePackageRequired([
       item?.package_required,
       item?.packageRequired,
       item?.required_package,
       item?.target_package,
+      item?.package,
+      item?.nama_paket,
       this.getThemePackageBadge(theme),
-    ]) || '').trim();
+    ]);
     const explicitConnected = this.firstPresent([
       item?.is_connected,
       item?.isConnected,
@@ -508,13 +511,20 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   private buildThemeCards(categories: WebsiteCategory[]): AdminThemeCard[] {
     const categoryById = this.buildCategoryById(categories);
     const linkedThemes = this.themePresets.map((preset, index) => {
-      // Match directly by slug — preset.key must equal adminTheme.slug exactly.
-      const presetSlug = this.normalizeSlug(preset.key);
-      const adminThemeData = this.adminThemesMap.get(presetSlug) ?? null;
+      // Match by real backend theme slug. The UI key may be legacy (e.g. "diamond"),
+      // while the master theme slug is "champagne-rose".
+      const presetSlug = this.normalizeSlug(preset.adminSlug || preset.key);
+      const legacyPresetSlug = this.normalizeSlug(preset.key);
+      const adminThemeData =
+        this.adminThemesMap.get(presetSlug) ??
+        this.findAdminThemeByName(preset.name) ??
+        this.adminThemesMap.get(legacyPresetSlug) ??
+        null;
       const categoryData = this.resolveCategoryData(adminThemeData, categoryById);
 
       console.log(`[buildThemeCards] preset=${preset.key} slug=${presetSlug}`, {
         adminThemeId: adminThemeData?.id,
+        adminSlug: adminThemeData?.slug,
         adminCategoryId: adminThemeData?.category_id,
         resolvedCategoryId: categoryData?.id,
         resolvedCategorySlug: categoryData?.slug,
@@ -726,6 +736,92 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   private normalizeSlug(value: string | undefined | null): string {
     return (value || '').trim().toLowerCase();
+  }
+
+  private resolveMasterThemeSlug(item: any, theme?: AdminThemeCard): string {
+    const hasBackendItem = !!item && Object.keys(item).length > 0;
+    const candidates = [
+      item?.master_theme_slug,
+      item?.masterTheme?.slug,
+      item?.theme?.slug,
+      item?.masterThemeSlug,
+      item?.slug_master,
+      item?.slug,
+      this.extractSlugFromUrl(item?.url_thema || item?.demo_url || item?.preview_url),
+      hasBackendItem && theme ? this.findPresetAdminSlug(theme.key) : '',
+    ];
+
+    for (const candidate of candidates) {
+      const slug = this.normalizeSlug(String(candidate || ''));
+      if (slug && !this.isPackageSlug(slug)) {
+        return slug;
+      }
+    }
+
+    return '';
+  }
+
+  private findPresetAdminSlug(key: string): string {
+    const preset = this.themePresets.find((item) => item.key === key || item.adminSlug === key);
+    return preset?.adminSlug || '';
+  }
+
+  private findAdminThemeByName(name: string): AdminTheme | null {
+    const targetName = this.normalizeKey(name);
+    if (!targetName) {
+      return null;
+    }
+
+    return Array.from(this.adminThemesMap.values()).find((theme) => {
+      const themeName = this.normalizeKey(
+        theme?.['name'] ||
+        theme?.['nama'] ||
+        theme?.['title'] ||
+        theme?.['nama_tema'] ||
+        ''
+      );
+      return themeName === targetName;
+    }) || null;
+  }
+
+  private resolvePackageRequired(values: unknown[]): string {
+    const rawValue = this.firstPresent(values);
+    if (!rawValue) {
+      return '';
+    }
+
+    if (typeof rawValue === 'object') {
+      return this.resolvePackageRequired([
+        (rawValue as any)?.package_required,
+        (rawValue as any)?.package_code,
+        (rawValue as any)?.code,
+        (rawValue as any)?.name_paket,
+        (rawValue as any)?.name,
+        (rawValue as any)?.jenis_paket,
+      ]);
+    }
+
+    const raw = String(rawValue).trim();
+    const normalized = raw.toLowerCase();
+    if (normalized === 'ruby') return 'Ruby';
+    if (normalized === 'sapphire') return 'Sapphire';
+    if (normalized === 'diamond') return 'Diamond';
+    return raw;
+  }
+
+  private extractSlugFromUrl(value: string | undefined | null): string {
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    const path = raw.split('?')[0].split('#')[0];
+    const lastSegment = path.split('/').filter(Boolean).pop() || '';
+    return this.normalizeSlug(lastSegment);
+  }
+
+  private isPackageSlug(value: string | undefined | null): boolean {
+    return ['trial', 'ruby', 'sapphire', 'diamond'].includes(this.normalizeSlug(value));
   }
 
   private buildWebsiteCategoryUpdatePayload(

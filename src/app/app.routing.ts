@@ -18,6 +18,10 @@ const routes: Routes = [
     component: DashboardUserComponent
   },
   {
+    path: 'wedding/:domain',
+    component: WeddingViewComponent
+  },
+  {
     path: 'wedding',
     component: WeddingViewComponent
   },

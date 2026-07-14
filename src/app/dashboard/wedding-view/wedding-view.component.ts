@@ -14,6 +14,7 @@ import { SapphireThemeOneComponent } from './templates/sapphire-theme-one/sapphi
 import { DiamondThemeOneComponent } from './templates/diamond-theme-one/diamond-theme-one.component';
 import { DiamondThemeTwoComponent } from './templates/diamond-theme-two/diamond-theme-two.component';
 import {
+  DEFAULT_THEME_SLUG,
   resolveThemeRenderKey,
   resolveThemeSlug,
   resolveThemeSlugFromCandidates,
@@ -462,7 +463,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadWeddingDataFromAPI(
     domain: string,
     isBackgroundUpdate: boolean = false,
-    includeGuestCode: boolean = true
+    includeGuestCode: boolean = true,
+    useLegacyEndpoint: boolean = false
   ): void {
     const cleanDomain = this.sanitizeRouteValue(domain);
     const cleanGuestCode = includeGuestCode ? this.sanitizeRouteValue(this.guestCode) : null;
@@ -479,19 +481,23 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const apiPath = `/${encodeURIComponent(cleanDomain)}`;
     const queryParams = cleanGuestCode ? { to: cleanGuestCode } : undefined;
-    const apiUrl = `${this.dashboardService.getUrl(DashboardServiceType.WEDDING_VIEW_COUPLE)}${apiPath}${cleanGuestCode ? `?to=${encodeURIComponent(cleanGuestCode)}` : ''}`;
+    const endpointType = useLegacyEndpoint
+      ? DashboardServiceType.WEDDING_VIEW_COUPLE
+      : DashboardServiceType.WEDDING_PUBLIC_BY_DOMAIN;
+    const apiUrl = `${this.dashboardService.getUrl(endpointType)}${apiPath}${cleanGuestCode ? `?to=${encodeURIComponent(cleanGuestCode)}` : ''}`;
 
     console.log('Loading fresh wedding data from API for domain:', cleanDomain, isBackgroundUpdate ? '(background)' : '');
-    console.log('[PUBLIC_WEDDING_LOAD]', cleanDomain, cleanGuestCode, apiUrl);
+    console.log('[PUBLIC_WEDDING]', { domain: cleanDomain, guestCode: cleanGuestCode, apiUrl });
 
-    // Use the endpoint: v1/wedding-profile/couple/{domain}
-    const apiSubscription = this.dashboardService.getParam(DashboardServiceType.WEDDING_VIEW_COUPLE, apiPath, queryParams).subscribe({
+    const apiSubscription = this.dashboardService.getParam(endpointType, apiPath, queryParams).subscribe({
       next: (response) => {
         console.log('API Response:', response);
         console.log('API Response (formatted):', JSON.stringify(response, null, 2));
 
-        if (response && response.data) {
-          const raw = response.data as any;
+        const weddingPayload = this.resolveWeddingDataPayload(response);
+
+        if (weddingPayload) {
+          const raw = weddingPayload as any;
           console.log('[WeddingPublicResponse]', raw);
           console.log('[WeddingView] API raw response.data keys:', Object.keys(raw));
           console.log('[WeddingView] selected_theme from API:', raw.selected_theme ?? 'TIDAK ADA');
@@ -507,7 +513,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           });
 
           this.domain = cleanDomain;
-          this.weddingData = this.applyGuestNameToWeddingData(response.data);
+          this.weddingData = this.applyGuestNameToWeddingData(weddingPayload);
           this.weddingDataService.setWeddingData(this.weddingData);
 
           this.updateWeddingContent(this.weddingData);
@@ -531,7 +537,16 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           if (cleanGuestCode && this.shouldRetryWithoutGuest(error)) {
             console.warn('Guest code failed to load, retrying public wedding without guest code:', cleanGuestCode);
             this.guestName = 'Tamu Undangan';
-            this.loadWeddingDataFromAPI(cleanDomain, false, false);
+            this.loadWeddingDataFromAPI(cleanDomain, false, false, useLegacyEndpoint);
+            return;
+          }
+
+          if (!useLegacyEndpoint && this.shouldRetryLegacyPublicEndpoint(error)) {
+            console.warn('Public wedding endpoint failed, retrying legacy wedding-profile endpoint:', {
+              domain: cleanDomain,
+              status: error?.status,
+            });
+            this.loadWeddingDataFromAPI(cleanDomain, false, includeGuestCode, true);
             return;
           }
 
@@ -650,6 +665,36 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.errorMessage = errorMsg;
     console.error('API Error details:', error);
+  }
+
+  private resolveWeddingDataPayload(response: any): WeddingData | null {
+    const candidates = [
+      response?.data?.wedding,
+      response?.data?.invitation,
+      response?.data?.undangan,
+      response?.data,
+      response?.wedding,
+      response?.invitation,
+      response?.undangan,
+      response,
+    ];
+
+    const payload = candidates.find((candidate) => {
+      if (!candidate || typeof candidate !== 'object') {
+        return false;
+      }
+
+      return !!(
+        candidate?.mempelai ||
+        candidate?.settings ||
+        candidate?.invitation_package ||
+        candidate?.user_info ||
+        candidate?.domain ||
+        candidate?.slug
+      );
+    });
+
+    return payload ? payload as WeddingData : null;
   }
 
   /**
@@ -849,6 +894,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private shouldRetryWithoutGuest(error: any): boolean {
     return !!error;
+  }
+
+  private shouldRetryLegacyPublicEndpoint(error: any): boolean {
+    return [0, 404, 405].includes(Number(error?.status));
   }
 
   private resolveGuestNameFromWeddingData(data: any): string {
@@ -1756,8 +1805,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
 
     console.log('[WeddingView] Fallback candidates (selected_theme.slug not valid):', candidateValues);
     const fallbackSlug = resolveThemeSlugFromCandidates(candidateValues);
-    console.log('[WeddingView] Resolved fallback slug:', fallbackSlug);
-    return fallbackSlug;
+    const resolvedSlug = fallbackSlug || DEFAULT_THEME_SLUG;
+    console.log('[WeddingView] Resolved fallback slug:', resolvedSlug);
+    return resolvedSlug;
   }
 
   private resolveThemeComponent(slug: ThemeSlug | null): Type<unknown> | null {
