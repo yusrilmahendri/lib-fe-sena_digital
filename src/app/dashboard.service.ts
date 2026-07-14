@@ -1377,11 +1377,15 @@ export interface PublicTheme {
   url_thema?: string;
   demo_url: string;
   is_active?: boolean;
+  admin_is_active?: boolean;
+  inactive_by_admin?: boolean;
   can_preview?: boolean;
   can_use?: boolean;
   locked?: boolean;
   is_current_theme?: boolean;
   upgrade_required?: boolean;
+  package_required?: string | null;
+  required_package?: string | null;
   target_package?: string | null;
   features: string[];
   description?: string;

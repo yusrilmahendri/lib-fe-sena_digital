@@ -249,6 +249,11 @@ export class WebsiteCategoryService {
       console.log('Added slug:', request.slug);
     }
 
+    if (request.urutan !== undefined && request.urutan !== null && request.urutan !== '') {
+      formData.append('urutan', String(request.urutan));
+      console.log('Added urutan:', request.urutan);
+    }
+
     if (request.image) {
       formData.append('image', request.image);
       console.log('Added image:', request.image.name, 'Size:', request.image.size, 'Type:', request.image.type);
@@ -258,6 +263,12 @@ export class WebsiteCategoryService {
       const isActiveValue = request.is_active.toString();
       formData.append('is_active', isActiveValue);
       console.log('Added is_active:', isActiveValue);
+    }
+
+    if (request.status !== undefined) {
+      const statusValue = request.status.toString();
+      formData.append('status', statusValue);
+      console.log('Added status:', statusValue);
     }
 
     // Log FormData entries for debugging

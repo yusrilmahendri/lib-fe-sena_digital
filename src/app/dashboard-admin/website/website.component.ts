@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Notyf } from 'notyf';
 import { DashboardService, DashboardServiceType, ThemeService, ThemeToggleRequest } from '../../dashboard.service';
-import { WebsiteCategory } from '../../interfaces/admin-category.interfaces';
+import { CategoryUpdateRequest, WebsiteCategory } from '../../interfaces/admin-category.interfaces';
 import { WebsiteCategoryService } from '../../services/website-category.service';
 import {
   buildThemeAccessMap,
@@ -45,6 +45,15 @@ interface AdminThemeCard {
   displayOrder: number;
   categoryData: WebsiteCategory | null;
   adminThemeData: AdminTheme | null;
+}
+
+interface AdminThemeConnectionDetail {
+  masterThemeId: number | string | null;
+  masterThemeSlug: string;
+  categoryUserId: number | string | null;
+  categoryUserSlug: string;
+  packageRequired: string;
+  isConnected: boolean;
 }
 
 type ThemeCategory = ThemePreset['category'];
@@ -189,7 +198,8 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   toggleThemeStatus(theme: AdminThemeCard): void {
-    const adminId = theme.adminThemeData?.id;
+    const detail = this.getThemeConnectionDetail(theme);
+    const adminId = Number(detail.masterThemeId);
     if (!adminId) {
       this.notyf.error('Data master tema tidak ditemukan. Tidak bisa mengubah status.');
       return;
@@ -197,16 +207,32 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     const currentActive = theme.adminThemeData?.is_active ?? false;
     const newActive = !currentActive;
+    const categoryPayload = this.buildWebsiteCategoryUpdatePayload(theme, {
+      is_active: newActive,
+      status: newActive,
+    });
+
+    if (theme.categoryData && !categoryPayload) {
+      return;
+    }
 
     const request: ThemeToggleRequest = { is_active: newActive };
 
     this.themeService.toggleThemeActivation(adminId, request).subscribe({
       next: (_result) => {
-        this.notyf.success(`Status ${theme.name} berhasil diperbarui menjadi ${newActive ? 'Aktif' : 'Nonaktif'}`);
-        // Refresh both admin themes (updates adminThemesMap + rebuilds cards)
-        // and website categories (updates allData + triggers subscription rebuild).
-        this.loadAdminThemes();
-        this.getData();
+        const categoryId = theme.categoryData?.id;
+        if (categoryId && categoryPayload) {
+          this.websiteCategoryService.updateCategory(categoryId, categoryPayload).subscribe({
+            next: () => this.handleThemeUpdateSuccess(`Status ${theme.name} berhasil diperbarui menjadi ${newActive ? 'Aktif' : 'Nonaktif'}`),
+            error: (error) => {
+              console.error('Error updating website category status:', error);
+              this.notyf.error('Gagal mengubah status kategori tema');
+            }
+          });
+          return;
+        }
+
+        this.handleThemeUpdateSuccess(`Status ${theme.name} berhasil diperbarui menjadi ${newActive ? 'Aktif' : 'Nonaktif'}`);
       },
       error: (error) => {
         console.error('Error toggling theme status:', error);
@@ -232,6 +258,26 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     this.themeCards = this.applyDisplayOrder(reordered);
     this.saveThemeOrder();
+
+    const updatedTheme = this.themeCards.find((item) => item.key === theme.key);
+    if (!updatedTheme?.categoryData?.id) {
+      return;
+    }
+
+    const payload = this.buildWebsiteCategoryUpdatePayload(updatedTheme, {
+      urutan: updatedTheme.displayOrder,
+    });
+    if (!payload) {
+      return;
+    }
+
+    this.websiteCategoryService.updateCategory(updatedTheme.categoryData.id, payload).subscribe({
+      next: () => this.handleThemeUpdateSuccess('Urutan tema berhasil diperbarui'),
+      error: (error) => {
+        console.error('Error updating theme order:', error);
+        this.notyf.error('Gagal memperbarui urutan tema');
+      }
+    });
   }
 
   onPreviewSelected(event: Event, theme: AdminThemeCard): void {
@@ -252,11 +298,18 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     this.uploadingThemeKey = theme.key;
 
-    this.websiteCategoryService.updateCategory(categoryId, { image: file }).subscribe({
+    const payload = this.buildWebsiteCategoryUpdatePayload(theme, { image: file });
+    if (!payload) {
+      target.value = '';
+      return;
+    }
+
+    this.websiteCategoryService.updateCategory(categoryId, payload).subscribe({
       next: (result) => {
         if (result.success) {
           this.notyf.success(`Preview ${theme.name} berhasil diperbarui`);
           this.getData();
+          this.loadAdminThemes();
         } else {
           this.notyf.error(result.error || 'Gagal memperbarui gambar preview');
         }
@@ -293,14 +346,15 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
+    const detail = this.getThemeConnectionDetail(theme);
     const adminActive = theme.adminThemeData?.is_active;
 
-    if (!theme.adminThemeData) {
+    if (!detail.isConnected) {
       return 'Belum Terhubung';
     }
 
-    if (!theme.categoryData) {
-      return 'Belum Terhubung ke User';
+    if (!theme.categoryData && !detail.categoryUserId && !detail.categoryUserSlug) {
+      return 'Belum Terhubung';
     }
 
     if (adminActive === false) {
@@ -309,7 +363,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     // Only show "Kategori Nonaktif" when is_active is explicitly false.
     // undefined/null = unknown → treat as active to avoid false negatives.
-    if (theme.categoryData.is_active === false) {
+    if (theme.categoryData?.is_active === false) {
       return 'Kategori Nonaktif';
     }
 
@@ -317,14 +371,75 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeDisabledReason(theme: AdminThemeCard): string {
-    if (!theme.adminThemeData?.id) {
+    if (!this.getThemeConnectionDetail(theme).masterThemeId) {
       return 'Data master tema tidak ditemukan.';
     }
     return '';
   }
 
   canActivateTheme(theme: AdminThemeCard): boolean {
-    return !!theme.adminThemeData?.id;
+    const detail = this.getThemeConnectionDetail(theme);
+    return detail.isConnected && !!detail.masterThemeId;
+  }
+
+  getThemeConnectionDetail(theme: AdminThemeCard): AdminThemeConnectionDetail {
+    const item: any = theme.adminThemeData || {};
+    const category: any = item?.category || {};
+    const categoryData = theme.categoryData || null;
+    const masterThemeId = this.firstPresent([
+      item?.master_theme_id,
+      item?.masterThemeId,
+      item?.jenis_thema_id,
+      item?.theme_id,
+      item?.id,
+    ]);
+    const masterThemeSlug = String(this.firstPresent([
+      item?.master_theme_slug,
+      item?.masterThemeSlug,
+      item?.slug_master,
+      item?.slug,
+      theme.key,
+    ]) || '').trim();
+    const categoryUserId = this.firstPresent([
+      item?.category_user_id,
+      item?.categoryUserId,
+      item?.category_thema_id,
+      item?.category_id,
+      category?.id,
+      categoryData?.id,
+    ]);
+    const categoryUserSlug = String(this.firstPresent([
+      item?.category_user_slug,
+      item?.categoryUserSlug,
+      item?.slug_kategori,
+      category?.slug,
+      categoryData?.slug,
+      this.normalizeKey(category?.name || ''),
+    ]) || '').trim();
+    const packageRequired = String(this.firstPresent([
+      item?.package_required,
+      item?.packageRequired,
+      item?.required_package,
+      item?.target_package,
+      this.getThemePackageBadge(theme),
+    ]) || '').trim();
+    const explicitConnected = this.firstPresent([
+      item?.is_connected,
+      item?.isConnected,
+      item?.status_terhubung,
+    ]);
+    const isConnected = explicitConnected === null
+      ? !!(masterThemeId || masterThemeSlug)
+      : this.toBoolean(explicitConnected);
+
+    return {
+      masterThemeId,
+      masterThemeSlug,
+      categoryUserId,
+      categoryUserSlug,
+      packageRequired,
+      isConnected,
+    };
   }
 
   isThemeUploading(theme: AdminThemeCard): boolean {
@@ -489,7 +604,11 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const categoryId = adminThemeData.category_id ?? adminThemeData.category?.id;
+    const categoryId =
+      adminThemeData['category_user_id'] ??
+      adminThemeData['category_thema_id'] ??
+      adminThemeData.category_id ??
+      adminThemeData.category?.id;
 
     if (categoryId) {
       const found = categoryById.get(categoryId);
@@ -607,5 +726,85 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   private normalizeSlug(value: string | undefined | null): string {
     return (value || '').trim().toLowerCase();
+  }
+
+  private buildWebsiteCategoryUpdatePayload(
+    theme: AdminThemeCard,
+    overrides: Partial<CategoryUpdateRequest> = {}
+  ): CategoryUpdateRequest | null {
+    const category = theme.categoryData;
+    const adminCategory: any = theme.adminThemeData?.category || {};
+    const namaKategori = String(this.firstPresent([
+      category?.nama_kategori,
+      (category as any)?.name,
+      (category as any)?.title,
+      adminCategory?.nama_kategori,
+      adminCategory?.name,
+      adminCategory?.title,
+    ]) || '').trim();
+
+    if (!namaKategori) {
+      this.notyf.error('Nama kategori tema tidak ditemukan. Silakan refresh halaman.');
+      return null;
+    }
+
+    const currentOrder = this.firstPresent([
+      category?.urutan,
+      (category as any)?.order,
+      (category as any)?.sort_order,
+      theme.displayOrder,
+    ]);
+    const currentActive = this.firstPresent([
+      category?.is_active,
+      category?.status,
+      adminCategory?.is_active,
+      true,
+    ]);
+    const slug = String(this.firstPresent([
+      category?.slug,
+      adminCategory?.slug,
+    ]) || '').trim();
+
+    const payload: CategoryUpdateRequest = {
+      nama_kategori: namaKategori,
+      urutan: overrides.urutan ?? currentOrder,
+      is_active: overrides.is_active ?? currentActive,
+    };
+
+    if (slug) {
+      payload.slug = slug;
+    }
+
+    if (overrides.status !== undefined) {
+      payload.status = overrides.status;
+    }
+
+    if (overrides.image) {
+      payload.image = overrides.image;
+    }
+
+    return payload;
+  }
+
+  private handleThemeUpdateSuccess(message: string): void {
+    this.notyf.success(message);
+    this.loadAdminThemes();
+    this.getData();
+  }
+
+  private firstPresent(values: unknown[]): any {
+    for (const value of values) {
+      if (value !== null && value !== undefined && value !== '') {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  private toBoolean(value: unknown): boolean {
+    if (value === true || value === 1) return true;
+    const normalized = String(value ?? '').trim().toLowerCase();
+    return ['true', '1', 'yes', 'ya', 'terhubung', 'connected'].includes(normalized);
   }
 }

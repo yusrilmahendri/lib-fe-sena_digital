@@ -61,6 +61,8 @@ interface ThemeCard {
   canUse: boolean;
   canUseFromApi: boolean | null;
   lockedFromApi: boolean | null;
+  inactiveByAdmin: boolean;
+  adminIsActive: boolean;
   upgradeRequired: boolean;
   targetPackage: string | null;
   targetPackageLabel: string;
@@ -111,6 +113,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   showThemeFeedbackModal = false;
   themeFeedbackType: 'success' | 'error' = 'success';
   themeFeedbackMessage = '';
+  isAccountActive = false;
 
   private subscriptions = new Subscription();
   private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
@@ -118,11 +121,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
   private pendingThemeForConfirmation: ThemeCard | null = null;
   private pendingThemeForUpgrade: ThemeCard | null = null;
   private readonly legacyTrialCards: ThemeCard[] = [
-    { id: -1, backendThemeId: null, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
-    { id: -2, backendThemeId: null, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
-    { id: -3, backendThemeId: null, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
-    { id: -4, backendThemeId: null, label: 'Scroll', title: 'Pinky', name: 'Pinky', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
-    { id: -5, backendThemeId: null, label: 'Mobile', title: 'Elegant', name: 'Elegant', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
+    { id: -1, backendThemeId: null, label: 'Scroll', title: 'Modern', name: 'Modern', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, inactiveByAdmin: false, adminIsActive: true, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
+    { id: -2, backendThemeId: null, label: 'Slide', title: 'Blue', name: 'Blue', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, inactiveByAdmin: false, adminIsActive: true, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
+    { id: -3, backendThemeId: null, label: 'Mobile', title: 'Minimalist', name: 'Minimalist', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, inactiveByAdmin: false, adminIsActive: true, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
+    { id: -4, backendThemeId: null, label: 'Scroll', title: 'Pinky', name: 'Pinky', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, inactiveByAdmin: false, adminIsActive: true, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
+    { id: -5, backendThemeId: null, label: 'Mobile', title: 'Elegant', name: 'Elegant', slug: '', image: 'assets/modern.svg', imageFallback: 'assets/modern.svg', url_thema: '', demo_url: '', price: 0, isCurrentTheme: false, isLoading: false, category_id: 0, category: 'Legacy', isLegacy: true, requiredPackageTier: null, is_active: true, category_is_active: true, isConnectedToBackend: false, availabilityMessage: 'Tema default trial', canPreview: true, canUse: false, canUseFromApi: null, lockedFromApi: null, inactiveByAdmin: false, adminIsActive: true, upgradeRequired: false, targetPackage: null, targetPackageLabel: 'Trial', targetPackagePrice: null },
   ];
 
   constructor(
@@ -186,7 +189,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const themeTier = getThemeTierForSlug(theme.slug);
+    const themeTier = theme.requiredPackageTier || getThemeTierForSlug(theme.slug);
     return tab === 'all' || themeTier === tab;
   }
 
@@ -224,7 +227,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    return this.canUseTheme(theme) || theme.upgradeRequired === true;
+    return this.canUseTheme(theme);
   }
 
   get isPreviewOnlyTab(): boolean {
@@ -336,6 +339,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return 'Tema default trial';
     }
 
+    if (this.isCurrentTheme(theme)) {
+      return 'Tema digunakan';
+    }
+
+    if (this.canUseTheme(theme)) {
+      return 'Tema tersedia';
+    }
+
     return `${this.getPackageLabel(theme.requiredPackageTier || this.activeTab)} template`;
   }
 
@@ -366,6 +377,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         themes: PublicCategoriesResponse;
       }) => {
         this.userPackageTier = this.resolveUserPackageTier(profile?.data);
+        this.isAccountActive = this.resolveAccountActive(profile?.data);
         this.activeTab = this.getInitialActiveTab();
         this.packageCatalog = Array.isArray(packages?.data) ? packages.data : [];
         this.themeAccessMap = buildThemeAccessMap(this.packageCatalog);
@@ -496,6 +508,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
           canUse: false,
           canUseFromApi: null,
           lockedFromApi: null,
+          inactiveByAdmin: true,
+          adminIsActive: false,
           upgradeRequired: true,
           targetPackage: requiredPackageTier,
           targetPackageLabel: this.getPackageLabel(requiredPackageTier),
@@ -508,30 +522,48 @@ export class TampilanComponent implements OnInit, OnDestroy {
       const resolvedThemeId = Number((theme as any)?.id) || null;
       const rawCategory = (theme as any)?.category || category;
       const resolvedCategoryId = Number((theme as any)?.category_id ?? rawCategory?.id) || 0;
-      const isThemeActive = theme?.is_active == null ? true : this.toBoolean(theme.is_active);
-      const isCategoryActive = rawCategory?.is_active == null ? true : rawCategory.is_active === true;
+      const adminIsActive = this.resolveAdminThemeActive(theme, rawCategory);
+      const inactiveByAdmin = this.toBoolean((theme as any)?.inactive_by_admin) || adminIsActive === false;
+      const isThemeActive = adminIsActive;
+      const isCategoryActive = rawCategory?.is_active == null ? true : this.toBoolean(rawCategory.is_active);
       const isConnectedToBackend = !!resolvedThemeId && !!preset.slug;
-      const requiredPackageTier = getLowestPackageTierForTheme(preset.slug, this.themeAccessMap);
-      const tierCanUse = this.canUseThemeByTier(preset.slug);
+      const requiredPackageTier =
+        this.normalizeTargetPackage(
+          (theme as any)?.package_required ||
+          (theme as any)?.packageRequired ||
+          (theme as any)?.required_package ||
+          (theme as any)?.target_package
+        ) ||
+        getLowestPackageTierForTheme(preset.slug, this.themeAccessMap);
+      const tierCanUse = this.canUseThemeByTier(preset.slug, requiredPackageTier);
       const canPreview = true;
       const canUseFromApi = (theme as any)?.can_use == null ? null : this.toBoolean((theme as any).can_use);
       const lockedFromApi = (theme as any)?.locked == null ? null : this.toBoolean((theme as any).locked);
-      const fallbackCanUse = isConnectedToBackend && tierCanUse && lockedFromApi !== true;
-      const canUse = canUseFromApi == null ? fallbackCanUse : canUseFromApi;
+      const fallbackCanUse = isConnectedToBackend && tierCanUse && adminIsActive && this.isAccountActive;
+      const canUse = canUseFromApi === true
+        ? adminIsActive && this.isAccountActive
+        : fallbackCanUse;
       const upgradeRequired = (theme as any)?.upgrade_required == null
-        ? !canUse
+        ? !canUse && this.isAccountActive && adminIsActive && !tierCanUse
         : this.toBoolean((theme as any).upgrade_required) && !canUse;
-      const targetPackageRaw = (theme as any)?.target_package;
+      const targetPackageRaw =
+        (theme as any)?.package_required ||
+        (theme as any)?.packageRequired ||
+        (theme as any)?.required_package ||
+        (theme as any)?.target_package ||
+        requiredPackageTier;
       const targetPackage = this.normalizeTargetPackage(targetPackageRaw) || requiredPackageTier;
       const availabilityMessage = canUse
         ? undefined
-        : lockedFromApi === true
-          ? `Upgrade ke ${this.getPackageLabel(targetPackage)}`
-          : !isThemeActive
-        ? 'Tema belum aktif'
-        : !isCategoryActive
-          ? 'Kategori belum aktif'
-          : undefined;
+        : !this.isAccountActive
+          ? 'Menunggu konfirmasi pembayaran'
+          : inactiveByAdmin || !isCategoryActive
+            ? 'Tema belum diaktifkan admin'
+            : upgradeRequired
+              ? `Upgrade ke ${this.getPackageLabel(targetPackage)}`
+              : lockedFromApi === true
+                ? `Upgrade ke ${this.getPackageLabel(targetPackage)}`
+                : undefined;
 
       nextCards.push({
         id: resolvedThemeId || -100 - nextCards.length,
@@ -557,7 +589,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
         canPreview,
         canUse,
         canUseFromApi,
-        lockedFromApi,
+        lockedFromApi: canUse ? false : (lockedFromApi ?? true),
+        inactiveByAdmin,
+        adminIsActive,
         upgradeRequired,
         targetPackage,
         targetPackageLabel: this.resolveTargetPackageLabel(targetPackageRaw, targetPackage),
@@ -890,7 +924,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (!theme.isConnectedToBackend || !this.hasValidBackendThemeConnection(theme)) {
       return true;
     }
-    return !this.canUseTheme(theme);
+    return theme.lockedFromApi === true && !this.canUseTheme(theme);
   }
 
   isSelectedTheme(theme: ThemeCard): boolean {
@@ -931,6 +965,22 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     if (theme.availabilityMessage) {
       return theme.availabilityMessage;
+    }
+
+    if (this.shouldShowUsedTheme(theme)) {
+      return 'Tema digunakan';
+    }
+
+    if (this.canUseTheme(theme)) {
+      return 'Tema tersedia';
+    }
+
+    if (theme.inactiveByAdmin || theme.adminIsActive === false) {
+      return 'Tema belum diaktifkan admin';
+    }
+
+    if (!this.isAccountActive) {
+      return 'Menunggu konfirmasi pembayaran';
     }
 
     if (theme.upgradeRequired) {
@@ -983,22 +1033,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    if (theme.canUseFromApi !== null) {
-      return theme.canUseFromApi === true || (
-        theme.lockedFromApi !== true &&
-        !theme.upgradeRequired &&
-        this.canUseThemeByTier(theme.slug)
-      );
-    }
-
-    if (theme.lockedFromApi !== null) {
-      return theme.lockedFromApi === false && this.canUseThemeByTier(theme.slug);
-    }
-
-    return theme.canUse === true || this.canUseThemeByTier(theme.slug);
+    return theme.canUse === true;
   }
 
-  private canUseThemeByTier(themeSlug: string): boolean {
+  private canUseThemeByTier(themeSlug: string, requiredTier?: PaidPackageTier | null): boolean {
     if (!themeSlug) {
       return false;
     }
@@ -1010,7 +1048,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
     // Cumulative access: a theme is usable when its tier is at/below the user's
     // tier (Sapphire may use Ruby themes; Diamond may use Ruby + Sapphire, etc.).
-    const themeTier = getThemeTierForSlug(themeSlug);
+    const themeTier = requiredTier || getThemeTierForSlug(themeSlug);
     const allowed = isTierAllowed(userTier, themeTier);
 
     console.log('[ThemeAccessCumulative]', {
@@ -1175,6 +1213,114 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return 'trial';
   }
 
+  private resolveAccountActive(profileData: any): boolean {
+    const explicitPayment = this.firstDefined([
+      profileData?.is_payment_confirmed,
+      profileData?.payment_confirmed,
+      profileData?.is_paid,
+      profileData?.package_info?.is_payment_confirmed,
+      profileData?.package_info?.payment_confirmed,
+      profileData?.package_info?.is_paid,
+      profileData?.invitation_package?.is_payment_confirmed,
+      profileData?.invitation_package?.payment_confirmed,
+      profileData?.invitation_package?.is_paid,
+    ]);
+
+    if (explicitPayment !== undefined) {
+      return this.toBoolean(explicitPayment);
+    }
+
+    const statusValues = [
+      profileData?.account_status,
+      profileData?.payment_status,
+      profileData?.status_bayar,
+      profileData?.status_pembayaran,
+      profileData?.paket_status,
+      profileData?.status_tagihan,
+      profileData?.package_info?.account_status,
+      profileData?.package_info?.payment_status,
+      profileData?.package_info?.status_bayar,
+      profileData?.package_info?.status_pembayaran,
+      profileData?.invitation_package?.account_status,
+      profileData?.invitation_package?.payment_status,
+      profileData?.invitation_package?.status,
+      profileData?.invitation_package?.status_bayar,
+    ]
+      .map((value) => String(value ?? '').toLowerCase().trim())
+      .filter(Boolean);
+
+    const inactiveStatuses = [
+      'pending_payment',
+      'pending',
+      'belum selesai',
+      'menunggu pembayaran',
+      'unpaid',
+      'expired',
+      'kedaluwarsa',
+    ];
+
+    const activeStatuses = [
+      'active',
+      'aktif',
+      'paid',
+      'settlement',
+      'settled',
+      'confirmed',
+      'success',
+      'sukses',
+      'selesai',
+    ];
+
+    if (statusValues.some((status) => inactiveStatuses.includes(status))) {
+      return false;
+    }
+
+    if (statusValues.some((status) => activeStatuses.includes(status))) {
+      return true;
+    }
+
+    return true;
+  }
+
+  private resolveAdminThemeActive(theme: PublicTheme, category: any): boolean {
+    const inactiveFlag = this.firstDefined([
+      (theme as any)?.inactive_by_admin,
+      (theme as any)?.inactiveByAdmin,
+    ]);
+
+    if (inactiveFlag !== undefined) {
+      return !this.toBoolean(inactiveFlag);
+    }
+
+    const activeFlag = this.firstDefined([
+      (theme as any)?.admin_is_active,
+      (theme as any)?.adminIsActive,
+      (theme as any)?.is_active,
+      (theme as any)?.status,
+      category?.is_active,
+      category?.status,
+    ]);
+
+    if (activeFlag === undefined) {
+      return true;
+    }
+
+    const normalized = String(activeFlag).toLowerCase().trim();
+    if (['inactive', 'nonaktif', 'disabled', 'false', '0'].includes(normalized)) {
+      return false;
+    }
+
+    if (['active', 'aktif', 'enabled', 'true', '1'].includes(normalized)) {
+      return true;
+    }
+
+    return this.toBoolean(activeFlag);
+  }
+
+  private firstDefined(values: unknown[]): unknown {
+    return values.find((value) => value !== undefined && value !== null && value !== '');
+  }
+
   private toBoolean(value: unknown): boolean {
     return value === true || value === 1 || value === '1' || String(value ?? '').toLowerCase() === 'true';
   }
@@ -1283,6 +1429,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
             this.pendingThemeForUpgrade = theme;
             this.showUpgradeModal = true;
             this.toastService.showToast(message, 'info');
+            return;
+          }
+
+          if (errorCode === 'THEME_INACTIVE') {
+            const inactiveMessage = error?.error?.message || 'Tema belum aktif oleh admin.';
+            this.showThemeFeedback('error', inactiveMessage);
+            this.toastService.showToast(inactiveMessage, 'info');
             return;
           }
 

@@ -147,7 +147,7 @@
       <div class="theme-detail-list">
         <div>
           <span>Status</span>
-          <strong>{{ getThemeStatusLabel(selectedThemeDetail) }}</strong>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).isConnected ? 'Terhubung' : 'Belum Terhubung' }}</strong>
           <p class="theme-status-hint" *ngIf="getThemeDisabledReason(selectedThemeDetail)">
             {{ getThemeDisabledReason(selectedThemeDetail) }}
           </p>
@@ -158,19 +158,23 @@
         </div>
         <div>
           <span>Slug Master</span>
-          <strong>{{ selectedThemeDetail.adminThemeData?.slug || '-' }}</strong>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).masterThemeSlug || '-' }}</strong>
         </div>
         <div>
           <span>Slug Kategori User</span>
-          <strong>{{ selectedThemeDetail.categoryData?.slug || '-' }}</strong>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).categoryUserSlug || '-' }}</strong>
         </div>
         <div>
           <span>ID Master Theme</span>
-          <strong>{{ selectedThemeDetail.adminThemeData?.id || '-' }}</strong>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).masterThemeId || '-' }}</strong>
         </div>
         <div>
           <span>ID Kategori User</span>
-          <strong>{{ selectedThemeDetail.categoryData?.id || '-' }}</strong>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).categoryUserId || '-' }}</strong>
+        </div>
+        <div>
+          <span>Paket</span>
+          <strong>{{ getThemeConnectionDetail(selectedThemeDetail).packageRequired || '-' }}</strong>
         </div>
         <div>
           <span>Dibuat</span>

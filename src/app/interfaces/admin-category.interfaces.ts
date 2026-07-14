@@ -13,6 +13,8 @@ export interface BaseCategory {
   slug: string;
   image: string;
   is_active: boolean;
+  urutan?: number | string | null;
+  status?: boolean | number | string;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +34,8 @@ export interface CategoryCreateRequest {
   slug?: string;
   image?: File;
   is_active?: boolean | number | string; // Support boolean, 1/0, "true"/"false", "1"/"0"
+  urutan?: number | string | null;
+  status?: boolean | number | string;
 }
 
 export interface CategoryUpdateRequest {
@@ -39,6 +43,8 @@ export interface CategoryUpdateRequest {
   slug?: string;
   image?: File;
   is_active?: boolean | number | string; // Support boolean, 1/0, "true"/"false", "1"/"0"
+  urutan?: number | string | null;
+  status?: boolean | number | string;
 }
 
 export interface CategoryToggleRequest {

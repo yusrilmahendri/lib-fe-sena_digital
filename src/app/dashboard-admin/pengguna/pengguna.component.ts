@@ -179,14 +179,27 @@ export class PenggunaComponent implements OnInit {
   }
 
   isSoftDeleteLoading(row: AdminUserRow): boolean {
-    return this.processingSoftDeleteUserId === row.id;
+    const userId = this.getUserId(row);
+    return userId !== null && this.processingSoftDeleteUserId === userId;
   }
 
   isHardDeleteLoading(row: AdminUserRow): boolean {
-    return this.processingHardDeleteUserId === row.id;
+    const userId = this.getUserId(row);
+    return userId !== null && this.processingHardDeleteUserId === userId;
   }
 
   async onSoftDelete(row: AdminUserRow): Promise<void> {
+    const userId = this.getUserId(row);
+    console.log('[ADMIN_DELETE_USER]', {
+      rawUser: row.rawUser || row,
+      userId
+    });
+
+    if (!userId) {
+      this.showError('ID pengguna tidak valid. Silakan refresh data.');
+      return;
+    }
+
     const result = await Swal.fire({
       title: 'Soft Delete Data Pengguna',
       html: `
@@ -205,9 +218,9 @@ export class PenggunaComponent implements OnInit {
 
     if (!result.isConfirmed) return;
 
-    this.processingSoftDeleteUserId = row.id;
+    this.processingSoftDeleteUserId = userId;
     try {
-      await this.executeDeleteAction(row.id, 'soft');
+      await this.executeDeleteAction(userId, 'soft');
       this.notyf.success('Data pengguna berhasil dibersihkan.');
       await this.loadUsersAfterAction();
     } catch {
@@ -218,6 +231,17 @@ export class PenggunaComponent implements OnInit {
   }
 
   async onHardDelete(row: AdminUserRow): Promise<void> {
+    const userId = this.getUserId(row);
+    console.log('[ADMIN_DELETE_USER]', {
+      rawUser: row.rawUser || row,
+      userId
+    });
+
+    if (!userId) {
+      this.showError('ID pengguna tidak valid. Silakan refresh data.');
+      return;
+    }
+
     const result = await Swal.fire({
       title: 'Hard Delete Akun',
       html: `
@@ -236,9 +260,9 @@ export class PenggunaComponent implements OnInit {
 
     if (!result.isConfirmed) return;
 
-    this.processingHardDeleteUserId = row.id;
+    this.processingHardDeleteUserId = userId;
     try {
-      await this.executeDeleteAction(row.id, 'hard');
+      await this.executeDeleteAction(userId, 'hard');
       this.notyf.success('Akun pengguna berhasil dihapus permanen.');
       await this.loadUsersAfterAction();
     } catch {
@@ -288,9 +312,12 @@ export class PenggunaComponent implements OnInit {
     const daysRemaining = this.resolveDaysRemaining(user, expirationDate);
     const computedStatus = this.computeStatus(user?.kd_status, daysRemaining);
     const packageName = this.resolvePackageName(user);
+    const userId = this.getUserId(user);
 
     return {
-      id: Number(user?.id ?? 0),
+      id: userId,
+      user_id: userId,
+      rawUser: user,
       name: user?.name ?? user?.full_name ?? user?.nama ?? 'Tanpa Nama',
       email: user?.email ?? '–',
       domain: user?.domain ?? '–',
@@ -344,6 +371,10 @@ export class PenggunaComponent implements OnInit {
   }
 
   private async executeDeleteAction(userId: number, action: 'soft' | 'hard'): Promise<void> {
+    if (!Number.isFinite(userId) || userId <= 0) {
+      throw new Error('Invalid user id');
+    }
+
     const endpointCandidates = this.buildDeleteEndpointCandidates(userId, action);
     let lastError: unknown = null;
 
@@ -369,25 +400,26 @@ export class PenggunaComponent implements OnInit {
 
   private buildDeleteEndpointCandidates(userId: number, action: 'soft' | 'hard'): string[] {
     const getUsersUrl = this.dashboardSvc.getUrl(DashboardServiceType.ADM_IDX_DASHBOARD);
-    const adminBaseUrl = getUsersUrl.replace(/\/get-users$/, '');
-    const usersUrl = `${adminBaseUrl}/users`;
 
     if (action === 'soft') {
       return [
-        `${getUsersUrl}/${userId}/soft-delete-data`,
-        `${getUsersUrl}/${userId}/soft-delete`,
-        `${usersUrl}/${userId}/soft-delete-data`,
-        `${usersUrl}/${userId}/soft-delete`,
-        `${usersUrl}/${userId}/clear-data`
+        `${getUsersUrl}/${userId}/soft-delete-data`
       ];
     }
 
     return [
-      `${getUsersUrl}/${userId}/hard-delete`,
-      `${usersUrl}/${userId}/hard-delete`,
-      `${usersUrl}/${userId}`,
-      `${getUsersUrl}/${userId}`
+      `${getUsersUrl}/${userId}/hard-delete`
     ];
+  }
+
+  getUserId(user: any): number | null {
+    const rawId = user?.user_id ?? user?.id;
+    const parsed = Number(rawId);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  private showError(message: string): void {
+    this.notyf.error(message);
   }
 
   private safeText(value: string): string {
@@ -412,7 +444,9 @@ type UserStatusFilter = 'all' | 'active' | 'expiring' | 'expired';
 type UserComputedStatus = 'active' | 'expiring-soon' | 'expired' | 'other';
 
 interface AdminUserRow {
-  id: number;
+  id: number | null;
+  user_id: number | null;
+  rawUser: any;
   name: string;
   email: string;
   domain: string;
