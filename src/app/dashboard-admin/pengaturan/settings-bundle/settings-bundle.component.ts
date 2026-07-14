@@ -216,6 +216,11 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
   getFieldError(form: FormGroup, fieldName: string): string {
     const field = form.get(fieldName);
     if (field?.errors) {
+      if (fieldName === 'price') {
+        if (field.errors['required']) return 'Harga paket wajib diisi.';
+        if (field.errors['pattern']) return 'Harga paket harus berupa angka.';
+        if (field.errors['min']) return 'Harga paket tidak boleh kurang dari Rp 0.';
+      }
       if (field.errors['required']) return 'Field ini wajib diisi';
       if (field.errors['minlength']) return `Minimal ${field.errors['minlength'].requiredLength} karakter`;
       if (field.errors['min']) return `Nilai minimal ${field.errors['min'].min}`;
@@ -256,6 +261,28 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
     return this.rubyThemes.find((theme) => theme.slug === selectedSlug) || null;
   }
 
+  formatRupiah(value: string | number | null | undefined): string {
+    const numericValue = String(this.normalizePriceValue(value))
+      .replace(/\D/g, '');
+
+    if (!numericValue) {
+      return 'Rp 0';
+    }
+
+    return `Rp ${Number(numericValue).toLocaleString('id-ID')}`;
+  }
+
+  onPriceInput(card: PackageCardState, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const numericValue = input.value.replace(/\D/g, '');
+    const cleanValue = numericValue ? Number(numericValue) : 0;
+    const control = card.form.get('price');
+
+    control?.setValue(cleanValue, { emitEvent: false });
+    control?.markAsDirty();
+    input.value = this.formatRupiah(cleanValue);
+  }
+
   getThemeThumb(theme: ThemeOption | null): string {
     return theme?.thumbnail || 'assets/landing/template-2.png';
   }
@@ -277,7 +304,7 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
       id: [null],
       code: [tier],
       name_paket: ['', [Validators.required, Validators.minLength(3)]],
-      price: ['', [Validators.required, Validators.min(0)]],
+      price: [0, [Validators.required, Validators.pattern(/^\d+$/), Validators.min(0)]],
       masa_aktif: ['', [Validators.required, Validators.min(1)]],
       halaman_buku: [false],
       kirim_wa: [false],
@@ -340,7 +367,7 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
       id: packageData.id,
       code: this.resolvePackageCode(packageData) || card.tier,
       name_paket: packageData.name_paket,
-      price: this.formatPrice(packageData.price),
+      price: this.normalizePriceValue(packageData.price),
       masa_aktif: packageData.masa_aktif,
     };
 
@@ -392,7 +419,7 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
     const payload: any = {
       id: packageData.id,
       name_paket: formValue.name_paket,
-      price: this.parseNumber(formValue.price),
+      price: this.toCleanPricePayload(formValue.price),
       masa_aktif: parseInt(formValue.masa_aktif, 10),
     };
 
@@ -600,12 +627,24 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
     return value === true || value === 1 || value === '1';
   }
 
-  private formatPrice(price: string | number): string {
-    return Math.floor(parseFloat(String(price || 0))).toString();
+  private normalizePriceValue(value: unknown): number {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    }
+
+    const rawValue = String(value ?? '').trim();
+    if (!rawValue) return 0;
+
+    if (/^\d+(\.\d+)?$/.test(rawValue)) {
+      return Math.max(0, Math.floor(parseFloat(rawValue)));
+    }
+
+    const numericValue = rawValue.replace(/\D/g, '');
+    return numericValue ? Number(numericValue) : 0;
   }
 
-  private parseNumber(value: unknown): number {
-    return parseFloat(String(value || '0').replace(/[^\d]/g, '')) || 0;
+  private toCleanPricePayload(value: unknown): string {
+    return String(this.normalizePriceValue(value)).replace(/\D/g, '') || '0';
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {

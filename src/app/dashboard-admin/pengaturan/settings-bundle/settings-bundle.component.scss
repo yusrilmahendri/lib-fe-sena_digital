@@ -164,6 +164,12 @@
   gap: 10px;
 }
 
+.package-information-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 1fr);
+  gap: 12px;
+}
+
 .form-field {
   display: block;
   min-width: 0;
@@ -184,10 +190,23 @@
 
 .form-control,
 .input-group-text {
+  width: 100%;
   min-height: 40px;
   border-color: #d9e1ea;
   border-radius: 8px;
   font-size: 0.9rem;
+}
+
+.price-input {
+  min-width: 0;
+  height: 40px;
+  padding-left: 14px;
+  padding-right: 14px;
+  overflow: hidden;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .input-group {
@@ -438,6 +457,12 @@
 @media (max-width: 1024px) {
   .bundle-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .package-information-grid {
+    grid-template-columns: 1fr;
   }
 }
 

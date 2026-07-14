@@ -74,20 +74,20 @@
               </small>
             </label>
 
-            <div class="field-row">
+            <div class="package-information-grid">
               <label class="form-field">
                 <span>Harga <b>*</b></span>
-                <div class="input-group">
-                  <span class="input-group-text">Rp</span>
-                  <input
-                    type="number"
-                    class="form-control"
-                    formControlName="price"
-                    min="0"
-                    [class.is-invalid]="isFieldInvalid(card.form, 'price')"
-                    [disabled]="card.loading"
-                    placeholder="0">
-                </div>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  class="form-control price-input"
+                  [value]="formatRupiah(card.form.get('price')?.value)"
+                  (input)="onPriceInput(card, $event)"
+                  (blur)="card.form.get('price')?.markAsTouched()"
+                  [class.is-invalid]="isFieldInvalid(card.form, 'price')"
+                  [disabled]="card.loading"
+                  placeholder="Rp 0">
                 <small class="invalid-feedback" *ngIf="isFieldInvalid(card.form, 'price')">
                   {{ getFieldError(card.form, 'price') }}
                 </small>
