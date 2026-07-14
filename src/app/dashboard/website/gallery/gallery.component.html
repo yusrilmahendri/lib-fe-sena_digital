@@ -117,6 +117,73 @@
       </button>
     </form>
 
+    <form class="upload-panel video-panel" [formGroup]="youtubeForm" (ngSubmit)="submitYoutubeVideo()">
+      <div class="panel-title">
+        <div>
+          <h2>Video YouTube</h2>
+          <p>Tambahkan link YouTube dan cover video untuk ditampilkan di galeri undangan.</p>
+        </div>
+      </div>
+
+      <label>
+        Link YouTube
+        <input
+          type="text"
+          formControlName="url_video"
+          placeholder="https://www.youtube.com/watch?v=..." />
+      </label>
+      <small class="field-hint">Mendukung youtube.com/watch?v=, youtu.be/, atau youtube.com/embed/.</small>
+      <div *ngIf="youtubeForm.get('url_video')?.invalid && youtubeForm.get('url_video')?.dirty" class="field-error">
+        Link YouTube tidak valid.
+      </div>
+
+      <label>
+        Deskripsi
+        <textarea formControlName="description" rows="2" placeholder="Contoh: Video prewedding"></textarea>
+      </label>
+
+      <div
+        class="drop-zone video-cover-zone"
+        (dragover)="preventDropDefault($event)"
+        (drop)="onYoutubeCoverDrop($event)"
+        (click)="browseYoutubeCover()">
+        <input
+          id="youtubeCoverFileInput"
+          class="sr-only"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          (change)="onYoutubeCoverSelected($event)" />
+        <ng-container *ngIf="youtubeCoverPreviewUrl; else youtubeCoverEmpty">
+          <img [src]="youtubeCoverPreviewUrl" alt="Preview cover video YouTube" class="video-cover-preview" />
+          <span>Ganti Cover Video / Thumbnail YouTube</span>
+        </ng-container>
+        <ng-template #youtubeCoverEmpty>
+          <i class="fas fa-play-circle"></i>
+          <strong>Upload Cover Video / Thumbnail YouTube</strong>
+          <span>JPG, JPEG, PNG, WEBP. Maksimal {{ maxUploadSizeMb }} MB.</span>
+        </ng-template>
+      </div>
+
+      <div *ngIf="youtubeCoverOriginalSize || youtubeCoverCompressedSize" class="size-summary">
+        <span>Asli: {{ formatFileSize(youtubeCoverOriginalSize) }}</span>
+        <span>Hasil kompresi: {{ formatFileSize(youtubeCoverCompressedSize) }}</span>
+      </div>
+
+      <div *ngIf="youtubeErrorMessage" class="alert-message error">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ youtubeErrorMessage }}</span>
+      </div>
+      <div *ngIf="youtubeSuccessMessage" class="alert-message success">
+        <i class="fas fa-check-circle"></i>
+        <span>{{ youtubeSuccessMessage }}</span>
+      </div>
+
+      <button type="submit" class="primary-action" [disabled]="isYoutubeSaveDisabled">
+        <i class="fas" [class.fa-spinner]="isSavingYoutubeVideo" [class.fa-save]="!isSavingYoutubeVideo"></i>
+        <span>{{ isSavingYoutubeVideo ? 'Menyimpan...' : 'Simpan Video' }}</span>
+      </button>
+    </form>
+
     <aside class="preview-panel">
       <div class="panel-title">
         <div>
@@ -197,6 +264,9 @@
             [style.object-fit]="photo.display_mode"
             [style.object-position]="getPhotoObjectPosition(photo)" />
           <span *ngIf="photo.is_featured" class="featured-badge">Featured</span>
+          <button *ngIf="hasPhotoVideo(photo)" type="button" class="video-play-badge" (click)="openPhotoVideo(photo)" title="Buka video YouTube">
+            <i class="fas fa-play"></i>
+          </button>
         </div>
 
         <div class="photo-body">

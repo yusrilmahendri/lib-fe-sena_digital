@@ -73,41 +73,12 @@
           </div>
         </div>
 
-        <div class="mt-4">
-          <h4>Musik Global</h4>
-          <div *ngIf="globalCatalogTracks.length; else emptyGlobalCatalog" class="music-list">
-            <label class="music-item" *ngFor="let music of globalCatalogTracks; trackBy: trackMusicById" [class.selected]="selectedMusicId === music.id">
-              <input type="radio" name="music-selection" [checked]="selectedMusicId === music.id" (change)="selectMusic(music.id, 'global_catalog')" />
-              <img *ngIf="music.thumbnail_url; else globalThumbnailFallback" class="music-thumb" [src]="music.thumbnail_url" [alt]="music.title || 'Musik Global'" />
-              <ng-template #globalThumbnailFallback>
-                <span class="music-thumb fallback"><i class="fa fa-globe" aria-hidden="true"></i></span>
-              </ng-template>
-              <span class="music-info">
-                <strong>{{ music.title || 'Musik Global' }}</strong>
-                <small>{{ music.artist || 'Artis tidak tersedia' }}</small>
-                <small *ngIf="getTrackDurationLabel(music)">Durasi: {{ getTrackDurationLabel(music) }}</small>
-              </span>
-              <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">
-                {{ isMusicSaved(music, 'global_catalog') ? 'Aktif' : 'Terpilih' }}
-              </span>
-              <button type="button" class="icon-button" (click)="playPreview(music); $event.preventDefault()" [disabled]="!music.audio_url" title="Preview lagu global">
-                <i class="fa" [class.fa-play]="previewingMusicId !== music.id" [class.fa-pause]="previewingMusicId === music.id" aria-hidden="true"></i>
-              </button>
-            </label>
-          </div>
-        </div>
+        <!-- Musik Global sementara dinonaktifkan -->
 
         <ng-template #emptyAdminCatalog>
           <div class="empty-state">
             <i class="fa fa-info-circle" aria-hidden="true"></i>
             <p>Daftar lagu Sena Digital belum tersedia saat ini. Kamu tetap bisa memakai musik default atau musik pribadi.</p>
-          </div>
-        </ng-template>
-
-        <ng-template #emptyGlobalCatalog>
-          <div class="empty-state">
-            <i class="fa fa-globe" aria-hidden="true"></i>
-            <p>Musik Global belum tersedia di akun ini. Coba cek lagi setelah backend mengirimkan global catalog.</p>
           </div>
         </ng-template>
 

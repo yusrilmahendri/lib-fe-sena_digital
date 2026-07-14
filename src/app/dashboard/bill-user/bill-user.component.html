@@ -9,7 +9,7 @@
       <h2>{{ statusPage === 'expired' ? 'Masa Aktif Paket Berakhir' : 'Pembayaran Belum Terkonfirmasi' }}</h2>
 
       <p class="payment-card__lead" *ngIf="statusPage === 'pending_payment'">
-        Akun Anda sudah berhasil dibuat, namun pembayaran paket undangan belum dikonfirmasi oleh admin. Silakan lakukan pembayaran terlebih dahulu. Jika Anda sudah membayar, hubungi admin Sena Digital dan kirimkan kode pemesanan berikut.
+        Akun Anda sudah dibuat, namun pembayaran paket undangan belum dikonfirmasi oleh admin. Silakan lakukan pembayaran terlebih dahulu. Jika sudah membayar, hubungi admin Sena Digital dan kirimkan kode pemesanan Anda.
       </p>
       <p class="payment-card__lead" *ngIf="statusPage === 'expired'">
         Masa aktif paket Anda telah berakhir. Silakan perpanjang atau upgrade paket untuk melanjutkan penggunaan fitur.

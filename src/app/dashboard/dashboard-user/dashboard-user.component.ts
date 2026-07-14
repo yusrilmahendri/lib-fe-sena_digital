@@ -214,7 +214,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
       case 'unverified':
         return '/verify-account';
       case 'pending_payment':
-        return '/dashboard/payment-pending';
+        return '/dashboard/overview';
       case 'expired':
         return '/dashboard/account-expired';
       default:

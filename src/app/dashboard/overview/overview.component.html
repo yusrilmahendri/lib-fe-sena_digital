@@ -48,6 +48,53 @@
         </div>
       </div>
     </section>
+
+    <section class="payment-warning-card mb-4" *ngIf="isPendingPayment() && accountStatusState as paymentState" aria-label="Pembayaran belum dikonfirmasi">
+      <div class="payment-warning-card__icon" aria-hidden="true">
+        <i class="fas fa-credit-card"></i>
+      </div>
+      <div class="payment-warning-card__body">
+        <p class="payment-warning-card__eyebrow">Status pembayaran</p>
+        <h2>Pembayaran Belum Dikonfirmasi</h2>
+        <p>
+          Akun Anda sudah dibuat, namun pembayaran paket undangan belum dikonfirmasi oleh admin. Silakan lakukan pembayaran terlebih dahulu. Jika sudah membayar, hubungi admin Sena Digital dan kirimkan kode pemesanan Anda.
+        </p>
+        <p class="payment-warning-card__message" *ngIf="paymentStatusMessage" role="status">
+          {{ paymentStatusMessage }}
+        </p>
+
+        <dl class="payment-warning-card__details">
+          <div>
+            <dt>Paket</dt>
+            <dd>{{ paymentState.packageName || paymentState.packageCode || 'Belum tersedia' }}</dd>
+          </div>
+          <div>
+            <dt>Domain</dt>
+            <dd>{{ paymentState.domain || publicWeddingDomain || 'Belum tersedia' }}</dd>
+          </div>
+          <div>
+            <dt>Kode Pemesanan</dt>
+            <dd>{{ paymentState.invoiceCode || 'Belum tersedia' }}</dd>
+          </div>
+          <div>
+            <dt>Status Pembayaran</dt>
+            <dd>{{ paymentState.paymentStatus || paymentState.accountStatusLabel }}</dd>
+          </div>
+        </dl>
+
+        <div class="payment-warning-card__actions">
+          <button type="button" class="btn btn-primary" [disabled]="!paymentState.invoiceCode" (click)="copyInvoiceCode()">
+            Salin Kode Pemesanan
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="contactAdmin()">
+            Hubungi Admin
+          </button>
+          <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="refreshStatus()">
+            {{ isLoading ? 'Memuat...' : 'Refresh Status' }}
+          </button>
+        </div>
+      </div>
+    </section>
     <div class="row g-3 mb-4">
       <div class="col-12 col-sm-6 col-md-3" *ngFor="let card of dashboardCards">
         <div class="card p-3 h-100 d-flex flex-column justify-content-between cursor-pointer position-relative"

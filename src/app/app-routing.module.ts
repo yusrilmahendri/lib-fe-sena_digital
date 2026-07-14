@@ -104,7 +104,7 @@ const routes: Routes = [
           { path: 'riwayat', component: RiwayatComponent, canActivate: [AccountVerificationGuard] },
           { path: 'ucapan', component: UcapanComponent, canActivate: [AccountVerificationGuard] },
         ],
-      },      { path: 'testimoni', component: TestimoniComponent },
+      },      { path: 'testimoni', component: TestimoniComponent, canActivate: [AccountVerificationGuard] },
       { path: 'hubungi-kami', component: HubungiKamiComponent },
     ],
   },

@@ -9,7 +9,8 @@ import {
   DashboardMessage
 } from 'src/app/dashboard.service';
 import { forkJoin, catchError, of } from 'rxjs';
-import { PaymentState, resolvePaymentState } from 'src/app/shared/payment-status.util';
+import { formatDateDisplay, PaymentState, resolvePaymentState } from 'src/app/shared/payment-status.util';
+import { Router } from '@angular/router';
 
 
 Chart.register(...registerables);
@@ -55,6 +56,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   dashboardTrends: DashboardTrendsResponse['data'] | null = null;
   dashboardMessages: DashboardMessage[] = [];
   apiError: string | null = null;
+  paymentStatusMessage = '';
 
 
   dashboardCards: DashboardCard[] = [
@@ -96,7 +98,8 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   chartData: ChartDataPoint[] = [];
 
   constructor(
-    private DashBoardSvc: DashboardService
+    private DashBoardSvc: DashboardService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -236,6 +239,52 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     if (days === null || days === undefined) return 'Belum tersedia';
     if (days < 1) return 'Berakhir';
     return `${days} hari`;
+  }
+
+  isPendingPayment(): boolean {
+    return this.accountStatusState?.accountStatus === 'pending_payment';
+  }
+
+  refreshStatus(): void {
+    this.initDataProfile();
+  }
+
+  contactAdmin(): void {
+    this.router.navigate(['/dashboard/hubungi-kami']);
+  }
+
+  copyInvoiceCode(): void {
+    const invoiceCode = this.accountStatusState?.invoiceCode || '';
+    if (!invoiceCode) {
+      this.paymentStatusMessage = 'Kode pemesanan belum tersedia.';
+      return;
+    }
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(invoiceCode)
+        .then(() => this.paymentStatusMessage = 'Kode pemesanan berhasil disalin.')
+        .catch(() => this.copyInvoiceCodeFallback(invoiceCode));
+      return;
+    }
+
+    this.copyInvoiceCodeFallback(invoiceCode);
+  }
+
+  private copyInvoiceCodeFallback(invoiceCode: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = invoiceCode;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    this.paymentStatusMessage = 'Kode pemesanan berhasil disalin.';
+  }
+
+  formatDateDisplay(value: unknown): string {
+    return formatDateDisplay(value);
   }
 
   private loadDashboardData(): void {
@@ -621,13 +670,9 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
   getDomainExpiryDate(): string {
     if (this.userData?.invitation?.domain_expires_at) {
       const expiryDate = new Date(this.userData.invitation.domain_expires_at);
-      return expiryDate.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
+      return this.formatDateDisplay(expiryDate);
     }
-    return '20 Desember 2024'; // Fallback to original hardcoded date
+    return this.accountStatusState?.activeUntil || 'Belum tersedia';
   }
 
   ngOnDestroy(): void {

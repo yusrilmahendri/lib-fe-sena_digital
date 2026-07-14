@@ -1,6 +1,6 @@
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Notyf } from 'notyf';
 import Swal from 'sweetalert2';
@@ -21,6 +21,11 @@ type PhotoFormValue = {
   focal_point_x?: number | string | null;
   focal_point_y?: number | string | null;
   is_featured?: boolean | null;
+};
+
+type YoutubeVideoFormValue = {
+  url_video?: string | null;
+  description?: string | null;
 };
 
 @Component({
@@ -57,6 +62,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   uploadForm: FormGroup = this.createPhotoForm(true);
   editForm: FormGroup = this.createPhotoForm(false);
+  youtubeForm: FormGroup = this.createYoutubeForm();
 
   isLoading = false;
   isCompressing = false;
@@ -64,6 +70,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   isSorting = false;
   isEditCompressing = false;
   isUpdating = false;
+  isSavingYoutubeVideo = false;
 
   previewUrl: string | null = null;
   editPreviewUrl: string | null = null;
@@ -77,6 +84,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   editCompressedSize: number | null = null;
   errorMessage = '';
   successMessage = '';
+  youtubeErrorMessage = '';
+  youtubeSuccessMessage = '';
   editingPhoto: UserPhoto | null = null;
   userData: any = null;
   previewSessionId = 0;
@@ -86,6 +95,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   private readonly compressionQuality = 0.85;
   private readonly maxImageDimension = 1920;
   private readonly allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  private readonly allowedCoverExtensions = ['jpg', 'jpeg', 'png', 'webp'];
   private readonly notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
 
   constructor(private dashboardSvc: DashboardService) {}
@@ -97,6 +107,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearPreview();
     this.clearEditPreview();
+    this.clearYoutubeCoverPreview();
   }
 
   ngAfterViewChecked(): void {
@@ -128,6 +139,19 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return this.uploadForm.invalid || !this.compressedFile || this.isCompressing || this.isUploading;
   }
 
+  get youtubeCoverPreviewUrl(): string {
+    return this.previewUrlForYoutubeCover || this.getYoutubeThumbnailUrl(this.youtubeForm.value.url_video) || '';
+  }
+
+  get isYoutubeSaveDisabled(): boolean {
+    return this.youtubeForm.invalid || this.isSavingYoutubeVideo || this.isCompressing;
+  }
+
+  previewUrlForYoutubeCover: string | null = null;
+  youtubeCoverFile: File | null = null;
+  youtubeCoverOriginalSize: number | null = null;
+  youtubeCoverCompressedSize: number | null = null;
+
   setActiveType(type: PhotoType): void {
     if (this.activeType === type) {
       return;
@@ -143,6 +167,10 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   browseEditFiles(): void {
     document.getElementById('editPhotoFileInput')?.click();
+  }
+
+  browseYoutubeCover(): void {
+    document.getElementById('youtubeCoverFileInput')?.click();
   }
 
   onFileSelected(event: Event): void {
@@ -175,6 +203,23 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     event.preventDefault();
   }
 
+  onYoutubeCoverSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    if (file) {
+      void this.prepareYoutubeCoverFile(file);
+    }
+    input.value = '';
+  }
+
+  onYoutubeCoverDrop(event: DragEvent): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0] || null;
+    if (file) {
+      void this.prepareYoutubeCoverFile(file);
+    }
+  }
+
   submitUpload(): void {
     if (this.isUploadDisabled || !this.compressedFile) {
       return;
@@ -197,6 +242,43 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       },
       complete: () => {
         this.isUploading = false;
+      }
+    });
+  }
+
+  submitYoutubeVideo(): void {
+    if (this.isYoutubeSaveDisabled) {
+      return;
+    }
+
+    const formValue = this.youtubeForm.value as YoutubeVideoFormValue;
+    const youtubeUrl = String(formValue.url_video || '').trim();
+
+    if (!youtubeUrl && !this.youtubeCoverFile) {
+      this.youtubeErrorMessage = 'Isi link YouTube atau upload cover video terlebih dahulu.';
+      return;
+    }
+
+    this.isSavingYoutubeVideo = true;
+    this.clearMessages();
+    this.youtubeErrorMessage = '';
+    this.youtubeSuccessMessage = '';
+
+    const formData = this.buildYoutubeVideoFormData(formValue, this.youtubeCoverFile);
+
+    this.dashboardSvc.create(DashboardServiceType.USER_PHOTOS, formData).subscribe({
+      next: () => {
+        this.notyf.success('Video YouTube berhasil disimpan.');
+        this.youtubeSuccessMessage = 'Video YouTube berhasil disimpan.';
+        this.resetYoutubeForm();
+        this.loadPhotos('gallery');
+      },
+      error: (err) => {
+        this.youtubeErrorMessage = this.resolveErrorMessage(err, 'Gagal menyimpan video YouTube.');
+        this.notyf.error(this.youtubeErrorMessage);
+      },
+      complete: () => {
+        this.isSavingYoutubeVideo = false;
       }
     });
   }
@@ -378,6 +460,17 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return getUserPhotoObjectPosition(photo);
   }
 
+  hasPhotoVideo(photo: UserPhoto): boolean {
+    return !!(photo.url_video || photo.video_url || photo.link_video);
+  }
+
+  openPhotoVideo(photo: UserPhoto): void {
+    const videoUrl = photo.url_video || photo.video_url || photo.link_video || '';
+    if (videoUrl) {
+      window.open(videoUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
   formatFileSize(bytes?: number | null): string {
     if (!bytes) {
       return '-';
@@ -429,6 +522,13 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       focal_point_x: new FormControl(null, [Validators.min(0), Validators.max(100)]),
       focal_point_y: new FormControl(null, [Validators.min(0), Validators.max(100)]),
       is_featured: new FormControl(false),
+    });
+  }
+
+  private createYoutubeForm(): FormGroup {
+    return new FormGroup({
+      url_video: new FormControl('', [this.youtubeUrlValidator.bind(this)]),
+      description: new FormControl('Video YouTube'),
     });
   }
 
@@ -519,6 +619,54 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return true;
   }
 
+  private validateYoutubeCoverFile(file: File): boolean {
+    const extension = this.getFileExtension(file.name);
+    if (!this.allowedCoverExtensions.includes(extension)) {
+      this.youtubeErrorMessage = 'Format cover tidak didukung. Gunakan JPG, JPEG, PNG, atau WEBP.';
+      this.notyf.error(this.youtubeErrorMessage);
+      return false;
+    }
+
+    const maxBytes = this.maxUploadSizeMb * 1024 * 1024;
+    if (file.size > maxBytes) {
+      this.youtubeErrorMessage = `Ukuran cover terlalu besar. Maksimal ${this.maxUploadSizeMb} MB.`;
+      this.notyf.error(this.youtubeErrorMessage);
+      return false;
+    }
+
+    return true;
+  }
+
+  private async prepareYoutubeCoverFile(file: File): Promise<void> {
+    this.youtubeErrorMessage = '';
+    this.clearYoutubeCoverPreview();
+
+    if (!this.validateYoutubeCoverFile(file)) {
+      return;
+    }
+
+    this.youtubeCoverOriginalSize = file.size;
+    this.youtubeCoverCompressedSize = null;
+    this.previewUrlForYoutubeCover = URL.createObjectURL(file);
+    this.isCompressing = true;
+
+    try {
+      const compressed = await this.compressImage(file);
+      const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
+      this.youtubeCoverFile = compressedFile;
+      this.youtubeCoverCompressedSize = compressedFile.size;
+      this.clearYoutubeCoverPreview();
+      this.previewUrlForYoutubeCover = URL.createObjectURL(compressedFile);
+    } catch (error) {
+      console.error('[Gallery] youtube cover compression failed', error);
+      this.youtubeErrorMessage = 'Gagal kompresi cover. Coba gunakan file JPG, PNG, atau WEBP lain.';
+      this.notyf.error(this.youtubeErrorMessage);
+      this.youtubeCoverFile = null;
+    } finally {
+      this.isCompressing = false;
+    }
+  }
+
   private compressImage(file: File): Promise<File> {
     return new Promise((resolve, reject) => {
       const image = new Image();
@@ -600,6 +748,27 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return formData;
   }
 
+  private buildYoutubeVideoFormData(value: YoutubeVideoFormValue, image: File | null): FormData {
+    const formData = new FormData();
+    const youtubeUrl = String(value.url_video || '').trim();
+
+    formData.append('photo_type', 'gallery');
+    formData.append('description', String(value.description || 'Video YouTube').trim());
+    formData.append('position', 'center');
+    formData.append('display_mode', 'cover');
+    formData.append('is_featured', '0');
+
+    if (youtubeUrl) {
+      formData.append('url_video', youtubeUrl);
+    }
+
+    if (image) {
+      formData.append('image', image, image.name);
+    }
+
+    return formData;
+  }
+
   private unwrapPhotos(response: any): UserPhoto[] {
     const raw = Array.isArray(response?.data?.data)
       ? response.data.data
@@ -618,7 +787,10 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return {
       id: Number(photo?.id),
       photo_type: photo?.photo_type === 'collage' ? 'collage' : 'gallery',
-      photo_url: String(photo?.photo_url || ''),
+      photo_url: String(photo?.photo_url || photo?.image_url || photo?.preview_url || this.getYoutubeThumbnailUrl(photo?.url_video || photo?.video_url || photo?.link_video) || ''),
+      url_video: photo?.url_video ?? photo?.video_url ?? photo?.link_video ?? null,
+      video_url: photo?.video_url ?? photo?.url_video ?? photo?.link_video ?? null,
+      link_video: photo?.link_video ?? photo?.url_video ?? photo?.video_url ?? null,
       description: photo?.description ?? null,
       position: this.isPhotoPosition(photo?.position) ? photo.position : 'center',
       display_mode: photo?.display_mode === 'contain' ? 'contain' : 'cover',
@@ -653,6 +825,17 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       is_featured: false,
     });
     this.clearPreview();
+  }
+
+  private resetYoutubeForm(): void {
+    this.youtubeForm.reset({
+      url_video: '',
+      description: 'Video YouTube',
+    });
+    this.clearYoutubeCoverPreview();
+    this.youtubeCoverFile = null;
+    this.youtubeCoverOriginalSize = null;
+    this.youtubeCoverCompressedSize = null;
   }
 
   private clearPreview(invalidateSession = true): void {
@@ -699,6 +882,13 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.previewUrl = null;
   }
 
+  private clearYoutubeCoverPreview(): void {
+    if (this.previewUrlForYoutubeCover && this.previewUrlForYoutubeCover.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrlForYoutubeCover);
+    }
+    this.previewUrlForYoutubeCover = null;
+  }
+
   private syncPreviewImageSrc(): void {
     if (!this.previewUrl || !this.previewImage?.nativeElement) {
       return;
@@ -740,6 +930,62 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     if (currentUrl && currentUrl.startsWith('blob:')) {
       URL.revokeObjectURL(currentUrl);
     }
+  }
+
+  private youtubeUrlValidator(control: AbstractControl): { youtubeUrl: true } | null {
+    const value = String(control.value || '').trim();
+    if (!value) return null;
+    return this.isValidYoutubeUrl(value) ? null : { youtubeUrl: true };
+  }
+
+  isValidYoutubeUrl(value: string | null | undefined): boolean {
+    const raw = String(value || '').trim();
+    if (!raw) return true;
+
+    try {
+      const url = new URL(raw);
+      const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+      if (hostname === 'youtu.be') {
+        return url.pathname.replace(/\//g, '').length > 0;
+      }
+      if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
+        return (url.pathname === '/watch' && !!url.searchParams.get('v')) || url.pathname.startsWith('/embed/');
+      }
+    } catch {
+      return false;
+    }
+
+    return false;
+  }
+
+  getYoutubeThumbnailUrl(value: string | null | undefined): string {
+    const videoId = this.extractYoutubeVideoId(value);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+  }
+
+  private extractYoutubeVideoId(value: string | null | undefined): string {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+
+    try {
+      const url = new URL(raw);
+      const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+      if (hostname === 'youtu.be') {
+        return url.pathname.split('/').filter(Boolean)[0] || '';
+      }
+      if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
+        if (url.pathname === '/watch') return url.searchParams.get('v') || '';
+        if (url.pathname.startsWith('/embed/')) return url.pathname.split('/').filter(Boolean)[1] || '';
+      }
+    } catch {
+      return '';
+    }
+
+    return '';
+  }
+
+  private getFileExtension(fileName: string): string {
+    return String(fileName || '').split('.').pop()?.toLowerCase() || '';
   }
 
   onPreviewImageLoad(): void {

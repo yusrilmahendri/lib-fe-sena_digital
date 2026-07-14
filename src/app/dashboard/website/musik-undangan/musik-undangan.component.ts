@@ -73,8 +73,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.adminCatalogTracks = catalogSections.hasCatalogSections
           ? catalogSections.adminCatalog
           : fallbackCatalogTracks;
-        this.globalCatalogTracks = catalogSections.globalCatalog;
-        this.musicOptions = this.mergeMusicOptions(this.adminCatalogTracks, this.globalCatalogTracks);
+        // Musik Global sementara dinonaktifkan
+        this.globalCatalogTracks = [];
+        this.musicOptions = this.adminCatalogTracks;
         this.musicSelection = normalizedSelection;
         this.selectedMusicId = normalizedSelection?.selected_music_id ?? null;
         this.selectedMusicSourceHint = this.resolveSourceTypeByTrackId(this.selectedMusicId);
@@ -126,7 +127,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     const fileExtension = this.getMusicFileExtension(file);
 
     if (!this.allowedMusicExtensions.includes(fileExtension)) {
-      this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, M4A, AAC, atau OGG.';
+      this.uploadError = 'Format file tidak didukung. Gunakan MP3, WAV, M4A, AAC, atau OGG.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';
@@ -134,7 +135,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }
 
     if (file.size > this.maxMusicUploadSizeInBytes) {
-      this.uploadError = 'Ukuran file musik melebihi batas maksimum 20 MB.';
+      this.uploadError = 'Ukuran file maksimal 20 MB.';
       input.value = '';
       this.selectedMusicFile = null;
       this.selectedMusicFileName = '';

@@ -16,6 +16,7 @@ import {
   logInvitationImageError,
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
+  resolveInvitationVideoUrl,
 } from '../../../../shared/user-photo.model';
 import {
   appendPreviewGuestWish,
@@ -283,7 +284,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   hasVideo(item: any): boolean {
-    return !!(item && item.url_video && item.url_video.toString().trim());
+    return !!resolveInvitationVideoUrl(item);
   }
 
   override getGalleryPhotoUrl(item: any): string {
@@ -303,7 +304,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       return;
     }
 
-    window.open(item.url_video, '_blank', 'noopener,noreferrer');
+    window.open(resolveInvitationVideoUrl(item), '_blank', 'noopener,noreferrer');
   }
 
   onGalleryImageError(event: Event): void {

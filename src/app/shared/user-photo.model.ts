@@ -19,7 +19,9 @@ export interface UserPhoto {
   id: number;
   photo_type: PhotoType;
   photo_url: string;
+  url_video?: string | null;
   video_url?: string | null;
+  link_video?: string | null;
   media_type?: string | null;
   image_url?: string | null;
   preview_url?: string | null;
@@ -105,6 +107,7 @@ export function resolveInvitationPhotoUrl(photo: any): string {
     photo?.file_path ||
     photo?.path ||
     photo?.foto ||
+    getYoutubeThumbnailUrl(resolveInvitationVideoUrl(photo)) ||
     photo
   );
 }
@@ -140,6 +143,9 @@ export function resolveInvitationVideoUrl(photo: any): string {
     photo?.video_url ||
     photo?.url_video ||
     photo?.link_video ||
+    photo?.youtube_link ||
+    photo?.link_youtube ||
+    photo?.youtube ||
     (isInvitationVideoMedia(photo) ? (
       photo?.url ||
       photo?.file_url ||
@@ -160,6 +166,9 @@ export function isInvitationVideoMedia(photo: any): boolean {
     photo?.video_url ||
     photo?.url_video ||
     photo?.link_video ||
+    photo?.youtube_link ||
+    photo?.link_youtube ||
+    photo?.youtube ||
     photo?.url ||
     photo?.file_url ||
     photo?.path ||
@@ -167,7 +176,37 @@ export function isInvitationVideoMedia(photo: any): boolean {
     ''
   ).toLowerCase();
 
-  return mediaType === 'video' || /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/.test(url);
+  return mediaType === 'video' || isYoutubeUrl(url) || /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/.test(url);
+}
+
+export function getYoutubeThumbnailUrl(value: string | null | undefined): string {
+  const videoId = extractYoutubeVideoId(value);
+  return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+}
+
+function isYoutubeUrl(value: string | null | undefined): boolean {
+  return !!extractYoutubeVideoId(value);
+}
+
+function extractYoutubeVideoId(value: string | null | undefined): string {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  try {
+    const url = new URL(raw);
+    const hostname = url.hostname.replace(/^www\./, '').toLowerCase();
+    if (hostname === 'youtu.be') {
+      return url.pathname.split('/').filter(Boolean)[0] || '';
+    }
+    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
+      if (url.pathname === '/watch') return url.searchParams.get('v') || '';
+      if (url.pathname.startsWith('/embed/')) return url.pathname.split('/').filter(Boolean)[1] || '';
+    }
+  } catch {
+    return '';
+  }
+
+  return '';
 }
 
 export function logInvitationImageError(event: Event, context: string, raw?: any, resolved?: string): void {

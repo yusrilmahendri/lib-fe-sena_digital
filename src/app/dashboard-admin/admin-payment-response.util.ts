@@ -70,9 +70,18 @@ export function mapAdminInvoiceRow(item: any): AdminInvoiceRow {
   const rawStatus = firstValue([
     item?.status,
     item?.status_bayar,
+    item?.status_pembayaran,
     item?.payment_status,
     item?.transaction_status,
     item?.kd_status,
+    item?.tagihan?.status,
+    item?.tagihan?.status_bayar,
+    item?.tagihan?.status_pembayaran,
+    item?.tagihan?.payment_status,
+    item?.invoice?.status,
+    item?.invoice?.status_bayar,
+    item?.invoice?.status_pembayaran,
+    item?.invoice?.payment_status,
   ]);
   const normalizedStatus = normalizePaymentStatus(rawStatus);
   const invoicePayload = normalizeInvoicePayload(firstString([

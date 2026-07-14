@@ -56,7 +56,7 @@ export class BillUserComponent implements OnInit {
         }
 
         if (this.paymentState.accountStatus === 'expired' && this.statusPage !== 'expired') {
-          this.router.navigate(['/account-expired']);
+          this.router.navigate(['/dashboard/account-expired']);
           return;
         }
 
@@ -69,7 +69,7 @@ export class BillUserComponent implements OnInit {
         }
 
         if (this.paymentState.accountStatus === 'pending_payment' && this.statusPage !== 'pending_payment') {
-          this.router.navigate(['/payment-pending']);
+          this.router.navigate(['/dashboard/payment-pending']);
         }
       },
       error: (error) => {

@@ -75,6 +75,21 @@ export function normalizeStatus(value: unknown): string {
   return String(value ?? '').trim().toLowerCase();
 }
 
+export function formatDateDisplay(value: unknown): string {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) return raw;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 export function isPaymentActive(profile: any): boolean {
   return resolvePaymentState(profile).accountStatus === 'active';
 }
@@ -118,6 +133,13 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.kode_pemesanan,
   ]);
   const transactionDate = firstText([
+    data.tanggal_transaksi_formatted,
+    data.transaction_date_formatted,
+    data.created_at_formatted,
+    data.tagihan?.tanggal_transaksi_formatted,
+    data.tagihan?.created_at_formatted,
+    data.invoice?.tanggal_transaksi_formatted,
+    data.invoice?.created_at_formatted,
     data.tanggal_transaksi,
     data.transaction_date,
     data.created_at,
@@ -128,6 +150,15 @@ export function resolvePaymentState(profile: any): PaymentState {
   ]);
   const hasInvoice = resolveHasInvoice(data, invoiceCode);
   const activeUntil = firstText([
+    data.active_until_formatted,
+    data.domain_info?.expires_at_formatted,
+    data.domain_end_date_formatted,
+    data.expired_at_formatted,
+    data.expires_at_formatted,
+    data.package_info?.active_until_formatted,
+    data.package_info?.expires_at_formatted,
+    data.invitation_package?.active_until_formatted,
+    data.invitation_package?.expires_at_formatted,
     data.active_until,
     data.domain_info?.expires_at,
     data.domain_end_date,
@@ -195,7 +226,7 @@ export function resolvePaymentState(profile: any): PaymentState {
       data.paket?.package_code,
       data.paket_undangan?.package_code,
     ]),
-    activeUntil,
+    activeUntil: formatDateDisplay(activeUntil),
     remainingDays,
     isPaymentConfirmed,
     isExpired,
@@ -207,7 +238,7 @@ export function resolvePaymentState(profile: any): PaymentState {
       data.wedding_profile?.domain,
     ]),
     invoiceCode,
-    transactionDate,
+    transactionDate: formatDateDisplay(transactionDate),
     hasInvoice,
   };
 }

@@ -374,7 +374,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         packages: any;
         themes: PublicCategoriesResponse;
       }) => {
-        this.userPackageTier = resolvePackageTier(profile?.data?.package_info) || 'trial';
+        this.userPackageTier = this.resolveUserPackageTier(profile?.data);
         this.activeTab = this.getInitialActiveTab();
         this.packageCatalog = Array.isArray(packages?.data) ? packages.data : [];
         this.themeAccessMap = buildThemeAccessMap(this.packageCatalog);
@@ -521,10 +521,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
       const isConnectedToBackend = !!resolvedThemeId && !!preset.slug;
       const requiredPackageTier = getLowestPackageTierForTheme(preset.slug, this.themeAccessMap);
       const fallbackCanUse = isConnectedToBackend && isThemeActive && isCategoryActive && this.canUseThemeByTier(preset.slug);
-      const canPreview = (theme as any)?.can_preview == null ? true : (theme as any).can_preview === true;
-      const canUseFromApi = (theme as any)?.can_use == null ? null : (theme as any).can_use === true;
+      const canPreview = true;
+      const canUseFromApi = (theme as any)?.can_use == null ? null : this.toBoolean((theme as any).can_use);
       const canUse = canUseFromApi == null ? fallbackCanUse : canUseFromApi;
-      const upgradeRequired = (theme as any)?.upgrade_required == null ? !canUse : (theme as any).upgrade_required === true;
+      const upgradeRequired = (theme as any)?.upgrade_required == null ? !canUse : this.toBoolean((theme as any).upgrade_required) && !canUse;
       const targetPackageRaw = (theme as any)?.target_package;
       const targetPackage = this.normalizeTargetPackage(targetPackageRaw) || requiredPackageTier;
       const availabilityMessage = !isThemeActive
@@ -545,7 +545,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         url_thema: theme.url_thema || '',
         demo_url: theme.demo_url || '',
         price: theme.price || 0,
-        isCurrentTheme: (theme as any)?.is_current_theme === true,
+        isCurrentTheme: this.toBoolean((theme as any)?.is_current_theme),
         isLoading: false,
         category_id: resolvedCategoryId,
         category: preset.category,
@@ -986,7 +986,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (theme.canUseFromApi !== null) {
-      return theme.canUseFromApi === true;
+      return theme.canUseFromApi === true || (!theme.upgradeRequired && this.canUseThemeByTier(theme.slug));
     }
 
     return theme.canUse === true || this.canUseThemeByTier(theme.slug);
@@ -1018,7 +1018,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   canPreviewTheme(theme: ThemeCard): boolean {
-    return theme.canPreview === true && !!theme.slug;
+    return !!theme.slug;
   }
 
   shouldShowUsedTheme(theme: ThemeCard): boolean {
@@ -1150,6 +1150,27 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     return getLowestPackageTierForTheme(theme.slug, this.themeAccessMap);
+  }
+
+  private resolveUserPackageTier(profileData: any): ThemePackageTier {
+    const candidates = [
+      profileData?.package_info,
+      profileData?.invitation_package,
+      profileData?.paket,
+      profileData?.paket_undangan,
+      profileData,
+    ];
+
+    for (const candidate of candidates) {
+      const tier = resolvePackageTier(candidate);
+      if (tier) return tier;
+    }
+
+    return 'trial';
+  }
+
+  private toBoolean(value: unknown): boolean {
+    return value === true || value === 1 || value === '1' || String(value ?? '').toLowerCase() === 'true';
   }
 
   private selectTheme(theme: ThemeCard): void {

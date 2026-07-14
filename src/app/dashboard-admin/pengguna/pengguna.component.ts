@@ -166,7 +166,7 @@ export class PenggunaComponent implements OnInit {
     if (Number.isNaN(date.getTime())) return '–';
     return date.toLocaleDateString('id-ID', {
       day: '2-digit',
-      month: 'short',
+      month: '2-digit',
       year: 'numeric'
     });
   }

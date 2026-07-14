@@ -102,6 +102,9 @@ export function resolvePackageTier(
   // Collect all candidate strings from all known field names and join them
   // so a value like "Ruby & Sapphire & Diamond" or "Paket Ruby" still matches.
   const candidates = [
+    (paket as any)?.package_code,
+    (paket as any)?.code,
+    (paket as any)?.kode_paket,
     (paket as any)?.name,
     (paket as any)?.tier,
     (paket as any)?.package_name,

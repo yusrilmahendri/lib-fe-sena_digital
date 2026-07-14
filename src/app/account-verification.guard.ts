@@ -37,7 +37,9 @@ export class AccountVerificationGuard implements CanActivate {
               return this.router.createUrlTree(['/dashboard/account-expired']);
             }
             if (paymentState.accountStatus === 'pending_payment') {
-              return this.router.createUrlTree(['/dashboard/payment-pending']);
+              return this.isDashboardOverviewUrl(state.url)
+                ? true
+                : this.router.createUrlTree(['/dashboard/overview']);
             }
 
             return this.router.createUrlTree([this.onboardingRoute]);
@@ -57,5 +59,10 @@ export class AccountVerificationGuard implements CanActivate {
         return of(this.router.createUrlTree(['/verify-account']));
       })
     );
+  }
+
+  private isDashboardOverviewUrl(url: string): boolean {
+    const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
+    return path === '/dashboard' || path === '/dashboard/overview';
   }
 }
