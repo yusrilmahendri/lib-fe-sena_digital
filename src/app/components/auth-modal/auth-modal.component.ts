@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../auth.service';
 import { LandingModalService } from '../../landing-modal.service';
 
@@ -32,8 +33,10 @@ export class AuthModalComponent implements OnChanges {
   showConfirmPassword = false;
 
   isSubmitting = false;
+  isSendingResetLink = false;
   errorMessage = '';
   infoMessage = '';
+  forgotPasswordError = '';
 
   lastForgotPasswordEmail = '';
 
@@ -92,7 +95,9 @@ export class AuthModalComponent implements OnChanges {
   private resetTransientState(): void {
     this.errorMessage = '';
     this.infoMessage = '';
+    this.forgotPasswordError = '';
     this.isSubmitting = false;
+    this.isSendingResetLink = false;
     this.showPassword = false;
     this.showNewPassword = false;
     this.showConfirmPassword = false;
@@ -214,28 +219,39 @@ export class AuthModalComponent implements OnChanges {
   submitForgotPassword(): void {
     this.errorMessage = '';
     this.infoMessage = '';
-    if (this.forgotForm.invalid || this.isSubmitting) {
+    this.forgotPasswordError = '';
+    if (this.forgotForm.invalid || this.isSubmitting || this.isSendingResetLink) {
       this.forgotForm.markAllAsTouched();
       return;
     }
 
     this.isSubmitting = true;
+    this.isSendingResetLink = true;
     const email = this.forgotForm.value.email;
     this.lastForgotPasswordEmail = email;
 
-    this.auth.forgotPassword(email, 'email').subscribe({
-      next: () => {
+    this.auth.forgotPassword(email, 'email').pipe(
+      finalize(() => {
         this.isSubmitting = false;
+        this.isSendingResetLink = false;
+      })
+    ).subscribe({
+      next: (response) => {
+        if (response?.status === false || response?.success === false) {
+          this.forgotPasswordError = response?.message || 'Email tidak terdaftar.';
+          return;
+        }
         this.openEmailConfirmationModal();
       },
       error: (err: any) => {
-        // Security: never reveal whether the email exists. Prefer the backend's
-        // (already-generic) message; otherwise fall back to a safe default.
-        this.isSubmitting = false;
-        this.errorMessage =
-          err?.error?.message || 'Jika email terdaftar, tautan reset kata sandi akan dikirim.';
+        this.forgotPasswordError = this.resolveForgotPasswordError(err);
       },
     });
+  }
+
+  clearForgotPasswordError(): void {
+    this.forgotPasswordError = '';
+    this.errorMessage = '';
   }
 
   resendForgotPasswordEmail(): void {
@@ -310,6 +326,10 @@ export class AuthModalComponent implements OnChanges {
     }
 
     return validationMsg || err?.error?.message || 'Reset kata sandi gagal. Silakan coba lagi.';
+  }
+
+  private resolveForgotPasswordError(error: any): string {
+    return error?.error?.errors?.email?.[0] || error?.error?.message || 'Email tidak terdaftar.';
   }
 
   /** Extract the first Laravel-style validation error message, if any. */

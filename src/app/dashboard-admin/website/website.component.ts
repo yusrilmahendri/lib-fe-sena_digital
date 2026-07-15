@@ -329,7 +329,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         if (result.success) {
           this.notyf.success(result.message || 'Preview tema berhasil diperbarui.');
           this.patchThemePreviewFromResponse(categoryId, result.data);
-          this.getData();
+          this.loadWebsiteCategories();
           this.loadAdminThemes();
         } else {
           this.notyf.error(result.error || 'Gagal memperbarui gambar preview');
@@ -361,28 +361,19 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   getThemeImage(theme: any): string {
     const categoryData = theme?.categoryData || theme?.category || {};
     const adminThemeData = theme?.adminThemeData || {};
-    const url = this.firstString([
-      theme?.preview_image,
-      theme?.preview,
-      theme?.image,
-      theme?.thumbnail_image,
-      theme?.image_url,
-      theme?.preview_url,
-      categoryData?.preview_image,
-      categoryData?.preview,
-      categoryData?.image,
-      categoryData?.thumbnail_image,
-      categoryData?.image_url,
-      categoryData?.preview_url,
-      adminThemeData?.preview_image,
-      adminThemeData?.preview,
-      adminThemeData?.image,
-      adminThemeData?.thumbnail_image,
-      adminThemeData?.image_url,
-      adminThemeData?.preview_url,
-    ]);
-
-    return url ? this.websiteCategoryService.getImageUrl(url) : this.themePlaceholderImage;
+    return theme?.preview_image
+      || theme?.preview
+      || theme?.image
+      || theme?.thumbnail_image
+      || categoryData?.preview_image
+      || categoryData?.preview
+      || categoryData?.image
+      || categoryData?.thumbnail_image
+      || adminThemeData?.preview_image
+      || adminThemeData?.preview
+      || adminThemeData?.image
+      || adminThemeData?.thumbnail_image
+      || this.themePlaceholderImage;
   }
 
   getThemePreviewImage(item: any): string {
@@ -395,45 +386,6 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return;
     }
     img.src = this.themePlaceholderImage;
-  }
-
-  getThemePreviewImageWithVersion(item: any): string {
-    const categoryData = item?.categoryData || item?.category || item;
-    const adminThemeData = item?.adminThemeData || {};
-    const rawUrl = this.firstString([
-      categoryData?.preview_image,
-      categoryData?.preview,
-      categoryData?.image,
-      categoryData?.thumbnail_image,
-      categoryData?.image_url,
-      categoryData?.preview_url,
-      adminThemeData?.preview_image,
-      adminThemeData?.preview,
-      adminThemeData?.image,
-      adminThemeData?.thumbnail_image,
-      adminThemeData?.image_url,
-      adminThemeData?.preview_url,
-    ]);
-
-    if (!rawUrl) {
-      return this.themePlaceholderImage;
-    }
-
-    const resolvedUrl = this.websiteCategoryService.getImageUrl(rawUrl);
-    const version = this.firstString([
-      categoryData?.updated_at,
-      categoryData?.preview_updated_at,
-      categoryData?.__preview_cache_buster,
-      adminThemeData?.updated_at,
-      adminThemeData?.__preview_cache_buster,
-    ]);
-
-    if (!version) {
-      return resolvedUrl;
-    }
-
-    const separator = resolvedUrl.includes('?') ? '&' : '?';
-    return `${resolvedUrl}${separator}v=${encodeURIComponent(version)}`;
   }
 
   getThemeImageUrl(theme: AdminThemeCard): string {
@@ -577,6 +529,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       })
     );
+  }
+
+  private loadWebsiteCategories(): void {
+    this.getData();
   }
 
   private loadPackageAccessMapping(): void {
@@ -751,42 +707,25 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     }
 
     const updatedAt = source.updated_at || new Date().toISOString();
-    const image = this.firstString([
-      source.image,
-      source.preview_image,
-      source.preview,
-      source.thumbnail_image,
-      source.image_url,
-      source.preview_url,
-    ]);
 
     return {
       ...source,
       id: Number(source.id ?? categoryId),
-      image: image || source.image,
-      preview: source.preview || image || source.image,
-      preview_image: source.preview_image || image || source.image,
-      thumbnail_image: source.thumbnail_image || image || source.image,
+      image: source.image,
+      preview: source.preview,
+      preview_image: source.preview_image,
+      thumbnail_image: source.thumbnail_image,
       updated_at: updatedAt,
       __preview_cache_buster: updatedAt,
     } as Partial<WebsiteCategory>;
   }
 
   private pickPreviewFields(source: any): ThemePreviewFields {
-    const image = this.firstString([
-      source?.image,
-      source?.preview_image,
-      source?.preview,
-      source?.thumbnail_image,
-      source?.image_url,
-      source?.preview_url,
-    ]);
-
     return {
-      image: image || source?.image,
-      preview: source?.preview || image || source?.image,
-      preview_image: source?.preview_image || image || source?.image,
-      thumbnail_image: source?.thumbnail_image || image || source?.image,
+      image: source?.image,
+      preview: source?.preview,
+      preview_image: source?.preview_image,
+      thumbnail_image: source?.thumbnail_image,
       image_url: source?.image_url,
       preview_url: source?.preview_url,
       updated_at: source?.updated_at || new Date().toISOString(),

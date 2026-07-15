@@ -112,12 +112,16 @@
             placeholder="Email terdaftar"
             formControlName="email"
             autocomplete="email"
+            (input)="clearForgotPasswordError()"
           />
           <p
             class="auth-field__error"
             *ngIf="forgotForm.get('email')?.touched && forgotForm.get('email')?.invalid"
           >
             Masukkan email yang valid.
+          </p>
+          <p class="auth-field__error" *ngIf="forgotPasswordError">
+            {{ forgotPasswordError }}
           </p>
         </div>
 
@@ -126,9 +130,9 @@
         <button
           type="submit"
           class="auth-btn auth-btn--primary"
-          [disabled]="forgotForm.invalid || isSubmitting"
+          [disabled]="forgotForm.invalid || isSendingResetLink"
         >
-          {{ isSubmitting ? 'Mengirim…' : 'Kirim Tautan Reset' }}
+          {{ isSendingResetLink ? 'Mengirim...' : 'Kirim Tautan Reset' }}
         </button>
       </form>
 

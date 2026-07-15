@@ -177,9 +177,11 @@ $lp-input-bg: #fbf2f7;
   gap: 0.3rem;
 
   &__error {
-    margin: 0;
-    font-size: 0.78rem;
-    color: #c0392b;
+    margin: 8px 0 0;
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
   }
 }
 

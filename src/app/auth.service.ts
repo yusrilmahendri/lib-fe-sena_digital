@@ -12,7 +12,7 @@ export interface LoginPayload {
 
 export type VerificationChannel = 'email' | 'whatsapp';
 
-export interface ApiMessageResponse { success?: boolean; message: string; }
+export interface ApiMessageResponse { success?: boolean; status?: boolean; message: string; }
 export interface VerificationProfile {
   email: string;
   phone: string;
