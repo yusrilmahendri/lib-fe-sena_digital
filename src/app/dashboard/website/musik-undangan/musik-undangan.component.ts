@@ -218,13 +218,16 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   playDefaultPreview(): void {
-    const defaultMusic = this.musicSelection?.default_music;
-    const audioUrl = defaultMusic?.audio_url || (this.getActiveSourceType() === 'default' ? this.musicSelection?.resolved_music_url : '') || '';
+    const defaultMusic = this.musicSelection?.default_music as any;
+
+    const audioUrl =
+      this.getMusicPlayableUrl(defaultMusic) ||
+      (this.getActiveSourceType() === 'default' ? this.musicSelection?.resolved_music_url || '' : '');
+
     if (!audioUrl) {
       this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
     }
-
     this.playAudio(audioUrl, 'default');
   }
 
@@ -374,15 +377,27 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   getCustomMusicUrl(): string {
-    const fallbackResolvedUrl = this.getActiveSourceType() === 'custom' ? this.musicSelection?.resolved_music_url : null;
-    return this.firstString([
-      this.musicSelection?.custom_music?.audio_url,
-      this.musicSelection?.custom_music?.url,
-      (this.musicSelection?.active_music as any)?.audio_url,
-      (this.musicSelection?.active_music as any)?.url,
-      this.musicSelection?.custom_music_url,
-      fallbackResolvedUrl,
-    ]) || '';
+    const fallbackResolvedUrl =
+      this.getActiveSourceType() === 'custom'
+        ? this.musicSelection?.resolved_music_url
+        : null;
+
+    const customMusic = this.musicSelection?.custom_music as any;
+    const activeMusic = this.musicSelection?.active_music as any;
+
+    const rawUrl = this.firstString([
+        customMusic?.stream_url,
+        customMusic?.audio_url,
+        customMusic?.url,
+        customMusic?.music_url,
+        customMusic?.file_url,
+        activeMusic?.stream_url,
+        activeMusic?.audio_url,
+        activeMusic?.url,
+        this.musicSelection?.custom_music_url,
+        fallbackResolvedUrl,
+      ]);
+    return this.normalizeMusicUrl(rawUrl);
   }
 
   trackMusicById(_index: number, music: MusicTrack): number {
@@ -394,7 +409,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   getMusicPlayableUrl(music: any): string {
-    return this.firstString([
+    const rawUrl = this.firstString([
       music?.stream_url,
       music?.audio_url,
       music?.url,
@@ -402,12 +417,41 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       music?.musik_url,
       music?.file_url,
       music?.path,
-    ]) || '';
+    ]);
+
+    return this.normalizeMusicUrl(rawUrl);
+  }
+
+  private normalizeMusicUrl(url: string | null): string {
+    const value = String(url || '').trim();
+
+    if (!value) return '';
+
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+
+    const apiOrigin = 'https://cloud-api.sena-digital.com';
+
+    if (value.startsWith('/')) {
+      return `${apiOrigin}${value}`;
+    }
+
+    return `${apiOrigin}/${value}`;
   }
 
   canPreviewMusic(music: MusicTrack): boolean {
     return !!this.getMusicPlayableUrl(music);
   }
+
+  canPreviewDefaultMusic(): boolean {
+  const defaultMusic = this.musicSelection?.default_music as any;
+
+  return !!(
+    this.getMusicPlayableUrl(defaultMusic) ||
+    this.musicSelection?.resolved_music_url
+  );
+}
 
   private playAudio(audioUrl: string, previewId: number | 'custom' | 'default'): void {
     const normalizedUrl = String(audioUrl || '').trim();
@@ -424,7 +468,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
     if (this.previewAudio && this.currentPreviewId === previewId && !this.previewAudio.paused) {
       this.previewAudio.pause();
+      this.previewAudio.currentTime = 0;
       this.previewingMusicId = null;
+      this.currentPreviewId = null;
       this.isPreviewLoading = false;
       return;
     }
@@ -432,12 +478,13 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     const audio = this.ensurePreviewAudio();
 
     audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
+    audio.currentTime = 0;
 
-    audio.src = normalizedUrl;
+    if (audio.src !== normalizedUrl) {
+      audio.src = normalizedUrl;
+    }
+
     audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
 
     this.currentPreviewId = previewId;
     this.previewingMusicId = previewId;
@@ -498,7 +545,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
     this.previewAudio = new Audio();
     this.previewAudio.preload = 'auto';
-    this.previewAudio.crossOrigin = 'anonymous';
+    // this.previewAudio.crossOrigin = 'anonymous';
 
     this.previewAudio.addEventListener('loadstart', () => {
       console.log('[MUSIC_AUDIO_LOADSTART]', this.previewAudio?.src);
@@ -819,8 +866,21 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       size: item.size ?? item.file_size ?? null,
       file_size: item.file_size ?? item.size ?? null,
       size_label: this.firstString([item.size_label, item.file_size_label, item.human_size]),
-      url: this.firstString([item.url, item.music_url, item.file_url, item.path]),
-      audio_url: this.firstString([item.audio_url, item.url, item.music_url, item.file_url, item.path]),
+      url: this.firstString([
+        item.stream_url,
+        item.url,
+        item.music_url,
+        item.file_url,
+        item.path,
+      ]),
+      audio_url: this.firstString([
+        item.stream_url,
+        item.audio_url,
+        item.url,
+        item.music_url,
+        item.file_url,
+        item.path,
+      ]),
       uploaded_at: this.firstString([item.uploaded_at, item.created_at]),
       created_at: this.firstString([item.created_at]),
       updated_at: this.firstString([item.updated_at]),
@@ -839,18 +899,19 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
           continue;
         }
 
-        merged.set(track.id, {
-          ...existing,
-          ...track,
-          title: track.title || existing.title,
-          artist: track.artist ?? existing.artist,
-          description: track.description ?? existing.description,
-          audio_url: track.audio_url ?? existing.audio_url,
-          thumbnail_url: track.thumbnail_url ?? existing.thumbnail_url,
-          is_active: track.is_active ?? existing.is_active,
-          is_default: track.is_default ?? existing.is_default,
-          sort_order: track.sort_order ?? existing.sort_order,
-        });
+      merged.set(track.id, {
+        ...existing,
+        ...track,
+        title: track.title || existing.title,
+        artist: track.artist ?? existing.artist,
+        description: track.description ?? existing.description,
+        audio_url: track.audio_url ?? existing.audio_url ?? track.stream_url ?? existing.stream_url,
+        stream_url: track.stream_url ?? existing.stream_url ?? track.audio_url ?? existing.audio_url,
+        thumbnail_url: track.thumbnail_url ?? existing.thumbnail_url,
+        is_active: track.is_active ?? existing.is_active,
+        is_default: track.is_default ?? existing.is_default,
+        sort_order: track.sort_order ?? existing.sort_order,
+      });
       }
     }
 

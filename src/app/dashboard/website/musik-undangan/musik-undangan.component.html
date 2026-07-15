@@ -49,7 +49,7 @@
             <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
           </span>
           <span *ngIf="getActiveSourceType() === 'default'" class="selected-badge">Aktif</span>
-          <button type="button" class="icon-button" (click)="playDefaultPreview(); $event.preventDefault()" [disabled]="!musicSelection?.resolved_music_url && !musicSelection?.default_music?.audio_url" title="Preview musik default">
+          <button type="button" class="icon-button" (click)="$event.preventDefault(); $event.stopPropagation(); playDefaultPreview()" [disabled]="!canPreviewDefaultMusic()" title="Preview musik default">
             <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'default'" [class.fa-play]="previewingMusicId !== 'default' && !(isPreviewLoading && currentPreviewId === 'default')" [class.fa-pause]="previewingMusicId === 'default' && !(isPreviewLoading && currentPreviewId === 'default')" aria-hidden="true"></i>
           </button>
         </label>
@@ -136,7 +136,13 @@
             <small *ngIf="getCustomMusicUploadedAt()">Upload: {{ getCustomMusicUploadedAt() }}</small>
           </div>
           <span *ngIf="isCustomMusicActive()" class="selected-badge">Aktif</span>
-          <button type="button" class="icon-button" (click)="playCustomPreview()" title="Preview musik pribadi">
+          <button
+            type="button"
+            class="icon-button"
+            (click)="$event.preventDefault(); $event.stopPropagation(); playCustomPreview()"
+            [disabled]="!getCustomMusicUrl()"
+            title="Preview musik pribadi"
+          >
             <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'custom'" [class.fa-play]="previewingMusicId !== 'custom' && !(isPreviewLoading && currentPreviewId === 'custom')" [class.fa-pause]="previewingMusicId === 'custom' && !(isPreviewLoading && currentPreviewId === 'custom')" aria-hidden="true"></i>
           </button>
         </div>
