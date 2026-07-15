@@ -41,6 +41,58 @@
   }
 }
 
+.music-upload-btn {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.12);
+}
+
+.music-upload-btn--idle {
+  color: #2563eb;
+  background: #ffffff;
+  border: 2.5px solid #2563eb;
+}
+
+.music-upload-btn--idle:hover {
+  background: #eff6ff;
+}
+
+.music-upload-btn--ready {
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  border: 2.5px solid #1d4ed8;
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+}
+
+.music-upload-btn--ready:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #1d4ed8, #0284c7);
+}
+
+.music-upload-btn--loading {
+  color: #ffffff;
+  background: #1d4ed8;
+  border: 2.5px solid #1e40af;
+}
+
+.music-upload-btn:disabled {
+  opacity: 0.85;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 425px) {
+  .music-upload-btn {
+    min-height: 52px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+}
 .upload-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
