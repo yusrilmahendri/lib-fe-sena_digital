@@ -393,7 +393,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     return this.firstString([music.artist, music.description]);
   }
 
-  private getMusicPlayableUrl(music: any): string {
+  getMusicPlayableUrl(music: any): string {
     return this.firstString([
       music?.stream_url,
       music?.audio_url,
@@ -405,8 +405,18 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     ]) || '';
   }
 
+  canPreviewMusic(music: MusicTrack): boolean {
+    return !!this.getMusicPlayableUrl(music);
+  }
+
   private playAudio(audioUrl: string, previewId: number | 'custom' | 'default'): void {
     const normalizedUrl = String(audioUrl || '').trim();
+
+    console.log('[MUSIC_PLAY_AUDIO_START]', {
+      previewId,
+      normalizedUrl,
+    });
+
     if (!normalizedUrl) {
       this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
@@ -420,30 +430,60 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }
 
     const audio = this.ensurePreviewAudio();
-    if (this.currentPreviewId !== previewId || audio.src !== normalizedUrl) {
-      audio.pause();
-      audio.src = normalizedUrl;
-      audio.load();
-    }
+
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+
+    audio.src = normalizedUrl;
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
 
     this.currentPreviewId = previewId;
     this.previewingMusicId = previewId;
     this.isPreviewLoading = true;
     this.previewError = null;
 
+    console.log('[MUSIC_AUDIO_ELEMENT]', {
+      src: audio.src,
+      readyState: audio.readyState,
+      networkState: audio.networkState,
+    });
+
+    audio.load();
+
     audio.play()
       .then(() => {
+        console.log('[MUSIC_PLAY_SUCCESS]', {
+          previewId,
+          src: audio.src,
+        });
+
         this.previewingMusicId = previewId;
         this.isPreviewLoading = false;
         this.previewError = null;
       })
       .catch((error) => {
+        console.error('[MUSIC_PLAY_FAILED]', {
+          name: error?.name,
+          message: error?.message,
+          src: audio.src,
+          readyState: audio.readyState,
+          networkState: audio.networkState,
+        });
+
         this.previewingMusicId = null;
         this.isPreviewLoading = false;
 
         const errorName = String(error?.name || '').trim();
-        if (errorName === 'NotAllowedError' || errorName === 'AbortError') {
+
+        if (errorName === 'NotAllowedError') {
           this.setPreviewError('Klik play sekali lagi untuk memutar preview.');
+          return;
+        }
+
+        if (errorName === 'AbortError') {
+          this.setPreviewError('Preview dibatalkan. Klik play sekali lagi.');
           return;
         }
 
@@ -457,22 +497,46 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     }
 
     this.previewAudio = new Audio();
-    this.previewAudio.preload = 'metadata';
+    this.previewAudio.preload = 'auto';
+    this.previewAudio.crossOrigin = 'anonymous';
+
+    this.previewAudio.addEventListener('loadstart', () => {
+      console.log('[MUSIC_AUDIO_LOADSTART]', this.previewAudio?.src);
+    });
+
+    this.previewAudio.addEventListener('canplay', () => {
+      console.log('[MUSIC_AUDIO_CANPLAY]', this.previewAudio?.src);
+    });
+
+    this.previewAudio.addEventListener('playing', () => {
+      console.log('[MUSIC_AUDIO_PLAYING]', this.previewAudio?.src);
+      this.previewingMusicId = this.currentPreviewId;
+      this.isPreviewLoading = false;
+      this.previewError = null;
+    });
+
+    this.previewAudio.addEventListener('pause', () => {
+      this.previewingMusicId = null;
+      this.isPreviewLoading = false;
+    });
+
     this.previewAudio.addEventListener('ended', () => {
       this.previewingMusicId = null;
       this.currentPreviewId = null;
       this.isPreviewLoading = false;
     });
-    this.previewAudio.addEventListener('pause', () => {
-      this.previewingMusicId = null;
-      this.isPreviewLoading = false;
-    });
-    this.previewAudio.addEventListener('playing', () => {
-      this.previewingMusicId = this.currentPreviewId;
-      this.isPreviewLoading = false;
-      this.previewError = null;
-    });
+
     this.previewAudio.addEventListener('error', () => {
+      const audioError = this.previewAudio?.error;
+
+      console.error('[MUSIC_AUDIO_ERROR]', {
+        src: this.previewAudio?.src,
+        code: audioError?.code,
+        message: this.getAudioErrorMessage(audioError?.code),
+        networkState: this.previewAudio?.networkState,
+        readyState: this.previewAudio?.readyState,
+      });
+
       this.previewingMusicId = null;
       this.isPreviewLoading = false;
       this.setPreviewError('Preview musik tidak tersedia.', true);
@@ -480,6 +544,21 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
     return this.previewAudio;
   }
+
+  private getAudioErrorMessage(code?: number): string {
+  switch (code) {
+    case 1:
+      return 'MEDIA_ERR_ABORTED';
+    case 2:
+      return 'MEDIA_ERR_NETWORK';
+    case 3:
+      return 'MEDIA_ERR_DECODE';
+    case 4:
+      return 'MEDIA_ERR_SRC_NOT_SUPPORTED';
+    default:
+      return 'UNKNOWN_AUDIO_ERROR';
+  }
+}
 
   private setPreviewError(message: string, allowGlobalToast = false): void {
     this.isPreviewLoading = false;
@@ -680,16 +759,49 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     const id = Number(item.id ?? item.music_id);
     if (!Number.isFinite(id)) return null;
 
-    return {
+   return {
       id,
       title: String(this.firstString([item.title, item.name, item.judul]) || `Musik ${id}`),
       artist: item.artist ?? item.penyanyi ?? null,
       description: this.firstString([item.description, item.deskripsi, item.caption, item.keterangan]),
       duration: item.duration ?? item.length ?? item.duration_seconds ?? item.seconds ?? null,
-      duration_label: this.firstString([item.duration_label, item.duration_text, item.formatted_duration, item.duration_human]),
-      source_type: this.firstString([item.source_type, item.music_source_type, item.section_type, item.catalog_type]),
-     audio_url: this.firstString([item.stream_url, item.audio_url, item.url, item.music_url, item.musik_url, item.file_url, item.path,]),
-      thumbnail_url: this.firstString([item.thumbnail_url, item.cover_url, item.image_url, item.thumbnail, item.cover]),
+      duration_label: this.firstString([
+        item.duration_label,
+        item.duration_text,
+        item.formatted_duration,
+        item.duration_human,
+      ]),
+      source_type: this.firstString([
+        item.source_type,
+        item.music_source_type,
+        item.section_type,
+        item.catalog_type,
+      ]),
+      audio_url: this.firstString([
+        item.stream_url,
+        item.audio_url,
+        item.url,
+        item.music_url,
+        item.musik_url,
+        item.file_url,
+        item.path,
+      ]),
+      stream_url: this.firstString([
+        item.stream_url,
+        item.audio_url,
+        item.url,
+        item.music_url,
+        item.musik_url,
+        item.file_url,
+        item.path,
+      ]),
+      thumbnail_url: this.firstString([
+        item.thumbnail_url,
+        item.cover_url,
+        item.image_url,
+        item.thumbnail,
+        item.cover,
+      ]),
       is_active: this.toBoolean(item.is_active),
       is_default: this.toBoolean(item.is_default),
       sort_order: this.toNullableNumber(item.sort_order ?? item.order),

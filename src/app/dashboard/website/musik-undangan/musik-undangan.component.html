@@ -71,8 +71,20 @@
               <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">
                 {{ isMusicSaved(music, 'catalog') ? 'Aktif' : 'Terpilih' }}
               </span>
-              <button type="button" class="icon-button" (click)="playPreview(music); $event.preventDefault()" [disabled]="!music.audio_url" title="Preview lagu">
-                <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === music.id" [class.fa-play]="previewingMusicId !== music.id && !(isPreviewLoading && currentPreviewId === music.id)" [class.fa-pause]="previewingMusicId === music.id && !(isPreviewLoading && currentPreviewId === music.id)" aria-hidden="true"></i>
+             <button
+                type="button"
+                class="icon-button"
+                (click)="$event.preventDefault(); $event.stopPropagation(); playPreview(music)"
+                [disabled]="!canPreviewMusic(music)"
+                title="Preview lagu"
+              >
+                <i
+                  class="fa"
+                  [class.fa-spinner]="isPreviewLoading && currentPreviewId === music.id"
+                  [class.fa-play]="previewingMusicId !== music.id && !(isPreviewLoading && currentPreviewId === music.id)"
+                  [class.fa-pause]="previewingMusicId === music.id && !(isPreviewLoading && currentPreviewId === music.id)"
+                  aria-hidden="true"
+                ></i>
               </button>
             </label>
           </div>
