@@ -154,7 +154,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   youtubeCoverFile: File | null = null;
   youtubeCoverOriginalSize: number | null = null;
   youtubeCoverCompressedSize: number | null = null;
-
+  private youtubeCoverPreviewSessionId = 0;
   setActiveType(type: PhotoType): void {
     if (this.activeType === type) {
       return;
@@ -644,34 +644,66 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   private async prepareYoutubeCoverFile(file: File): Promise<void> {
     this.youtubeErrorMessage = '';
-    this.clearYoutubeCoverPreview();
 
     if (!this.validateYoutubeCoverFile(file)) {
       return;
     }
 
+    const sessionId = ++this.youtubeCoverPreviewSessionId;
+
     this.youtubeCoverOriginalSize = file.size;
     this.youtubeCoverCompressedSize = null;
     this.youtubeCoverFile = file;
-    this.previewUrlForYoutubeCover = URL.createObjectURL(file);
+
+    this.previewUrlForYoutubeCover = await this.readFileAsDataUrl(file);
+
     this.isCompressing = true;
 
     try {
       const compressed = await this.compressImage(file);
-      const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
+
+      if (sessionId !== this.youtubeCoverPreviewSessionId) {
+        return;
+      }
+
+      const compressedFile = this.ensureFile(
+        compressed,
+        this.buildCompressedFileName(file),
+        compressed.type || 'image/webp'
+      );
+
       this.youtubeCoverFile = compressedFile;
       this.youtubeCoverCompressedSize = compressedFile.size;
-      this.clearYoutubeCoverPreview();
-      this.previewUrlForYoutubeCover = URL.createObjectURL(compressedFile);
+      this.previewUrlForYoutubeCover = await this.readFileAsDataUrl(compressedFile);
     } catch (error) {
+      if (sessionId !== this.youtubeCoverPreviewSessionId) {
+        return;
+      }
+
       console.error('[Gallery] youtube cover compression failed', error);
-      this.youtubeErrorMessage = 'Gagal kompresi cover. Coba gunakan file JPG, PNG, atau WEBP lain.';
+
+      this.youtubeErrorMessage = 'Gagal kompresi cover. File asli tetap digunakan sebagai preview.';
       this.notyf.error(this.youtubeErrorMessage);
-      this.youtubeCoverFile = null;
-      this.clearYoutubeCoverPreview();
+
+      this.youtubeCoverFile = file;
+      this.youtubeCoverCompressedSize = null;
+      this.previewUrlForYoutubeCover = await this.readFileAsDataUrl(file);
     } finally {
-      this.isCompressing = false;
+      if (sessionId === this.youtubeCoverPreviewSessionId) {
+        this.isCompressing = false;
+      }
     }
+  }
+
+  private readFileAsDataUrl(file: File | Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('Failed to read image preview'));
+
+      reader.readAsDataURL(file);
+    });
   }
 
   private compressImage(file: File): Promise<File> {
@@ -789,10 +821,21 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       .sort((a: UserPhoto, b: UserPhoto) => a.sort_order - b.sort_order);
   }
 
+  private resolveManualPhotoUrl(photo: any): string {
+    return normalizeInvitationMediaUrl(
+      photo?.photo_url ||
+      photo?.image_url ||
+      photo?.preview_url ||
+      photo?.photo ||
+      photo?.file_path ||
+      ''
+    );
+  }
   private normalizePhoto(photo: any): UserPhoto {
     const urlVideo = photo?.url_video ?? photo?.video_url ?? photo?.link_video ?? null;
+    const manualPhotoUrl = this.resolveManualPhotoUrl(photo);
     const thumbnailUrl = this.resolveYoutubeThumbnailFromResponse(photo, urlVideo);
-    const normalizedPhotoUrl = thumbnailUrl || resolveInvitationPhotoUrl({
+    const normalizedPhotoUrl = manualPhotoUrl || thumbnailUrl || resolveInvitationPhotoUrl({
       ...photo,
       url_video: urlVideo,
       video_url: photo?.video_url ?? urlVideo,
@@ -832,7 +875,6 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       photo?.thumbnail_url ||
       photo?.thumbnail ||
       photo?.youtube_thumbnail_url ||
-      photo?.cover_url ||
       ''
     );
 
@@ -851,6 +893,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       this.collagePhotos = photos;
     }
   }
+
 
   private resetUploadForm(): void {
     this.uploadForm.reset({
@@ -874,6 +917,25 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.youtubeCoverFile = null;
     this.youtubeCoverOriginalSize = null;
     this.youtubeCoverCompressedSize = null;
+  }
+
+  onYoutubeCoverPreviewLoad(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+    image?.classList.remove('is-hidden');
+  }
+
+  onYoutubeCoverPreviewError(event: Event): void {
+    const image = event.target as HTMLImageElement | null;
+
+    if (
+      this.previewUrlForYoutubeCover?.startsWith('blob:') ||
+      this.previewUrlForYoutubeCover?.startsWith('data:image/')
+    ) {
+      image?.classList.remove('is-hidden');
+      return;
+    }
+
+    image?.classList.add('is-hidden');
   }
 
   private clearPreview(invalidateSession = true): void {
@@ -918,12 +980,15 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     this.previewUrl = null;
   }
 
-  private clearYoutubeCoverPreview(): void {
-    if (this.previewUrlForYoutubeCover && this.previewUrlForYoutubeCover.startsWith('blob:')) {
-      URL.revokeObjectURL(this.previewUrlForYoutubeCover);
-    }
-    this.previewUrlForYoutubeCover = null;
+ private clearYoutubeCoverPreview(): void {
+  this.youtubeCoverPreviewSessionId++;
+
+  if (this.previewUrlForYoutubeCover && this.previewUrlForYoutubeCover.startsWith('blob:')) {
+    URL.revokeObjectURL(this.previewUrlForYoutubeCover);
   }
+
+  this.previewUrlForYoutubeCover = null;
+}
 
   private syncPreviewImageSrc(): void {
     if (!this.previewUrl || !this.previewImage?.nativeElement) {

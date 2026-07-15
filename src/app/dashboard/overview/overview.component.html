@@ -1,15 +1,4 @@
 <section class="overview-page">
-  <header class="overview-header">
-    <div class="overview-title">
-      <h1>Overview <span>/overview</span></h1>
-    </div>
-
-    <div class="overview-account">
-      <span class="overview-account__name">{{ getOverviewUserDisplayName() }}</span>
-      <i class="fas fa-chevron-down" aria-hidden="true"></i>
-    </div>
-  </header>
-
   <section class="overview-active-row">
       <p>
         Undangan kamu aktif sampai pada <strong>{{ getDomainExpiryDate() }}</strong>
@@ -215,7 +204,7 @@
           <div class="data-doa-ucapan flex-grow-1">
             <h3 class="fs-6 fw-semibold mb-3">Data Doa &amp; Ucapan</h3>
             <i class="fas fa-comment-alt"></i>
-            
+
             <!-- Loading state -->
             <div *ngIf="isLoading" class="text-center py-3">
               <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -234,27 +223,27 @@
 
             <!-- Messages display -->
             <div *ngIf="!isLoading && !apiError">
-              <div *ngIf="getRecentMessages().length > 0; else noMessages" 
-                   class="messages-container" 
-                   style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px; 
+              <div *ngIf="getRecentMessages().length > 0; else noMessages"
+                   class="messages-container"
+                   style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 8px;
                           scrollbar-width: thin; scrollbar-color: #CBD5E0 #F7FAFC;">
-                <div class="border-start border-2 border-black ps-3" 
+                <div class="border-start border-2 border-black ps-3"
                      *ngFor="let message of getRecentMessages(); let last = last"
                      [class.mb-3]="!last" [class.mb-0]="last"
                      style="border-left-color: #E5E7EB !important;">
                   <p class="name mb-1 fw-semibold" style="font-size: 0.9rem;">{{ message.nama }}</p>
-                  <p class="message mb-2" 
+                  <p class="message mb-2"
                      [title]="message.pesan"
-                     style="word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4; 
+                     style="word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4;
                             font-size: 0.85rem; color: #4B5563;">
                     "{{ message.pesan }}"
                   </p>
-                  <div class="d-flex justify-content-between align-items-center" 
+                  <div class="d-flex justify-content-between align-items-center"
                        [class.mb-3]="!last" [class.mb-0]="last">
                     <small class="text-muted" style="font-size: 0.75rem;">
                       {{ message.created_at_human }}
                     </small>
-                    <span class="badge rounded-pill px-2 py-1 text-white" 
+                    <span class="badge rounded-pill px-2 py-1 text-white"
                           [style.background-color]="getAttendanceColor(message.kehadiran)"
                           style="font-size: 0.65rem;">
                       {{ message.kehadiran_label }}
@@ -262,7 +251,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <ng-template #noMessages>
                 <div class="text-center py-3 text-muted">
                   <i class="fas fa-comment-slash fa-2x mb-2 opacity-25"></i>

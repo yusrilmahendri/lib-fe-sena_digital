@@ -153,10 +153,16 @@
           type="file"
           accept="image/jpeg,image/png,image/webp"
           (change)="onYoutubeCoverSelected($event)" />
+
         <ng-container *ngIf="youtubeCoverPreviewUrl; else youtubeCoverEmpty">
-          <img [src]="youtubeCoverPreviewUrl" alt="Preview cover video YouTube" class="video-cover-preview" />
+          <img [src]="youtubeCoverPreviewUrl"
+                alt="Preview cover video YouTube"
+                class="video-cover-preview"
+                (load)="onYoutubeCoverPreviewLoad($event)"
+                (error)="onYoutubeCoverPreviewError($event)"/>
           <span>Ganti Cover Video / Thumbnail YouTube</span>
         </ng-container>
+
         <ng-template #youtubeCoverEmpty>
           <i class="fas fa-play-circle"></i>
           <strong>Upload Cover Video / Thumbnail YouTube</strong>
