@@ -435,3 +435,97 @@
     grid-template-columns: 1fr;
   }
 }
+
+:host,
+.share-invitation-page,
+.bagi-undangan-page,
+.share-invitation {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.share-card,
+.guest-list-card,
+.import-export-card,
+.generated-link-card,
+.bagi-undangan-card,
+.share-guide-card,
+.share-invitation__card,
+.share-invitation__history {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.guest-link,
+.invitation-link,
+.generated-url,
+.share-invitation__result a,
+.share-invitation__guest-info a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .share-invitation {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .share-card,
+  .guest-list-card,
+  .import-export-card,
+  .generated-link-card,
+  .bagi-undangan-card,
+  .share-guide-card,
+  .share-invitation__card,
+  .share-invitation__history {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    padding: 18px !important;
+    width: 100% !important;
+  }
+
+  .share-actions,
+  .guest-actions,
+  .import-export-actions,
+  .share-invitation__actions,
+  .share-invitation__guest-actions,
+  .share-invitation__excel-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .share-actions button,
+  .guest-actions button,
+  .import-export-actions button,
+  .share-invitation__actions button,
+  .share-invitation__guest-actions button,
+  .share-invitation__excel-actions button {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .share-card,
+  .guest-list-card,
+  .import-export-card,
+  .generated-link-card,
+  .bagi-undangan-card,
+  .share-guide-card,
+  .share-invitation__card,
+  .share-invitation__history {
+    max-width: calc(100vw - 28px) !important;
+    width: calc(100vw - 28px) !important;
+  }
+}

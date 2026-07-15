@@ -905,8 +905,14 @@ textarea {
   .photo-header,
   .upload-panel,
   .preview-panel,
-  .photo-list-section {
+  .photo-list-section,
+  .gallery-upload-box,
+  .upload-dropzone,
+  .photo-upload-zone,
+  .drop-zone {
     border-radius: 16px !important;
+    max-width: calc(100vw - 28px) !important;
     padding: 16px !important;
+    width: calc(100vw - 28px) !important;
   }
 }

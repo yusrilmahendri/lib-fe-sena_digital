@@ -25,3 +25,95 @@ body {
   border-color: #f472b6;
   box-shadow: 0 0 0 0.25rem rgba(244, 114, 182, 0.25);
 }
+
+:host,
+.testimoni-page,
+.testimonial-page {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.testimoni-page .container,
+.testimoni-page .row,
+.testimoni-form-column,
+.testimoni-card,
+.testimonial-card,
+.review-card,
+.review-form-card {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.testimoni-card,
+.testimonial-card,
+.review-card,
+.review-form-card {
+  max-width: 520px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .testimoni-page .container {
+    justify-content: stretch !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .testimoni-page .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .testimoni-form-column {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .testimoni-card,
+  .testimonial-card,
+  .review-card,
+  .review-form-card {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 22px !important;
+    width: 100% !important;
+  }
+
+  .testimoni-card input,
+  .testimoni-card textarea,
+  .testimonial-card input,
+  .testimonial-card textarea,
+  .review-card input,
+  .review-card textarea,
+  .review-form-card input,
+  .review-form-card textarea {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .testimoni-card button,
+  .testimonial-card button,
+  .review-card button,
+  .review-form-card button {
+    min-height: 44px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .testimoni-card,
+  .testimonial-card,
+  .review-card,
+  .review-form-card {
+    max-width: calc(100vw - 28px) !important;
+    width: calc(100vw - 28px) !important;
+  }
+}

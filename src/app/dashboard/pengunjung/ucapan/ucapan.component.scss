@@ -115,3 +115,117 @@ body {
     font-size: 2.5rem;
   }
 }
+
+:host,
+.visitor-page,
+.pengunjung-page,
+.riwayat-ucapan-page {
+  display: block;
+  max-width: 100%;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.visitor-stats-grid,
+.guest-stats-grid,
+.ucapan-stats-grid,
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.ucapan-stats-grid > [class*="col-"] {
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  width: 100%;
+}
+
+.visitor-stat-card,
+.guest-stat-card,
+.ucapan-stat-card,
+.stat-card,
+.data-ucapan-card,
+.table-card,
+.card-custom {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.ucapan-filter,
+.filter-actions,
+.filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.table-responsive,
+.table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .container,
+  .riwayat-ucapan-page,
+  main.container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .visitor-stats-grid,
+  .guest-stats-grid,
+  .ucapan-stats-grid,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .visitor-stat-card,
+  .guest-stat-card,
+  .ucapan-stat-card,
+  .stat-card,
+  .data-ucapan-card,
+  .table-card,
+  .card-custom {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .data-ucapan-card,
+  .table-card {
+    padding: 18px !important;
+  }
+
+  #search {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .visitor-stat-card,
+  .guest-stat-card,
+  .ucapan-stat-card,
+  .stat-card,
+  .data-ucapan-card,
+  .table-card,
+  .card-custom {
+    max-width: calc(100vw - 28px) !important;
+    width: calc(100vw - 28px) !important;
+  }
+}

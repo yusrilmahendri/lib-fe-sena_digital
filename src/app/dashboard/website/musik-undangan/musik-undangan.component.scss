@@ -492,6 +492,19 @@ input[type='file'] {
   }
 }
 
+@media (max-width: 480px) {
+  .music-card,
+  .music-track-card,
+  .music-option-card,
+  .music-item,
+  .default-option,
+  .custom-current,
+  .upload-box {
+    max-width: calc(100vw - 28px) !important;
+    width: calc(100vw - 28px) !important;
+  }
+}
+
 @media (max-width: 360px) {
   .music-track-card,
   .music-option-card,

@@ -13,6 +13,10 @@
   --header-bg: #ffffff; // White header
   --text-primary: #1a202c; // Dark text
   --text-secondary: #64748b; // Gray text
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .dashboard-container {
@@ -916,6 +920,7 @@
 }
 
 .user-profile .user-name,
+.account-display-name,
 .profile-menu span,
 .account-menu span,
 .user-email,
@@ -924,6 +929,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.account-display-name,
+.user-email,
+.profile-email,
+.account-name {
+  display: inline-block;
+  max-width: 140px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+@media screen and (min-width: 1025px) {
+  .dashboard-content {
+    width: calc(100% - 280px);
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -947,8 +971,17 @@
     max-width: 100% !important;
   }
 
+  .main-content,
+  .dashboard-user,
+  .user-dashboard {
+    max-width: 100% !important;
+    min-width: 0;
+    width: 100% !important;
+  }
+
   .content .well {
-    padding: 16px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
     overflow-x: hidden !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
@@ -986,11 +1019,59 @@
     max-width: 96px;
     font-size: 13px;
   }
+
+  .account-display-name,
+  .user-email,
+  .profile-email,
+  .account-name {
+    max-width: 110px !important;
+    font-size: 13px !important;
+    font-weight: 700;
+  }
+
+  :host ::ng-deep .dashboard-content .card,
+  :host ::ng-deep .dashboard-content .section-card,
+  :host ::ng-deep .dashboard-content .form-card,
+  :host ::ng-deep .dashboard-content .content-card,
+  :host ::ng-deep .dashboard-content .panel,
+  :host ::ng-deep .dashboard-content .website-card,
+  :host ::ng-deep .dashboard-content .event-card,
+  :host ::ng-deep .dashboard-content .rekening-card,
+  :host ::ng-deep .dashboard-content .music-card,
+  :host ::ng-deep .dashboard-content .gallery-card,
+  :host ::ng-deep .dashboard-content .testimoni-card,
+  :host ::ng-deep .dashboard-content .guest-card,
+  :host ::ng-deep .dashboard-content .share-card,
+  :host ::ng-deep .dashboard-content .ucapan-card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  :host ::ng-deep .dashboard-content input,
+  :host ::ng-deep .dashboard-content textarea,
+  :host ::ng-deep .dashboard-content select,
+  :host ::ng-deep .dashboard-content .form-control,
+  :host ::ng-deep .dashboard-content .form-select {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  :host ::ng-deep .dashboard-content textarea {
+    min-height: 120px;
+  }
+
+  :host ::ng-deep .dashboard-content button {
+    max-width: 100%;
+  }
 }
 
 @media screen and (max-width: 480px) {
   .content .well {
-    padding: 14px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
   }
 
   .user-header,
@@ -999,18 +1080,70 @@
     padding: 12px 14px 12px 64px !important;
   }
 
-  .user-profile {
-    max-width: none !important;
-  }
-
-  .user-profile .user-name {
-    display: none !important;
-  }
-
-  .user-profile::before {
-    content: "Akun";
-    color: #111827;
-    font-size: 13px;
+  .account-display-name,
+  .user-email,
+  .profile-email,
+  .account-name {
+    display: inline-block !important;
+    max-width: 105px !important;
+    font-size: 13px !important;
     font-weight: 700;
+  }
+
+  .user-profile::before,
+  .user-menu::before,
+  .profile-menu::before,
+  .account-menu::before {
+    content: none !important;
+  }
+
+  :host ::ng-deep .dashboard-content .card,
+  :host ::ng-deep .dashboard-content .section-card,
+  :host ::ng-deep .dashboard-content .form-card,
+  :host ::ng-deep .dashboard-content .content-card,
+  :host ::ng-deep .dashboard-content .panel,
+  :host ::ng-deep .dashboard-content .website-card,
+  :host ::ng-deep .dashboard-content .event-card,
+  :host ::ng-deep .dashboard-content .rekening-card,
+  :host ::ng-deep .dashboard-content .music-card,
+  :host ::ng-deep .dashboard-content .gallery-card,
+  :host ::ng-deep .dashboard-content .testimoni-card,
+  :host ::ng-deep .dashboard-content .guest-card,
+  :host ::ng-deep .dashboard-content .share-card,
+  :host ::ng-deep .dashboard-content .ucapan-card {
+    max-width: calc(100vw - 28px) !important;
+    width: calc(100vw - 28px) !important;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .content .well {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .account-display-name,
+  .user-email,
+  .profile-email,
+  .account-name {
+    max-width: 90px !important;
+  }
+
+  :host ::ng-deep .dashboard-content .card,
+  :host ::ng-deep .dashboard-content .section-card,
+  :host ::ng-deep .dashboard-content .form-card,
+  :host ::ng-deep .dashboard-content .content-card,
+  :host ::ng-deep .dashboard-content .panel,
+  :host ::ng-deep .dashboard-content .website-card,
+  :host ::ng-deep .dashboard-content .event-card,
+  :host ::ng-deep .dashboard-content .rekening-card,
+  :host ::ng-deep .dashboard-content .music-card,
+  :host ::ng-deep .dashboard-content .gallery-card,
+  :host ::ng-deep .dashboard-content .testimoni-card,
+  :host ::ng-deep .dashboard-content .guest-card,
+  :host ::ng-deep .dashboard-content .share-card,
+  :host ::ng-deep .dashboard-content .ucapan-card {
+    max-width: calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
   }
 }
