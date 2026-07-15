@@ -1,4 +1,4 @@
-<div class="dashboard-container dashboard-layout">
+<div class="dashboard-container dashboard-layout user-dashboard-layout">
   <!-- Overlay for mobile -->
   <div class="sidebar-overlay dashboard-sidebar-backdrop"
        *ngIf="isSidebarOpen"
@@ -15,8 +15,9 @@
   </button>
 
   <!-- Sidebar with Animation -->
-  <div class="sidebar dashboard-sidebar"
-       [class.open]="isSidebarOpen">
+  <div class="sidebar dashboard-sidebar user-sidebar"
+       [class.open]="isSidebarOpen"
+       [class.is-open]="isSidebarOpen">
 
     <!-- Logo Section -->
     <div class="logo-section">
@@ -275,9 +276,9 @@
   </div>
 
   <!-- Main Content -->
-  <div class="content dashboard-content">
+  <div class="content dashboard-content user-dashboard-content">
     <!-- Header -->
-    <header class="header dashboard-header" role="banner">
+    <header class="header dashboard-header user-header" role="banner">
       <div class="breadcrumbs">
         <h1 class="route-name">{{ currentRouteName }}</h1>
         <span class="route-path">{{ routePath }}</span>

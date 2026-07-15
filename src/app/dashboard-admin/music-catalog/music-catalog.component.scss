@@ -45,17 +45,19 @@
   width: 100%;
   min-height: 48px;
   border-radius: 14px;
+  padding: 12px 18px;
   font-weight: 800;
   font-size: 15px;
   letter-spacing: 0.01em;
   transition: all 0.2s ease;
-  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.12);
+  cursor: pointer;
 }
 
 .music-upload-btn--idle {
   color: #2563eb;
   background: #ffffff;
-  border: 2.5px solid #2563eb;
+  border: 3px solid #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.12);
 }
 
 .music-upload-btn--idle:hover {
@@ -65,7 +67,7 @@
 .music-upload-btn--ready {
   color: #ffffff;
   background: linear-gradient(135deg, #2563eb, #0ea5e9);
-  border: 2.5px solid #1d4ed8;
+  border: 3px solid #1d4ed8;
   box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
 }
 
@@ -77,11 +79,11 @@
 .music-upload-btn--loading {
   color: #ffffff;
   background: #1d4ed8;
-  border: 2.5px solid #1e40af;
+  border: 3px solid #1e40af;
 }
 
 .music-upload-btn:disabled {
-  opacity: 0.85;
+  opacity: 0.75;
   cursor: not-allowed;
   transform: none;
 }
@@ -214,5 +216,54 @@
   .catalog-actions {
     flex-direction: row;
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .music-catalog-page {
+    min-height: auto;
+    height: auto;
+    overflow: visible;
+    padding: 1rem 0.75rem 7rem;
+  }
+
+  .music-catalog-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+  }
+
+  .upload-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .upload-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .catalog-item {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .catalog-actions .btn {
+    width: 100%;
+    min-height: 42px;
   }
 }

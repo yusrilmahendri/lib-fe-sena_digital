@@ -22,6 +22,7 @@ export interface AdminMusicCatalogPayload {
   title?: string;
   artist?: string;
   subtitle?: string;
+  description?: string;
 }
 
 export interface AdminMusicCatalogSortPayload {

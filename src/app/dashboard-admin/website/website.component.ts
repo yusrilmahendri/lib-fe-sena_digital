@@ -315,6 +315,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       next: (result) => {
         if (result.success) {
           this.notyf.success(result.message || 'Preview tema berhasil diperbarui.');
+          this.patchThemePreviewFromResponse(categoryId, result.data);
           this.getData();
           this.loadAdminThemes();
         } else {
@@ -344,16 +345,47 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.selectedThemeDetail = null;
   }
 
+  getThemePreviewImage(item: any): string {
+    const categoryData = item?.categoryData || item?.category || item;
+    const adminThemeData = item?.adminThemeData || {};
+    const rawUrl = this.firstString([
+      categoryData?.preview_image,
+      categoryData?.preview,
+      categoryData?.image,
+      categoryData?.thumbnail_image,
+      categoryData?.image_url,
+      categoryData?.preview_url,
+      adminThemeData?.preview_image,
+      adminThemeData?.preview,
+      adminThemeData?.image,
+      adminThemeData?.thumbnail_image,
+      adminThemeData?.image_url,
+      adminThemeData?.preview_url,
+    ]);
+
+    if (!rawUrl) {
+      return item?.fallbackImage || 'assets/modern.svg';
+    }
+
+    const resolvedUrl = this.websiteCategoryService.getImageUrl(rawUrl);
+    const version = this.firstString([
+      categoryData?.updated_at,
+      categoryData?.preview_updated_at,
+      categoryData?.__preview_cache_buster,
+      adminThemeData?.updated_at,
+      adminThemeData?.__preview_cache_buster,
+    ]);
+
+    if (!version) {
+      return resolvedUrl;
+    }
+
+    const separator = resolvedUrl.includes('?') ? '&' : '?';
+    return `${resolvedUrl}${separator}v=${encodeURIComponent(version)}`;
+  }
+
   getThemeImageUrl(theme: AdminThemeCard): string {
-    if (theme.categoryData?.preview_image) {
-      return this.websiteCategoryService.getImageUrl(theme.categoryData.preview_image);
-    }
-
-    if (theme.categoryData?.image) {
-      return this.websiteCategoryService.getImageUrl(theme.categoryData.image);
-    }
-
-    return theme.fallbackImage;
+    return this.getThemePreviewImage(theme);
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
@@ -601,6 +633,89 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     return map;
   }
 
+  private patchThemePreviewFromResponse(categoryId: number, responseData: WebsiteCategory | any): void {
+    const updatedCategory = this.normalizeUpdatedCategory(categoryId, responseData);
+    if (!updatedCategory) {
+      return;
+    }
+
+    const nextAllData = [...this.allData];
+    const existingIndex = nextAllData.findIndex((category) => Number(category?.id) === categoryId);
+    if (existingIndex >= 0) {
+      nextAllData[existingIndex] = {
+        ...nextAllData[existingIndex],
+        ...updatedCategory,
+      };
+    } else {
+      nextAllData.push(updatedCategory as WebsiteCategory);
+    }
+    this.allData = nextAllData;
+
+    this.themeCards = this.themeCards.map((card) => {
+      if (Number(card.categoryData?.id) !== categoryId) {
+        return card;
+      }
+
+      const mergedCategory = {
+        ...(card.categoryData || {}),
+        ...updatedCategory,
+      } as WebsiteCategory;
+
+      return {
+        ...card,
+        categoryData: mergedCategory,
+        adminThemeData: card.adminThemeData
+          ? {
+              ...card.adminThemeData,
+              ...this.pickPreviewFields(updatedCategory),
+            }
+          : card.adminThemeData,
+      };
+    });
+
+    if (this.selectedThemeDetail && Number(this.selectedThemeDetail.categoryData?.id) === categoryId) {
+      const latest = this.themeCards.find((card) => card.key === this.selectedThemeDetail?.key);
+      this.selectedThemeDetail = latest || {
+        ...this.selectedThemeDetail,
+        categoryData: {
+          ...(this.selectedThemeDetail.categoryData || {}),
+          ...updatedCategory,
+        } as WebsiteCategory,
+      };
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private normalizeUpdatedCategory(categoryId: number, responseData: any): Partial<WebsiteCategory> | null {
+    const source = responseData?.category || responseData?.website_category || responseData?.data || responseData;
+    if (!source || typeof source !== 'object') {
+      return null;
+    }
+
+    const cacheBuster = String(source.updated_at || Date.now());
+
+    return {
+      ...source,
+      id: Number(source.id ?? categoryId),
+      updated_at: source.updated_at || cacheBuster,
+      __preview_cache_buster: cacheBuster,
+    } as Partial<WebsiteCategory>;
+  }
+
+  private pickPreviewFields(source: any): Partial<AdminTheme> {
+    return {
+      image: source?.image,
+      preview_image: source?.preview_image,
+      preview: source?.preview,
+      thumbnail_image: source?.thumbnail_image,
+      image_url: source?.image_url,
+      preview_url: source?.preview_url,
+      updated_at: source?.updated_at,
+      __preview_cache_buster: source?.__preview_cache_buster,
+    };
+  }
+
   /**
    * Resolve categoryData for a theme card.
    *
@@ -631,16 +746,21 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       }
     }
 
-    const inline = adminThemeData.category;
+    const inline: any = adminThemeData.category;
     if (inline?.id) {
       return {
         id: inline.id,
         nama_kategori: inline.name || '',
         slug: this.normalizeKey(inline.name || ''),
-        image: '',
+        image: inline.image || adminThemeData['image'] || '',
+        preview_image: inline.preview_image || adminThemeData['preview_image'] || null,
+        preview: inline.preview || adminThemeData['preview'] || null,
+        thumbnail_image: inline.thumbnail_image || adminThemeData['thumbnail_image'] || null,
+        image_url: inline.image_url || adminThemeData['image_url'] || null,
+        preview_url: inline.preview_url || adminThemeData['preview_url'] || null,
         is_active: inline.is_active ?? true,
-        created_at: '',
-        updated_at: '',
+        created_at: inline.created_at || '',
+        updated_at: inline.updated_at || adminThemeData['updated_at'] || '',
       } as WebsiteCategory;
     }
 
@@ -884,6 +1004,11 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  private firstString(values: unknown[]): string {
+    const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
+    return typeof value === 'string' ? value.trim() : '';
   }
 
   private toBoolean(value: unknown): boolean {

@@ -375,9 +375,12 @@ export class WebsiteCategoryService {
   getImageUrl(imagePath: string): string {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
+    const apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
     if (imagePath.startsWith('/')) {
-      const apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
       return `${apiOrigin}${imagePath}`;
+    }
+    if (/^(storage|uploads|upload)\//i.test(imagePath)) {
+      return `${apiOrigin}/${imagePath}`;
     }
     return `/storage/website-categories/${imagePath}`;
   }

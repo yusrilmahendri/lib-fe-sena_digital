@@ -43,7 +43,7 @@
             <span class="theme-card-order">Urutan {{ theme.displayOrder }}</span>
             <span class="theme-card-badge">{{ theme.category }}</span>
             <img
-              [src]="getThemeImageUrl(theme)"
+              [src]="getThemePreviewImage(theme)"
               [alt]="theme.name"
               class="theme-card-image" />
           </div>
@@ -135,7 +135,7 @@
   <div class="theme-detail-grid">
     <div class="theme-detail-preview">
       <img
-        [src]="getThemeImageUrl(selectedThemeDetail)"
+        [src]="getThemePreviewImage(selectedThemeDetail)"
         [alt]="selectedThemeDetail.name"
         class="theme-detail-image" />
     </div>

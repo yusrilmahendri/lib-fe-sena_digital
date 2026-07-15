@@ -28,7 +28,14 @@
       </div>
     </div>
     <div class="upload-actions">
-      <button type="button" class="btn btn-sky" (click)="uploadMusicCatalog()" [disabled]="isUploading || !selectedMusicFile">
+      <button
+        type="button"
+        class="music-upload-btn"
+        [class.music-upload-btn--ready]="selectedMusicFile && !isUploading"
+        [class.music-upload-btn--idle]="!selectedMusicFile && !isUploading"
+        [class.music-upload-btn--loading]="isUploading"
+        (click)="uploadMusicCatalog()"
+        [disabled]="isUploading || !selectedMusicFile">
         <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
         {{ isUploading ? 'Mengupload...' : 'Upload Musik Katalog' }}
       </button>
@@ -86,13 +93,13 @@
 
         <div class="catalog-actions">
           <button type="button" class="btn btn-outline-secondary btn-sm" (click)="saveMetadata(item)" [disabled]="editor.isSaving">
-            {{ editor.isSaving ? 'Menyimpan...' : 'Simpan Metadata' }}
+            {{ editor.isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
           </button>
           <button type="button" class="btn btn-outline-primary btn-sm" (click)="toggleActive(item)">
-            {{ item.is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+            {{ item.is_active ? 'Sembunyikan dari User' : 'Tampilkan ke User' }}
           </button>
           <button type="button" class="btn btn-outline-success btn-sm" (click)="setAsDefault(item)" [disabled]="item.is_default">
-            Jadikan Default
+            Jadikan Musik Default
           </button>
           <button type="button" class="btn btn-outline-danger btn-sm" (click)="deleteItem(item)">
             Hapus

@@ -147,11 +147,12 @@ export class MusicCatalogComponent implements OnInit {
     const isActive = item.is_active === true;
     this.musicCatalogService.toggleCatalogMusic(item.id, !isActive).subscribe({
       next: () => {
+        this.notyf.success(!isActive ? 'Musik katalog ditampilkan ke user.' : 'Musik katalog disembunyikan dari user.');
         this.loadCatalog();
       },
       error: (err) => {
         this.logHttpError('Gagal memperbarui status musik katalog', err);
-        this.notyf.error(err?.error?.message || 'Gagal memperbarui status musik katalog.');
+        this.notyf.error(this.resolveCatalogActionErrorMessage(err, 'Gagal memperbarui status musik katalog.'));
       },
     });
   }
@@ -164,7 +165,7 @@ export class MusicCatalogComponent implements OnInit {
       },
       error: (err) => {
         this.logHttpError('Gagal memperbarui musik default', err);
-        this.notyf.error(err?.error?.message || 'Gagal memperbarui musik default.');
+        this.notyf.error(this.resolveCatalogActionErrorMessage(err, 'Gagal memperbarui musik default.'));
       },
     });
   }
@@ -178,16 +179,17 @@ export class MusicCatalogComponent implements OnInit {
       title: state.title,
       artist: state.artist,
       subtitle: state.subtitle,
+      description: state.subtitle,
     }).subscribe({
       next: () => {
-        this.notyf.success('Metadata musik katalog berhasil diperbarui.');
+        this.notyf.success('Perubahan musik katalog berhasil disimpan.');
         state.isSaving = false;
         this.loadCatalog();
       },
       error: (err) => {
         this.logHttpError('Gagal memperbarui metadata musik katalog', err);
         state.isSaving = false;
-        this.notyf.error(err?.error?.message || 'Gagal memperbarui metadata musik katalog.');
+        this.notyf.error(this.resolveCatalogActionErrorMessage(err, 'Gagal memperbarui metadata musik katalog.'));
       },
     });
   }
@@ -216,7 +218,7 @@ export class MusicCatalogComponent implements OnInit {
       },
       error: (err) => {
         this.logHttpError('Gagal menghapus musik katalog', err);
-        this.notyf.error('Gagal menghapus musik katalog.');
+        this.notyf.error(this.resolveCatalogActionErrorMessage(err, 'Gagal menghapus musik katalog.'));
       },
     });
   }
@@ -313,6 +315,23 @@ export class MusicCatalogComponent implements OnInit {
     }
 
     return this.resolveUploadMessage(error?.error, 'Gagal mengunggah file musik.');
+  }
+
+  private resolveCatalogActionErrorMessage(error: any, fallback: string): string {
+    if (error?.status === 403) {
+      return 'Akun admin belum memiliki izin mengelola katalog musik.';
+    }
+
+    const message = this.firstString([
+      error?.error?.message,
+      error?.message,
+    ]);
+
+    if (message && !message.toLowerCase().includes('right roles')) {
+      return message;
+    }
+
+    return fallback;
   }
 
   private getMusicFileExtension(file: File): string {

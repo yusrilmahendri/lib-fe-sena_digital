@@ -13,6 +13,10 @@ export interface BaseCategory {
   slug: string;
   image: string;
   preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  preview_url?: string | null;
   is_active: boolean;
   urutan?: number | string | null;
   status?: boolean | number | string;

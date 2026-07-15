@@ -37,25 +37,24 @@ export class AdminMusicCatalogService {
   }
 
   updateCatalogMusic(id: number, payload: AdminMusicCatalogPayload): Observable<any> {
-    return this.unsupportedEndpoint('Update metadata musik belum tersedia pada kontrak endpoint backend.');
+    return this.http.put(`${this.musicBaseUrl}/tracks/${id}`, {
+      title: payload.title,
+      artist: payload.artist,
+      subtitle: payload.subtitle,
+      description: payload.description ?? payload.subtitle,
+    });
   }
 
   toggleCatalogMusic(id: number, isActive: boolean): Observable<any> {
-    if (!isActive) {
-      return this.http.post(`${this.musicBaseUrl}/clear-selection`, {});
-    }
-
-    return this.http.post(`${this.musicBaseUrl}/select-track`, { music_id: id, track_id: id });
+    return this.http.patch(`${this.musicBaseUrl}/tracks/${id}/status`, { is_active: isActive });
   }
 
   setDefaultCatalogMusic(id: number): Observable<any> {
-    return this.http.post(`${this.musicBaseUrl}/select-track`, { music_id: id, track_id: id });
+    return this.http.patch(`${this.musicBaseUrl}/tracks/${id}/default`, {});
   }
 
   deleteCatalogMusic(id: number): Observable<any> {
-    return this.http.delete(`${this.musicBaseUrl}/delete`, {
-      body: { music_id: id, track_id: id },
-    });
+    return this.http.delete(`${this.musicBaseUrl}/tracks/${id}`);
   }
 
   sortCatalogMusic(items: AdminMusicCatalogSortPayload[]): Observable<any> {
