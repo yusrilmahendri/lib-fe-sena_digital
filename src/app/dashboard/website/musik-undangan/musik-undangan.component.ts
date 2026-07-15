@@ -200,7 +200,15 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   }
 
   playPreview(music: MusicTrack): void {
-    const audioUrl = music.audio_url || '';
+    const audioUrl = this.getMusicPlayableUrl(music);
+
+    console.log('[MUSIC_PREVIEW_CLICK]', {
+      id: music?.id,
+      title: music?.title,
+      audioUrl,
+      music,
+    });
+
     if (!audioUrl) {
       this.setPreviewError('Preview musik tidak tersedia.', true);
       return;
@@ -383,6 +391,18 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
   getMusicMeta(music: MusicTrack): string | null {
     return this.firstString([music.artist, music.description]);
+  }
+
+  private getMusicPlayableUrl(music: any): string {
+    return this.firstString([
+      music?.stream_url,
+      music?.audio_url,
+      music?.url,
+      music?.music_url,
+      music?.musik_url,
+      music?.file_url,
+      music?.path,
+    ]) || '';
   }
 
   private playAudio(audioUrl: string, previewId: number | 'custom' | 'default'): void {
@@ -668,7 +688,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       duration: item.duration ?? item.length ?? item.duration_seconds ?? item.seconds ?? null,
       duration_label: this.firstString([item.duration_label, item.duration_text, item.formatted_duration, item.duration_human]),
       source_type: this.firstString([item.source_type, item.music_source_type, item.section_type, item.catalog_type]),
-      audio_url: this.firstString([item.audio_url, item.url, item.music_url, item.musik_url, item.file_url, item.path]),
+     audio_url: this.firstString([item.stream_url, item.audio_url, item.url, item.music_url, item.musik_url, item.file_url, item.path,]),
       thumbnail_url: this.firstString([item.thumbnail_url, item.cover_url, item.image_url, item.thumbnail, item.cover]),
       is_active: this.toBoolean(item.is_active),
       is_default: this.toBoolean(item.is_default),
