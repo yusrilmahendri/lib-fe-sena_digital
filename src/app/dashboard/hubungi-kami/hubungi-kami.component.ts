@@ -6,6 +6,7 @@ import {
   COMPANY_CONTACT,
   CompanyContactConfig,
 } from 'src/app/shared/company-contact.config';
+import { DashboardService } from 'src/app/dashboard.service';
 
 interface ContactMethod {
   title: string;
@@ -65,13 +66,15 @@ export class HubungiKamiComponent implements OnInit {
     },
   ];
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder,
+              private dashboardSvc: DashboardService) {}
 
   ngOnInit(): void {
     this.contactForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', Validators.email],
       whatsapp: [''],
+      invoice_number: [''],
       category: ['Lainnya'],
       message: ['', Validators.required],
     });
@@ -104,7 +107,87 @@ export class HubungiKamiComponent implements OnInit {
         external: false,
       },
     ];
+    this.loadUserContactData();
   }
+
+  private loadUserContactData(): void {
+  this.dashboardSvc.getProfile().subscribe({
+    next: (res: any) => {
+      const user = res?.data || res?.user || res || {};
+
+      const invoiceNumber = this.firstString([
+      user?.invoice_code,
+      user?.kode_pemesanan,
+      user?.invoice_number,
+      user?.no_invoice,
+      user?.invoice_id ? `INV-${user.invoice_id}` : '',
+
+      user?.latest_invoice?.invoice_code,
+      user?.latest_invoice?.kode_pemesanan,
+      user?.latest_invoice?.invoice_number,
+      user?.latest_invoice?.no_invoice,
+
+      user?.active_invoice?.invoice_code,
+      user?.active_invoice?.kode_pemesanan,
+      user?.active_invoice?.invoice_number,
+      user?.active_invoice?.no_invoice,
+
+      user?.payment?.invoice_code,
+      user?.payment?.kode_pemesanan,
+      user?.payment?.invoice_number,
+      user?.payment?.no_invoice,
+
+      user?.tagihan?.invoice_code,
+      user?.tagihan?.kode_pemesanan,
+      user?.tagihan?.invoice_number,
+      user?.tagihan?.no_invoice,
+
+      user?.master_tagihan?.invoice_code,
+      user?.master_tagihan?.kode_pemesanan,
+      user?.master_tagihan?.invoice_number,
+      user?.master_tagihan?.no_invoice,
+
+      user?.package_info?.invoice_code,
+      user?.package_info?.kode_pemesanan,
+      user?.package_info?.invoice_number,
+      user?.package_info?.no_invoice,
+    ]);
+
+      this.contactForm.patchValue({
+        name: user?.name || user?.nama || this.contactForm.get('name')?.value || '',
+        email: user?.email || this.contactForm.get('email')?.value || '',
+        whatsapp: user?.phone || user?.whatsapp || user?.no_hp || this.contactForm.get('whatsapp')?.value || '',
+        invoice_number: invoiceNumber || '',
+      });
+
+      this.syncInvoiceToMessage(invoiceNumber);
+    },
+    error: () => {
+      this.syncInvoiceToMessage('');
+    },
+  });
+  }
+
+private syncInvoiceToMessage(invoiceNumber: string): void {
+  if (!invoiceNumber) return;
+
+  const currentMessage = String(this.contactForm.get('message')?.value || '').trim();
+
+  if (currentMessage.includes('Nomor Invoice:')) return;
+
+  const invoiceText = `Nomor Invoice: ${invoiceNumber}`;
+
+  this.contactForm.patchValue({
+    message: currentMessage
+      ? `${invoiceText}\n\n${currentMessage}`
+      : `${invoiceText}\n\nKendala/Pertanyaan: `,
+  });
+}
+
+private firstString(values: unknown[]): string {
+  const value = values.find((item) => typeof item === 'string' && item.trim().length > 0);
+  return typeof value === 'string' ? value.trim() : '';
+}
 
   get whatsappHref(): string {
     return buildWhatsappUrl('Halo Admin Sena Digital, saya butuh bantuan terkait pengaturan undangan.');
@@ -137,10 +220,11 @@ export class HubungiKamiComponent implements OnInit {
       `Nama: ${value.name}`,
       value.email ? `Email: ${value.email}` : '',
       value.whatsapp ? `WhatsApp: ${value.whatsapp}` : '',
+      value.invoice_number ? `Nomor Invoice: ${value.invoice_number}` : '',
       `Kategori: ${value.category || 'Lainnya'}`,
+      '',
       `Pesan: ${value.message}`,
     ].filter(Boolean).join('\n');
-
     return buildWhatsappUrl(message);
   }
 
@@ -151,6 +235,7 @@ export class HubungiKamiComponent implements OnInit {
       `Nama: ${value.name || ''}`,
       `Email: ${value.email || ''}`,
       `WhatsApp: ${value.whatsapp || ''}`,
+      `Nomor Invoice: ${value.invoice_number || '-'}`,
       `Kategori: ${value.category || 'Lainnya'}`,
       '',
       value.message || '',

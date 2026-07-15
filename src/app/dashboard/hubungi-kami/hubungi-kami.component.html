@@ -88,6 +88,20 @@
           </div>
 
           <div class="field-group">
+            <label for="contact-invoice">Nomor Invoice</label>
+            <input
+              type="text"
+              id="contact-invoice"
+              formControlName="invoice_number"
+              placeholder="Nomor invoice otomatis"
+              readonly
+            />
+            <small class="field-hint">
+              Nomor invoice otomatis terisi jika Anda sudah memiliki tagihan.
+            </small>
+          </div>
+
+          <div class="field-group">
             <label for="contact-category">Subjek/kategori</label>
             <select id="contact-category" formControlName="category">
               <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
