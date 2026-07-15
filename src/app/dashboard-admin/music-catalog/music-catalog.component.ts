@@ -22,8 +22,9 @@ export class MusicCatalogComponent implements OnInit {
   isUploading = false;
   isSavingSort = false;
   uploadError = '';
+  errorMessage = '';
 
-  uploadFile: File | null = null;
+  selectedMusicFile: File | null = null;
   uploadTitle = '';
   uploadArtist = '';
   uploadSubtitle = '';
@@ -57,13 +58,14 @@ export class MusicCatalogComponent implements OnInit {
     });
   }
 
-  onUploadFileSelected(event: Event): void {
+  onMusicFileSelected(event: Event): void {
     this.uploadError = '';
+    this.errorMessage = '';
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
+    const file = input.files && input.files.length ? input.files[0] : null;
 
     if (!file) {
-      this.uploadFile = null;
+      this.selectedMusicFile = null;
       return;
     }
 
@@ -71,36 +73,60 @@ export class MusicCatalogComponent implements OnInit {
 
     if (!this.allowedMusicExtensions.includes(fileExtension)) {
       this.uploadError = 'Format file musik tidak didukung. Gunakan MP3, WAV, M4A, AAC, atau OGG.';
+      this.errorMessage = this.uploadError;
       input.value = '';
-      this.uploadFile = null;
+      this.selectedMusicFile = null;
       return;
     }
 
     if (file.size > this.maxMusicUploadSizeInBytes) {
       this.uploadError = 'Ukuran file maksimal 20 MB.';
+      this.errorMessage = this.uploadError;
       input.value = '';
-      this.uploadFile = null;
+      this.selectedMusicFile = null;
       return;
     }
 
-    this.uploadFile = file;
+    this.selectedMusicFile = file;
+    console.log('[ADMIN_MUSIC_FILE_SELECTED]', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
   }
 
-  uploadMusic(): void {
+  uploadMusicCatalog(): void {
     if (this.isUploading) return;
-    if (!this.uploadFile) {
+    if (!(this.selectedMusicFile instanceof File)) {
       this.uploadError = 'File musik wajib dipilih.';
+      this.errorMessage = this.uploadError;
       return;
     }
 
     this.isUploading = true;
     this.uploadError = '';
+    this.errorMessage = '';
 
-    this.musicCatalogService.uploadCatalogMusic(this.uploadFile, {
-      title: this.uploadTitle,
-      artist: this.uploadArtist,
-      subtitle: this.uploadSubtitle,
-    }).subscribe({
+    const formData = new FormData();
+    formData.append('musik', this.selectedMusicFile, this.selectedMusicFile.name);
+    formData.append('title', this.uploadTitle || '');
+    formData.append('judul', this.uploadTitle || '');
+    formData.append('artist', this.uploadArtist || '');
+    formData.append('subtitle', this.uploadSubtitle || '');
+    formData.append('description', this.uploadSubtitle || '');
+
+    const entries = (formData as any).entries?.();
+    if (entries) {
+      for (const pair of entries) {
+        console.log('[ADMIN_MUSIC_UPLOAD_FORMDATA]', pair[0], pair[1]);
+      }
+    } else {
+      formData.forEach((value, key) => {
+        console.log('[ADMIN_MUSIC_UPLOAD_FORMDATA]', key, value);
+      });
+    }
+
+    this.musicCatalogService.uploadMusicCatalog(formData).subscribe({
       next: (res) => {
         this.notyf.success('Musik katalog berhasil diupload.');
         this.resetUploadForm();
@@ -110,6 +136,7 @@ export class MusicCatalogComponent implements OnInit {
       error: (err) => {
         this.logHttpError('Gagal mengunggah musik katalog', err);
         this.uploadError = this.resolveUploadErrorMessage(err);
+        this.errorMessage = this.uploadError;
         this.notyf.error(this.uploadError);
         this.isUploading = false;
       },
@@ -253,10 +280,12 @@ export class MusicCatalogComponent implements OnInit {
   }
 
   private resetUploadForm(): void {
-    this.uploadFile = null;
+    this.selectedMusicFile = null;
     this.uploadTitle = '';
     this.uploadArtist = '';
     this.uploadSubtitle = '';
+    this.uploadError = '';
+    this.errorMessage = '';
     const input = document.getElementById('admin-music-upload') as HTMLInputElement | null;
     if (input) input.value = '';
   }

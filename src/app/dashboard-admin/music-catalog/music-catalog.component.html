@@ -12,7 +12,7 @@
     <div class="upload-grid">
       <div class="field">
         <label for="admin-music-upload">File Musik</label>
-        <input id="admin-music-upload" type="file" class="form-control" accept=".mp3,.wav,.m4a,.aac,.ogg,audio/*" (change)="onUploadFileSelected($event)" [disabled]="isUploading" />
+        <input id="admin-music-upload" type="file" class="form-control" accept=".mp3,.wav,.m4a,.aac,.ogg" (change)="onMusicFileSelected($event)" [disabled]="isUploading" />
       </div>
       <div class="field">
         <label>Judul</label>
@@ -28,9 +28,9 @@
       </div>
     </div>
     <div class="upload-actions">
-      <button type="button" class="btn btn-sky" (click)="uploadMusic()" [disabled]="isUploading || !uploadFile">
+      <button type="button" class="btn btn-sky" (click)="uploadMusicCatalog()" [disabled]="isUploading || !selectedMusicFile">
         <span *ngIf="isUploading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-        {{ isUploading ? 'Mengunggah...' : 'Upload Musik Katalog' }}
+        {{ isUploading ? 'Mengupload...' : 'Upload Musik Katalog' }}
       </button>
       <small *ngIf="uploadError" class="text-danger">{{ uploadError }}</small>
     </div>

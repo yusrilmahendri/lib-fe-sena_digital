@@ -32,12 +32,7 @@ export class AdminMusicCatalogService {
     );
   }
 
-  uploadCatalogMusic(file: File, payload: AdminMusicCatalogPayload): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    if (payload.title?.trim()) formData.append('title', payload.title.trim());
-    if (payload.artist?.trim()) formData.append('artist', payload.artist.trim());
-    if (payload.subtitle?.trim()) formData.append('subtitle', payload.subtitle.trim());
+  uploadMusicCatalog(formData: FormData): Observable<any> {
     return this.http.post(`${this.musicBaseUrl}/upload`, formData);
   }
 
