@@ -23,6 +23,8 @@ export interface UserPhoto {
   video_url?: string | null;
   link_video?: string | null;
   media_type?: string | null;
+  thumbnail_url?: string | null;
+  youtube_id?: string | null;
   image_url?: string | null;
   preview_url?: string | null;
   photo?: string | null;

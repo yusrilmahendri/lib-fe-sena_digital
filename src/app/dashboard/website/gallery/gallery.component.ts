@@ -12,6 +12,7 @@ import {
   PhotoPosition,
   PhotoType,
   UserPhoto,
+  normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
 } from 'src/app/shared/user-photo.model';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
@@ -274,10 +275,12 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
         this.youtubeSuccessMessage = 'Video YouTube berhasil disimpan.';
         this.resetYoutubeForm();
         this.loadPhotos('gallery');
+        this.isSavingYoutubeVideo = false;
       },
       error: (err) => {
         this.youtubeErrorMessage = this.resolveYoutubeVideoErrorMessage(err);
         this.notyf.error(this.youtubeErrorMessage);
+        this.isSavingYoutubeVideo = false;
       },
       complete: () => {
         this.isSavingYoutubeVideo = false;
@@ -752,22 +755,21 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     return formData;
   }
 
-  private buildYoutubeVideoFormData(value: YoutubeVideoFormValue, image: File | null): FormData {
+  private buildYoutubeVideoFormData(value: YoutubeVideoFormValue, selectedVideoCoverFile: File | null): FormData {
     const formData = new FormData();
     const youtubeUrl = String(value.url_video || '').trim();
 
     formData.append('photo_type', 'gallery');
     formData.append('media_type', 'video');
-    formData.append('description', String(value.description || 'Video YouTube').trim());
+    formData.append('url_video', youtubeUrl);
+    formData.append('description', String(value.description || 'Video YouTube').trim() || 'Video YouTube');
     formData.append('position', 'center');
-    formData.append('object_position', this.mapPosition('center'));
+    formData.append('object_position', 'center center');
     formData.append('display_mode', 'cover');
     formData.append('is_featured', '0');
 
-    formData.append('url_video', youtubeUrl);
-
-    if (image instanceof File) {
-      formData.append('image', image, image.name);
+    if (selectedVideoCoverFile instanceof File) {
+      formData.append('photo', selectedVideoCoverFile, selectedVideoCoverFile.name);
     }
 
     return formData;
@@ -789,7 +791,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   private normalizePhoto(photo: any): UserPhoto {
     const urlVideo = photo?.url_video ?? photo?.video_url ?? photo?.link_video ?? null;
-    const normalizedPhotoUrl = resolveInvitationPhotoUrl({
+    const thumbnailUrl = this.resolveYoutubeThumbnailFromResponse(photo, urlVideo);
+    const normalizedPhotoUrl = thumbnailUrl || resolveInvitationPhotoUrl({
       ...photo,
       url_video: urlVideo,
       video_url: photo?.video_url ?? urlVideo,
@@ -804,6 +807,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       video_url: photo?.video_url ?? urlVideo,
       link_video: photo?.link_video ?? urlVideo,
       media_type: photo?.media_type ?? null,
+      thumbnail_url: thumbnailUrl || photo?.thumbnail_url || null,
+      youtube_id: photo?.youtube_id ? String(photo.youtube_id) : this.extractYoutubeVideoId(urlVideo),
       image_url: photo?.image_url ?? null,
       preview_url: photo?.preview_url ?? null,
       photo: photo?.photo ?? null,
@@ -820,6 +825,23 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       quality: photo?.quality ?? null,
       created_at: photo?.created_at ?? null,
     };
+  }
+
+  private resolveYoutubeThumbnailFromResponse(photo: any, urlVideo: string | null): string {
+    const thumbnailUrl = normalizeInvitationMediaUrl(
+      photo?.thumbnail_url ||
+      photo?.thumbnail ||
+      photo?.youtube_thumbnail_url ||
+      photo?.cover_url ||
+      ''
+    );
+
+    if (thumbnailUrl) {
+      return thumbnailUrl;
+    }
+
+    const youtubeId = photo?.youtube_id ? String(photo.youtube_id).trim() : this.extractYoutubeVideoId(urlVideo);
+    return youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '';
   }
 
   private setPhotosForType(type: PhotoType, photos: UserPhoto[]): void {
