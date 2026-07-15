@@ -19,7 +19,7 @@ export class AdminMusicCatalogService {
   constructor(private http: HttpClient) {}
 
   getCatalog(params?: { search?: string; status?: 'active' | 'inactive'; page?: number; per_page?: number }): Observable<AdminMusicCatalogListResult> {
-    let queryParams = new HttpParams();
+    let queryParams = new HttpParams().set('admin', '1');
     if (params?.search) queryParams = queryParams.set('search', params.search);
     if (params?.status) queryParams = queryParams.set('status', params.status);
     if (params?.page) queryParams = queryParams.set('page', String(params.page));
@@ -121,7 +121,12 @@ export class AdminMusicCatalogService {
     };
     const pickBoolean = (value: unknown): boolean | undefined => {
       if (value === null || value === undefined || value === '') return undefined;
-      return value === true || value === 1 || value === '1' || value === 'true';
+      if (typeof value === 'string') {
+        const normalized = value.trim().toLowerCase();
+        if (['1', 'true', 'active', 'aktif', 'enabled'].includes(normalized)) return true;
+        if (['0', 'false', 'inactive', 'nonaktif', 'disabled'].includes(normalized)) return false;
+      }
+      return value === true || value === 1;
     };
     const pickNumber = (value: unknown): number | null => {
       if (value === null || value === undefined || value === '') return null;
@@ -134,12 +139,13 @@ export class AdminMusicCatalogService {
       title: pickString([item.title, item.name, item.judul]) || `Musik ${id}`,
       artist: pickString([item.artist, item.penyanyi]),
       subtitle: pickString([item.subtitle, item.description, item.deskripsi, item.caption]),
-      audio_url: pickString([item.audio_url, item.music_url, item.url, item.path]),
-      file_url: pickString([item.file_url, item.audio_url, item.music_url, item.url, item.path]),
+      stream_url: pickString([item.stream_url, item.audio_stream_url]),
+      audio_url: pickString([item.audio_url, item.stream_url, item.music_url, item.url, item.path]),
+      file_url: pickString([item.file_url, item.stream_url, item.audio_url, item.music_url, item.url, item.path]),
       duration: item.duration ?? item.duration_seconds ?? item.seconds ?? null,
       duration_label: pickString([item.duration_label, item.formatted_duration, item.duration_text]),
       sort_order: pickNumber(item.sort_order ?? item.order),
-      is_active: pickBoolean(item.is_active),
+      is_active: pickBoolean(item.is_active ?? item.active ?? item.status),
       is_default: pickBoolean(item.is_default),
       created_at: pickString([item.created_at]),
       updated_at: pickString([item.updated_at]),

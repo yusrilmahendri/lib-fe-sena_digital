@@ -3,6 +3,7 @@ export interface AdminMusicCatalogItem {
   title: string;
   artist?: string | null;
   subtitle?: string | null;
+  stream_url?: string | null;
   audio_url?: string | null;
   file_url?: string | null;
   duration?: number | string | null;

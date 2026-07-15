@@ -43,8 +43,9 @@
             <span class="theme-card-order">Urutan {{ theme.displayOrder }}</span>
             <span class="theme-card-badge">{{ theme.category }}</span>
             <img
-              [src]="getThemePreviewImage(theme)"
-              [alt]="theme.name"
+              [src]="getThemeImage(theme)"
+              [alt]="theme.name || theme.categoryData?.nama_kategori || 'Preview tema'"
+              (error)="onThemeImageError($event)"
               class="theme-card-image" />
           </div>
 
@@ -135,8 +136,9 @@
   <div class="theme-detail-grid">
     <div class="theme-detail-preview">
       <img
-        [src]="getThemePreviewImage(selectedThemeDetail)"
-        [alt]="selectedThemeDetail.name"
+        [src]="getThemeImage(selectedThemeDetail)"
+        [alt]="selectedThemeDetail.name || selectedThemeDetail.categoryData?.nama_kategori || 'Preview tema'"
+        (error)="onThemeImageError($event)"
         class="theme-detail-image" />
     </div>
 

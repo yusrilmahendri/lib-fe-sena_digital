@@ -6,5 +6,5 @@ export class VerifyAccountSuccessComponent implements OnInit {
   checking = true;
   constructor(private auth: AuthService, private router: Router) {}
   ngOnInit(): void { this.auth.getVerificationStatus().subscribe({ next: () => this.checking = false, error: () => this.checking = false }); }
-  continue(): void { sessionStorage.removeItem('verification_intended_url'); sessionStorage.removeItem('verification_channel'); sessionStorage.removeItem('verification_resend_at'); this.router.navigateByUrl('/buat-undangan'); }
+  continue(): void { sessionStorage.removeItem('verification_intended_url'); sessionStorage.removeItem('verification_channel'); sessionStorage.removeItem('verification_resend_at'); sessionStorage.removeItem('verification_email_sent_at'); this.router.navigateByUrl('/buat-undangan'); }
 }

@@ -39,15 +39,12 @@ export interface VerificationStatusResponse extends ApiMessageResponse {
 }
 export interface ForgotPasswordPayload {
   identifier: string;
-  channel: VerificationChannel;
+  channel?: VerificationChannel;
 }
 
 export interface ResetPasswordPayload {
-  token?: string;
-  code?: string;
-  identifier?: string;
   email?: string;
-  channel?: VerificationChannel;
+  token?: string;
   password: string;
   password_confirmation: string;
 }
@@ -58,8 +55,8 @@ export interface ResetPasswordPayload {
  *
  * Login reuses the existing, working DashboardService.login() endpoint
  * (`/api/v1/login`) so token storage and role handling stay consistent with
- * the rest of the app. Forgot/reset password hit `/api/forgot-password` and
- * `/api/reset-password` on the configured API base URL.
+ * the rest of the app. Forgot/reset password use the `/api/v1/auth/*`
+ * endpoints on the configured API base URL.
  */
 @Injectable({
   providedIn: 'root',
@@ -94,9 +91,7 @@ export class AuthService {
   }
 
   resendAccountVerification(channel: VerificationChannel): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/verification/resend`, {
-      channel: this.accountVerificationChannel(channel),
-    });
+    return this.sendAccountVerification(channel);
   }
 
   getVerificationStatus(): Observable<VerificationStatusResponse> {
@@ -104,16 +99,22 @@ export class AuthService {
   }
 
   forgotPassword(identifier: string, channel: VerificationChannel = 'email'): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/forgot-password`, { identifier, channel });
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/forgot-password`, {
+      email: identifier,
+      channel: this.accountVerificationChannel(channel),
+    });
   }
 
   resetPassword(payload: ResetPasswordPayload): Observable<ApiMessageResponse> {
-    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/reset-password`, payload);
+    return this.http.post<ApiMessageResponse>(`${this.apiBaseUrl}/v1/auth/reset-password`, {
+      email: payload.email,
+      token: payload.token,
+      password: payload.password,
+      password_confirmation: payload.password_confirmation,
+    });
   }
 
   private accountVerificationChannel(_channel: VerificationChannel): VerificationChannel {
-    // WhatsApp account verification is temporarily disabled. Keep the channel
-    // type intact so it can be re-enabled without removing the existing flow.
     return 'email';
   }
 }

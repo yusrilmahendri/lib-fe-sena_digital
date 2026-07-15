@@ -738,10 +738,79 @@
 }
 
 @media screen and (max-width: 768px) {
+  .admin-header.dashboard-header {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    padding: 12px 14px;
+    min-height: 72px;
+    width: 100%;
+    overflow: visible;
+
+    .dashboard-menu-toggle {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      z-index: 35;
+      width: 44px;
+      height: 44px;
+      grid-column: 1;
+      flex: 0 0 44px;
+    }
+
+    .breadcrumbs {
+      grid-column: 2;
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .route-name {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .route-path {
+      display: none;
+    }
+
+    .user-profile {
+      grid-column: 3;
+      width: auto;
+      max-width: 104px;
+      min-width: 0;
+      margin-left: 0;
+      justify-self: end;
+      padding: 8px 10px;
+
+      .user-name {
+        display: block;
+        max-width: 68px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .dropdown-menu {
+      right: 0;
+      left: auto;
+      max-width: calc(100vw - 24px);
+    }
+  }
+
+  .admin-dashboard-content .well {
+    padding: 16px;
+  }
+
   .dashboard-header {
     align-items: flex-start;
     flex-wrap: wrap;
-    padding: 14px 16px 14px 72px;
 
     .breadcrumbs {
       display: grid;
@@ -782,8 +851,9 @@
     left: 14px;
   }
 
-  .dashboard-header {
-    padding: 12px 14px 12px 64px;
+  .admin-header.dashboard-header {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(72px, auto);
+    padding: 10px 12px;
     min-height: 64px;
 
     .breadcrumbs .route-name {
@@ -792,12 +862,12 @@
     }
 
     .user-profile {
-      padding: 8px 10px;
-      width: 100%;
-      max-width: calc(100vw - 78px);
+      width: auto;
+      max-width: 86px;
+      padding: 8px;
 
       .user-name {
-        max-width: 100%;
+        max-width: 50px;
       }
     }
   }

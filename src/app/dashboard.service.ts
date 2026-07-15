@@ -1380,6 +1380,8 @@ export interface PublicTheme {
   image: string;
   preview_image: string | null;
   thumbnail_image: string | null;
+  image_url?: string | null;
+  preview_url?: string | null;
   url_thema?: string;
   demo_url: string;
   is_active?: boolean;

@@ -291,12 +291,25 @@ export class AuthModalComponent implements OnChanges {
           // safe default. Never expose internal/broker status fields.
           this.isSubmitting = false;
           const validationMsg = this.firstValidationError(err);
-          this.errorMessage =
-            validationMsg ||
-            err?.error?.message ||
-            'Tautan reset kata sandi tidak valid atau sudah kedaluwarsa.';
+          this.errorMessage = this.resolveResetPasswordError(err, validationMsg);
         },
       });
+  }
+
+  private resolveResetPasswordError(err: any, validationMsg: string | null): string {
+    const code = String(err?.error?.code || '').toLowerCase();
+    const message = String(validationMsg || err?.error?.message || '').toLowerCase();
+    if (
+      code.includes('expired') ||
+      code.includes('invalid_token') ||
+      message.includes('expired') ||
+      message.includes('kedaluwarsa') ||
+      message.includes('token')
+    ) {
+      return 'Link reset kata sandi sudah kedaluwarsa. Silakan minta link baru.';
+    }
+
+    return validationMsg || err?.error?.message || 'Reset kata sandi gagal. Silakan coba lagi.';
   }
 
   /** Extract the first Laravel-style validation error message, if any. */

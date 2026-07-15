@@ -609,3 +609,113 @@ router-outlet {
     width: 100% !important;
   }
 }
+
+@media (max-width: 768px) {
+  .admin-dashboard-layout {
+    overflow-x: hidden !important;
+
+    .admin-header.dashboard-header {
+      display: grid !important;
+      grid-template-columns: 52px minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      gap: 10px !important;
+      flex-direction: unset !important;
+      flex-wrap: nowrap !important;
+      padding: 12px 14px !important;
+      min-height: 72px !important;
+      width: 100% !important;
+    }
+
+    .admin-header .dashboard-menu-toggle,
+    .admin-header .menu-toggle {
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      z-index: 35 !important;
+      width: 44px !important;
+      height: 44px !important;
+      grid-column: 1 !important;
+      flex: 0 0 44px !important;
+    }
+
+    .admin-header .breadcrumbs {
+      grid-column: 2 !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .admin-header .route-name {
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    .admin-header .route-path {
+      display: none !important;
+    }
+
+    .admin-header .user-profile {
+      grid-column: 3 !important;
+      justify-self: end !important;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: 104px !important;
+      margin-left: 0 !important;
+    }
+
+    .admin-header .user-name {
+      max-width: 68px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    .well,
+    .admin-dashboard-content,
+    .admin-dashboard-content main {
+      overflow-x: hidden !important;
+    }
+
+    a,
+    p,
+    span,
+    small,
+    td,
+    th,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+  }
+}
+
+@media (max-width: 425px) {
+  .admin-dashboard-layout {
+    .admin-header.dashboard-header {
+      grid-template-columns: 44px minmax(0, 1fr) minmax(72px, auto) !important;
+      padding: 10px 12px !important;
+      min-height: 64px !important;
+    }
+
+    .admin-header .dashboard-menu-toggle,
+    .admin-header .menu-toggle {
+      width: 40px !important;
+      height: 40px !important;
+    }
+
+    .admin-header .user-profile {
+      max-width: 86px !important;
+      padding: 8px !important;
+    }
+
+    .admin-header .user-name {
+      max-width: 50px !important;
+    }
+  }
+}

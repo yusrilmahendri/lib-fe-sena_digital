@@ -46,6 +46,14 @@ interface AdminThemeCard {
   displayOrder: number;
   categoryData: WebsiteCategory | null;
   adminThemeData: AdminTheme | null;
+  image?: string | null;
+  preview?: string | null;
+  preview_image?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  preview_url?: string | null;
+  updated_at?: string | null;
+  [key: string]: any;
 }
 
 interface AdminThemeConnectionDetail {
@@ -59,6 +67,10 @@ interface AdminThemeConnectionDetail {
 
 type ThemeCategory = ThemePreset['category'];
 type PackageTier = 'Ruby' | 'Sapphire' | 'Diamond';
+type ThemePreviewFields = Pick<
+  AdminThemeCard,
+  'image' | 'preview' | 'preview_image' | 'thumbnail_image' | 'image_url' | 'preview_url' | 'updated_at'
+> & { __preview_cache_buster?: string | number | null };
 
 @Component({
   selector: 'wc-website',
@@ -67,6 +79,7 @@ type PackageTier = 'Ruby' | 'Sapphire' | 'Diamond';
 })
 export class WebsiteComponent implements OnInit, OnDestroy {
   private readonly storageKey = 'admin-website-theme-order';
+  private readonly themePlaceholderImage = 'assets/images/theme-placeholder.jpg';
   // Keep the public preset key stable, but allow admin master slugs to differ
   // when the backend uses the real theme slug (e.g. Champagne Rose).
   private readonly themePresets: ThemePreset[] = PUBLIC_THEME_PRESETS.map((preset) => ({
@@ -345,7 +358,46 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.selectedThemeDetail = null;
   }
 
+  getThemeImage(theme: any): string {
+    const categoryData = theme?.categoryData || theme?.category || {};
+    const adminThemeData = theme?.adminThemeData || {};
+    const url = this.firstString([
+      theme?.preview_image,
+      theme?.preview,
+      theme?.image,
+      theme?.thumbnail_image,
+      theme?.image_url,
+      theme?.preview_url,
+      categoryData?.preview_image,
+      categoryData?.preview,
+      categoryData?.image,
+      categoryData?.thumbnail_image,
+      categoryData?.image_url,
+      categoryData?.preview_url,
+      adminThemeData?.preview_image,
+      adminThemeData?.preview,
+      adminThemeData?.image,
+      adminThemeData?.thumbnail_image,
+      adminThemeData?.image_url,
+      adminThemeData?.preview_url,
+    ]);
+
+    return url ? this.websiteCategoryService.getImageUrl(url) : this.themePlaceholderImage;
+  }
+
   getThemePreviewImage(item: any): string {
+    return this.getThemeImage(item);
+  }
+
+  onThemeImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img.src.includes(this.themePlaceholderImage)) {
+      return;
+    }
+    img.src = this.themePlaceholderImage;
+  }
+
+  getThemePreviewImageWithVersion(item: any): string {
     const categoryData = item?.categoryData || item?.category || item;
     const adminThemeData = item?.adminThemeData || {};
     const rawUrl = this.firstString([
@@ -364,7 +416,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     ]);
 
     if (!rawUrl) {
-      return item?.fallbackImage || 'assets/modern.svg';
+      return this.themePlaceholderImage;
     }
 
     const resolvedUrl = this.websiteCategoryService.getImageUrl(rawUrl);
@@ -385,7 +437,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeImageUrl(theme: AdminThemeCard): string {
-    return this.getThemePreviewImage(theme);
+    return this.getThemeImage(theme);
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
@@ -572,6 +624,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         category: preset.category,
         fallbackImage: preset.fallbackImage,
         displayOrder: index + 1,
+        ...this.pickPreviewFields(categoryData || adminThemeData || {}),
         categoryData,
         adminThemeData
       };
@@ -656,6 +709,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         return card;
       }
 
+      const previewFields = this.pickPreviewFields(updatedCategory);
       const mergedCategory = {
         ...(card.categoryData || {}),
         ...updatedCategory,
@@ -663,11 +717,12 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
       return {
         ...card,
+        ...previewFields,
         categoryData: mergedCategory,
         adminThemeData: card.adminThemeData
           ? {
               ...card.adminThemeData,
-              ...this.pickPreviewFields(updatedCategory),
+              ...previewFields,
             }
           : card.adminThemeData,
       };
@@ -675,8 +730,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     if (this.selectedThemeDetail && Number(this.selectedThemeDetail.categoryData?.id) === categoryId) {
       const latest = this.themeCards.find((card) => card.key === this.selectedThemeDetail?.key);
+      const previewFields = this.pickPreviewFields(updatedCategory);
       this.selectedThemeDetail = latest || {
         ...this.selectedThemeDetail,
+        ...previewFields,
         categoryData: {
           ...(this.selectedThemeDetail.categoryData || {}),
           ...updatedCategory,
@@ -693,25 +750,46 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    const cacheBuster = String(source.updated_at || Date.now());
+    const updatedAt = source.updated_at || new Date().toISOString();
+    const image = this.firstString([
+      source.image,
+      source.preview_image,
+      source.preview,
+      source.thumbnail_image,
+      source.image_url,
+      source.preview_url,
+    ]);
 
     return {
       ...source,
       id: Number(source.id ?? categoryId),
-      updated_at: source.updated_at || cacheBuster,
-      __preview_cache_buster: cacheBuster,
+      image: image || source.image,
+      preview: source.preview || image || source.image,
+      preview_image: source.preview_image || image || source.image,
+      thumbnail_image: source.thumbnail_image || image || source.image,
+      updated_at: updatedAt,
+      __preview_cache_buster: updatedAt,
     } as Partial<WebsiteCategory>;
   }
 
-  private pickPreviewFields(source: any): Partial<AdminTheme> {
+  private pickPreviewFields(source: any): ThemePreviewFields {
+    const image = this.firstString([
+      source?.image,
+      source?.preview_image,
+      source?.preview,
+      source?.thumbnail_image,
+      source?.image_url,
+      source?.preview_url,
+    ]);
+
     return {
-      image: source?.image,
-      preview_image: source?.preview_image,
-      preview: source?.preview,
-      thumbnail_image: source?.thumbnail_image,
+      image: image || source?.image,
+      preview: source?.preview || image || source?.image,
+      preview_image: source?.preview_image || image || source?.image,
+      thumbnail_image: source?.thumbnail_image || image || source?.image,
       image_url: source?.image_url,
       preview_url: source?.preview_url,
-      updated_at: source?.updated_at,
+      updated_at: source?.updated_at || new Date().toISOString(),
       __preview_cache_buster: source?.__preview_cache_buster,
     };
   }

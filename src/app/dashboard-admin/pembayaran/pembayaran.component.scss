@@ -55,6 +55,7 @@
   height: 100%;
   transition: var(--transition-base);
   border: 1px solid var(--border-light);
+  min-height: 96px;
 
   &:hover {
     transform: translateY(-2px);
@@ -68,6 +69,7 @@
   width: 100%;
   position: relative;
   gap: var(--spacing-sm);
+  min-height: 64px;
 }
 
 .left-border {
@@ -86,6 +88,7 @@
 
 .card-details {
   flex: 1;
+  min-width: 0;
   margin-left: var(--spacing-sm);
 
   .title {
@@ -102,6 +105,7 @@
     font-weight: 600;
     line-height: 1.2;
     display: block;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -319,6 +323,9 @@
   box-shadow: var(--shadow-sm);
   transition: var(--transition-base);
   margin-top: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
   &:hover {
     box-shadow: var(--shadow-md);
@@ -338,6 +345,8 @@
     font-weight: 600;
     font-size: 1rem;
     color: var(--text-primary);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -350,6 +359,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-xs);
+  gap: 10px;
+  min-width: 0;
 
   &:last-child {
     margin-bottom: 0;
@@ -366,15 +377,83 @@
     color: var(--text-primary);
     font-size: 0.875rem;
     text-align: right;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 
     a {
       color: #2a52be;
       text-decoration: none;
+      overflow-wrap: anywhere;
+      word-break: break-word;
 
       &:hover {
         text-decoration: underline;
       }
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    padding: 0;
+  }
+
+  .invoice-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .mobile-cards {
+    width: 100%;
+  }
+
+  .invoice-card-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .status-badge {
+    width: fit-content;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .invoice-detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 4px;
+
+    .value {
+      text-align: left;
+    }
+  }
+
+  .invoice-card-footer,
+  .btn-konfirmasi.mobile {
+    width: 100%;
+  }
+}
+
+@media (max-width: 425px) {
+  .invoice-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .invoice-card {
+    padding: 12px;
+  }
+
+  .btn-konfirmasi.mobile {
+    min-height: 44px;
   }
 }
 

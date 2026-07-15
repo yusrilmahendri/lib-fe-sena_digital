@@ -29,6 +29,7 @@ import {
 } from '../../../theme-package-access.util';
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
+import { environment } from '../../../../environments/environment';
 
 type PaidPackageTier = PaidThemePackageTier;
 
@@ -691,25 +692,31 @@ export class TampilanComponent implements OnInit, OnDestroy {
    * Get theme image from API response
    */
   private getThemeImage(theme: PublicTheme, category: ThemeCategoryName): string {
-    const baseUrl = 'http://127.0.0.1:8000/storage/';
+    const url =
+      theme.preview_image ||
+      theme.preview ||
+      theme.image ||
+      theme.thumbnail_image ||
+      theme.image_url ||
+      theme.preview_url;
 
-    if (theme.preview_image) {
-      return theme.preview_image.startsWith('http') ? theme.preview_image : `${baseUrl}${theme.preview_image}`;
+    return url ? this.resolveThemeImageUrl(url) : this.getThemeFallbackImage(theme.name, category);
+  }
+
+  private resolveThemeImageUrl(url: string): string {
+    const raw = String(url || '').trim();
+    if (!raw) return '';
+    if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('assets/')) {
+      return raw;
     }
 
-    if (theme.thumbnail_image) {
-      return theme.thumbnail_image.startsWith('http') ? theme.thumbnail_image : `${baseUrl}${theme.thumbnail_image}`;
+    const apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    const cleanPath = raw.replace(/^\/+/, '');
+    if (cleanPath.startsWith('storage/')) {
+      return `${apiOrigin}/${cleanPath}`;
     }
 
-    if (theme.image) {
-      return theme.image.startsWith('http') ? theme.image : `${baseUrl}${theme.image}`;
-    }
-
-    if (theme.preview && theme.preview.includes('http')) {
-      return theme.preview;
-    }
-
-    return this.getThemeFallbackImage(theme.name, category);
+    return `${apiOrigin}/storage/${cleanPath}`;
   }
 
   setActiveTab(tab: ThemeFilterTier): void {
@@ -1087,7 +1094,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
   onImageError(event: Event, theme: ThemeCard): void {
     const target = event.target as HTMLImageElement | null;
     if (target) {
-      target.src = theme.imageFallback || 'assets/modern.svg';
+      const fallback = theme.imageFallback || 'assets/images/theme-placeholder.jpg';
+      if (!target.src.includes(fallback)) {
+        target.src = fallback;
+      }
     }
   }
 

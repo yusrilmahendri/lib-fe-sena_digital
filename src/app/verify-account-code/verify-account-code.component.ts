@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, VerificationChannel } from '../auth.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({ selector: 'wc-verify-account-code', templateUrl: './verify-account-code.component.html', styleUrls: ['./verify-account-code.component.scss'] })
 export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
@@ -10,6 +11,7 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   destination = 'akun Anda';
   submitting = false; resending = false; seconds = 0; errorMessage = '';
   private readonly RESEND_COOLDOWN_MS = 120000;
+  private verificationSendInProgress = false;
   private timer?: ReturnType<typeof setInterval>;
   constructor(private auth: AuthService, private router: Router, private route: ActivatedRoute) {}
   ngOnInit(): void {
@@ -112,6 +114,7 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
         this.syncInputValues();
         sessionStorage.removeItem('verification_channel');
         sessionStorage.removeItem('verification_resend_at');
+        sessionStorage.removeItem('verification_email_sent_at');
         this.router.navigate(['/verify-account/success']);
       },
       error: (error) => {
@@ -127,13 +130,23 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     });
   }
   resend(): void {
-    if (this.seconds || this.resending) return;
+    if (this.seconds || this.resending || this.verificationSendInProgress) return;
     this.resending = true; this.errorMessage = '';
+    this.verificationSendInProgress = true;
     this.channel = 'email';
     sessionStorage.setItem('verification_channel', 'email');
-    this.auth.resendAccountVerification('email').subscribe({
-      next: () => { this.resending = false; sessionStorage.setItem('verification_resend_at', String(Date.now() + this.RESEND_COOLDOWN_MS)); this.startCountdown(); },
-      error: (error) => { this.resending = false; this.errorMessage = error.status === 429 ? 'Batas pengiriman tercapai. Silakan coba beberapa saat lagi.' : 'Kode gagal dikirim ulang. Silakan coba lagi.'; }
+    this.auth.resendAccountVerification('email').pipe(
+      finalize(() => {
+        this.resending = false;
+        this.verificationSendInProgress = false;
+      })
+    ).subscribe({
+      next: () => {
+        sessionStorage.setItem('verification_email_sent_at', String(Date.now()));
+        sessionStorage.setItem('verification_resend_at', String(Date.now() + this.RESEND_COOLDOWN_MS));
+        this.startCountdown();
+      },
+      error: (error) => { this.errorMessage = error.status === 429 ? 'Batas pengiriman tercapai. Silakan coba beberapa saat lagi.' : 'Kode gagal dikirim ulang. Silakan coba lagi.'; }
     });
   }
   changeMethod(): void { this.digits.fill(''); this.syncInputValues(); sessionStorage.setItem('verification_channel', 'email'); this.router.navigate(['/verify-account']); }
