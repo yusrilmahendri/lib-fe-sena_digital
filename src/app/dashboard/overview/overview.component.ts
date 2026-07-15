@@ -241,6 +241,13 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${days} hari`;
   }
 
+  getOverviewUserDisplayName(): string {
+    return this.userData?.name
+      || this.userData?.nama
+      || this.userData?.email
+      || 'Akun';
+  }
+
   isPendingPayment(): boolean {
     return this.accountStatusState?.accountStatus === 'pending_payment';
   }

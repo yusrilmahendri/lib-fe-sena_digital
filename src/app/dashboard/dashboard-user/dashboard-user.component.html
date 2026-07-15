@@ -1,4 +1,4 @@
-<div class="dashboard-container dashboard-layout user-dashboard-layout">
+<div class="dashboard-container dashboard-layout user-dashboard-layout user-dashboard-shell">
   <!-- Overlay for mobile -->
   <div class="sidebar-overlay dashboard-sidebar-backdrop"
        *ngIf="isSidebarOpen"
@@ -309,7 +309,7 @@
     </header>
 
     <!-- Content Area -->
-    <main class="well" role="main">
+    <main class="well dashboard-user-content" role="main">
       <router-outlet></router-outlet>
     </main>
 

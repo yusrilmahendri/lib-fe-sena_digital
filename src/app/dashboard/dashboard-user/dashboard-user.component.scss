@@ -881,9 +881,11 @@
 
 // User dashboard mobile width and header hardening.
 .user-dashboard-layout,
+.user-dashboard-shell,
 .dashboard-container,
 .dashboard-layout,
 .user-dashboard-content,
+.dashboard-user-content,
 .dashboard-content,
 .content,
 .content .well {
@@ -894,9 +896,11 @@
 }
 
 .user-dashboard-layout *,
+.user-dashboard-shell *,
 .dashboard-container *,
 .dashboard-layout *,
 .user-dashboard-content *,
+.dashboard-user-content *,
 .dashboard-content *,
 .content * {
   box-sizing: border-box;
@@ -952,6 +956,7 @@
 
 @media screen and (max-width: 768px) {
   .user-dashboard-layout,
+  .user-dashboard-shell,
   .dashboard-container,
   .dashboard-layout {
     min-height: 100dvh;
@@ -962,6 +967,7 @@
   }
 
   .user-dashboard-content,
+  .dashboard-user-content,
   .dashboard-content,
   .content {
     margin: 0 !important;
@@ -985,6 +991,10 @@
     overflow-x: hidden !important;
     overflow-y: visible !important;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .dashboard-user-content {
+    padding: 14px !important;
   }
 
   .user-header,
@@ -1111,8 +1121,8 @@
   :host ::ng-deep .dashboard-content .guest-card,
   :host ::ng-deep .dashboard-content .share-card,
   :host ::ng-deep .dashboard-content .ucapan-card {
-    max-width: calc(100vw - 28px) !important;
-    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
   }
 }
 
@@ -1120,6 +1130,10 @@
   .content .well {
     padding-left: 10px !important;
     padding-right: 10px !important;
+  }
+
+  .dashboard-user-content {
+    padding: 10px !important;
   }
 
   .account-display-name,

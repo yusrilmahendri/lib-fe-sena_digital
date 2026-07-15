@@ -719,3 +719,104 @@ router-outlet {
     }
   }
 }
+
+@media (max-width: 768px) {
+  .user-dashboard-shell,
+  .dashboard-user-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-user-content > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-user-content section,
+  .dashboard-user-content main,
+  .dashboard-user-content article,
+  .dashboard-user-content form {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-user-content .card,
+  .dashboard-user-content .panel,
+  .dashboard-user-content .section-card,
+  .dashboard-user-content .content-card,
+  .dashboard-user-content .form-card,
+  .dashboard-user-content .website-card,
+  .dashboard-user-content .event-card,
+  .dashboard-user-content .music-card,
+  .dashboard-user-content .gallery-card,
+  .dashboard-user-content .rekening-card,
+  .dashboard-user-content .testimoni-card,
+  .dashboard-user-content .share-card,
+  .dashboard-user-content .guest-card,
+  .dashboard-user-content .ucapan-card,
+  .dashboard-user-content .dashboard-card,
+  .dashboard-user-content .card-custom,
+  .dashboard-user-content .form-container,
+  .dashboard-user-content .share-guide-card,
+  .dashboard-user-content .share-invitation__card,
+  .dashboard-user-content .share-invitation__history {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-user-content input,
+  .dashboard-user-content textarea,
+  .dashboard-user-content select,
+  .dashboard-user-content .form-control,
+  .dashboard-user-content .form-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-user-content button {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-user-content {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .dashboard-user-content .card,
+  .dashboard-user-content .panel,
+  .dashboard-user-content .section-card,
+  .dashboard-user-content .content-card,
+  .dashboard-user-content .form-card,
+  .dashboard-user-content .website-card,
+  .dashboard-user-content .event-card,
+  .dashboard-user-content .music-card,
+  .dashboard-user-content .gallery-card,
+  .dashboard-user-content .rekening-card,
+  .dashboard-user-content .testimoni-card,
+  .dashboard-user-content .share-card,
+  .dashboard-user-content .guest-card,
+  .dashboard-user-content .ucapan-card,
+  .dashboard-user-content .dashboard-card,
+  .dashboard-user-content .card-custom,
+  .dashboard-user-content .form-container,
+  .dashboard-user-content .share-guide-card,
+  .dashboard-user-content .share-invitation__card,
+  .dashboard-user-content .share-invitation__history {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+}

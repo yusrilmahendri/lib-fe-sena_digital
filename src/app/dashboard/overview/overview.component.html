@@ -1,12 +1,21 @@
-<div class="dashboard-overview overview-page">
-  <div class="container-lg overview-content">
-    <div class="overview-header overview-header-row overview-top-row mb-4">
-      <p class="mb-0 fs-6 fw-normal text-black">
+<section class="overview-page">
+  <header class="overview-header">
+    <div class="overview-title">
+      <h1>Overview <span>/overview</span></h1>
+    </div>
+
+    <div class="overview-account">
+      <span class="overview-account__name">{{ getOverviewUserDisplayName() }}</span>
+      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+    </div>
+  </header>
+
+  <section class="overview-active-row">
+      <p>
         Undangan kamu aktif sampai pada <strong>{{ getDomainExpiryDate() }}</strong>
       </p>
-      <div class="overview-website-action">
         <a
-          class="btn-lihat-website"
+          class="overview-website-btn"
           [attr.href]="publicWeddingUrl || null"
           [class.disabled]="!publicWeddingUrl"
           [attr.aria-disabled]="!publicWeddingUrl"
@@ -16,36 +25,36 @@
         >
           Lihat Website
         </a>
-      </div>
-    </div>
-    <section class="account-status-card mb-4" *ngIf="accountStatusState as accountState" aria-label="Status akun">
-      <div class="account-status-card__header">
+  </section>
+
+    <section class="overview-status-card" *ngIf="accountStatusState as accountState" aria-label="Status akun">
+      <div class="overview-status-card__header">
         <div>
-          <p class="account-status-card__eyebrow">Status Akun</p>
+          <span class="overview-eyebrow">Status Akun</span>
           <h2>Status Akun</h2>
         </div>
-        <span class="account-status-card__badge" [ngClass]="getAccountStatusClass()">
+        <span class="overview-status-badge" [ngClass]="getAccountStatusClass()">
           {{ accountState.accountStatusLabel }}
         </span>
       </div>
 
-      <div class="account-status-card__grid">
-        <div>
+      <div class="overview-status-grid">
+        <article class="overview-status-item">
           <span>Status</span>
           <strong>{{ accountState.accountStatusLabel }}</strong>
-        </div>
-        <div>
+        </article>
+        <article class="overview-status-item">
           <span>Paket</span>
           <strong>{{ accountState.packageName || accountState.packageCode || 'Belum tersedia' }}</strong>
-        </div>
-        <div>
+        </article>
+        <article class="overview-status-item">
           <span>Sisa masa aktif</span>
           <strong>{{ getRemainingDaysText() }}</strong>
-        </div>
-        <div>
+        </article>
+        <article class="overview-status-item">
           <span>Tanggal expired</span>
           <strong>{{ accountState.activeUntil || 'Belum tersedia' }}</strong>
-        </div>
+        </article>
       </div>
     </section>
 
@@ -95,12 +104,13 @@
         </div>
       </div>
     </section>
-    <div class="overview-stats-grid summary-grid mb-4">
-      <div class="overview-stat-cell" *ngFor="let card of dashboardCards">
-        <div class="card summary-card stat-card p-3 h-100 d-flex flex-column justify-content-between cursor-pointer position-relative"
-          [class.border-left-green]="card.id === 'totalPengunjung'"
-          [class.border-left-orange]="card.id === 'konfirmasiKehadiran'"
-          [class.border-left-cyan]="card.id === 'doaUcapan'" [class.border-left-pink]="card.id === 'totalHadiah'"
+    <section class="overview-stat-grid">
+        <article class="overview-stat-card"
+          *ngFor="let card of dashboardCards"
+          [class.overview-stat-card--green]="card.id === 'totalPengunjung'"
+          [class.overview-stat-card--orange]="card.id === 'konfirmasiKehadiran'"
+          [class.overview-stat-card--cyan]="card.id === 'doaUcapan'"
+          [class.overview-stat-card--pink]="card.id === 'totalHadiah'"
           [class.shadow-sm]="!card.active" [class.shadow]="card.active" [style.opacity]="card.active ? '1' : '0.8'"
           (click)="onCardClick(card.id)" role="button" tabindex="0" (keydown.enter)="onCardClick(card.id)"
           (keydown.space)="onCardClick(card.id)">
@@ -109,36 +119,31 @@
               Aktif
             </div>
           </div>
-          <div class="d-flex justify-content-between align-items-start mb-1">
-            <small class="fw-normal text-black">{{ card.title }}</small>
-          </div>
+          <h3>{{ card.title }}</h3>
           <div class="d-flex align-items-center gap-2">
-            <h2 class="fw-extrabold mb-0" [class.text-green]="card.id === 'totalPengunjung'"
-              [class.text-orange]="card.id === 'konfirmasiKehadiran'" [class.text-cyan]="card.id === 'doaUcapan'"
-              [class.text-pink]="card.id === 'totalHadiah'" style="font-weight: 800;">
+            <span class="stat-value">
               {{ formatNumber(card.value) }}
-            </h2>
+            </span>
             <div *ngIf="card.active && isLoading" class="spinner-border spinner-border-sm" [style.color]="card.color"
               role="status">
               <span class="visually-hidden">Loading...</span>
             </div>
           </div>
-          <small class="fw-normal text-black mt-1">{{ card.subtitle }}</small>
+          <p>{{ card.subtitle }}</p>
           <div class="position-absolute top-0 start-0 w-100 h-100 rounded"
             [style.background]="'linear-gradient(45deg, ' + card.color + '10, transparent)'"
             [style.opacity]="card.active ? '0.1' : '0'" style="pointer-events: none; transition: opacity 0.2s ease;">
           </div>
-        </div>
-      </div>
-    </div>
-    <div class="overview-main-grid dashboard-main-grid mb-4">
-      <div class="overview-chart-column">
-        <div class="card chart-card p-3 h-100 position-relative">
+        </article>
+    </section>
+
+    <section class="overview-bottom-grid">
+      <article class="overview-chart-card">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="card-title mb-1">
+              <h3>
                 Grafik {{ getActiveCard()?.title || 'Data' }}
-              </h5>
+              </h3>
               <small class="text-muted">
                 Tren dalam 30 hari terakhir
               </small>
@@ -204,11 +209,9 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="overview-detail-column">
-        <div class="card detail-card p-3 h-100">
-          <h6 class="card-title mb-3">Informasi Detail</h6>
+      </article>
+      <aside class="overview-detail-card">
+          <h3>Informasi Detail</h3>
           <div class="data-doa-ucapan flex-grow-1">
             <h3 class="fs-6 fw-semibold mb-3">Data Doa &amp; Ucapan</h3>
             <i class="fas fa-comment-alt"></i>
@@ -268,8 +271,6 @@
               </ng-template>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+      </aside>
+    </section>
+</section>

@@ -495,3 +495,79 @@
     transition: none;
   }
 }
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.setting-page,
+.settings-page,
+.website-setting-page,
+.pengaturan-page,
+.dashboard-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.setting-card,
+.settings-card,
+.filter-card,
+.music-setting-card,
+.cover-setting-card,
+.dashboard-card,
+.message-card,
+.music-card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .dashboard-page,
+  .settings-page,
+  .pengaturan-page {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .settings-grid,
+  .settings-grid__left {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .setting-card,
+  .settings-card,
+  .filter-card,
+  .music-setting-card,
+  .cover-setting-card,
+  .dashboard-card,
+  .message-card,
+  .music-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .setting-card,
+  .settings-card,
+  .filter-card,
+  .music-setting-card,
+  .cover-setting-card,
+  .dashboard-card,
+  .message-card,
+  .music-card {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+}

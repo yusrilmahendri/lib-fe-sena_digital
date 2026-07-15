@@ -681,7 +681,43 @@ textarea.form-control {
   .form-container {
     border-radius: 16px !important;
     padding: 16px !important;
-    max-width: calc(100vw - 28px) !important;
-    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
+  }
+}
+
+.acara-container,
+.acara-card {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .acara-container,
+  .acara-card {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .event-settings-card input,
+  .countdown-card input,
+  .event-card input,
+  .event-card textarea,
+  .event-card select,
+  .event-form-card input,
+  .event-form-card textarea,
+  .event-form-card select {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .acara-card {
+    max-width: calc(100vw - 20px) !important;
+    width: calc(100vw - 20px) !important;
   }
 }
