@@ -142,30 +142,24 @@ export class AcaraComponent implements OnInit {
 
     this.isLoading = true;
 
-
     const payload = {
-      user_id: this.userID,
-      nama_acara: eventData.nama_acara
+      id: eventData.id,
     };
-
 
     this.dashboardSvc.delete(DashboardServiceType.ACARA_SUBMIT_DELETE_DYNAMIC, payload).subscribe({
       next: (res) => {
         this.isLoading = false;
         this.notyf.success(res?.message ?? 'Acara berhasil dihapus.');
-
-
         this.dynamicEvents.removeAt(index);
-
-
         this.fetchInitialData();
       },
       error: (err) => {
         this.isLoading = false;
-        this.notyf.error(getFriendlyErrorMessage(err));
+        this.notyf.error(getFriendlyErrorMessage(err) || 'Gagal menghapus acara. Silakan coba lagi.');
       }
     });
   }
+
   fetchInitialData(): void {
     this.isLoading = true;
     this.dashboardSvc.list(DashboardServiceType.ACARA_DATA).subscribe({
@@ -219,6 +213,12 @@ export class AcaraComponent implements OnInit {
   }
 
   onDynamicSubmitClicked(): void {
+    if (!this.hasSelectedCountdown()) {
+      this.staticEventForm.get('selectedEvent')?.markAsTouched();
+      this.notyf.error('Nama countdown acara belum diisi. Silakan isi dan simpan countdown terlebih dahulu sebelum menyimpan data acara.');
+      return;
+    }
+
     if (this.dynamicEventForm.valid && this.hasMinimumLocationData()) {
       const message =
         this.data.length > 0
@@ -308,6 +308,15 @@ export class AcaraComponent implements OnInit {
   }
 
 submitDynamicEventForm(): void {
+  if (!this.hasSelectedCountdown()) {
+
+    this.staticEventForm.get('selectedEvent')?.markAsTouched();
+
+    this.notyf.error('Nama countdown acara belum diisi. Silakan isi dan simpan countdown terlebih dahulu sebelum menyimpan data acara.');
+
+    return;
+
+  }
   if (this.dynamicEventForm.valid && this.hasMinimumLocationData()) {
     this.isLoading = true;
     const events = (this.dynamicEvents.value as Acara[]).map(event => this.prepareEventLocationPayload(event));
@@ -340,7 +349,7 @@ submitDynamicEventForm(): void {
         place_id: eventsToCreate.map(event => event.place_id || ''),
       };
 
-      console.log('[SubmissionAcaraPayload]', createPayload);
+      // console.log('[SubmissionAcaraPayload]', createPayload);
 
       const createPromise = this.dashboardSvc.create(DashboardServiceType.ACARA_SUBMIT_DYNAMIC, createPayload);
       promises.push(createPromise);
@@ -458,11 +467,23 @@ submitDynamicEventForm(): void {
   applyCoordinatesFromMapsUrl(index: number, showMessage = true): void {
     const form = this.dynamicEvents.at(index) as FormGroup;
     const mapsUrl = String(form.get('google_maps_url')?.value || form.get('link_maps')?.value || '').trim();
-    const coordinates = this.extractCoordinates(mapsUrl);
 
-    if (!coordinates) {
+    if (!mapsUrl) {
+        if (showMessage) {
+          this.notyf.error('Masukkan link Google Maps terlebih dahulu.');
+        }
       return;
     }
+
+    const coordinates = this.extractCoordinates(mapsUrl);
+      if (!coordinates) {
+        if (showMessage) {
+          this.notyf.error(
+              'Koordinat tidak ditemukan. Link tetap bisa disimpan. Untuk ambil koordinat otomatis, gunakan link Google Maps panjang.'
+          );
+        }
+        return;
+      }
 
     form.patchValue({
       latitude: coordinates.latitude,
@@ -474,7 +495,7 @@ submitDynamicEventForm(): void {
     form.updateValueAndValidity();
 
     if (showMessage) {
-      this.notyf.success('Lokasi berhasil dipilih.');
+      this.notyf.success('Koordinat berhasil diambil dari link Google Maps.');
     }
   }
 
@@ -577,6 +598,13 @@ submitDynamicEventForm(): void {
     return null;
   }
 
+  private hasSelectedCountdown(): boolean {
+    const savedCountdownId = String(this.countdownData?.id || '').trim();
+    const savedCountdown = String(this.countdownData?.name_countdown || '').trim();
+
+    return !!(savedCountdownId || savedCountdown);
+  }
+
   private hasMinimumLocationData(): boolean {
     return this.dynamicEvents.controls.every(control => {
       const form = control as FormGroup;
@@ -597,7 +625,7 @@ submitDynamicEventForm(): void {
     }
 
     if (!this.hasMinimumLocationData()) {
-      return 'Silakan pilih titik lokasi di peta atau isi alamat manual.';
+      return 'Silakan isi alamat manual, nama lokasi, atau link Google Maps. Latitude dan longitude bersifat opsional.';
     }
 
     return '';

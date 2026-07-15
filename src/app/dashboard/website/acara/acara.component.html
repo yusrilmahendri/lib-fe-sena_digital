@@ -43,6 +43,33 @@
           </div>
         </div>
 
+        <div class="col-12" style="margin-bottom: 15px;">
+          <div class="maps-shortlink-info-card">
+            <div class="maps-shortlink-info-card__icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+
+            <div class="maps-shortlink-info-card__content">
+              <strong>Catatan penggunaan link Google Maps</strong>
+
+              <p>
+                Link share pendek seperti <b>maps.app.goo.gl</b> tetap bisa disimpan dan digunakan sebagai link lokasi.
+                Latitude dan longitude bersifat opsional. Jika ingin mengambil koordinat otomatis, gunakan link Google Maps panjang yang berisi angka latitude dan longitude.
+              </p>
+
+              <div class="maps-link-example">
+                <span>Contoh link pendek, bisa disimpan tetapi koordinat tidak terbaca otomatis:</span>
+                <code>https://maps.app.goo.gl/MLMF6xivPUJKaFVc7</code>
+              </div>
+
+              <div class="maps-link-example maps-link-example--valid">
+                <span>Contoh link panjang, bisa dipakai untuk ambil koordinat otomatis:</span>
+                <code>https://www.google.com/maps/search/?api=1&amp;query=-7.7353891,110.3858977</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Dynamic Events Form -->
         <div class="col-12">
           <form [formGroup]="dynamicEventForm" (ngSubmit)="onDynamicSubmitClicked()">

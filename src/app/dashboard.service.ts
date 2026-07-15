@@ -424,7 +424,7 @@ export class DashboardService {
       case DashboardServiceType.ACARA_SUBMIT_UPDATE_DYNAMIC:
         return `${this.BASE_URL_API}/v1/user/update-acara`;
       case DashboardServiceType.ACARA_SUBMIT_DELETE_DYNAMIC:
-        return `${this.BASE_URL_API}/v1/user/delete-countdown`;
+        return `${this.BASE_URL_API}/v1/user/delete-acara`;
 
       //SETTINGS BUNDLE ADMIN
       case DashboardServiceType.ST_BUNDLE_ADMIN:
