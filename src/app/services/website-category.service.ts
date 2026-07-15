@@ -161,6 +161,40 @@ export class WebsiteCategoryService {
       );
   }
 
+  updatePreviewImage(id: number, file: File): Observable<CategoryOperationResult<WebsiteCategory>> {
+    this.loadingSubject.next(true);
+    this.errorSubject.next(null);
+
+    const imageValidation = this.validateImage(file);
+    if (!imageValidation.valid) {
+      this.loadingSubject.next(false);
+      return throwError(() => ({
+        success: false,
+        error: imageValidation.error
+      }));
+    }
+
+    const formData = new FormData();
+    formData.append('preview_image', file);
+
+    return this.http.post<CategoryUpdateResponse<WebsiteCategory>>(`${this.baseUrl}/${id}/preview`, formData)
+      .pipe(
+        map(response => ({
+          success: response.status,
+          data: response.data,
+          message: response.message,
+          error: response.status ? undefined : response.message
+        })),
+        tap(result => {
+          if (result.success) {
+            this.refreshCategories();
+          }
+          this.loadingSubject.next(false);
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
   /**
    * Delete website category
    */

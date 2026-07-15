@@ -318,13 +318,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     this.uploadingThemeKey = theme.key;
 
-    const payload = this.buildWebsiteCategoryUpdatePayload(theme, { preview_image: file });
-    if (!payload) {
-      target.value = '';
-      return;
-    }
-
-    this.websiteCategoryService.updateCategory(categoryId, payload).subscribe({
+    this.websiteCategoryService.updatePreviewImage(categoryId, file).subscribe({
       next: (result) => {
         if (result.success) {
           this.notyf.success(result.message || 'Preview tema berhasil diperbarui.');
@@ -359,20 +353,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeImage(theme: any): string {
-    const categoryData = theme?.categoryData || theme?.category || {};
-    const adminThemeData = theme?.adminThemeData || {};
     return theme?.preview_image
       || theme?.preview
       || theme?.image
       || theme?.thumbnail_image
-      || categoryData?.preview_image
-      || categoryData?.preview
-      || categoryData?.image
-      || categoryData?.thumbnail_image
-      || adminThemeData?.preview_image
-      || adminThemeData?.preview
-      || adminThemeData?.image
-      || adminThemeData?.thumbnail_image
       || this.themePlaceholderImage;
   }
 
@@ -382,10 +366,9 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   onThemeImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    if (img.src.includes(this.themePlaceholderImage)) {
-      return;
+    if (!img.src.includes('theme-placeholder')) {
+      img.src = this.themePlaceholderImage;
     }
-    img.src = this.themePlaceholderImage;
   }
 
   getThemeImageUrl(theme: AdminThemeCard): string {
