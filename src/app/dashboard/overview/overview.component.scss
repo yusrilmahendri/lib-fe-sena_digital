@@ -1,10 +1,28 @@
-body {
+.dashboard-overview {
   font-family: "Inter", sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background-color: #f9fafb;
   padding: 1rem;
-
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
+
+.dashboard-overview *,
+.overview-page *,
+.overview-content * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.overview-page,
+.overview-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .card {
   border-radius: 1rem;
 }
@@ -45,7 +63,8 @@ body {
   color: #d9468f;
 }
 .overview-header-row,
-.overview-top-row {
+.overview-top-row,
+.overview-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -84,6 +103,48 @@ body {
 .btn-lihat-website.disabled {
   pointer-events: none;
   opacity: 0.55;
+}
+
+.account-status-card__grid,
+.account-status-grid,
+.status-account-grid,
+.status-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.summary-grid,
+.overview-stats-grid,
+.stats-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+}
+
+.overview-stat-cell {
+  width: 100%;
+  min-width: 0;
+}
+
+.overview-main-grid,
+.dashboard-main-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  width: 100%;
+  max-width: 100%;
+}
+
+.stat-card,
+.summary-card,
+.chart-card,
+.detail-card {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .account-status-card {
@@ -146,9 +207,7 @@ body {
 }
 
 .account-status-card__grid {
-  display: grid;
   gap: 14px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .account-status-card__grid div {
@@ -270,10 +329,24 @@ body {
 }
 
 @media (max-width: 768px) {
+  .dashboard-overview,
+  .overview-page,
+  .overview-content {
+    padding: 16px !important;
+    overflow-x: hidden !important;
+  }
+
   .overview-header-row,
-  .overview-top-row {
+  .overview-top-row,
+  .overview-header {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+  }
+
+  .overview-header h1 {
+    font-size: 24px;
+    line-height: 1.2;
   }
 
   .overview-website-action {
@@ -285,14 +358,67 @@ body {
   .btn-lihat-website {
     width: 100%;
     max-width: 100%;
+    min-height: 44px;
   }
 
   .account-status-card__header {
     flex-direction: column;
   }
 
-  .account-status-card__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .account-status-card,
+  .status-account-card {
+    border-radius: 16px !important;
+    padding: 18px !important;
+  }
+
+  .account-status-card__grid,
+  .account-status-grid,
+  .status-account-grid,
+  .status-grid {
+    gap: 12px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .summary-grid,
+  .overview-stats-grid,
+  .stats-grid {
+    gap: 12px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .overview-main-grid,
+  .dashboard-main-grid {
+    gap: 16px !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .stat-card,
+  .summary-card {
+    border-radius: 16px !important;
+    min-height: 120px;
+    padding: 14px !important;
+  }
+
+  .stat-card h3,
+  .summary-card h3 {
+    font-size: 14px;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+
+  .stat-card .value,
+  .summary-card .value,
+  .stat-card h2,
+  .summary-card h2 {
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .chart-card,
+  .detail-card {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .payment-warning-card {
@@ -305,11 +431,63 @@ body {
 
 }
 
-@media (max-width: 575.98px) {
-  .account-status-card__grid {
-    grid-template-columns: 1fr;
+@media (max-width: 480px) {
+  .dashboard-overview,
+  .overview-page,
+  .overview-content {
+    padding: 14px !important;
   }
 
+  .overview-header h1 {
+    font-size: 22px;
+  }
+
+  .account-status-card__grid,
+  .account-status-grid,
+  .status-account-grid,
+  .status-grid {
+    gap: 10px !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .summary-grid,
+  .overview-stats-grid,
+  .stats-grid {
+    gap: 10px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .stat-card,
+  .summary-card {
+    min-height: 108px;
+    padding: 12px !important;
+  }
+
+  .stat-card h3,
+  .summary-card h3,
+  .stat-card small,
+  .summary-card small {
+    font-size: 12px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .stat-card p,
+  .summary-card p {
+    font-size: 12px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .stat-card .value,
+  .summary-card .value,
+  .stat-card h2,
+  .summary-card h2 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 575.98px) {
   .payment-warning-card__details {
     grid-template-columns: 1fr;
   }
@@ -361,9 +539,6 @@ body {
   text-overflow: ellipsis;
 }
 @media (max-width: 575.98px) {
-  body {
-    padding: 0.5rem;
-  }
   .btn-outline-pink,
   .btn-lihat-website {
     width: 100%;

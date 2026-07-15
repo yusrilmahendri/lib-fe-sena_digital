@@ -572,3 +572,98 @@ textarea.form-control {
     width: 100%;
   }
 }
+
+// Mobile dashboard-user layout overrides.
+.acara-page,
+.event-page,
+.acara-page__container,
+.event-settings-card,
+.event-card,
+.countdown-card,
+.card-custom,
+.form-container {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.acara-page,
+.event-page {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.event-grid,
+.events-grid,
+.dynamic-events-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .acara-page__container {
+    padding: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .event-grid,
+  .events-grid,
+  .dynamic-events-container,
+  .responsive-form-row,
+  .countdown-form,
+  .location-picker__actions {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .event-settings-card,
+  .event-card,
+  .countdown-card,
+  .card-custom,
+  .form-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .event-settings-card input,
+  .event-card input,
+  .event-card textarea,
+  .event-card select,
+  .countdown-card input,
+  .card-custom input,
+  .card-custom select,
+  .card-custom textarea,
+  .form-container input,
+  .form-container select,
+  .form-container textarea {
+    width: 100% !important;
+  }
+
+  .btn-save-countdown,
+  .save-countdown-btn,
+  .submit-button-container .btn-save,
+  .btn-simpan,
+  .btn-google {
+    min-height: 44px;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .acara-page__container {
+    padding: 14px !important;
+  }
+
+  .card-custom,
+  .form-container {
+    border-radius: 16px !important;
+    padding: 16px !important;
+  }
+}

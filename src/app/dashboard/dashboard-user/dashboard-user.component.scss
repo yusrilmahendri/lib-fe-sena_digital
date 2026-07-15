@@ -874,3 +874,143 @@
     width: min(86vw, 300px);
   }
 }
+
+// User dashboard mobile width and header hardening.
+.user-dashboard-layout,
+.dashboard-container,
+.dashboard-layout,
+.user-dashboard-content,
+.dashboard-content,
+.content,
+.content .well {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.user-dashboard-layout *,
+.dashboard-container *,
+.dashboard-layout *,
+.user-dashboard-content *,
+.dashboard-content *,
+.content * {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.user-header,
+.dashboard-header,
+.header {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.user-profile,
+.profile-menu,
+.account-menu {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.user-profile .user-name,
+.profile-menu span,
+.account-menu span,
+.user-email,
+.profile-email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 768px) {
+  .user-dashboard-layout,
+  .dashboard-container,
+  .dashboard-layout {
+    min-height: 100dvh;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .user-dashboard-content,
+  .dashboard-content,
+  .content {
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .content .well {
+    padding: 16px !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .user-header,
+  .dashboard-header,
+  .header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center !important;
+    gap: 10px;
+    padding: 14px 16px 14px 72px !important;
+  }
+
+  .user-header .breadcrumbs,
+  .dashboard-header .breadcrumbs {
+    min-width: 0;
+  }
+
+  .user-header .route-name,
+  .dashboard-header .route-name {
+    font-size: 18px !important;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .user-profile {
+    justify-self: end;
+    max-width: 130px !important;
+    padding: 8px 10px !important;
+  }
+
+  .user-profile .user-name {
+    max-width: 96px;
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .content .well {
+    padding: 14px !important;
+  }
+
+  .user-header,
+  .dashboard-header,
+  .header {
+    padding: 12px 14px 12px 64px !important;
+  }
+
+  .user-profile {
+    max-width: none !important;
+  }
+
+  .user-profile .user-name {
+    display: none !important;
+  }
+
+  .user-profile::before {
+    content: "Akun";
+    color: #111827;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}

@@ -1,6 +1,6 @@
-<body>
-  <div class="container-lg">
-    <div class="overview-header-row overview-top-row mb-4">
+<div class="dashboard-overview overview-page">
+  <div class="container-lg overview-content">
+    <div class="overview-header overview-header-row overview-top-row mb-4">
       <p class="mb-0 fs-6 fw-normal text-black">
         Undangan kamu aktif sampai pada <strong>{{ getDomainExpiryDate() }}</strong>
       </p>
@@ -95,9 +95,9 @@
         </div>
       </div>
     </section>
-    <div class="row g-3 mb-4">
-      <div class="col-12 col-sm-6 col-md-3" *ngFor="let card of dashboardCards">
-        <div class="card p-3 h-100 d-flex flex-column justify-content-between cursor-pointer position-relative"
+    <div class="overview-stats-grid summary-grid mb-4">
+      <div class="overview-stat-cell" *ngFor="let card of dashboardCards">
+        <div class="card summary-card stat-card p-3 h-100 d-flex flex-column justify-content-between cursor-pointer position-relative"
           [class.border-left-green]="card.id === 'totalPengunjung'"
           [class.border-left-orange]="card.id === 'konfirmasiKehadiran'"
           [class.border-left-cyan]="card.id === 'doaUcapan'" [class.border-left-pink]="card.id === 'totalHadiah'"
@@ -131,9 +131,9 @@
         </div>
       </div>
     </div>
-    <div class="row g-3 mb-4">
-      <div class="col-12 col-md-8">
-        <div class="card p-3 h-100 position-relative">
+    <div class="overview-main-grid dashboard-main-grid mb-4">
+      <div class="overview-chart-column">
+        <div class="card chart-card p-3 h-100 position-relative">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
               <h5 class="card-title mb-1">
@@ -206,8 +206,8 @@
           </div>
         </div>
       </div>
-      <div class="col-12 col-md-4">
-        <div class="card p-3 h-100">
+      <div class="overview-detail-column">
+        <div class="card detail-card p-3 h-100">
           <h6 class="card-title mb-3">Informasi Detail</h6>
           <div class="data-doa-ucapan flex-grow-1">
             <h3 class="fs-6 fw-semibold mb-3">Data Doa &amp; Ucapan</h3>
@@ -272,4 +272,4 @@
       </div>
     </div>
   </div>
-</body>
+</div>

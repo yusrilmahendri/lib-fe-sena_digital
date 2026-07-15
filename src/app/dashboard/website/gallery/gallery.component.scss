@@ -803,3 +803,110 @@ textarea {
     padding: 1.1rem 0.95rem 0.95rem;
   }
 }
+
+// Mobile dashboard-user layout overrides.
+.photo-management,
+.gallery-page,
+.gallery-wrapper,
+.photo-header,
+.workspace-grid,
+.upload-panel,
+.preview-panel,
+.photo-list-section,
+.gallery-upload-box,
+.upload-dropzone,
+.photo-upload-zone,
+.drop-zone {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.photo-management,
+.gallery-page,
+.gallery-wrapper {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.gallery-tabs,
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+
+.gallery-form-grid,
+.gallery-content-grid,
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .photo-management,
+  .gallery-page,
+  .gallery-wrapper {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .gallery-form-grid,
+  .gallery-content-grid,
+  .workspace-grid,
+  .edit-layout {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .gallery-tabs,
+  .segmented-control {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .photo-header,
+  .upload-panel,
+  .preview-panel,
+  .photo-list-section,
+  .gallery-upload-box,
+  .upload-dropzone,
+  .photo-upload-zone,
+  .drop-zone {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .gallery-upload-box,
+  .upload-dropzone,
+  .photo-upload-zone,
+  .drop-zone {
+    min-height: 150px;
+    overflow: hidden;
+  }
+
+  .gallery-upload-box p,
+  .upload-dropzone p,
+  .photo-upload-zone p,
+  .drop-zone p {
+    text-align: center;
+    white-space: normal !important;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 480px) {
+  .photo-header,
+  .upload-panel,
+  .preview-panel,
+  .photo-list-section {
+    border-radius: 16px !important;
+    padding: 16px !important;
+  }
+}
