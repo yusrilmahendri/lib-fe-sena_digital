@@ -12,6 +12,7 @@ export interface BaseCategory {
   nama_kategori: string;
   slug: string;
   image: string;
+  preview_image?: string | null;
   is_active: boolean;
   urutan?: number | string | null;
   status?: boolean | number | string;
@@ -33,6 +34,7 @@ export interface CategoryCreateRequest {
   nama_kategori: string;
   slug?: string;
   image?: File;
+  preview_image?: File;
   is_active?: boolean | number | string; // Support boolean, 1/0, "true"/"false", "1"/"0"
   urutan?: number | string | null;
   status?: boolean | number | string;
@@ -42,6 +44,7 @@ export interface CategoryUpdateRequest {
   nama_kategori?: string;
   slug?: string;
   image?: File;
+  preview_image?: File;
   is_active?: boolean | number | string; // Support boolean, 1/0, "true"/"false", "1"/"0"
   urutan?: number | string | null;
   status?: boolean | number | string;
@@ -164,6 +167,7 @@ export interface CategoryOperationResult<T = BaseCategory> {
   success: boolean;
   data?: T;
   error?: string;
+  message?: string;
   validationErrors?: { [key: string]: string[] };
 }
 

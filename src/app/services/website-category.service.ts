@@ -108,6 +108,7 @@ export class WebsiteCategoryService {
         map(response => ({
           success: response.status,
           data: response.data,
+          message: response.message,
           error: response.status ? undefined : response.message
         })),
         tap(result => {
@@ -128,8 +129,9 @@ export class WebsiteCategoryService {
     this.errorSubject.next(null);
 
     // Validate image if provided
-    if (request.image) {
-      const imageValidation = this.validateImage(request.image);
+    const uploadFile = request.image || request.preview_image;
+    if (uploadFile) {
+      const imageValidation = this.validateImage(uploadFile);
       if (!imageValidation.valid) {
         this.loadingSubject.next(false);
         return throwError(() => ({
@@ -146,6 +148,7 @@ export class WebsiteCategoryService {
         map(response => ({
           success: response.status,
           data: response.data,
+          message: response.message,
           error: response.status ? undefined : response.message
         })),
         tap(result => {
@@ -237,45 +240,37 @@ export class WebsiteCategoryService {
   private buildFormData(request: CategoryCreateRequest | CategoryUpdateRequest): FormData {
     const formData = new FormData();
 
-    console.log('Building FormData with request:', request);
-
-    if (request.nama_kategori) {
-      formData.append('nama_kategori', request.nama_kategori);
-      console.log('Added nama_kategori:', request.nama_kategori);
+    const namaKategori = request.nama_kategori?.trim();
+    if (namaKategori) {
+      formData.append('nama_kategori', namaKategori);
     }
 
-    if (request.slug) {
-      formData.append('slug', request.slug);
-      console.log('Added slug:', request.slug);
+    const slug = request.slug?.trim();
+    if (slug) {
+      formData.append('slug', slug);
     }
 
     if (request.urutan !== undefined && request.urutan !== null && request.urutan !== '') {
       formData.append('urutan', String(request.urutan));
-      console.log('Added urutan:', request.urutan);
     }
 
     if (request.image) {
       formData.append('image', request.image);
-      console.log('Added image:', request.image.name, 'Size:', request.image.size, 'Type:', request.image.type);
+    }
+
+    if (request.preview_image) {
+      formData.append('preview_image', request.preview_image);
     }
 
     if (request.is_active !== undefined) {
       const isActiveValue = request.is_active.toString();
       formData.append('is_active', isActiveValue);
-      console.log('Added is_active:', isActiveValue);
     }
 
     if (request.status !== undefined) {
       const statusValue = request.status.toString();
       formData.append('status', statusValue);
-      console.log('Added status:', statusValue);
     }
-
-    // Log FormData entries for debugging
-    console.log('FormData entries:');
-    formData.forEach((value, key) => {
-      console.log(key, value);
-    });
 
     return formData;
   }
@@ -310,7 +305,11 @@ export class WebsiteCategoryService {
     let errorMessage = 'Terjadi kendala saat memuat data tema. Silakan coba lagi.';
     let validationErrors: { [key: string]: string[] } | undefined;
 
-    console.error('Website Category Service Error:', error);
+    console.error('Website Category Service Error:', {
+      status: error?.status,
+      url: error?.url,
+      error: error?.error,
+    });
 
     if (error.status === 0) {
       errorMessage = 'Koneksi ke server sedang bermasalah. Silakan coba lagi sebentar lagi.';
@@ -327,7 +326,7 @@ export class WebsiteCategoryService {
 
       if (errorResponse.errors) {
         validationErrors = errorResponse.errors;
-        errorMessage = 'Beberapa data belum sesuai. Mohon periksa kembali input Anda.';
+        errorMessage = this.formatValidationErrors(errorResponse.errors);
       }
     }
 
@@ -340,6 +339,16 @@ export class WebsiteCategoryService {
       status: error.status,
       originalError: error
     }));
+  }
+
+  private formatValidationErrors(errors: { [key: string]: string[] }): string {
+    const messages = Object.values(errors)
+      .reduce((acc: string[], value) => acc.concat(Array.isArray(value) ? value : []), [])
+      .filter((message) => typeof message === 'string' && message.trim().length > 0);
+
+    return messages.length
+      ? messages.join(' ')
+      : 'Beberapa data belum sesuai. Mohon periksa kembali input Anda.';
   }
 
   /**
@@ -366,6 +375,10 @@ export class WebsiteCategoryService {
   getImageUrl(imagePath: string): string {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/')) {
+      const apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
+      return `${apiOrigin}${imagePath}`;
+    }
     return `/storage/website-categories/${imagePath}`;
   }
 }

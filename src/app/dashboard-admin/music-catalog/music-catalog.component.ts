@@ -102,7 +102,7 @@ export class MusicCatalogComponent implements OnInit {
       subtitle: this.uploadSubtitle,
     }).subscribe({
       next: (res) => {
-        this.notyf.success(this.resolveUploadMessage(res, 'Musik katalog berhasil diunggah.'));
+        this.notyf.success('Musik katalog berhasil diupload.');
         this.resetUploadForm();
         this.isUploading = false;
         this.loadCatalog();
@@ -272,7 +272,7 @@ export class MusicCatalogComponent implements OnInit {
 
   private resolveUploadErrorMessage(error: any): string {
     if (error?.status === 403) {
-      return 'Akun admin ini belum memiliki izin upload katalog musik. Silakan periksa role/permission admin di backend.';
+      return 'Akun admin ini belum memiliki izin upload katalog musik.';
     }
 
     if (error?.status === 413) {

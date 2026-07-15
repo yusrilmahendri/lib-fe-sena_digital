@@ -82,9 +82,18 @@
                 <div class="action-buttons">
                   <button
                     type="button"
+                    class="btn btn-upgrade-package"
+                    (click)="openUpgradeModal(row)"
+                    [disabled]="isUpgradeLoading(row) || isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+                  >
+                    <span *ngIf="isUpgradeLoading(row)" class="btn-loading-spinner"></span>
+                    Upgrade Paket Manual
+                  </button>
+                  <button
+                    type="button"
                     class="btn btn-soft-delete"
                     (click)="onSoftDelete(row)"
-                    [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+                    [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row) || isUpgradeLoading(row)"
                   >
                     <span *ngIf="isSoftDeleteLoading(row)" class="btn-loading-spinner"></span>
                     Soft Delete Data
@@ -93,7 +102,7 @@
                     type="button"
                     class="btn btn-hard-delete"
                     (click)="onHardDelete(row)"
-                    [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row)"
+                    [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row) || isUpgradeLoading(row)"
                   >
                     <span *ngIf="isHardDeleteLoading(row)" class="btn-loading-spinner"></span>
                     Hard Delete Akun
@@ -137,9 +146,18 @@
           <div class="card-actions">
             <button
               type="button"
+              class="btn btn-upgrade-package"
+              (click)="openUpgradeModal(row)"
+              [disabled]="isUpgradeLoading(row) || isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+            >
+              <span *ngIf="isUpgradeLoading(row)" class="btn-loading-spinner"></span>
+              Ubah Paket
+            </button>
+            <button
+              type="button"
               class="btn btn-soft-delete"
               (click)="onSoftDelete(row)"
-              [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row)"
+              [disabled]="isSoftDeleteLoading(row) || isHardDeleteLoading(row) || isUpgradeLoading(row)"
             >
               <span *ngIf="isSoftDeleteLoading(row)" class="btn-loading-spinner"></span>
               Soft Delete Data
@@ -148,7 +166,7 @@
               type="button"
               class="btn btn-hard-delete"
               (click)="onHardDelete(row)"
-              [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row)"
+              [disabled]="isHardDeleteLoading(row) || isSoftDeleteLoading(row) || isUpgradeLoading(row)"
             >
               <span *ngIf="isHardDeleteLoading(row)" class="btn-loading-spinner"></span>
               Hard Delete Akun
@@ -209,3 +227,57 @@
     </div>
   </div>
 </div>
+
+<div class="manual-upgrade-backdrop" *ngIf="upgradeModalUser" (click)="closeUpgradeModal()"></div>
+
+<section class="manual-upgrade-modal" *ngIf="upgradeModalUser" role="dialog" aria-modal="true" aria-labelledby="manualUpgradeTitle">
+  <div class="manual-upgrade-header">
+    <div>
+      <p>Admin Paket</p>
+      <h3 id="manualUpgradeTitle">Upgrade Paket Manual</h3>
+    </div>
+    <button type="button" class="manual-upgrade-close" aria-label="Tutup modal" (click)="closeUpgradeModal()">&times;</button>
+  </div>
+
+  <div class="manual-upgrade-body">
+    <div class="manual-upgrade-summary">
+      <div>
+        <span>Email user</span>
+        <strong>{{ upgradeModalUser.email }}</strong>
+      </div>
+      <div>
+        <span>Domain user</span>
+        <strong>{{ upgradeModalUser.domain }}</strong>
+      </div>
+      <div>
+        <span>Paket saat ini</span>
+        <strong>{{ upgradeModalUser.packageName }}</strong>
+      </div>
+    </div>
+
+    <label class="manual-upgrade-field">
+      <span>Paket tujuan</span>
+      <select class="form-select" [(ngModel)]="upgradeForm.package_code">
+        <option *ngFor="let option of manualPackageOptions" [ngValue]="option.code">{{ option.label }}</option>
+      </select>
+    </label>
+
+    <label class="manual-upgrade-field">
+      <span>Tanggal expired</span>
+      <input type="date" class="form-control" [(ngModel)]="upgradeForm.expired_at" />
+    </label>
+
+    <label class="manual-upgrade-field">
+      <span>Catatan admin</span>
+      <textarea class="form-control" rows="3" [(ngModel)]="upgradeForm.note" placeholder="Upgrade manual oleh admin"></textarea>
+    </label>
+  </div>
+
+  <div class="manual-upgrade-footer">
+    <button type="button" class="btn btn-light" (click)="closeUpgradeModal()" [disabled]="!!processingUpgradeUserId">Batal</button>
+    <button type="button" class="btn btn-primary" (click)="submitManualUpgrade()" [disabled]="!canSubmitManualUpgrade()">
+      <span *ngIf="processingUpgradeUserId" class="btn-loading-spinner"></span>
+      Simpan
+    </button>
+  </div>
+</section>

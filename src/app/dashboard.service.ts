@@ -102,6 +102,7 @@ export enum DashboardServiceType {
   ADM_DELETE_ALL_CATEGORY,
   ADM_GET_CATEGORY,
   RDM_CONFIRM_PAYMENT,
+  ADMIN_USER_UPGRADE_PACKAGE,
 
   // === User Settings Endpoints ===
   // Manages user preferences like domain, music, and filters.
@@ -454,6 +455,8 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/admin/send-rekening`;
       case DashboardServiceType.RDM_CONFIRM_PAYMENT:
         return `${this.BASE_URL_API}/v1/update/status-bayar`;
+      case DashboardServiceType.ADMIN_USER_UPGRADE_PACKAGE:
+        return `${this.BASE_URL_API}/v1/admin/users`;
 
       // Kategori
       case DashboardServiceType.ADM_ADD_CATEGORY:

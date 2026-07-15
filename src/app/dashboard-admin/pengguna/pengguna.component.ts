@@ -28,6 +28,22 @@ export class PenggunaComponent implements OnInit {
 
   processingSoftDeleteUserId: number | null = null;
   processingHardDeleteUserId: number | null = null;
+  processingUpgradeUserId: number | null = null;
+
+  readonly manualPackageOptions = [
+    { code: 'trial', label: 'Trial' },
+    { code: 'ruby', label: 'Ruby' },
+    { code: 'sapphire', label: 'Sapphire' },
+    { code: 'diamond', label: 'Diamond' }
+  ];
+
+  upgradeModalUser: AdminUserRow | null = null;
+  upgradeForm: ManualUpgradeForm = {
+    package_code: 'diamond',
+    expired_at: '',
+    note: ''
+  };
+  lastUpgradeExpiredDate = '';
 
   readonly expiringSoonThresholdDays = 7;
 
@@ -186,6 +202,87 @@ export class PenggunaComponent implements OnInit {
   isHardDeleteLoading(row: AdminUserRow): boolean {
     const userId = this.getUserId(row);
     return userId !== null && this.processingHardDeleteUserId === userId;
+  }
+
+  isUpgradeLoading(row: AdminUserRow): boolean {
+    const userId = this.getUserId(row);
+    return userId !== null && this.processingUpgradeUserId === userId;
+  }
+
+  openUpgradeModal(row: AdminUserRow): void {
+    const userId = this.getUserId(row);
+    if (!userId) {
+      this.showError('ID pengguna tidak valid. Request upgrade paket tidak dikirim.');
+      return;
+    }
+
+    this.upgradeModalUser = row;
+    this.upgradeForm = {
+      package_code: this.resolveCurrentPackageCode(row) || 'diamond',
+      expired_at: this.toDateInputValue(row.expirationDate),
+      note: ''
+    };
+    this.lastUpgradeExpiredDate = '';
+  }
+
+  closeUpgradeModal(): void {
+    if (this.processingUpgradeUserId) return;
+    this.upgradeModalUser = null;
+    this.upgradeForm = {
+      package_code: 'diamond',
+      expired_at: '',
+      note: ''
+    };
+  }
+
+  canSubmitManualUpgrade(): boolean {
+    if (!this.upgradeModalUser || this.processingUpgradeUserId) return false;
+    const userId = this.getUserId(this.upgradeModalUser);
+    return !!userId &&
+      this.manualPackageOptions.some((option) => option.code === this.upgradeForm.package_code) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(this.upgradeForm.expired_at);
+  }
+
+  async submitManualUpgrade(): Promise<void> {
+    if (!this.upgradeModalUser) return;
+    const userId = this.getUserId(this.upgradeModalUser);
+    if (!userId) {
+      this.showError('ID pengguna tidak valid. Request upgrade paket tidak dikirim.');
+      return;
+    }
+
+    if (!this.canSubmitManualUpgrade()) {
+      this.showError('Paket tujuan dan tanggal expired wajib diisi.');
+      return;
+    }
+
+    const payload = {
+      package_code: this.upgradeForm.package_code,
+      expired_at: this.upgradeForm.expired_at,
+      note: this.upgradeForm.note.trim()
+    };
+
+    this.processingUpgradeUserId = userId;
+    try {
+      const response = await firstValueFrom(
+        this.dashboardSvc.createParam(
+          DashboardServiceType.ADMIN_USER_UPGRADE_PACKAGE,
+          payload,
+          `/${userId}/upgrade-package`
+        )
+      );
+
+      this.lastUpgradeExpiredDate = response?.data?.active_until_formatted || this.formatDate(payload.expired_at);
+      this.notyf.success('Paket pengguna berhasil diperbarui.');
+      this.notyf.success(`Tanggal expired: ${this.lastUpgradeExpiredDate}`);
+      this.upgradeModalUser = null;
+      await this.loadUsersAfterAction();
+    } catch (error: any) {
+      this.logHttpError('Gagal upgrade paket manual', error);
+      this.showError(this.resolveManualUpgradeError(error));
+    } finally {
+      this.processingUpgradeUserId = null;
+    }
   }
 
   async onSoftDelete(row: AdminUserRow): Promise<void> {
@@ -370,6 +467,52 @@ export class PenggunaComponent implements OnInit {
     return user?.nama_paket ?? user?.package_name ?? '–';
   }
 
+  private resolveCurrentPackageCode(row: AdminUserRow): ManualPackageCode | '' {
+    const rawPackage = row.rawUser || {};
+    const value = String(this.firstPresent([
+      rawPackage.package_code,
+      rawPackage.kode_paket,
+      rawPackage.package,
+      rawPackage.jenis_paket,
+      row.packageName,
+    ]) || '').toLowerCase();
+
+    const found = this.manualPackageOptions.find((option) => value.includes(option.code));
+    return found?.code as ManualPackageCode || '';
+  }
+
+  private toDateInputValue(value: string | null): string {
+    if (!value) return '';
+    if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private resolveManualUpgradeError(error: any): string {
+    if (error?.status === 422 && error?.error?.errors) {
+      const messages = Object.values(error.error.errors)
+        .reduce((acc: string[], value: any) => acc.concat(Array.isArray(value) ? value : []), [])
+        .filter((message) => typeof message === 'string' && message.trim().length > 0);
+      return messages.join(' ') || 'Beberapa data upgrade belum sesuai.';
+    }
+
+    if (typeof error?.error?.message === 'string' && error.error.message.trim()) {
+      return error.error.message;
+    }
+
+    if (error?.status === 403) return 'Akun admin ini belum memiliki izin mengubah paket pengguna.';
+    if (error?.status === 404) return 'Data pengguna tidak ditemukan.';
+    return 'Gagal memperbarui paket pengguna.';
+  }
+
+  private firstPresent(values: unknown[]): unknown {
+    return values.find((value) => value !== null && value !== undefined && value !== '');
+  }
+
   private async executeDeleteAction(userId: number, action: 'soft' | 'hard'): Promise<void> {
     if (!Number.isFinite(userId) || userId <= 0) {
       throw new Error('Invalid user id');
@@ -442,6 +585,13 @@ export class PenggunaComponent implements OnInit {
 
 type UserStatusFilter = 'all' | 'active' | 'expiring' | 'expired';
 type UserComputedStatus = 'active' | 'expiring-soon' | 'expired' | 'other';
+type ManualPackageCode = 'trial' | 'ruby' | 'sapphire' | 'diamond';
+
+interface ManualUpgradeForm {
+  package_code: ManualPackageCode;
+  expired_at: string;
+  note: string;
+}
 
 interface AdminUserRow {
   id: number | null;

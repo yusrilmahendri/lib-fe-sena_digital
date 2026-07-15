@@ -305,7 +305,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
     this.uploadingThemeKey = theme.key;
 
-    const payload = this.buildWebsiteCategoryUpdatePayload(theme, { image: file });
+    const payload = this.buildWebsiteCategoryUpdatePayload(theme, { preview_image: file });
     if (!payload) {
       target.value = '';
       return;
@@ -314,7 +314,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.websiteCategoryService.updateCategory(categoryId, payload).subscribe({
       next: (result) => {
         if (result.success) {
-          this.notyf.success(`Preview ${theme.name} berhasil diperbarui`);
+          this.notyf.success(result.message || 'Preview tema berhasil diperbarui.');
           this.getData();
           this.loadAdminThemes();
         } else {
@@ -327,7 +327,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error updating theme preview:', error);
-        this.notyf.error(error.error || 'Gagal memperbarui gambar preview');
+        this.notyf.error(this.resolveCategoryUpdateError(error));
         target.value = '';
         this.uploadingThemeKey = null;
         this.cdr.detectChanges();
@@ -345,6 +345,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeImageUrl(theme: AdminThemeCard): string {
+    if (theme.categoryData?.preview_image) {
+      return this.websiteCategoryService.getImageUrl(theme.categoryData.preview_image);
+    }
+
     if (theme.categoryData?.image) {
       return this.websiteCategoryService.getImageUrl(theme.categoryData.image);
     }
@@ -828,47 +832,14 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     theme: AdminThemeCard,
     overrides: Partial<CategoryUpdateRequest> = {}
   ): CategoryUpdateRequest | null {
-    const category = theme.categoryData;
-    const adminCategory: any = theme.adminThemeData?.category || {};
-    const namaKategori = String(this.firstPresent([
-      category?.nama_kategori,
-      (category as any)?.name,
-      (category as any)?.title,
-      adminCategory?.nama_kategori,
-      adminCategory?.name,
-      adminCategory?.title,
-    ]) || '').trim();
+    const payload: CategoryUpdateRequest = {};
 
-    if (!namaKategori) {
-      this.notyf.error('Nama kategori tema tidak ditemukan. Silakan refresh halaman.');
-      return null;
+    if (overrides.urutan !== undefined && overrides.urutan !== null && overrides.urutan !== '') {
+      payload.urutan = overrides.urutan;
     }
 
-    const currentOrder = this.firstPresent([
-      category?.urutan,
-      (category as any)?.order,
-      (category as any)?.sort_order,
-      theme.displayOrder,
-    ]);
-    const currentActive = this.firstPresent([
-      category?.is_active,
-      category?.status,
-      adminCategory?.is_active,
-      true,
-    ]);
-    const slug = String(this.firstPresent([
-      category?.slug,
-      adminCategory?.slug,
-    ]) || '').trim();
-
-    const payload: CategoryUpdateRequest = {
-      nama_kategori: namaKategori,
-      urutan: overrides.urutan ?? currentOrder,
-      is_active: overrides.is_active ?? currentActive,
-    };
-
-    if (slug) {
-      payload.slug = slug;
+    if (overrides.is_active !== undefined) {
+      payload.is_active = overrides.is_active;
     }
 
     if (overrides.status !== undefined) {
@@ -879,7 +850,24 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       payload.image = overrides.image;
     }
 
+    if (overrides.preview_image) {
+      payload.preview_image = overrides.preview_image;
+    }
+
+    if (!Object.keys(payload).length) {
+      this.notyf.error(`Tidak ada perubahan untuk tema ${theme.name}.`);
+      return null;
+    }
+
     return payload;
+  }
+
+  private resolveCategoryUpdateError(error: any): string {
+    if (error?.status === 422) {
+      return error?.error || 'Beberapa data belum sesuai. Mohon periksa kembali input Anda.';
+    }
+
+    return error?.error || 'Gagal memperbarui gambar preview.';
   }
 
   private handleThemeUpdateSuccess(message: string): void {
