@@ -36,3 +36,323 @@
     width: calc(100vw - 24px);
   }
 }
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.dashboard-layout,
+.dashboard-container {
+  box-sizing: border-box;
+}
+
+.dashboard-layout *,
+.dashboard-layout *::before,
+.dashboard-layout *::after,
+.dashboard-container *,
+.dashboard-container *::before,
+.dashboard-container *::after {
+  box-sizing: border-box;
+}
+
+.dashboard-layout {
+  --dashboard-mobile-padding: 16px;
+}
+
+.dashboard-layout .well,
+.dashboard-layout .dashboard-content,
+.dashboard-layout .content {
+  max-width: 100%;
+}
+
+.dashboard-layout .table-wrapper,
+.dashboard-layout .table-responsive,
+.dashboard-layout .invoice-container,
+.dashboard-layout .attendance-table-wrapper,
+.dashboard-layout .desktop-table {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-layout img,
+.dashboard-layout video,
+.dashboard-layout canvas {
+  max-width: 100%;
+}
+
+.dashboard-layout input,
+.dashboard-layout select,
+.dashboard-layout textarea {
+  max-width: 100%;
+}
+
+.dashboard-layout .responsive-grid,
+.dashboard-layout .stats-grid,
+.dashboard-layout .theme-grid,
+.dashboard-layout .gallery-grid {
+  display: grid;
+}
+
+.dashboard-layout .responsive-card,
+.dashboard-layout .card,
+.dashboard-layout .form-card,
+.dashboard-layout .dashboard-card,
+.dashboard-layout .content-card,
+.dashboard-layout .music-catalog-card,
+.dashboard-layout .theme-admin-card,
+.dashboard-layout .upload-panel,
+.dashboard-layout .user-card,
+.dashboard-layout .invoice-card {
+  max-width: 100%;
+}
+
+.dashboard-layout .mobile-stack {
+  min-width: 0;
+}
+
+.dashboard-layout .dropdown-menu {
+  z-index: 1400;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-layout,
+  .dashboard-container {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-layout .dashboard-content,
+  .dashboard-layout .content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .dashboard-layout .well {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .dashboard-layout .responsive-grid,
+  .dashboard-layout .stats-grid,
+  .dashboard-layout .theme-grid,
+  .dashboard-layout .gallery-grid,
+  .dashboard-layout .upload-grid,
+  .dashboard-layout .meta-grid,
+  .dashboard-layout .dashboard-stats,
+  .dashboard-layout .summary-grid,
+  .dashboard-layout .overview-stats,
+  .dashboard-layout .quick-actions,
+  .dashboard-layout .theme-card-controls,
+  .dashboard-layout .workspace-grid,
+  .dashboard-layout .theme-detail-grid,
+  .dashboard-layout .theme-picker__header,
+  .dashboard-layout .scan-layout,
+  .dashboard-layout .attendance-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-layout .dashboard-sidebar,
+  .dashboard-layout .sidebar {
+    width: min(82vw, 300px) !important;
+    max-width: 300px !important;
+  }
+
+  .dashboard-layout .dashboard-header,
+  .dashboard-layout .header {
+    max-width: 100% !important;
+  }
+
+  .dashboard-layout .dashboard-header .user-name,
+  .dashboard-layout .header .user-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dashboard-layout .route-path {
+    display: none !important;
+  }
+
+  .dashboard-layout .row {
+    max-width: 100%;
+  }
+
+  .dashboard-layout .responsive-grid,
+  .dashboard-layout .stats-grid,
+  .dashboard-layout .theme-grid,
+  .dashboard-layout .gallery-grid,
+  .dashboard-layout .upload-grid,
+  .dashboard-layout .meta-grid,
+  .dashboard-layout .dashboard-stats,
+  .dashboard-layout .theme-admin-page .row,
+  .dashboard-layout .catalog-item,
+  .dashboard-layout .workspace-grid,
+  .dashboard-layout .theme-detail-grid,
+  .dashboard-layout .theme-picker__header,
+  .dashboard-layout .photo-header,
+  .dashboard-layout .panel-title,
+  .dashboard-layout .list-header,
+  .dashboard-layout .payment-grid,
+  .dashboard-layout .rekening-grid,
+  .dashboard-layout .story-grid,
+  .dashboard-layout .event-grid,
+  .dashboard-layout .couple-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-layout .theme-picker__header,
+  .dashboard-layout .theme-admin-hero,
+  .dashboard-layout .photo-header,
+  .dashboard-layout .panel-title,
+  .dashboard-layout .list-header,
+  .dashboard-layout .theme-card-head {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .dashboard-layout .upload-panel,
+  .dashboard-layout .preview-panel {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  .dashboard-layout .card,
+  .dashboard-layout .form-card,
+  .dashboard-layout .dashboard-card,
+  .dashboard-layout .content-card,
+  .dashboard-layout .music-catalog-card,
+  .dashboard-layout .theme-admin-card,
+  .dashboard-layout .upload-panel,
+  .dashboard-layout .gallery-card,
+  .dashboard-layout .theme-card,
+  .dashboard-layout .theme-admin-shell,
+  .dashboard-layout .theme-picker__shell,
+  .dashboard-layout .photo-management,
+  .dashboard-layout .photo-header,
+  .dashboard-layout .preview-panel,
+  .dashboard-layout .photo-list-section,
+  .dashboard-layout .users-admin-container,
+  .dashboard-layout .invoice-section {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .dashboard-layout .theme-admin-page,
+  .dashboard-layout .theme-picker,
+  .dashboard-layout .photo-management,
+  .dashboard-layout .music-catalog-page {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .dashboard-layout .form-control,
+  .dashboard-layout .form-select,
+  .dashboard-layout input,
+  .dashboard-layout select,
+  .dashboard-layout textarea {
+    width: 100%;
+  }
+
+  .dashboard-layout table {
+    min-width: 640px;
+  }
+
+  .dashboard-layout .mobile-cards {
+    width: 100%;
+  }
+
+  .dashboard-layout .modal,
+  .dashboard-layout .theme-modal,
+  .dashboard-layout .theme-detail-modal,
+  .dashboard-layout .manual-upgrade-modal {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+  }
+
+  .dashboard-layout .modal-footer,
+  .dashboard-layout .manual-upgrade-footer {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-layout .theme-admin-page::before,
+  .dashboard-layout .theme-admin-page::after,
+  .dashboard-layout .music-catalog-page::before,
+  .dashboard-layout .music-catalog-page::after {
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 425px) {
+  .dashboard-layout {
+    --dashboard-mobile-padding: 14px;
+  }
+
+  .dashboard-layout .well {
+    padding: var(--dashboard-mobile-padding) !important;
+  }
+
+  .dashboard-layout .dashboard-header,
+  .dashboard-layout .header {
+    gap: 8px !important;
+  }
+
+  .dashboard-layout .dashboard-header .breadcrumbs,
+  .dashboard-layout .header .breadcrumbs {
+    min-width: 0;
+  }
+
+  .dashboard-layout button,
+  .dashboard-layout .btn,
+  .dashboard-layout .menu-item,
+  .dashboard-layout .submenu-item {
+    min-height: 44px;
+  }
+
+  .dashboard-layout .upload-actions,
+  .dashboard-layout .catalog-actions,
+  .dashboard-layout .card-actions,
+  .dashboard-layout .action-buttons,
+  .dashboard-layout .theme-card-actions,
+  .dashboard-layout .theme-card-controls,
+  .dashboard-layout .order-controls,
+  .dashboard-layout .modal-footer,
+  .dashboard-layout .manual-upgrade-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dashboard-layout .upload-actions .btn,
+  .dashboard-layout .catalog-actions .btn,
+  .dashboard-layout .card-actions .btn,
+  .dashboard-layout .action-buttons .btn,
+  .dashboard-layout .theme-card-actions .btn,
+  .dashboard-layout .theme-card-actions .upload-btn,
+  .dashboard-layout .theme-card-controls button,
+  .dashboard-layout .modal-footer .btn,
+  .dashboard-layout .manual-upgrade-footer .btn {
+    width: 100%;
+  }
+
+  .dashboard-layout input[type="file"] {
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .dashboard-layout .modal-dialog {
+    margin: 12px auto;
+    width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+  }
+}

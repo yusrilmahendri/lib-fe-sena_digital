@@ -1,12 +1,12 @@
-<div class="dashboard-container">
+<div class="dashboard-container dashboard-layout">
   <!-- Overlay for mobile -->
-  <div class="sidebar-overlay"
+  <div class="sidebar-overlay dashboard-sidebar-backdrop"
        [class.active]="isSidebarOpen"
        (click)="closeSidebar()"
        [@sidebarSlide]="isSidebarOpen ? 'open' : 'closed'"></div>
 
   <!-- Enhanced Toggle Button for Mobile -->
-  <button class="menu-toggle"
+  <button class="menu-toggle dashboard-menu-toggle"
           (click)="toggleSidebar()"
           [class.active]="isSidebarOpen"
           aria-label="Toggle sidebar menu">
@@ -16,7 +16,7 @@
   </button>
 
   <!-- Sidebar with Animation -->
-  <div class="sidebar"
+  <div class="sidebar dashboard-sidebar"
        [class.open]="isSidebarOpen">
 
     <!-- Logo Section -->
@@ -181,9 +181,9 @@
   </div>
 
   <!-- Main Content -->
-  <div class="content">
+  <div class="content dashboard-content">
     <!-- Header -->
-    <header class="header" role="banner">
+    <header class="header dashboard-header" role="banner">
       <div class="breadcrumbs">
         <h1 class="route-name">{{ currentRouteName }}</h1>
         <span class="route-path">{{ routePath }}</span>

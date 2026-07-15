@@ -72,6 +72,7 @@ export class DashboardAdminComponent implements OnInit, OnDestroy {
   ) {}
 
     ngOnInit(): void {
+    this.initializeSidebarState();
     this.getAdminProfile();
     this.setRouteName();
     this.setRoutePath();
@@ -82,6 +83,9 @@ export class DashboardAdminComponent implements OnInit, OnDestroy {
     ).subscribe(() => {
       this.setRouteName();
       this.setRoutePath();
+      if (window.innerWidth <= 1024) {
+        this.closeSidebar();
+      }
       // Refresh profile data when navigating back from profile page
       if (this.router.url.includes('/admin') && !this.router.url.includes('/profile')) {
         this.getAdminProfile();
@@ -219,24 +223,22 @@ export class DashboardAdminComponent implements OnInit, OnDestroy {
     if (windowWidth > 1024) {
       // Desktop: sidebar should be open
       this.isSidebarOpen = true;
-    } else if (windowWidth <= 768) {
-      // Mobile: sidebar should be closed
+    } else {
       this.isSidebarOpen = false;
     }
-    // Tablet (769-1024): keep current state
   }
 
   selectMenu(): void {
     this.isDropdownOpen = false;
     // Close sidebar on mobile after menu selection
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       this.closeSidebar();
     }
   }
 
   // Handle menu item click for mobile
   onMenuItemClick(): void {
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 1024) {
       this.closeSidebar();
     }
   }
