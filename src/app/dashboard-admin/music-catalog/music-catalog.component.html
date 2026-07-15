@@ -83,7 +83,7 @@
 
           <div class="status-row">
             <span class="status-pill" [class.active]="item.is_active" [class.inactive]="!item.is_active">
-              {{ item.is_active ? 'Aktif' : 'Disembunyikan dari User' }}
+              {{ item.is_active ? 'Aktif' : 'Disembunyikan' }}
             </span>
             <span class="status-pill default" *ngIf="item.is_default">Default</span>
             <span class="status-pill order">Urutan: {{ item.sort_order ?? index + 1 }}</span>

@@ -36,8 +36,8 @@
       <p>Memuat data tema...</p>
     </div>
 
-    <div class="row g-4" *ngIf="!loading">
-      <div class="col-12 col-md-6 col-xl-4" *ngFor="let theme of filteredThemes; trackBy: trackByTheme">
+    <div class="row g-4 theme-admin-grid theme-grid" *ngIf="!loading">
+      <div class="col-12 col-md-6 col-xl-4 theme-admin-grid-item" *ngFor="let theme of filteredThemes; trackBy: trackByTheme">
         <article class="theme-admin-card">
           <div class="theme-card-media">
             <span class="theme-card-order">Urutan {{ theme.displayOrder }}</span>
