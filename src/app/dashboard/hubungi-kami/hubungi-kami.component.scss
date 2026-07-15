@@ -504,3 +504,207 @@
     transition: none;
   }
 }
+/* Final equal-card-width fix for Hubungi Kami */
+.dashboard-page.contact-page {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+}
+
+/* Semua section utama harus punya lebar sama */
+.contact-page > .contact-hero,
+.contact-page > .method-grid,
+.contact-page > .contact-layout,
+.contact-page > .faq-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Semua wrapper grid dibuat 1 kolom di mobile */
+.method-grid,
+.contact-layout {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Semua card harus ikut parent, bukan ukuran sendiri */
+.contact-hero,
+.method-card,
+.message-card,
+.support-card,
+.faq-card,
+.dashboard-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Jangan ada min-height yang bikin card terasa beda */
+.method-card p {
+  min-height: auto !important;
+}
+
+/* Form tetap full */
+.form-grid,
+.form-actions {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.field-group,
+.field-group input,
+.field-group select,
+.field-group textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .contact-page > .contact-hero,
+  .contact-page > .method-grid,
+  .contact-page > .contact-layout,
+  .contact-page > .faq-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .contact-hero,
+  .method-card,
+  .message-card,
+  .support-card,
+  .faq-card,
+  .dashboard-card {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .method-grid,
+  .contact-layout {
+    gap: 14px !important;
+    margin-top: 14px !important;
+  }
+
+  .contact-hero {
+    margin-bottom: 14px !important;
+  }
+
+  .faq-card {
+    margin-top: 14px !important;
+  }
+}
+/* Final equal-card-width fix for Hubungi Kami */
+.dashboard-page.contact-page {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+}
+
+/* Semua section utama harus punya lebar sama */
+.contact-page > .contact-hero,
+.contact-page > .method-grid,
+.contact-page > .contact-layout,
+.contact-page > .faq-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Semua wrapper grid dibuat 1 kolom di mobile */
+.method-grid,
+.contact-layout {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 14px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Semua card harus ikut parent, bukan ukuran sendiri */
+.contact-hero,
+.method-card,
+.message-card,
+.support-card,
+.faq-card,
+.dashboard-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Jangan ada min-height yang bikin card terasa beda */
+.method-card p {
+  min-height: auto !important;
+}
+
+/* Form tetap full */
+.form-grid,
+.form-actions {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.field-group,
+.field-group input,
+.field-group select,
+.field-group textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .contact-page > .contact-hero,
+  .contact-page > .method-grid,
+  .contact-page > .contact-layout,
+  .contact-page > .faq-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .contact-hero,
+  .method-card,
+  .message-card,
+  .support-card,
+  .faq-card,
+  .dashboard-card {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .method-grid,
+  .contact-layout {
+    gap: 14px !important;
+    margin-top: 14px !important;
+  }
+
+  .contact-hero {
+    margin-bottom: 14px !important;
+  }
+
+  .faq-card {
+    margin-top: 14px !important;
+  }
+}

@@ -9,6 +9,20 @@
         <p class="mt-2 text-muted">Memuat data rekening...</p>
       </div>
 
+              <!-- Info Panel -->
+          <div class="info-panel mt-4 col-12">
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Informasi:</strong>
+              <ul class="mb-0 mt-2">
+                <li>Maksimal {{ maxRekening }} rekening per pengguna</li>
+                <li>Semua field bertanda * wajib diisi</li>
+                <li>Foto rekening bersifat opsional (maksimal 2MB, format: JPG, JPEG, PNG)</li>
+                <li>Nomor rekening hanya boleh berisi angka</li>
+              </ul>
+            </div>
+          </div>
+
       <!-- Main Content -->
       <div *ngIf="!isLoading" class="col-12">
         <form [formGroup]="rekeningForm" (ngSubmit)="onSubmit()">
@@ -228,20 +242,6 @@
                   {{ isSubmitting ? 'Menyimpan...' : 'Simpan Rekening' }}
                 </button>
               </div>
-            </div>
-          </div>
-
-          <!-- Info Panel -->
-          <div class="info-panel mt-4">
-            <div class="alert alert-info">
-              <i class="fas fa-info-circle me-2"></i>
-              <strong>Informasi:</strong>
-              <ul class="mb-0 mt-2">
-                <li>Maksimal {{ maxRekening }} rekening per pengguna</li>
-                <li>Semua field bertanda * wajib diisi</li>
-                <li>Foto rekening bersifat opsional (maksimal 2MB, format: JPG, JPEG, PNG)</li>
-                <li>Nomor rekening hanya boleh berisi angka</li>
-              </ul>
             </div>
           </div>
         </form>

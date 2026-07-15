@@ -15,10 +15,10 @@
 
 .cerita-quote-container {
   width: 100%;
-  max-width: 1280px;
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: 24px;
+  max-width: 100%;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
   color: var(--text-primary);
   background: var(--page-bg);
   box-sizing: border-box;
@@ -677,5 +677,343 @@ textarea.form-control {
 
   .story-form-item {
     padding: 14px;
+  }
+}
+/* Final responsive fix for Cerita & Quote page */
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.cerita-quote-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  background: transparent !important;
+  box-sizing: border-box;
+}
+
+.page-header,
+.dashboard-card,
+.form-panel,
+.data-block,
+.data-card,
+.story-form-item,
+.content-grid,
+.data-section,
+.data-grid,
+.form-content,
+.story-form-list {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.content-grid,
+.data-section,
+.data-grid,
+.story-form-list,
+.form-content {
+  display: grid;
+  grid-template-columns: 1fr !important;
+}
+
+.page-header,
+.dashboard-card {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.form-control,
+textarea,
+input,
+select {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+textarea.form-control {
+  resize: vertical;
+}
+
+.btn-action {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .cerita-quote-container {
+    padding: 0 !important;
+  }
+
+  .content-grid,
+  .data-section {
+    gap: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .page-header {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 12px;
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .page-header h1 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+
+  .page-header p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .page-header__icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 14px !important;
+  }
+
+  .dashboard-card {
+    padding: 18px !important;
+    border-radius: 18px !important;
+  }
+
+  .card-heading {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .card-heading h2 {
+    font-size: 20px !important;
+    line-height: 1.25 !important;
+  }
+
+  .card-heading p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  .card-heading__icon,
+  .data-icon {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+  }
+
+  .story-form-item {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .story-form-item__header {
+    gap: 10px !important;
+  }
+
+  .label-row {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .form-actions,
+  .edit-actions {
+    justify-content: stretch !important;
+  }
+
+  .btn-action {
+    width: 100% !important;
+    min-height: 46px !important;
+  }
+
+  .data-block {
+    padding: 0 !important;
+    overflow: hidden;
+  }
+
+  .data-header {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 12px !important;
+    padding: 18px !important;
+  }
+
+  .data-title-wrap {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px !important;
+  }
+
+  .data-grid {
+    padding: 18px !important;
+    gap: 14px !important;
+  }
+
+  .data-card {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .data-card-header {
+    align-items: flex-start !important;
+  }
+
+  .card-actions {
+    flex-shrink: 0;
+  }
+
+  .edit-actions {
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .cerita-quote-container {
+    padding: 0 !important;
+  }
+
+  .content-grid,
+  .data-section {
+    gap: 14px !important;
+  }
+
+  .page-header,
+  .dashboard-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .page-header {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .page-header__icon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .page-header h1 {
+    font-size: 21px !important;
+  }
+
+  .page-header p {
+    font-size: 13px !important;
+  }
+
+  .card-heading {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 10px !important;
+  }
+
+  .card-heading__icon,
+  .data-icon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .card-heading h2 {
+    font-size: 19px !important;
+  }
+
+  .card-heading p {
+    font-size: 13px !important;
+  }
+
+  .story-form-item {
+    padding: 14px !important;
+  }
+
+  .item-badge {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  .icon-button {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .form-control {
+    min-height: 46px !important;
+    padding: 11px 13px !important;
+    font-size: 14px !important;
+  }
+
+  textarea.form-control {
+    min-height: 120px !important;
+  }
+
+  .quote-form textarea.form-control {
+    min-height: 140px !important;
+  }
+
+  .data-header {
+    padding: 16px !important;
+  }
+
+  .data-grid {
+    padding: 16px !important;
+  }
+
+  .empty-state {
+    padding: 32px 16px 36px !important;
+  }
+
+  .empty-state h3 {
+    font-size: 16px !important;
+  }
+
+  .empty-state p {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-header,
+  .dashboard-card {
+    padding: 14px !important;
+  }
+
+  .page-header {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .page-header__icon,
+  .card-heading__icon,
+  .data-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .card-heading,
+  .data-title-wrap {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .page-header h1,
+  .card-heading h2 {
+    font-size: 18px !important;
+  }
+
+  .story-form-item,
+  .data-card {
+    padding: 12px !important;
   }
 }

@@ -436,192 +436,353 @@
   }
 }
 
-@media (max-width: 768px) {
+// @media (max-width: 768px) {
+//   .overview-page {
+//     max-width: 100%;
+//     padding: 18px 14px 32px;
+//     overflow-x: hidden;
+//   }
+
+//   .overview-header {
+//     margin-bottom: 36px;
+//   }
+
+//   .overview-title h1 {
+//     font-size: 24px;
+//   }
+
+//   .overview-title h1 span {
+//     font-size: 14px;
+//   }
+
+//   .overview-account {
+//     max-width: 140px;
+//     font-size: 13px;
+//   }
+
+//   .overview-active-row {
+//     align-items: flex-start;
+//     margin-bottom: 20px;
+//   }
+
+//   .overview-active-row p {
+//     font-size: 14px;
+//   }
+
+//   .overview-website-btn {
+//     min-width: 130px;
+//     padding: 0 16px;
+//     font-size: 13px;
+//   }
+
+//   .overview-status-card {
+//     padding: 18px;
+//     margin-bottom: 20px;
+//     border-radius: 14px;
+//   }
+
+//   .overview-status-card h2 {
+//     font-size: 22px;
+//   }
+
+//   .overview-status-grid {
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//     gap: 12px;
+//   }
+
+//   .overview-status-item {
+//     min-height: 76px;
+//     padding: 13px;
+//   }
+
+//   .overview-status-item span {
+//     font-size: 11px;
+//   }
+
+//   .overview-status-item strong {
+//     font-size: 13px;
+//   }
+
+//   .overview-stat-grid {
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//     gap: 12px;
+//     margin-bottom: 20px;
+//   }
+
+//   .overview-stat-card {
+//     min-height: 118px;
+//     padding: 14px 12px 12px;
+//     border-radius: 14px;
+//   }
+
+//   .overview-stat-card h3 {
+//     font-size: 13px;
+//     line-height: 1.25;
+//     margin-bottom: 10px;
+//   }
+
+//   .overview-stat-card .stat-value {
+//     font-size: 26px;
+//   }
+
+//   .overview-stat-card p {
+//     font-size: 12px;
+//     line-height: 1.35;
+//   }
+
+//   .overview-bottom-grid {
+//     grid-template-columns: 1fr;
+//     gap: 18px;
+//   }
+
+//   .overview-chart-card,
+//   .overview-detail-card {
+//     width: 100%;
+//     min-height: 300px;
+//     padding: 16px;
+//     border-radius: 14px;
+//   }
+
+//   .payment-warning-card {
+//     grid-template-columns: 1fr;
+//     padding: 18px;
+//   }
+
+//   .payment-warning-card__details {
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//   }
+// }
+
+// @media (max-width: 360px) {
+//   .overview-page {
+//     padding-left: 10px;
+//     padding-right: 10px;
+//   }
+
+//   .overview-header {
+//     gap: 10px;
+//   }
+
+//   .overview-title h1 {
+//     font-size: 22px;
+//   }
+
+//   .overview-account {
+//     max-width: 110px;
+//   }
+
+//   .overview-active-row {
+//     display: grid;
+//     grid-template-columns: 1fr;
+//     gap: 12px;
+//   }
+
+//   .overview-website-btn {
+//     width: 100%;
+//   }
+
+//   .overview-status-card {
+//     padding: 16px;
+//   }
+
+//   .overview-status-grid {
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//     gap: 10px;
+//   }
+
+//   .overview-status-item {
+//     padding: 11px;
+//   }
+
+//   .overview-stat-grid {
+//     grid-template-columns: repeat(2, minmax(0, 1fr));
+//     gap: 10px;
+//   }
+
+//   .overview-stat-card {
+//     min-height: 112px;
+//     padding: 12px 10px;
+//   }
+
+//   .overview-stat-card h3 {
+//     font-size: 12px;
+//   }
+
+//   .overview-stat-card .stat-value {
+//     font-size: 24px;
+//   }
+
+//   .overview-chart-card,
+//   .overview-detail-card {
+//     min-height: 280px;
+//   }
+
+//   .payment-warning-card__details {
+//     grid-template-columns: 1fr;
+//   }
+
+//   .payment-warning-card__actions .btn {
+//     width: 100%;
+//   }
+// }
+/* Final overview layout: keep desktop layout on all devices */
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto !important;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overview-page {
+  width: 100%;
+  min-width: 1120px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 32px 40px;
+  box-sizing: border-box;
+  overflow: visible !important;
+}
+
+/* Active row tetap 1 baris seperti desktop */
+.overview-active-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+}
+
+/* Status akun tetap 4 kolom */
+.overview-status-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+/* Statistik tetap 4 kolom */
+.overview-stat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+/* Grafik + detail tetap 2 kolom */
+.overview-bottom-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
+  gap: 24px !important;
+  align-items: stretch !important;
+}
+
+.overview-chart-card,
+.overview-detail-card {
+  min-height: 420px !important;
+}
+
+/* Jangan biarkan media query mobile mengubah layout */
+@media (max-width: 1024px) {
+  :host {
+    overflow-x: auto !important;
+  }
+
   .overview-page {
-    max-width: 100%;
-    padding: 18px 14px 32px;
-    overflow-x: hidden;
-  }
-
-  .overview-header {
-    margin-bottom: 36px;
-  }
-
-  .overview-title h1 {
-    font-size: 24px;
-  }
-
-  .overview-title h1 span {
-    font-size: 14px;
-  }
-
-  .overview-account {
-    max-width: 140px;
-    font-size: 13px;
-  }
-
-  .overview-active-row {
-    align-items: flex-start;
-    margin-bottom: 20px;
-  }
-
-  .overview-active-row p {
-    font-size: 14px;
-  }
-
-  .overview-website-btn {
-    min-width: 130px;
-    padding: 0 16px;
-    font-size: 13px;
-  }
-
-  .overview-status-card {
-    padding: 18px;
-    margin-bottom: 20px;
-    border-radius: 14px;
-  }
-
-  .overview-status-card h2 {
-    font-size: 22px;
+    min-width: 1120px !important;
+    max-width: 1200px !important;
+    padding: 24px 32px 40px !important;
   }
 
   .overview-status-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .overview-status-item {
-    min-height: 76px;
-    padding: 13px;
-  }
-
-  .overview-status-item span {
-    font-size: 11px;
-  }
-
-  .overview-status-item strong {
-    font-size: 13px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
   .overview-stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .overview-stat-card {
-    min-height: 118px;
-    padding: 14px 12px 12px;
-    border-radius: 14px;
-  }
-
-  .overview-stat-card h3 {
-    font-size: 13px;
-    line-height: 1.25;
-    margin-bottom: 10px;
-  }
-
-  .overview-stat-card .stat-value {
-    font-size: 26px;
-  }
-
-  .overview-stat-card p {
-    font-size: 12px;
-    line-height: 1.35;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
   .overview-bottom-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    overflow-x: auto !important;
+  }
+
+  .overview-page {
+    min-width: 1120px !important;
+    max-width: 1200px !important;
+    padding: 24px 32px 40px !important;
+  }
+
+  .overview-active-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .overview-website-btn {
+    width: auto !important;
+    min-width: 150px !important;
+  }
+
+  .overview-status-card {
+    padding: 24px !important;
+  }
+
+  .overview-status-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
+
+  .overview-stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+  }
+
+  .overview-bottom-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
+    gap: 24px !important;
   }
 
   .overview-chart-card,
   .overview-detail-card {
-    width: 100%;
-    min-height: 300px;
-    padding: 16px;
-    border-radius: 14px;
-  }
-
-  .payment-warning-card {
-    grid-template-columns: 1fr;
-    padding: 18px;
-  }
-
-  .payment-warning-card__details {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 420px !important;
+    padding: 20px !important;
   }
 }
 
 @media (max-width: 360px) {
+  :host {
+    overflow-x: auto !important;
+  }
+
   .overview-page {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .overview-header {
-    gap: 10px;
-  }
-
-  .overview-title h1 {
-    font-size: 22px;
-  }
-
-  .overview-account {
-    max-width: 110px;
+    min-width: 1120px !important;
+    max-width: 1200px !important;
+    padding: 24px 32px 40px !important;
   }
 
   .overview-active-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
+    display: flex !important;
+    grid-template-columns: unset !important;
   }
 
   .overview-website-btn {
-    width: 100%;
-  }
-
-  .overview-status-card {
-    padding: 16px;
+    width: auto !important;
   }
 
   .overview-status-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .overview-status-item {
-    padding: 11px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
   .overview-stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
 
-  .overview-stat-card {
-    min-height: 112px;
-    padding: 12px 10px;
-  }
-
-  .overview-stat-card h3 {
-    font-size: 12px;
-  }
-
-  .overview-stat-card .stat-value {
-    font-size: 24px;
-  }
-
-  .overview-chart-card,
-  .overview-detail-card {
-    min-height: 280px;
-  }
-
-  .payment-warning-card__details {
-    grid-template-columns: 1fr;
-  }
-
-  .payment-warning-card__actions .btn {
-    width: 100%;
+  .overview-bottom-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr) !important;
   }
 }

@@ -9,10 +9,10 @@
     </div>
 
     <div class="row">
-      <div class="col-12">
+      <div class="acara-content-stack">
 
         <!-- Static Event Form (Countdown) -->
-        <div class="col-12 mb-4">
+        <div class="acara-section">
           <div class="card-custom countdown-card">
             <div class="section-heading">
               <span class="section-heading__icon"><i class="far fa-calendar-check"></i></span>
@@ -43,7 +43,7 @@
           </div>
         </div>
 
-        <div class="col-12" style="margin-bottom: 15px;">
+        <section class="acara-section acara-section--maps-note">
           <div class="maps-shortlink-info-card">
             <div class="maps-shortlink-info-card__icon">
               <i class="fas fa-info-circle"></i>
@@ -52,26 +52,26 @@
             <div class="maps-shortlink-info-card__content">
               <strong>Catatan penggunaan link Google Maps</strong>
 
-              <p>
-                Link share pendek seperti <b>maps.app.goo.gl</b> tetap bisa disimpan dan digunakan sebagai link lokasi.
-                Latitude dan longitude bersifat opsional. Jika ingin mengambil koordinat otomatis, gunakan link Google Maps panjang yang berisi angka latitude dan longitude.
-              </p>
+            <p>
+              Link pendek <b>maps.app.goo.gl</b> bisa disimpan sebagai lokasi.
+              Untuk mengambil koordinat otomatis, gunakan link Google Maps panjang.
+            </p>
 
-              <div class="maps-link-example">
-                <span>Contoh link pendek, bisa disimpan tetapi koordinat tidak terbaca otomatis:</span>
+             <div class="maps-link-example">
+                <span>Link pendek, hanya disimpan:</span>
                 <code>https://maps.app.goo.gl/MLMF6xivPUJKaFVc7</code>
               </div>
 
               <div class="maps-link-example maps-link-example--valid">
-                <span>Contoh link panjang, bisa dipakai untuk ambil koordinat otomatis:</span>
+                <span>Link panjang, bisa ambil koordinat:</span>
                 <code>https://www.google.com/maps/search/?api=1&amp;query=-7.7353891,110.3858977</code>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Dynamic Events Form -->
-        <div class="col-12">
+        <div class="acara-section">
           <form [formGroup]="dynamicEventForm" (ngSubmit)="onDynamicSubmitClicked()">
             <div formArrayName="dynamicEvents" class="dynamic-events-container">
               <div *ngFor="let eventForm of dynamicEvents.controls; let i = index" [formGroupName]="i" class="form-container">
