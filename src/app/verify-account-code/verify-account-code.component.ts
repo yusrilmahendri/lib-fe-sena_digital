@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, VerificationChannel } from '../auth.service';
 import { finalize } from 'rxjs/operators';
 import { DashboardService } from '../dashboard.service';
-import { resolvePaymentState } from '../shared/payment-status.util';
+import { resolvePaymentRedirect } from '../shared/payment-status.util';
 
 @Component({ selector: 'wc-verify-account-code', templateUrl: './verify-account-code.component.html', styleUrls: ['./verify-account-code.component.scss'] })
 export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
@@ -197,34 +197,19 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   }
 
   private navigateAfterVerification(verificationResponse?: any): void {
-    const redirectUrl = this.getBackendRedirectUrl(verificationResponse);
-    if (redirectUrl) {
+    const redirectUrl = resolvePaymentRedirect(verificationResponse, '/pilih-paket');
+    if (verificationResponse && redirectUrl !== '/verify-account') {
       this.router.navigateByUrl(redirectUrl);
       return;
     }
 
     this.dashboard.getProfile().subscribe({
       next: (profile) => this.router.navigateByUrl(this.resolveNextRoute(profile)),
-      error: () => this.router.navigateByUrl('/buat-undangan/payment'),
+      error: () => this.router.navigateByUrl('/pilih-paket'),
     });
   }
 
   private resolveNextRoute(profile: any): string {
-    const redirectUrl = this.getBackendRedirectUrl(profile);
-    if (redirectUrl) return redirectUrl;
-
-    const state = resolvePaymentState(profile);
-    if (state.accountStatus === 'active') return '/dashboard/overview';
-    if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';
-    if (state.accountStatus === 'expired') return '/dashboard/account-expired';
-    return '/buat-undangan/payment';
-  }
-
-  private getBackendRedirectUrl(response: any): string {
-    return String(
-      response?.data?.redirect_url ||
-      response?.redirect_url ||
-      ''
-    ).trim();
+    return resolvePaymentRedirect(profile, '/pilih-paket');
   }
 }

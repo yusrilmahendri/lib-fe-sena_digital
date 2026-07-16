@@ -8,7 +8,7 @@ import {
   ProfileData,
   ProfileResponse
 } from 'src/app/dashboard.service';
-import { filter } from 'rxjs/operators';
+import { filter, finalize } from 'rxjs/operators';
 import { IdleTimeoutService } from 'src/app/core/services/idle-timeout.service';
 import { AccountAccessStatus, resolvePaymentState } from 'src/app/shared/payment-status.util';
 
@@ -61,6 +61,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   nameCompletionForm: FormGroup;
   isSavingName = false;
   nameCompletionError = '';
+  isProfileLoading = false;
+  hasLoadedProfile = false;
 
   constructor(
     private router: Router,
@@ -110,8 +112,14 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   getUserProfile(): void {
-    this.DashBoardSvc.getProfile().subscribe({
+    this.isProfileLoading = true;
+    this.DashBoardSvc.getProfile().pipe(
+      finalize(() => {
+        this.isProfileLoading = false;
+      })
+    ).subscribe({
       next: (response: ProfileResponse) => {
+        this.hasLoadedProfile = true;
         this.userData = response.data;
         const paymentState = resolvePaymentState(response);
         this.accountStatus = paymentState.accountStatus;
@@ -120,6 +128,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
         // console.log('User profile data:', this.userData);
       },
       error: (error) => {
+        this.hasLoadedProfile = false;
+        this.requireNameModalOpen = false;
         console.error('Error loading user profile:', error);
       }
     });
@@ -239,7 +249,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
       case 'unverified':
         return '/verify-account';
       case 'pending_payment':
-        return '/dashboard/overview';
+        return '/dashboard/payment-pending';
       case 'expired':
         return '/dashboard/account-expired';
       default:
@@ -372,6 +382,11 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   private syncNameCompletionModal(): void {
+    if (this.isProfileLoading || !this.hasLoadedProfile) {
+      this.requireNameModalOpen = false;
+      return;
+    }
+
     const name = String(this.userData?.name || '').trim();
     const profileCompletionRequired =
       (this.userData as any)?.profile_completion_required === true ||

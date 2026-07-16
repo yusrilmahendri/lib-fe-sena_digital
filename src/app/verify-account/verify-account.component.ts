@@ -4,7 +4,7 @@ import { AuthService, VerificationChannel, VerificationProfile } from '../auth.s
 import { DashboardService } from '../dashboard.service';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
-import { resolvePaymentState } from '../shared/payment-status.util';
+import { resolvePaymentRedirect } from '../shared/payment-status.util';
 
 @Component({ selector: 'wc-verify-account', templateUrl: './verify-account.component.html', styleUrls: ['./verify-account.component.scss'] })
 export class VerifyAccountComponent implements OnInit {
@@ -78,13 +78,6 @@ export class VerifyAccountComponent implements OnInit {
   private maskPhone(value: string): string { const clean = value || ''; return clean.length > 7 ? `${clean.slice(0, 4)}****${clean.slice(-3)}` : 'Nomor akun Anda'; }
 
   private resolveNextRoute(profile: any): string {
-    const redirectUrl = String(profile?.data?.redirect_url || profile?.redirect_url || '').trim();
-    if (redirectUrl) return redirectUrl;
-
-    const state = resolvePaymentState(profile);
-    if (state.accountStatus === 'active') return '/dashboard/overview';
-    if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';
-    if (state.accountStatus === 'expired') return '/dashboard/account-expired';
-    return '/buat-undangan/payment';
+    return resolvePaymentRedirect(profile, '/pilih-paket');
   }
 }

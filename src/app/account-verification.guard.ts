@@ -4,12 +4,13 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { DashboardService } from './dashboard.service';
-import { isAccountVerified, resolvePaymentState } from './shared/payment-status.util';
+import { isAccountVerified, resolvePaymentRedirect, resolvePaymentState } from './shared/payment-status.util';
 
 @Injectable({ providedIn: 'root' })
 export class AccountVerificationGuard implements CanActivate {
   private readonly onboardingRoute = '/buat-undangan';
-  private readonly onboardingPaymentRoute = '/buat-undangan/payment';
+  private readonly onboardingPaymentRoute = '/pilih-paket';
+  private readonly legacyOnboardingPaymentRoute = '/buat-undangan/payment';
 
   constructor(
     private auth: AuthService,
@@ -28,12 +29,8 @@ export class AccountVerificationGuard implements CanActivate {
         return this.dashboardService.getProfile().pipe(
           map((profileResponse) => {
             sessionStorage.setItem('payment_intended_url', state.url);
-            const backendRedirectUrl = this.getBackendRedirectUrl(profileResponse);
-            if (backendRedirectUrl) {
-              return this.router.parseUrl(backendRedirectUrl);
-            }
-
             const paymentState = resolvePaymentState(profileResponse);
+            const redirectUrl = resolvePaymentRedirect(profileResponse, this.onboardingPaymentRoute);
 
             if (paymentState.accountStatus === 'active') return true;
             if (paymentState.accountStatus === 'onboarding') {
@@ -45,15 +42,12 @@ export class AccountVerificationGuard implements CanActivate {
               return this.router.createUrlTree(['/dashboard/account-expired']);
             }
             if (paymentState.accountStatus === 'pending_payment') {
-              if (!paymentState.hasInvoice) {
-                return this.router.createUrlTree([this.onboardingPaymentRoute]);
-              }
               return this.isDashboardPaymentStatusUrl(state.url)
                 ? true
-                : this.router.createUrlTree(['/dashboard/payment-pending']);
+                : this.router.parseUrl(redirectUrl);
             }
 
-            return this.router.createUrlTree([this.onboardingPaymentRoute]);
+            return this.router.parseUrl(redirectUrl);
           }),
           catchError(() => {
             sessionStorage.setItem('payment_intended_url', state.url);
@@ -74,19 +68,11 @@ export class AccountVerificationGuard implements CanActivate {
 
   private isDashboardPaymentStatusUrl(url: string): boolean {
     const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
-    return path === '/dashboard' || path === '/dashboard/overview' || path === '/dashboard/payment-pending' || path === '/dashboard/bill';
+    return path === '/dashboard/payment-pending' || path === '/dashboard/bill';
   }
 
   private isOnboardingUrl(url: string): boolean {
     const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
-    return path === this.onboardingRoute || path === this.onboardingPaymentRoute;
-  }
-
-  private getBackendRedirectUrl(response: any): string {
-    return String(
-      response?.data?.redirect_url ||
-      response?.redirect_url ||
-      ''
-    ).trim();
+    return path === this.onboardingRoute || path === this.onboardingPaymentRoute || path === this.legacyOnboardingPaymentRoute;
   }
 }

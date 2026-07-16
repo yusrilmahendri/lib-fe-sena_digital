@@ -15,6 +15,7 @@ export interface PaymentState {
   invoiceCode: string;
   transactionDate: string;
   hasInvoice: boolean;
+  hasSelectedPaymentMethod: boolean;
 }
 
 export type AccountAccessStatus = 'unverified' | 'onboarding' | 'pending_payment' | 'expired' | 'active';
@@ -36,17 +37,28 @@ const PAID_STATUSES = [
 const PENDING_STATUSES = [
   'pending_payment',
   'pending',
+  'waiting_payment',
   'menunggu',
   'menunggu konfirmasi',
   'menunggu pembayaran',
+  'menunggu_pembayaran',
   'waiting',
+  'belum selesai',
+  'mk',
+];
+
+const DRAFT_PAYMENT_STATUSES = [
+  'draft',
+  'unselected',
+  'no_payment_method',
+  'belum pilih metode',
+  'belum_pilih_metode',
+  'not_paid',
   'unpaid',
   'belum lunas',
   'belum_lunas',
-  'belum selesai',
-  'not_paid',
   'bl',
-  'mk',
+  '',
 ];
 
 const EXPIRED_STATUSES = [
@@ -67,7 +79,7 @@ export function isAccountVerified(profile: any): boolean {
     data.account_verified ||
     data.email_verified_at ||
     data.whatsapp_verified_at ||
-    ['onboarding', 'active', 'pending_payment', 'expired'].includes(accountStatus)
+    ['verified', 'verified_no_invoice', 'onboarding', 'active', 'pending_payment', 'expired'].includes(accountStatus)
   );
 }
 
@@ -104,17 +116,34 @@ export function resolvePaymentState(profile: any): PaymentState {
   const accountStatusRaw = normalizeStatus(data.account_status);
   const paymentStatus = firstText([
     data.payment_status,
+    data.invoice_status,
     data.status_bayar,
+    data.status_pembayaran,
     data.paket_status,
     data.status_tagihan,
+    data.transaction_status,
     data.package_info?.payment_status,
+    data.package_info?.invoice_status,
+    data.package_info?.status_pembayaran,
     data.invitation_package?.payment_status,
+    data.invitation_package?.invoice_status,
+    data.invitation_package?.status_pembayaran,
     data.tagihan?.status_bayar,
     data.tagihan?.payment_status,
+    data.tagihan?.invoice_status,
+    data.tagihan?.status_pembayaran,
+    data.tagihan?.transaction_status,
     data.invoice?.status_bayar,
     data.invoice?.payment_status,
+    data.invoice?.invoice_status,
+    data.invoice?.status_pembayaran,
+    data.invoice?.transaction_status,
+    data.transaction?.status,
+    data.transaction?.payment_status,
+    data.transaction?.transaction_status,
   ]);
   const paymentStatusRaw = normalizeStatus(paymentStatus);
+  const hasSelectedPaymentMethod = resolveHasSelectedPaymentMethod(data);
   const invoiceCode = firstText([
     data.no_invoice,
     data.invoice_number,
@@ -196,6 +225,7 @@ export function resolvePaymentState(profile: any): PaymentState {
     accountStatusRaw,
     paymentStatusRaw,
     hasInvoice,
+    hasSelectedPaymentMethod,
   });
 
   return {
@@ -240,7 +270,31 @@ export function resolvePaymentState(profile: any): PaymentState {
     invoiceCode,
     transactionDate: formatDateDisplay(transactionDate),
     hasInvoice,
+    hasSelectedPaymentMethod,
   };
+}
+
+export function resolvePaymentRedirect(profile: any, paymentRoute = '/pilih-paket'): string {
+  const data = profile?.data || profile || {};
+  const backendRedirectUrl = firstText([
+    data.redirect_url,
+    data.next_url,
+    data.redirect,
+  ]);
+  const state = resolvePaymentState(data);
+
+  if (backendRedirectUrl) {
+    if (normalizePath(backendRedirectUrl) === '/dashboard/payment-pending' && state.accountStatus !== 'pending_payment') {
+      return paymentRoute;
+    }
+    return backendRedirectUrl;
+  }
+
+  if (state.accountStatus === 'unverified') return '/verify-account';
+  if (state.accountStatus === 'expired') return '/dashboard/account-expired';
+  if (state.accountStatus === 'active') return '/dashboard/overview';
+  if (state.accountStatus === 'pending_payment') return '/dashboard/payment-pending';
+  return paymentRoute;
 }
 
 function resolveStatus(state: {
@@ -250,16 +304,21 @@ function resolveStatus(state: {
   accountStatusRaw: string;
   paymentStatusRaw: string;
   hasInvoice: boolean;
+  hasSelectedPaymentMethod: boolean;
 }): AccountAccessStatus {
   if (!state.isVerified) return 'unverified';
   if (state.isExpired) return 'expired';
   if (state.accountStatusRaw === 'active') return 'active';
   if (state.accountStatusRaw === 'onboarding') return 'onboarding';
   if (state.isPaymentConfirmed) return 'active';
+  if (DRAFT_PAYMENT_STATUSES.includes(state.paymentStatusRaw)) return 'onboarding';
   if (
-    state.accountStatusRaw === 'pending_payment' ||
-    PENDING_STATUSES.includes(state.accountStatusRaw) ||
-    PENDING_STATUSES.includes(state.paymentStatusRaw)
+    state.hasSelectedPaymentMethod &&
+    (
+      state.accountStatusRaw === 'pending_payment' ||
+      PENDING_STATUSES.includes(state.accountStatusRaw) ||
+      PENDING_STATUSES.includes(state.paymentStatusRaw)
+    )
   ) {
     return 'pending_payment';
   }
@@ -289,6 +348,49 @@ function resolveHasInvoice(data: any, invoiceCode: string): boolean {
   if (hasObjectValue(data.invoice) || hasObjectValue(data.tagihan)) return true;
 
   return false;
+}
+
+function resolveHasSelectedPaymentMethod(data: any): boolean {
+  return !!firstText([
+    data.payment_method,
+    data.payment_method_id,
+    data.payment_gateway,
+    data.metode_pembayaran,
+    data.metode_pembayaran_id,
+    data.id_methode_pembayaran,
+    data.manual_payment_selected === true ? 'manual' : '',
+    data.midtrans_order_id,
+    data.snap_token,
+    data.snap_redirect_url,
+    data.transaction?.payment_method,
+    data.transaction?.payment_method_id,
+    data.transaction?.payment_gateway,
+    data.transaction?.midtrans_order_id,
+    data.tagihan?.payment_method,
+    data.tagihan?.payment_method_id,
+    data.tagihan?.payment_gateway,
+    data.tagihan?.metode_pembayaran,
+    data.tagihan?.metode_pembayaran_id,
+    data.tagihan?.id_methode_pembayaran,
+    data.tagihan?.metode_transaction?.id,
+    data.tagihan?.metode_transaction?.name,
+    data.tagihan?.midtrans_order_id,
+    data.tagihan?.snap_token,
+    data.invoice?.payment_method,
+    data.invoice?.payment_method_id,
+    data.invoice?.payment_gateway,
+    data.invoice?.metode_pembayaran,
+    data.invoice?.metode_pembayaran_id,
+    data.invoice?.id_methode_pembayaran,
+    data.invoice?.metode_transaction?.id,
+    data.invoice?.metode_transaction?.name,
+    data.invoice?.midtrans_order_id,
+    data.invoice?.snap_token,
+  ]);
+}
+
+function normalizePath(url: string): string {
+  return (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
 }
 
 function hasObjectValue(value: unknown): boolean {
