@@ -450,7 +450,7 @@
         </div>
       </section>
 
-      <section class="diamond-garden-story">
+      <section class="diamond-garden-story" *ngIf="isStoryVisible() && hasStories()">
         <img
           #storyFrame
           class="diamond-garden-story__frame"

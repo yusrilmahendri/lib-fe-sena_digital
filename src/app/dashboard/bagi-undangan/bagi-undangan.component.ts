@@ -2,9 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import {
   createGuestSlug,
-  generateUniqueSlug,
   GuestInvitationRecord,
-  normalizeGuestRecord,
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
@@ -46,21 +44,15 @@ export class BagiUndanganComponent implements OnInit {
   public noticeMessage = '';
   public generatedGuests: GuestInvitationRecord[] = [];
   public isImportingGuests = false;
-  readonly guestStorageUsesLocalStorage = true;
+  public isGuestListLoading = false;
 
   get guestStorageWarningMessage(): string {
-    if (this.guestStorageUsesLocalStorage) {
-      return 'Daftar tamu tersimpan di browser ini. Jika cache browser dibersihkan atau dibuka di perangkat lain, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
-    }
-
-    return 'Daftar tamu pada halaman ini masih tersimpan sementara. Jika halaman di-refresh atau ditutup, data dapat hilang. Silakan gunakan Export Excel sebagai cadangan.';
+    return 'Daftar tamu tersimpan pada akun Anda dan dapat diakses dari perangkat lain.';
   }
 
   private weddingData: any = {};
   private salamSetting: Record<string, any> = {};
   private religionContent: ReligionContentLike = {};
-  private readonly storagePrefix = 'guest_invitations';
-  private readonly legacyStoragePrefix = 'generated_guest_invitations';
   private readonly maxStoredGuests = 500;
 
   constructor(private dashboardService: DashboardService) {}
@@ -74,7 +66,7 @@ export class BagiUndanganComponent implements OnInit {
     this.dashboardService.getProfile().subscribe({
       next: (response: ProfileResponse) => {
         this.publicWeddingDomain = this.normalizeWeddingDomain(response?.data?.domain_info?.domain);
-        this.loadStoredGuests();
+        this.loadGuestsFromBackend();
 
         if (!this.publicWeddingDomain) {
           this.showNotice('Domain undangan belum tersedia.');
@@ -155,19 +147,7 @@ export class BagiUndanganComponent implements OnInit {
       return;
     }
 
-    if (!this.publicWeddingDomain) {
-      this.showNotice('Domain undangan belum tersedia.');
-      return;
-    }
-
-    const createdGuest = this.addGuestLinkFromName(name);
-
-    if (!createdGuest) {
-      return;
-    }
-
-    this.generatedGuestUrl = this.getGuestInvitationUrl(createdGuest);
-    this.showNotice('Link undangan personal berhasil dibuat.');
+    this.createGuestInBackend(name);
   }
 
   public copyGuestInvitation(guestOrUrl?: GuestInvitationRecord | string): void {
@@ -194,7 +174,7 @@ export class BagiUndanganComponent implements OnInit {
       String(this.guestName || '').trim() ||
       'Tamu Undangan';
 
-    const invitationUrl = url || this.buildGuestInvitationUrl(resolvedGuestName);
+    const invitationUrl = url;
 
     if (!invitationUrl) {
       this.showNotice('Link undangan belum tersedia.');
@@ -214,14 +194,14 @@ export class BagiUndanganComponent implements OnInit {
 
     if (guestOrUrl && typeof guestOrUrl === 'object') {
       return String(guestOrUrl.url || '').trim()
-        || this.buildGuestInvitationUrl(guestOrUrl.slug);
+        || this.buildGuestInvitationUrl(guestOrUrl.guestToken, guestOrUrl.slug);
     }
 
     return String(this.generatedGuestUrl || '').trim();
   }
 
   public trackByGuest(index: number, guest: GuestInvitationRecord): string {
-    return `${guest.createdAt}-${guest.name}-${index}`;
+    return `${guest.id || guest.guestToken || guest.createdAt}-${guest.name}-${index}`;
   }
 
   public downloadGuestTemplate(): void {
@@ -271,51 +251,22 @@ export class BagiUndanganComponent implements OnInit {
 
     this.isImportingGuests = true;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const buffer = reader.result as ArrayBuffer;
-        const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
+    const formData = new FormData();
+    formData.append('file', file);
 
-        if (!sheetName) {
-          this.showNotice('File Excel kosong.');
-          return;
-        }
-
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-        const arrayRows = XLSX.utils.sheet_to_json<(string | number)[]>(worksheet, {
-          header: 1,
-          defval: ''
-        });
-
-        const guestNames = this.extractGuestNamesFromImportRows(jsonRows, arrayRows);
-
-        if (!guestNames.length) {
-          this.showNotice('Kolom Nama Tamu tidak ditemukan. Silakan gunakan template Excel.');
-          return;
-        }
-
-        const { successCount, duplicateCount } = this.importGuestNames(guestNames);
-        this.showNotice(
-          `Import selesai. ${successCount} tamu berhasil ditambahkan, ${duplicateCount} duplikat dilewati.`
-        );
-      } catch {
-        this.showNotice('Gagal membaca file Excel. Pastikan format file benar.');
-      } finally {
+    this.dashboardService.importInvitationGuests(formData).subscribe({
+      next: (response) => {
         this.isImportingGuests = false;
         input.value = '';
+        this.loadGuestsFromBackend();
+        this.showNotice(this.buildImportSuccessMessage(response));
+      },
+      error: (error) => {
+        this.isImportingGuests = false;
+        input.value = '';
+        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal mengimpor daftar tamu.'));
       }
-    };
-
-    reader.onerror = () => {
-      this.isImportingGuests = false;
-      input.value = '';
-      this.showNotice('Gagal membaca file Excel.');
-    };
-
-    reader.readAsArrayBuffer(file);
+    });
   }
 
   public onGuestExcelSelected(event: Event): void {
@@ -324,22 +275,21 @@ export class BagiUndanganComponent implements OnInit {
 
   public exportGuestsToExcel(): void {
     const rows = this.generatedGuests
-      .filter((guest) => !!guest.checkedInAt)
       .map((guest) => ({
-      Nama: guest.name,
-      Slug: guest.slug,
-      Link: guest.url,
+      'Nama Tamu': guest.name,
+      'Guest Slug': guest.slug,
+      'Invitation URL': guest.url,
+      'Status Kehadiran': (guest as any).attendanceStatus || (guest as any).attendance_status || '',
       'Waktu Hadir': guest.checkedInAt || '',
-      'Jumlah Scan': guest.checkinCount,
     }));
 
     if (!rows.length) {
       rows.push({
-        Nama: 'Belum ada tamu hadir',
-        Slug: '',
-        Link: '',
+        'Nama Tamu': 'Belum ada tamu',
+        'Guest Slug': '',
+        'Invitation URL': '',
+        'Status Kehadiran': '',
         'Waktu Hadir': '',
-        'Jumlah Scan': 0,
       });
     }
 
@@ -364,54 +314,25 @@ export class BagiUndanganComponent implements OnInit {
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
-  private addGuestLinkFromName(name: string, requestedSlug = ''): GuestInvitationRecord | null {
+  private createGuestInBackend(name: string): void {
     const cleanName = String(name || '').trim();
 
     if (!cleanName) {
-      return null;
+      return;
     }
 
-    const slug = generateUniqueSlug(requestedSlug || cleanName, this.generatedGuests);
-    const guestRecord = normalizeGuestRecord(
-      { name: cleanName, slug },
-      this.getInvitationShareOrigin(),
-      this.publicWeddingDomain,
-      this.generatedGuests
-    );
-
-    if (!guestRecord.url) {
-      return null;
-    }
-
-    this.generatedGuests = [
-      guestRecord,
-      ...this.generatedGuests
-    ].slice(0, this.maxStoredGuests);
-
-    this.persistGuestsToStorage();
-    return guestRecord;
-  }
-
-  private importGuestNames(names: ImportedGuestRow[]): { successCount: number; duplicateCount: number } {
-    let successCount = 0;
-    let duplicateCount = 0;
-
-    names.forEach((rawName) => {
-      const name = String(rawName?.name || '').trim();
-      const slug = String(rawName?.slug || '').trim();
-
-      if (!name) {
-        return;
-      }
-
-      if (this.addGuestLinkFromName(name, slug)) {
-        successCount += 1;
-      } else {
-        duplicateCount += 1;
+    this.dashboardService.createInvitationGuest({ name: cleanName }).subscribe({
+      next: (response) => {
+        const guest = this.normalizeBackendGuest(this.extractGuestPayload(response));
+        this.generatedGuestUrl = guest.url;
+        this.guestName = '';
+        this.showNotice('Link undangan personal berhasil dibuat.');
+        this.loadGuestsFromBackend();
+      },
+      error: (error) => {
+        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal membuat link undangan personal.'));
       }
     });
-
-    return { successCount, duplicateCount };
   }
 
   private extractGuestNamesFromImportRows(jsonRows: any[], arrayRows: (string | number)[][]): ImportedGuestRow[] {
@@ -434,22 +355,6 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     return this.extractGuestNamesFromExcelRows(arrayRows);
-  }
-
-  private normalizeStoredGuests(records: any[]): GuestInvitationRecord[] {
-    const origin = this.getInvitationShareOrigin();
-    const domain = this.publicWeddingDomain;
-
-    return records
-      .reduce((guests: GuestInvitationRecord[], record) => {
-        const guest = normalizeGuestRecord(record, origin, domain, guests);
-
-        if (String(guest.name || '').trim()) {
-          guests.push(guest);
-        }
-
-        return guests;
-      }, []);
   }
 
   private buildGuestExportFileName(): string {
@@ -783,7 +688,7 @@ export class BagiUndanganComponent implements OnInit {
     return String(value || '').replace(/\r\n/g, '\n');
   }
 
-  private buildGuestInvitationUrl(guestSlug?: string): string {
+  private buildGuestInvitationUrl(guestToken?: string, guestSlug?: string): string {
     const domain =
       this.publicWeddingDomain ||
       this.normalizeWeddingDomain(this.weddingData?.setting?.domain) ||
@@ -794,11 +699,21 @@ export class BagiUndanganComponent implements OnInit {
       return '';
     }
 
+    const cleanGuestToken = String(guestToken || '').trim();
     const cleanGuestSlug = String(guestSlug || '').trim();
     const origin = this.getInvitationShareOrigin();
     const baseUrl = `${origin}/wedding/${encodeURIComponent(domain)}`;
+    const params = new URLSearchParams();
 
-    return cleanGuestSlug ? `${baseUrl}?to=${encodeURIComponent(cleanGuestSlug)}` : '';
+    if (cleanGuestToken) {
+      params.set('guest', cleanGuestToken);
+    }
+
+    if (cleanGuestSlug) {
+      params.set('to', cleanGuestSlug);
+    }
+
+    return params.toString() ? `${baseUrl}?${params.toString()}` : '';
   }
 
   private getInvitationShareOrigin(): string {
@@ -817,15 +732,12 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     try {
-      return decodeURIComponent(new URL(url).searchParams.get('to') || '').replace(/-/g, ' ').trim();
+      const parsed = new URL(url);
+      return decodeURIComponent(parsed.searchParams.get('to') || '').replace(/-/g, ' ').trim();
     } catch {
       const match = String(url).match(/[?&]to=([^&]+)/i);
       return match ? decodeURIComponent(match[1]).trim() : '';
     }
-  }
-
-  private saveGeneratedGuest(name: string, url: string): void {
-    this.addGuestLinkFromName(name);
   }
 
   private extractGuestNamesFromExcelRows(rows: (string | number)[][]): ImportedGuestRow[] {
@@ -883,63 +795,184 @@ export class BagiUndanganComponent implements OnInit {
     return names.filter((guest) => !!String(guest.name || '').trim());
   }
 
-  private persistGuestsToStorage(): void {
-    try {
-      localStorage.setItem(this.getStorageKey(), JSON.stringify(this.generatedGuests.map((guest) => this.serializeGuest(guest))));
-    } catch {
-      // Local history is optional; link generation should still work.
-    }
-  }
-
-  private loadStoredGuests(): void {
-    try {
-      const raw = localStorage.getItem(this.getStorageKey());
-      const legacyRaw = raw ? '' : localStorage.getItem(this.getLegacyStorageKey());
-      const parsed = raw ? JSON.parse(raw) : legacyRaw ? JSON.parse(legacyRaw) : [];
-      const records = Array.isArray(parsed) ? parsed : [];
-      this.generatedGuests = this.normalizeStoredGuests(records);
-
-      if (records.length && this.generatedGuests.length) {
-        this.persistGuestsToStorage();
-      }
-    } catch {
-      this.generatedGuests = [];
-    }
-  }
-
-  private getStorageKey(): string {
-    return `${this.storagePrefix}_${this.publicWeddingDomain || 'unknown'}`;
-  }
-
-  private getLegacyStorageKey(): string {
-    return `${this.legacyStoragePrefix}_${this.publicWeddingDomain || 'unknown'}`;
-  }
-
   private createGuestSlug(name: string): string {
     return createGuestSlug(name);
   }
 
-  private getGuestCheckedInAt(guest: GuestInvitationRecord): string | null {
-    return guest.checkedInAt || null;
+  private loadGuestsFromBackend(): void {
+    this.isGuestListLoading = true;
+    this.dashboardService.getInvitationGuests().subscribe({
+      next: (response) => {
+        this.generatedGuests = this.extractGuestRows(response)
+          .map((guest) => this.normalizeBackendGuest(guest))
+          .filter((guest) => !!guest.name)
+          .slice(0, this.maxStoredGuests);
+        this.isGuestListLoading = false;
+      },
+      error: (error) => {
+        this.isGuestListLoading = false;
+        this.generatedGuests = [];
+        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal memuat daftar tamu.'));
+      }
+    });
   }
 
-  private getGuestCheckinCount(guest: GuestInvitationRecord): number {
-    return Number(guest.checkinCount ?? 0);
+  private extractGuestRows(response: any): any[] {
+    if (Array.isArray(response)) return response;
+    if (Array.isArray(response?.data?.data)) return response.data.data;
+    if (Array.isArray(response?.data?.guests)) return response.data.guests;
+    if (Array.isArray(response?.data?.items)) return response.data.items;
+    if (Array.isArray(response?.data)) return response.data;
+    if (Array.isArray(response?.guests)) return response.guests;
+    if (Array.isArray(response?.items)) return response.items;
+    return [];
   }
 
-  private serializeGuest(guest: GuestInvitationRecord): Record<string, any> {
-    const serialized: Record<string, any> = {
-      id: guest.id,
-      name: guest.name,
-      slug: guest.slug || this.createGuestSlug(guest.name),
-      url: guest.url,
-      checkedInAt: this.getGuestCheckedInAt(guest),
-      checkinCount: this.getGuestCheckinCount(guest),
-      lastScannedAt: guest.lastScannedAt || null,
-      createdAt: guest.createdAt,
+  private extractGuestPayload(response: any): any {
+    return response?.data?.guest ||
+      response?.data?.data ||
+      response?.data ||
+      response?.guest ||
+      response ||
+      {};
+  }
+
+  private normalizeBackendGuest(raw: any): GuestInvitationRecord {
+    const nestedGuest = raw?.guest || {};
+    const name = String(
+      raw?.name ||
+      raw?.guest_name ||
+      raw?.nama_tamu ||
+      raw?.nama ||
+      nestedGuest?.name ||
+      nestedGuest?.nama ||
+      ''
+    ).trim();
+    const guestToken = String(
+      raw?.guest_token ||
+      raw?.token ||
+      raw?.guestToken ||
+      nestedGuest?.guest_token ||
+      nestedGuest?.token ||
+      ''
+    ).trim();
+    const slug = String(
+      raw?.slug ||
+      raw?.to ||
+      raw?.guest_slug ||
+      raw?.kode_tamu ||
+      nestedGuest?.slug ||
+      this.createGuestSlug(name)
+    ).trim();
+    const invitationUrl = String(
+      raw?.invitation_url ||
+      raw?.invitation_link ||
+      raw?.link_undangan ||
+      raw?.url ||
+      ''
+    ).trim();
+
+    const url = this.ensureGuestTokenInUrl(invitationUrl, guestToken, slug) ||
+      this.buildGuestInvitationUrl(guestToken, slug);
+
+    return {
+      id: String(raw?.id || raw?.guest_id || nestedGuest?.id || guestToken || slug || name),
+      name,
+      guestToken,
+      slug,
+      url,
+      attendanceStatus: raw?.attendance_status || raw?.status_kehadiran || raw?.status || '',
+      checkedInAt: raw?.checked_in_at || raw?.attended_at || raw?.waktu_hadir || null,
+      lastScannedAt: raw?.last_scan_at || raw?.scan_terakhir || raw?.updated_at || null,
+      checkinCount: Number(raw?.checkin_count ?? raw?.scan_count ?? raw?.jumlah_scan ?? 0),
+      createdAt: String(raw?.created_at || new Date().toISOString()),
     };
+  }
 
-    return serialized;
+  private buildImportSuccessMessage(response: any): string {
+    const successCount = Number(
+      response?.data?.success_count ??
+      response?.data?.success ??
+      response?.success_count ??
+      response?.imported ??
+      response?.data?.imported ??
+      0
+    );
+    const failCount = Number(
+      response?.data?.failed_count ??
+      response?.data?.failed ??
+      response?.failed_count ??
+      response?.failed ??
+      0
+    );
+
+    if (Number.isFinite(successCount) && (successCount || failCount)) {
+      return `Import selesai. ${successCount} tamu berhasil ditambahkan, ${failCount} gagal.`;
+    }
+
+    return String(response?.message || 'Import daftar tamu berhasil.');
+  }
+
+  private ensureGuestTokenInUrl(url: string, guestToken: string, guestSlug: string): string {
+    const cleanUrl = String(url || '').trim();
+    const cleanToken = String(guestToken || '').trim();
+    const cleanSlug = String(guestSlug || '').trim();
+
+    if (!cleanUrl) {
+      return '';
+    }
+
+    if (!cleanToken) {
+      return cleanUrl;
+    }
+
+    try {
+      const parsed = new URL(cleanUrl, this.getInvitationShareOrigin());
+      parsed.searchParams.set('guest', cleanToken);
+
+      if (cleanSlug && !parsed.searchParams.get('to')) {
+        parsed.searchParams.set('to', cleanSlug);
+      }
+
+      return parsed.toString();
+    } catch {
+      const separator = cleanUrl.includes('?') ? '&' : '?';
+      const toParam = cleanSlug && !/[?&]to=/i.test(cleanUrl)
+        ? `&to=${encodeURIComponent(cleanSlug)}`
+        : '';
+      return `${cleanUrl}${separator}guest=${encodeURIComponent(cleanToken)}${toParam}`;
+    }
+  }
+
+  private resolveBackendErrorMessage(error: any, fallback: string): string {
+    const code = String(
+      error?.error?.code ||
+      error?.error?.error_code ||
+      error?.error?.status ||
+      ''
+    ).trim().toUpperCase();
+
+    if (error?.status === 0) {
+      return 'Koneksi ke server gagal. Periksa koneksi internet Anda.';
+    }
+
+    if (error?.status === 403) {
+      return 'Tamu tidak terdaftar pada undangan Anda.';
+    }
+
+    if (code === 'GUEST_NOT_FOUND') {
+      return 'Data tamu tidak ditemukan. Pastikan link dibuat melalui menu Bagi Undangan.';
+    }
+
+    if (code === 'INVALID_GUEST_LINK') {
+      return 'Format link undangan tidak valid.';
+    }
+
+    if (code === 'GUEST_ALREADY_CHECKED_IN') {
+      return 'Tamu ini sudah tercatat hadir.';
+    }
+
+    return getFriendlyErrorMessage(error) || fallback;
   }
 
   private showNotice(message: string): void {

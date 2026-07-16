@@ -174,21 +174,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   override getGuestName(): string {
-    const data = this.weddingData as any;
-    const candidates = [
-      data?.guest_name,
-      data?.nama_tamu,
-      data?.guest?.nama,
-      data?.guest?.name,
-      data?.guest_book?.[0]?.nama,
-      data?.guest_book?.[0]?.name,
-    ];
-
-    const guestName = candidates
-      .map((value) => String(value || '').trim())
-      .find((value) => !!value);
-
-    return guestName || 'Tamu Undangan';
+    return super.getGuestName();
   }
 
   getIntroText(): string {
@@ -392,22 +378,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getEventMapLink(event: WeddingEvent): string | null {
-    const data = event as any;
-    const directLink = [
-      data?.google_maps_url,
-      data?.link_maps,
-      data?.map_url,
-      data?.google_maps,
-      data?.maps_url,
-      data?.location_url,
-    ].map((value) => String(value || '').trim()).find((value) => !!value);
-
-    if (directLink) {
-      return directLink;
-    }
-
-    const query = this.getMapQuery(event);
-    return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
+    return this.getEventMapUrl(event);
   }
 
   getMapEmbedUrl(event: any): string {

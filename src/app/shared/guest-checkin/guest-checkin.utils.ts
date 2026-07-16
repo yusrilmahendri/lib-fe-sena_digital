@@ -1,8 +1,10 @@
 export interface GuestInvitationRecord {
   id: string;
   name: string;
+  guestToken?: string;
   slug: string;
   url: string;
+  attendanceStatus?: string;
   checkedInAt: string | null;
   lastScannedAt: string | null;
   checkinCount: number;

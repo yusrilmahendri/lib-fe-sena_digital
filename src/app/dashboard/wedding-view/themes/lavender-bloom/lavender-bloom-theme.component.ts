@@ -21,13 +21,21 @@ import {
 import {
   getFeaturedGalleryPhoto,
   getOrderedCollagePhotos,
-  getOrderedGalleryPhotos,
   getPhotoObjectFit,
   getPhotoObjectPosition,
   logInvitationImageError,
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
 } from '../../../../shared/user-photo.model';
+import {
+  isWeddingSectionEnabled,
+  resolveEventMapUrl,
+  resolveGalleryPhotos,
+  resolveGuestName,
+  resolveStories,
+  resolveWeddingEvents,
+  resolveYoutubeVideos,
+} from '../../../../shared/wedding-theme-data.util';
 
 type FilterKey =
   | 'halaman_sampul'
@@ -164,19 +172,7 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getGuestName(): string {
-    const data = this.weddingData as any;
-    const candidates = [
-      data?.guest_name,
-      data?.nama_tamu,
-      data?.guest?.nama,
-      data?.guest?.name,
-      data?.guest_book?.[0]?.nama,
-      data?.guest_book?.[0]?.name,
-    ];
-
-    return candidates
-      .map((value) => String(value || '').trim())
-      .find((value) => !!value) || 'Tamu Undangan';
+    return resolveGuestName(this.weddingData);
   }
 
   getCoverPhoto(): string {
@@ -361,11 +357,11 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getEvents(): WeddingEvent[] {
-    return Array.isArray(this.weddingData?.events) ? this.weddingData?.events || [] : [];
+    return resolveWeddingEvents(this.weddingData);
   }
 
   getStories(): WeddingStory[] {
-    return Array.isArray(this.weddingData?.stories) ? this.weddingData?.stories || [] : [];
+    return resolveStories(this.weddingData) as unknown as WeddingStory[];
   }
 
   getQuotes(): WeddingQuote[] {
@@ -373,8 +369,7 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getGalleryItems(): GalleryItem[] {
-    const gallery = Array.isArray(this.weddingData?.gallery) ? this.weddingData?.gallery || [] : [];
-    return getOrderedGalleryPhotos(gallery);
+    return resolveGalleryPhotos(this.weddingData);
   }
 
   getCollageItems(): GalleryItem[] {
@@ -403,7 +398,7 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   hasGallery(): boolean {
-    return this.getGalleryItems().length > 0;
+    return this.getGalleryItems().length > 0 || this.getYoutubeVideos().length > 0;
   }
 
   hasCollage(): boolean {
@@ -456,20 +451,7 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getMapsLink(): string | null {
-    const event = this.getLocationEvent() as any;
-    const directLink = String(event?.google_maps_url || event?.link_maps || event?.maps_url || event?.map_url || '').trim();
-    if (directLink) {
-      return directLink;
-    }
-
-    const latitude = String(event?.latitude || '').trim();
-    const longitude = String(event?.longitude || '').trim();
-    if (latitude && longitude) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
-    }
-
-    const address = String(event?.address || event?.alamat || event?.location_name || '').trim();
-    return address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : null;
+    return resolveEventMapUrl(this.getLocationEvent());
   }
 
   getCountdownParts(): Array<{ label: string; value: string }> {
@@ -527,11 +509,11 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getStoryDate(story: WeddingStory): string {
-    return this.formatDate(story.tanggal_cerita, 'long');
+    return this.formatDate((story as any).tanggal_cerita || (story as any).date, 'long');
   }
 
   getStoryLead(story: WeddingStory): string {
-    return story.lead_cerita || story.title || '';
+    return (story as any).lead_cerita || (story as any).description || story.title || '';
   }
 
   getGalleryAlt(item: GalleryItem, index: number): string {
@@ -627,9 +609,28 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
     return normalizeInvitationMediaUrl(value);
   }
 
-  private isFilterVisible(key: FilterKey): boolean {
-    const value = this.weddingData?.filter_undangan?.[key];
-    return value === undefined || value === null || Number(value) === 1;
+  getYoutubeVideos() {
+    return resolveYoutubeVideos(this.weddingData);
+  }
+
+  getEventMapUrl(event: WeddingEvent | null | undefined): string | null {
+    return resolveEventMapUrl(event);
+  }
+
+  protected isFilterVisible(key: FilterKey): boolean {
+    const sectionMap: Record<FilterKey, any> = {
+      halaman_sampul: 'cover',
+      halaman_mempelai: 'couple',
+      halaman_acara: 'events',
+      halaman_ucapan: 'wishes',
+      halaman_galery: 'gallery',
+      halaman_cerita: 'stories',
+      halaman_lokasi: 'location',
+      halaman_send_gift: 'gift',
+      halaman_qoute: 'quote',
+    };
+
+    return isWeddingSectionEnabled(this.weddingData, sectionMap[key] || key);
   }
 
   private formatClock(value: string): string {

@@ -150,19 +150,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override getGuestName(): string {
-    const data = this.weddingData as any;
-    const candidates = [
-      data?.guest_name,
-      data?.nama_tamu,
-      data?.guest?.nama,
-      data?.guest?.name,
-      data?.guest_book?.[0]?.nama,
-      data?.guest_book?.[0]?.name,
-    ];
-
-    return candidates
-      .map((value) => String(value || '').trim())
-      .find((value) => !!value) || 'Tamu Undangan';
+    return super.getGuestName();
   }
 
   getDisplayCoupleNames(): { first: string; second: string } {
@@ -707,7 +695,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   private setupRubyReceptionFromEvents(): void {
-    const events = (this as any)?.data?.events || this.weddingData?.events || (this as any)?.events || [];
+    const events = this.getEvents();
 
     this.receptionEvent = events.find((event: any) => {
       const type = String(event?.jenis_acara || event?.nama_acara || '').toLowerCase();
@@ -729,7 +717,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
     this.receptionVenueName = String(this.receptionEvent.nama_acara || '').trim();
     this.receptionAddress = String((this.receptionEvent as any).address || this.receptionEvent.alamat || '').trim();
-    this.googleMapsUrl = String((this.receptionEvent as any).google_maps_url || this.receptionEvent.link_maps || '').trim();
+    this.googleMapsUrl = this.getEventMapUrl(this.receptionEvent) || '';
 
     const mapQuery = this.receptionAddress || this.receptionVenueName;
     if (mapQuery) {

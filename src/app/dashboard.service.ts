@@ -695,6 +695,39 @@ export class DashboardService {
     return this.httpSvc.post<PasswordChangeResponse>(this.getUrl(DashboardServiceType.ADMIN_PROFILE_CHANGE_PASSWORD), data);
   }
 
+  createInvitationGuest(payload: { name: string }): Observable<InvitationGuestResponse> {
+    return this.httpSvc.post<InvitationGuestResponse>(
+      `${this.BASE_URL_API}/v1/user/invitation-guests`,
+      payload
+    );
+  }
+
+  getInvitationGuests(): Observable<InvitationGuestListResponse | any> {
+    return this.httpSvc.get<InvitationGuestListResponse | any>(
+      `${this.BASE_URL_API}/v1/user/invitation-guests`
+    );
+  }
+
+  importInvitationGuests(formData: FormData): Observable<any> {
+    return this.httpSvc.post<any>(
+      `${this.BASE_URL_API}/v1/user/invitation-guests/import`,
+      formData
+    );
+  }
+
+  getAttendanceGuests(): Observable<any> {
+    return this.httpSvc.get<any>(
+      `${this.BASE_URL_API}/v1/user/invitation-guests/attendance`
+    );
+  }
+
+  scanAttendance(payload: { scanned_value?: string; guest_token?: string }): Observable<any> {
+    return this.httpSvc.post<any>(
+      `${this.BASE_URL_API}/v1/attendance/scan`,
+      payload
+    );
+  }
+
   // === Generic HTTP Methods ===
   // Core HTTP methods for API calls.
   create(serviceType: DashboardServiceType, body: any): Observable<any> {
@@ -849,6 +882,29 @@ export interface Page {
 export interface LoginResponse {
   access_token: string;
   token_type: string;
+}
+
+export interface InvitationGuest {
+  id: number;
+  name: string;
+  guest_token: string;
+  guest_slug: string;
+  invitation_url: string;
+  attendance_status?: string;
+  checked_in_at?: string | null;
+}
+
+export interface InvitationGuestResponse {
+  success: boolean;
+  message: string;
+  data: InvitationGuest;
+}
+
+export interface InvitationGuestListResponse {
+  success?: boolean;
+  message?: string;
+  data?: InvitationGuest[] | { data?: InvitationGuest[]; guests?: InvitationGuest[]; items?: InvitationGuest[] };
+  guests?: InvitationGuest[];
 }
 
 // Dashboard Analytics API interfaces - Updated to match actual API response

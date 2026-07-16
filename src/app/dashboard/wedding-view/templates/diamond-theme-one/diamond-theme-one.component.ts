@@ -251,29 +251,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override getGuestName(): string {
-    return String(
-      (this.weddingData as any)?.guest_name ||
-      (this.weddingData as any)?.nama_tamu ||
-      (this.weddingData as any)?.filter_undangan?.nama_tamu ||
-      (this.weddingData as any)?.filter_undangan?.guest_name ||
-      (this.weddingData as any)?.guest?.nama ||
-      (this.weddingData as any)?.guest?.name ||
-      'Tamu Undangan'
-    ).trim();
+    return super.getGuestName();
   }
 
   override getEvents(): any[] {
-    const data: any = this.weddingData || {};
-
-    if (Array.isArray(data.events)) return data.events;
-    if (Array.isArray(data.acaras)) return data.acaras;
-    if (Array.isArray(data?.data?.events)) return data.data.events;
-
-    if (data.events && typeof data.events === 'object') {
-      return Object.values(data.events);
-    }
-
-    return [];
+    return super.getEvents();
   }
 
   private normalizeEventType(event: any): string {
@@ -447,29 +429,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getEventMapLink(): string {
     const event = this.getEventForLocation();
-    if (!event) return '';
-
-    const directLink = String(
-      event?.google_maps_url ||
-      event?.link_maps ||
-      event?.link_map ||
-      event?.maps ||
-      event?.map_url ||
-      event?.google_maps ||
-      event?.google_map ||
-      ''
-    ).trim();
-
-    if (directLink) {
-      return directLink;
-    }
-
-    const latitude = String(event?.latitude || '').trim();
-    const longitude = String(event?.longitude || '').trim();
-
-    return latitude && longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
-      : '';
+    return this.getEventMapUrl(event) || '';
   }
 
   getMapPreviewUrl(): string {
@@ -1082,17 +1042,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getEventMapsLink(event: WeddingEvent): string | null {
-    const data = event as any;
-    const link = String(data?.google_maps_url || event?.link_maps || data?.maps_url || data?.map_url || '').trim();
-    if (link) {
-      return link;
-    }
-
-    const latitude = String(data?.latitude || '').trim();
-    const longitude = String(data?.longitude || '').trim();
-    return latitude && longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
-      : null;
+    return this.getEventMapUrl(event);
   }
 
   getCalendarLink(event: WeddingEvent): string | null {
@@ -1270,17 +1220,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getAkadMapLink(): string {
     const event = this.getAkadCard();
-    const data = event as any;
-    const directLink = String(data?.google_maps_url || event?.link_maps || data?.maps || data?.map_url || '').trim();
-    if (directLink) {
-      return directLink;
-    }
-
-    const latitude = String(data?.latitude || '').trim();
-    const longitude = String(data?.longitude || '').trim();
-    return latitude && longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
-      : '';
+    return this.getEventMapUrl(event) || '';
   }
 
   getGiftAddress(bank?: any): string {
@@ -1488,6 +1428,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getLiveStreamingUrl(): string {
     const live = this.getLiveStreamingData();
     const data: any = this.weddingData || {};
+    const youtube = this.getYoutubeVideos()[0]?.url || this.getYoutubeVideos()[0]?.embedUrl || '';
 
     return String(
       live?.url ||
@@ -1496,6 +1437,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       live?.url_live ||
       live?.youtube_url ||
       live?.link_youtube ||
+      youtube ||
       data?.link_live_streaming ||
       data?.live_streaming_url ||
       ''

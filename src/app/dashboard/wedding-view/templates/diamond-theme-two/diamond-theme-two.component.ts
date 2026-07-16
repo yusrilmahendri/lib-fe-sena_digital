@@ -634,27 +634,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override getEventMapLink(event?: any): string {
     const selectedEvent = event || this.getGardenMainEvent();
-
-    const directLink = String(
-      selectedEvent?.google_maps_url ||
-      selectedEvent?.link_maps ||
-      selectedEvent?.link_map ||
-      selectedEvent?.maps ||
-      selectedEvent?.map_url ||
-      selectedEvent?.google_maps ||
-      selectedEvent?.google_map ||
-      ''
-    ).trim();
-
-    if (directLink) {
-      return directLink;
-    }
-
-    const latitude = String(selectedEvent?.latitude || '').trim();
-    const longitude = String(selectedEvent?.longitude || '').trim();
-    return latitude && longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`
-      : '';
+    return this.getEventMapUrl(selectedEvent) || '';
   }
 
   override getAkadMapLink(): string {
@@ -898,30 +878,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMapLink(event?: any): string {
-    const rawLink = String(
-      event?.google_maps_url ||
-      event?.link_maps ||
-      event?.link_map ||
-      event?.maps ||
-      event?.google_maps ||
-      event?.map_url ||
-      ''
-    ).trim();
-
-    if (rawLink) {
-      return rawLink;
-    }
-
-    const latitude = String(event?.latitude || '').trim();
-    const longitude = String(event?.longitude || '').trim();
-    if (latitude && longitude) {
-      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
-    }
-
-    const address = this.getGardenEventAddress(event);
-    if (!address) return '';
-
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    return this.getEventMapUrl(event) || '';
   }
 
   getGardenEventAddress(event?: any): string {
@@ -1061,49 +1018,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenStories(): Array<{ year: string; title: string; description: string }> {
-    const data: any = this.weddingData || {};
-    const invitationPackage: any = data.invitation_package || {};
-
-    const source =
-      data.stories ||
-      data.love_stories ||
-      data.cerita ||
-      data.cerita_perjalanan ||
-      invitationPackage.stories ||
-      [];
-
-    if (Array.isArray(source) && source.length) {
-      return source
-        .map((item: any) => ({
-          year: String(item?.year || item?.tahun || item?.date || item?.tanggal || '').trim(),
-          title: String(item?.title || item?.judul || item?.nama_cerita || '').trim(),
-          description: String(item?.description || item?.deskripsi || item?.cerita || item?.isi || '').trim(),
-        }))
-        .filter((item: any) => item.title || item.description);
-    }
-
-    return [
-      {
-        year: '2019',
-        title: 'Pertama Bertemu',
-        description: 'Dipertemukan di sebuah acara, percakapan singkat berubah menjadi awal dari segalanya.',
-      },
-      {
-        year: '2022',
-        title: 'Menjalin Hubungan',
-        description: 'Setiap hari menjadi lebih berwarna. Kami belajar tumbuh dan saling melengkapi.',
-      },
-      {
-        year: '2025',
-        title: 'Lamaran',
-        description: 'Di bawah langit senja, sebuah janji diucapkan untuk melangkah ke jenjang yang lebih serius.',
-      },
-      {
-        year: '2026',
-        title: 'Hari Bahagia',
-        description: 'Dengan restu keluarga, kami siap memulai babak baru sebagai sepasang suami istri.',
-      },
-    ];
+    return this.getStories().map((item: any) => ({
+      year: String(item?.year || item?.tahun || item?.date || item?.tanggal_cerita || item?.tanggal || '').trim(),
+      title: String(item?.title || item?.judul || item?.nama_cerita || 'Cerita Kami').trim(),
+      description: String(item?.description || item?.deskripsi || item?.lead_cerita || item?.cerita || item?.isi || '').trim(),
+    })).filter((item: any) => item.title || item.description);
   }
 
   trackByGardenStory(index: number, item: any): string {

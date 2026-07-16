@@ -7,6 +7,10 @@ import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../ser
 import { MusicTrack, resolveInvitationMusicSourceType, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
 import { normalizeInvitationMediaUrl } from '../../shared/user-photo.model';
 import { getReligionContentFromData } from '../../shared/religion-content.util';
+import {
+  formatGuestNameFromQuery,
+  resolveGuestName,
+} from '../../shared/wedding-theme-data.util';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
@@ -174,7 +178,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     const querySubscription = this.route.queryParams.subscribe(params => {
       const previousGuestCode = this.guestCode;
       this.guestCode = this.sanitizeRouteValue(params['to']);
-      this.guestName = 'Tamu Undangan';
+      this.guestName = formatGuestNameFromQuery(this.guestCode) || 'Tamu Undangan';
 
       if (this.weddingData && this.domain && previousGuestCode !== this.guestCode) {
         this.loadWeddingDataFromAPI(this.domain, false, true);
@@ -623,6 +627,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.guestName = guestName;
     const enriched = {
       ...(data as any),
+      resolvedGuestName: guestName,
       guest_name: guestName,
       nama_tamu: guestName,
       guest: {
@@ -942,20 +947,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resolveGuestNameFromWeddingData(data: any): string {
-    const candidates = [
-      data?.guest_name,
-      data?.nama_tamu,
-      data?.guest?.nama,
-      data?.guest?.name,
-      data?.guest?.guest_name,
-      data?.guest?.nama_tamu,
-    ];
-
-    const resolved = candidates
-      .map((value) => String(value || '').trim())
-      .find((value) => value && value !== '-' && value.toLowerCase() !== 'null' && value.toLowerCase() !== 'undefined');
-
-    return resolved || 'Tamu Undangan';
+    return resolveGuestName(data, formatGuestNameFromQuery(this.guestCode));
   }
 
   /**
