@@ -18,7 +18,7 @@
         class="theme-tabs__button"
         [class.theme-tabs__button--active]="activeTab === tab.tier"
         [class.theme-tabs__button--locked]="tab.tier !== userPackageTier && isPreviewOnlyTab && activeTab === tab.tier"
-        (click)="setActiveTab(tab.tier)">
+        (click)="$event.preventDefault(); $event.stopPropagation(); setActiveTab(tab.tier)">
         {{ tab.label }}
       </button>
     </div>
@@ -51,14 +51,14 @@
       </div>
 
       <div *ngIf="visibleThemeCards.length; else emptyState" class="theme-grid">
-        <article
-          *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
-          class="theme-card"
-          [class.theme-card--selected]="isSelectedTheme(theme)"
-          [class.theme-card--used]="isCurrentTheme(theme)"
-          [class.theme-card--locked]="isCardLocked(theme)"
-          [attr.aria-disabled]="isCardLocked(theme)"
-          (click)="onThemeCardClick(theme)">
+          <article
+            *ngFor="let theme of visibleThemeCards; trackBy: trackByThemeId"
+            class="theme-card"
+            [class.theme-card--selected]="isSelectedTheme(theme)"
+            [class.theme-card--used]="isCurrentTheme(theme)"
+            [class.theme-card--locked]="isCardLocked(theme)"
+            [attr.aria-disabled]="isCardLocked(theme)"
+            (click)="onThemeCardClick(theme, $event)">
           <div class="theme-card__media">
             <img
               [src]="theme.image"

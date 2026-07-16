@@ -720,6 +720,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   setActiveTab(tab: ThemeFilterTier): void {
+    console.log('[THEME_TAB_CLICK]', tab);
     this.activeTab = tab;
     this.syncSelectedThemeForVisibleTab();
   }
@@ -732,17 +733,54 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return 'all';
   }
 
-  onThemeCardClick(theme: ThemeCard): void {
+  onThemeCardClick(theme: ThemeCard, event?: Event): void {
+     console.log('[THEME_CARD_CLICK]', {
+
+    name: theme.name,
+
+    slug: theme.slug,
+
+    canUse: this.canUseTheme(theme),
+
+    locked: this.isCardLocked(theme),
+
+    upgradeRequired: theme.upgradeRequired,
+
+    connected: theme.isConnectedToBackend,
+
+    backendThemeId: theme.backendThemeId,
+
+  });
+    event?.preventDefault();
+    event?.stopPropagation();
+
     this.selectedThemeId = theme.id;
     this.selectedThemeSlug = theme.slug;
     this.selectedThemeForSubmit = theme;
-    this.pendingThemeForConfirmation = this.canUseTheme(theme) ? theme : null;
-    this.pendingThemeForUpgrade = theme.upgradeRequired ? theme : null;
+
+    if (this.canUseTheme(theme)) {
+      this.pendingThemeForConfirmation = theme;
+      this.pendingThemeForUpgrade = null;
+      this.logThemeSubmitState();
+      return;
+    }
+
+    if (theme.upgradeRequired || this.isCardLocked(theme)) {
+      this.pendingThemeForConfirmation = null;
+      this.pendingThemeForUpgrade = theme;
+      this.logThemeSubmitState();
+      return;
+    }
+
+    this.pendingThemeForConfirmation = null;
+    this.pendingThemeForUpgrade = null;
     this.logThemeSubmitState();
   }
 
   onPreviewClick(theme: ThemeCard, event: Event): void {
+    event.preventDefault();
     event.stopPropagation();
+    if (!this.canPreviewTheme(theme)) return;
     this.selectedThemeId = theme.id;
     this.selectedThemeSlug = theme.slug;
     this.selectedThemeForSubmit = theme;
@@ -1001,9 +1039,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
     if (theme.isLegacy) {
       return true;
     }
+
     if (!theme.isConnectedToBackend || !this.hasValidBackendThemeConnection(theme)) {
       return true;
     }
+
+    if (this.isThemeInactiveByAdmin(theme)) {
+      return true;
+    }
+
     return theme.lockedFromApi === true && !this.canUseTheme(theme);
   }
 
@@ -1168,7 +1212,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onUseThemeClick(theme: ThemeCard, event: Event): void {
+    event.preventDefault();
     event.stopPropagation();
+    if (theme.isLoading || this.processingPrimaryAction) return;
     this.selectedThemeId = theme.id;
     this.selectedThemeSlug = theme.slug;
     this.selectedThemeForSubmit = theme;
@@ -1177,6 +1223,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onUpgradeClick(theme: ThemeCard, event?: Event): void {
+    event?.preventDefault();
     event?.stopPropagation();
     this.selectedThemeId = theme.id;
     this.selectedThemeSlug = theme.slug;
