@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize, forkJoin, Subscription } from 'rxjs';
 import {
@@ -76,37 +76,6 @@ interface PackageTab {
   label: string;
 }
 
-interface TampilanPointerDebugElement {
-  tag: string;
-  className: string;
-  id: string;
-  selector: string;
-  position: string;
-  zIndex: string;
-  zIndexNumber: number;
-  pointerEvents: string;
-  touchAction: string;
-  overflowX: string;
-  overflowY: string;
-  transform: string;
-  display: string;
-  visibility: string;
-  opacity: string;
-  isPossibleBlocker: boolean;
-  rect: {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-  };
-}
-
-interface IosEventSequenceItem {
-  type: string;
-  selector: string;
-  point: string;
-}
-
 const PACKAGE_TABS: PackageTab[] = [
   { tier: 'ruby', label: 'Ruby' },
   { tier: 'sapphire', label: 'Sapphire' },
@@ -124,7 +93,7 @@ const FIXED_THEME_PRESETS = PUBLIC_THEME_PRESETS.map((preset) => ({
   templateUrl: './tampilan.component.html',
   styleUrls: ['./tampilan.component.scss']
 })
-export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
+export class TampilanComponent implements OnInit, OnDestroy {
   readonly packageTabs = PACKAGE_TABS;
   readonly upgradeRoute = '/dashboard/bill';
 
@@ -148,17 +117,8 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
   themeFeedbackType: 'success' | 'error' = 'success';
   themeFeedbackMessage = '';
   isAccountActive = false;
-  debugLastTapTopElement: TampilanPointerDebugElement | null = null;
-  debugLastTapEventType = '';
-  debugLastTapPoint = '';
-  debugElementsFromPoint: TampilanPointerDebugElement[] = [];
-  debugScanElements: TampilanPointerDebugElement[] = [];
-  debugAncestorElements: TampilanPointerDebugElement[] = [];
-  debugLastScanLabel = 'Belum scan';
-  debugIosEventSequence: IosEventSequenceItem[] = [];
 
   private subscriptions = new Subscription();
-  private pointerDebugCleanup: Array<() => void> = [];
   private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
   private packageCatalog: any[] = [];
   private pendingThemeForConfirmation: ThemeCard | null = null;
@@ -176,7 +136,6 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
     private themeService: ThemeService,
     private toastService: ToastService,
     private router: Router,
-    private elementRef: ElementRef<HTMLElement>,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -185,284 +144,8 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadSelectedTheme();
   }
 
-  ngAfterViewInit(): void {
-    this.installPointerDiagnostics();
-
-    setTimeout(() => {
-      this.logInitialModalState();
-      this.auditPointerBlockers();
-      this.auditSpecialPointerElements();
-      this.scanPointerDebugDom();
-    }, 0);
-  }
-
   ngOnDestroy(): void {
-    this.pointerDebugCleanup.forEach((cleanup) => cleanup());
-    this.pointerDebugCleanup = [];
     this.subscriptions.unsubscribe();
-  }
-
-  private installPointerDiagnostics(): void {
-    const eventTypes = ['pointerdown', 'touchstart', 'touchend', 'click'];
-
-    eventTypes.forEach((eventType) => {
-      const listener = (event: Event) => {
-        const point = this.getEventPoint(event);
-        if (!point) return;
-
-        console.log('[TAMPILAN_POINTER_EVENT]', {
-          type: event.type,
-          target: event.target,
-          clientX: point.x,
-          clientY: point.y,
-        });
-
-        this.trackIosEventSequence(event, point);
-        this.inspectPoint(point.x, point.y, event.type);
-      };
-
-      document.addEventListener(eventType, listener, { capture: true, passive: true });
-      this.pointerDebugCleanup.push(() => {
-        document.removeEventListener(eventType, listener, true);
-      });
-    });
-  }
-
-  private getEventPoint(event: Event): { x: number; y: number } | null {
-    const touchEvent = event as TouchEvent;
-    if (
-      typeof TouchEvent !== 'undefined' &&
-      event instanceof TouchEvent &&
-      touchEvent.changedTouches.length > 0
-    ) {
-      const touch = touchEvent.changedTouches[0];
-      return { x: touch.clientX, y: touch.clientY };
-    }
-
-    if (
-      event instanceof MouseEvent ||
-      (typeof PointerEvent !== 'undefined' && event instanceof PointerEvent)
-    ) {
-      const pointerEvent = event as MouseEvent | PointerEvent;
-      return { x: pointerEvent.clientX, y: pointerEvent.clientY };
-    }
-
-    return null;
-  }
-
-  private inspectPoint(x: number, y: number, eventType = ''): void {
-    const elements = document.elementsFromPoint(x, y).slice(0, 10);
-    const details = elements.map((element) => this.describeElement(element));
-
-    console.log('[TAMPILAN_ELEMENTS_FROM_POINT]', details);
-
-    this.debugLastTapEventType = eventType;
-    this.debugLastTapPoint = `${Math.round(x)}, ${Math.round(y)}`;
-    this.debugLastTapTopElement = details[0] ?? null;
-    this.debugElementsFromPoint = details;
-    this.debugAncestorElements = this.describeAncestorChain(this.elementRef.nativeElement);
-    this.cdr.detectChanges();
-  }
-
-  scanPointerDebugDom(): void {
-    this.auditPointerBlockers();
-    this.auditSpecialPointerElements();
-    this.debugAncestorElements = this.describeAncestorChain(this.elementRef.nativeElement);
-    this.debugScanElements = Array.from(document.querySelectorAll('*'))
-      .map((element) => this.describeElement(element))
-      .filter((element) =>
-        element.position === 'fixed' ||
-        element.position === 'absolute' ||
-        element.position === 'sticky'
-      )
-      .sort((a, b) => b.zIndexNumber - a.zIndexNumber);
-
-    const blockerCount = this.debugScanElements.filter((element) => element.isPossibleBlocker).length;
-    this.debugLastScanLabel = `${this.debugScanElements.length} positioned, ${blockerCount} possible blocker`;
-    this.cdr.detectChanges();
-  }
-
-  private trackIosEventSequence(event: Event, point: { x: number; y: number }): void {
-    const target = event.target instanceof Element
-      ? this.getElementSelector(event.target)
-      : String(event.target || '-');
-
-    this.debugIosEventSequence = [
-      ...this.debugIosEventSequence.slice(-5),
-      {
-        type: event.type,
-        selector: target,
-        point: `${Math.round(point.x)}, ${Math.round(point.y)}`,
-      },
-    ];
-
-    console.log('[IOS_EVENT_SEQUENCE]', this.debugIosEventSequence);
-  }
-
-  private logInitialModalState(): void {
-    console.log('[TAMPILAN_INITIAL_MODAL_STATE]', {
-      showSelectConfirmationModal: this.showSelectConfirmationModal,
-      showUpgradeModal: this.showUpgradeModal,
-      showThemeFeedbackModal: this.showThemeFeedbackModal,
-      showThemeSuccessToast: this.showThemeSuccessToast,
-    });
-  }
-
-  private auditPointerBlockers(): void {
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const candidates = Array.from(document.querySelectorAll('*'))
-      .map((element) => this.describeElement(element))
-      .filter((element) => {
-        return (
-          element.isPossibleBlocker &&
-          (element.position === 'fixed' ||
-            element.position === 'absolute' ||
-            element.position === 'sticky')
-        );
-      });
-
-    console.log('[TAMPILAN_POINTER_BLOCKER]', {
-      viewport: { width: viewportWidth, height: viewportHeight },
-      candidates,
-    });
-  }
-
-  private auditSpecialPointerElements(): void {
-    const selectors = [
-      '.theme-modal-backdrop',
-      '.theme-feedback-backdrop',
-      '.theme-success-toast',
-      '.theme-picker__footer',
-      '.theme-picker',
-      '.sidebar-overlay',
-      '.dashboard-sidebar-backdrop',
-    ];
-
-    const elements = selectors.map((selector) => ({
-      selector,
-      matches: Array.from(document.querySelectorAll(selector)).map((element) => this.describeElement(element)),
-    }));
-
-    const pseudoElements = Array.from(document.querySelectorAll('.theme-card--locked .theme-card__media'))
-      .map((element) => {
-        const afterStyle = getComputedStyle(element, '::after');
-        const beforeStyle = getComputedStyle(element, '::before');
-        return {
-          element: this.describeElement(element),
-          before: {
-            content: beforeStyle.content,
-            position: beforeStyle.position,
-            zIndex: beforeStyle.zIndex,
-            pointerEvents: beforeStyle.pointerEvents,
-            display: beforeStyle.display,
-          },
-          after: {
-            content: afterStyle.content,
-            position: afterStyle.position,
-            zIndex: afterStyle.zIndex,
-            pointerEvents: afterStyle.pointerEvents,
-            display: afterStyle.display,
-          },
-        };
-      });
-
-    console.log('[TAMPILAN_SPECIAL_POINTER_ELEMENTS]', {
-      elements,
-      pseudoElements,
-      modalDomPresence: {
-        themeModalBackdrops: document.querySelectorAll('.theme-modal-backdrop').length,
-        themeFeedbackBackdrops: document.querySelectorAll('.theme-feedback-backdrop').length,
-        themeSuccessToasts: document.querySelectorAll('.theme-success-toast').length,
-      },
-    });
-  }
-
-  private describeElement(element: Element): TampilanPointerDebugElement {
-    const style = getComputedStyle(element);
-    const rect = element.getBoundingClientRect();
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-    const zIndexNumber = this.parseZIndex(style.zIndex);
-    const position = style.position;
-    const pointerEvents = style.pointerEvents;
-    const display = style.display;
-    const visibility = style.visibility;
-    const opacity = style.opacity;
-    const isPossibleBlocker =
-      (position === 'fixed' || position === 'absolute' || position === 'sticky') &&
-      pointerEvents !== 'none' &&
-      display !== 'none' &&
-      visibility !== 'hidden' &&
-      Number(opacity) !== 0 &&
-      rect.height > viewportHeight * 0.7;
-
-    return {
-      tag: element.tagName,
-      className: this.getElementClassName(element),
-      id: element.id,
-      selector: this.getElementSelector(element),
-      position,
-      zIndex: style.zIndex,
-      zIndexNumber,
-      pointerEvents,
-      touchAction: style.touchAction,
-      overflowX: style.overflowX,
-      overflowY: style.overflowY,
-      transform: style.transform,
-      display,
-      visibility,
-      opacity,
-      isPossibleBlocker,
-      rect: {
-        left: rect.left,
-        top: rect.top,
-        width: rect.width,
-        height: rect.height,
-      },
-    };
-  }
-
-  private describeAncestorChain(element: Element): TampilanPointerDebugElement[] {
-    const ancestors: TampilanPointerDebugElement[] = [];
-    let current: Element | null = element;
-
-    while (current) {
-      ancestors.push(this.describeElement(current));
-      current = current.parentElement;
-    }
-
-    return ancestors;
-  }
-
-  private parseZIndex(zIndex: string): number {
-    const parsed = Number.parseInt(zIndex, 10);
-    return Number.isFinite(parsed) ? parsed : -1;
-  }
-
-  private getElementClassName(element: Element): string {
-    const className = element.className;
-    if (typeof className === 'string') {
-      return className;
-    }
-
-    if (className && typeof className === 'object' && 'baseVal' in className) {
-      return String((className as SVGAnimatedString).baseVal);
-    }
-
-    return '';
-  }
-
-  private getElementSelector(element: Element): string {
-    const id = element.id ? `#${element.id}` : '';
-    const className = this.getElementClassName(element)
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 4)
-      .map((item) => `.${item}`)
-      .join('');
-
-    return `${element.tagName.toLowerCase()}${id}${className}`;
   }
 
   @HostListener('document:keydown.escape')

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, NgZone, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Injectable({
@@ -24,7 +24,10 @@ export class IdleTimeoutService implements OnDestroy {
   private timer: any;
   private isRunning = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private ngZone: NgZone
+  ) {}
 
   start(): void {
     if (this.isRunning) {
@@ -35,9 +38,7 @@ export class IdleTimeoutService implements OnDestroy {
     this.stop();
     this.isRunning = true;
 
-    this.activityEvents.forEach((eventName) => {
-      document.addEventListener(eventName, this.activityHandler, this.activityListenerOptions);
-    });
+    this.bindActivityListeners();
 
     console.log('[IdleTimeout]', 'started');
     this.resetTimer();
@@ -58,6 +59,14 @@ export class IdleTimeoutService implements OnDestroy {
     this.isRunning = false;
   }
 
+  private bindActivityListeners(): void {
+    this.ngZone.runOutsideAngular(() => {
+      this.activityEvents.forEach((eventName) => {
+        document.addEventListener(eventName, this.activityHandler, this.activityListenerOptions);
+      });
+    });
+  }
+
   private logoutByIdle(): void {
     console.log('[IdleTimeout]', 'logout after 30 minutes idle');
     this.stop();
@@ -69,12 +78,14 @@ export class IdleTimeoutService implements OnDestroy {
       reason: 'session_expired',
     });
 
-    this.router.navigate(['/'], {
-      queryParams: {
-        auth: 'login',
-        reason: 'session_expired',
-      },
-      replaceUrl: true,
+    this.ngZone.run(() => {
+      this.router.navigate(['/'], {
+        queryParams: {
+          auth: 'login',
+          reason: 'session_expired',
+        },
+        replaceUrl: true,
+      });
     });
   }
 
