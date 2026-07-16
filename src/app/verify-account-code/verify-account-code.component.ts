@@ -2,6 +2,8 @@ import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } fro
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, VerificationChannel } from '../auth.service';
 import { finalize } from 'rxjs/operators';
+import { DashboardService } from '../dashboard.service';
+import { resolvePaymentState } from '../shared/payment-status.util';
 
 @Component({ selector: 'wc-verify-account-code', templateUrl: './verify-account-code.component.html', styleUrls: ['./verify-account-code.component.scss'] })
 export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
@@ -13,7 +15,12 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   private readonly RESEND_COOLDOWN_MS = 120000;
   private verificationSendInProgress = false;
   private timer?: ReturnType<typeof setInterval>;
-  constructor(private auth: AuthService, private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private auth: AuthService,
+    private dashboard: DashboardService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
   ngOnInit(): void {
     const queryChannel = this.route.snapshot.queryParamMap.get('channel');
     const stored = sessionStorage.getItem('verification_channel');
@@ -115,7 +122,7 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
         sessionStorage.removeItem('verification_channel');
         sessionStorage.removeItem('verification_resend_at');
         sessionStorage.removeItem('verification_email_sent_at');
-        this.router.navigate(['/verify-account/success']);
+        this.navigateAfterVerification();
       },
       error: (error) => {
         console.error('[Verify Account] failed', error);
@@ -187,5 +194,20 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   private isExpiredOtpError(error: any): boolean {
     const code = error.error?.code;
     return code === 'VERIFICATION_CODE_EXPIRED' || code === 'OTP_EXPIRED';
+  }
+
+  private navigateAfterVerification(): void {
+    this.dashboard.getProfile().subscribe({
+      next: (profile) => this.router.navigateByUrl(this.resolveNextRoute(profile)),
+      error: () => this.router.navigateByUrl('/buat-undangan/payment'),
+    });
+  }
+
+  private resolveNextRoute(profile: any): string {
+    const state = resolvePaymentState(profile);
+    if (state.accountStatus === 'active') return '/dashboard/overview';
+    if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';
+    if (state.accountStatus === 'expired') return '/dashboard/account-expired';
+    return '/buat-undangan/payment';
   }
 }

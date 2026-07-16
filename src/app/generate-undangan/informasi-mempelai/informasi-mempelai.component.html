@@ -4,22 +4,6 @@
     <div class="im-section">
       <h2 class="im-section-title">Calon Mempelai Pria</h2>
       
-      <div class="im-profile-section">
-        <div class="im-profile-upload">
-          <div class="im-profile-image">
-            <img [src]="imagePreviews['photo_pria'] || '/assets/default-avatar-male.svg'" 
-                 alt="Profile Pria" 
-                 class="im-avatar">
-          </div>
-          <label for="photo_pria" class="im-upload-btn">Upload Foto</label>
-          <input type="file" 
-                 id="photo_pria"
-                 (change)="onFileSelected($event, 'photo_pria')" 
-                 accept="image/*" 
-                 class="im-file-input">
-        </div>
-      </div>
-
       <div class="im-form-fields">
         <div class="im-form-group">
           <label for="namaLengkapPria" class="im-label">Nama Lengkap</label>
@@ -63,22 +47,6 @@
     <div class="im-section">
       <h2 class="im-section-title">Calon Mempelai wanita</h2>
       
-      <div class="im-profile-section">
-        <div class="im-profile-upload">
-          <div class="im-profile-image">
-            <img [src]="imagePreviews['photo_wanita'] || '/assets/default-avatar-female.svg'" 
-                 alt="Profile Wanita" 
-                 class="im-avatar">
-          </div>
-          <label for="photo_wanita" class="im-upload-btn">Upload Foto</label>
-          <input type="file" 
-                 id="photo_wanita"
-                 (change)="onFileSelected($event, 'photo_wanita')" 
-                 accept="image/*" 
-                 class="im-file-input">
-        </div>
-      </div>
-
       <div class="im-form-fields">
         <div class="im-form-group">
           <label for="namaLengkapWanita" class="im-label">Nama Lengkap</label>
@@ -114,27 +82,6 @@
                  id="namaIbuWanita" 
                  placeholder="Nama Ibu" 
                  formControlName="ibu_wanita">
-        </div>
-      </div>
-    </div>
-
-    <!-- Foto Sampul Section -->
-    <div class="im-section">
-      <h2 class="im-section-title">foto sampul</h2>
-      
-      <div class="im-profile-section">
-        <div class="im-profile-upload">
-          <div class="im-profile-image">
-            <img [src]="imagePreviews['cover_photo'] || '/assets/default-cover.svg'" 
-                 alt="Cover Photo" 
-                 class="im-avatar">
-          </div>
-          <label for="cover_photo" class="im-upload-btn">Upload Foto</label>
-          <input type="file" 
-                 id="cover_photo"
-                 (change)="onFileSelected($event, 'cover_photo')" 
-                 accept="image/*" 
-                 class="im-file-input">
         </div>
       </div>
     </div>

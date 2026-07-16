@@ -9,6 +9,7 @@ import { isAccountVerified, resolvePaymentState } from './shared/payment-status.
 @Injectable({ providedIn: 'root' })
 export class AccountVerificationGuard implements CanActivate {
   private readonly onboardingRoute = '/buat-undangan';
+  private readonly onboardingPaymentRoute = '/buat-undangan/payment';
 
   constructor(
     private auth: AuthService,
@@ -31,22 +32,27 @@ export class AccountVerificationGuard implements CanActivate {
 
             if (paymentState.accountStatus === 'active') return true;
             if (paymentState.accountStatus === 'onboarding') {
-              return state.url === this.onboardingRoute ? true : this.router.createUrlTree([this.onboardingRoute]);
+              return this.isOnboardingUrl(state.url)
+                ? true
+                : this.router.createUrlTree([this.onboardingPaymentRoute]);
             }
             if (paymentState.accountStatus === 'expired') {
               return this.router.createUrlTree(['/dashboard/account-expired']);
             }
             if (paymentState.accountStatus === 'pending_payment') {
-              return this.isDashboardOverviewUrl(state.url)
+              if (!paymentState.hasInvoice) {
+                return this.router.createUrlTree([this.onboardingPaymentRoute]);
+              }
+              return this.isDashboardPaymentStatusUrl(state.url)
                 ? true
-                : this.router.createUrlTree(['/dashboard/overview']);
+                : this.router.createUrlTree(['/dashboard/payment-pending']);
             }
 
-            return this.router.createUrlTree([this.onboardingRoute]);
+            return this.router.createUrlTree([this.onboardingPaymentRoute]);
           }),
           catchError(() => {
             sessionStorage.setItem('payment_intended_url', state.url);
-            return of(this.router.createUrlTree([this.onboardingRoute]));
+            return of(this.router.createUrlTree([this.onboardingPaymentRoute]));
           })
         );
       }),
@@ -61,8 +67,13 @@ export class AccountVerificationGuard implements CanActivate {
     );
   }
 
-  private isDashboardOverviewUrl(url: string): boolean {
+  private isDashboardPaymentStatusUrl(url: string): boolean {
     const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
-    return path === '/dashboard' || path === '/dashboard/overview';
+    return path === '/dashboard' || path === '/dashboard/overview' || path === '/dashboard/payment-pending' || path === '/dashboard/bill';
+  }
+
+  private isOnboardingUrl(url: string): boolean {
+    const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
+    return path === this.onboardingRoute || path === this.onboardingPaymentRoute;
   }
 }

@@ -35,7 +35,7 @@ export class GenerateUndanganComponent implements OnInit {
   ngOnInit(): void {
     const saved = localStorage.getItem('formData');
     if (saved) {
-      this.formData = JSON.parse(saved);
+      this.formData = this.sanitizeWizardData(JSON.parse(saved));
     }
 
     const temporaryPassword = history.state?.registrationDraft?.password;
@@ -65,7 +65,7 @@ export class GenerateUndanganComponent implements OnInit {
     // Handle Midtrans callback
     this.handleMidtransCallback();
 
-    this.formData.step = this.normalizeStep(this.formData.step);
+    this.formData.step = this.resolveInitialStep(this.formData.step);
 
     console.log('all formdata:', this.formData);
   }
@@ -121,7 +121,43 @@ export class GenerateUndanganComponent implements OnInit {
     if (!Number.isFinite(numeric) || numeric < 1) {
       return 1;
     }
-    return Math.floor(numeric);
+    return Math.min(Math.floor(numeric), this.titles.length);
+  }
+
+  private resolveInitialStep(step: unknown): number {
+    const routeStep = this.route.snapshot.data?.['onboardingStep'];
+    if (routeStep === 'payment') {
+      return this.titles.length;
+    }
+    return this.normalizeStep(step);
+  }
+
+  private sanitizeWizardData(data: any): any {
+    const cloned = JSON.parse(JSON.stringify(data || {}));
+    this.removeGalleryFields(cloned);
+    return cloned;
+  }
+
+  private removeGalleryFields(value: any): void {
+    if (!value || typeof value !== 'object') return;
+
+    [
+      'gallery',
+      'galery',
+      'photos',
+      'gallery_files',
+      'cover_photo',
+      'photo_pria',
+      'photo_wanita',
+      'crop',
+      'crop_metadata',
+    ].forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        delete value[key];
+      }
+    });
+
+    Object.keys(value).forEach((key) => this.removeGalleryFields(value[key]));
   }
 
   private scrollToTop(): void {

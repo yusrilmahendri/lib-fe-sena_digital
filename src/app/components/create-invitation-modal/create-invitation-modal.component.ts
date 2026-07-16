@@ -681,13 +681,13 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     try {
       sessionStorage.setItem(
         'landingOnboardingNotice',
-        'Data dasar berhasil dibuat. Silakan lengkapi data undangan sebelum melakukan pembayaran.'
+        'Data dasar berhasil dibuat. Silakan pilih metode pembayaran untuk melanjutkan.'
       );
     } catch {
       /* non-critical */
     }
     this.closeModal();
-    this.router.navigate(['/buat-undangan'], {
+    this.router.navigate(['/buat-undangan/payment'], {
       state: {
         registrationDraft: {
           password: this.accountPasswordDraft,
@@ -780,7 +780,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       pembayaran: {},
       theme: this.selectedTheme,
       response: res,
-      step: 2,
+      step: 4,
     };
 
     try {
