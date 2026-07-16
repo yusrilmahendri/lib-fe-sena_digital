@@ -32,15 +32,26 @@
 // Sidebar Overlay for Mobile
 .sidebar-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 998;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
+  z-index: 1200;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+
+  &.active,
+  &.open,
+  &.show,
+  &.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
 
   @media screen and (min-width: 1025px) {
     display: none !important;
@@ -1159,5 +1170,121 @@
   :host ::ng-deep .dashboard-content .ucapan-card {
     max-width: calc(100vw - 20px) !important;
     width: calc(100vw - 20px) !important;
+  }
+}
+@media screen and (max-width: 1024px) {
+  .dashboard-menu-toggle,
+  .menu-toggle {
+    pointer-events: auto !important;
+    z-index: 1400 !important;
+  }
+
+  .dashboard-sidebar,
+  .sidebar {
+    z-index: 1300 !important;
+  }
+
+  .dashboard-sidebar:not(.open):not(.active):not(.show):not(.is-open),
+  .sidebar:not(.open):not(.active):not(.show):not(.is-open) {
+    pointer-events: none !important;
+    transform: translateX(-100%) !important;
+  }
+
+  .sidebar-overlay:not(.active):not(.open):not(.show):not(.is-open),
+  .dashboard-sidebar-backdrop:not(.active):not(.open):not(.show):not(.is-open),
+  .dashboard-overlay:not(.active):not(.open):not(.show):not(.is-open) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .dashboard-content,
+  .content,
+  .content .well {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto !important;
+  }
+}
+@media screen and (max-width: 1024px) {
+  .dashboard-menu-toggle,
+  .menu-toggle {
+    z-index: 1400 !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-sidebar,
+  .sidebar {
+    z-index: 1300 !important;
+  }
+
+  .sidebar-overlay,
+  .dashboard-sidebar-backdrop {
+    z-index: 1200 !important;
+  }
+
+  .dashboard-sidebar:not(.open):not(.is-open),
+  .sidebar:not(.open):not(.is-open) {
+    pointer-events: none !important;
+    transform: translateX(-100%) !important;
+  }
+
+  .dashboard-sidebar.open,
+  .dashboard-sidebar.is-open,
+  .sidebar.open,
+  .sidebar.is-open {
+    pointer-events: auto !important;
+    transform: translateX(0) !important;
+  }
+
+  .dashboard-content,
+  .content,
+  .content .well {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto !important;
+  }
+}
+@media screen and (max-width: 1024px) {
+  .sidebar-overlay,
+  .dashboard-sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1200 !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-sidebar,
+  .sidebar {
+    z-index: 1300 !important;
+  }
+
+  .dashboard-menu-toggle,
+  .menu-toggle {
+    z-index: 1400 !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-sidebar:not(.open):not(.is-open),
+  .sidebar:not(.open):not(.is-open) {
+    transform: translateX(-110%) !important;
+    pointer-events: none !important;
+  }
+
+  .dashboard-sidebar.open,
+  .dashboard-sidebar.is-open,
+  .sidebar.open,
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-content,
+  .content,
+  .content .well,
+  .dashboard-user-content {
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
   }
 }

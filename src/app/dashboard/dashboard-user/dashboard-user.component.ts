@@ -75,7 +75,8 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
       this.setRoutePath();
       this.syncSubmenuStateWithRoute();
       if (window.innerWidth <= 1024) {
-        this.closeSidebar();
+        this.isSidebarOpen = false;
+        this.isDropdownOpen = false;
       }
       // Refresh profile data when navigating back from profile page
       if (this.router.url.includes('/dashboard') && !this.router.url.includes('/profile')) {
@@ -113,12 +114,18 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     });
   }
 
-  toggleSidebar() {
+  isMobileView(): boolean {
+    return window.innerWidth <= 1024;
+  }
+
+  toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
 
-  closeSidebar() {
-    this.isSidebarOpen = false;
+  closeSidebar(): void {
+    if (window.innerWidth <= 1024) {
+      this.isSidebarOpen = false;
+    }
   }
 
   private setRouteName(): void {
@@ -194,12 +201,19 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   onProtectedMenuClick(event: Event): void {
     if (this.isPaymentActive) {
-      this.onMenuItemClick();
+      if (window.innerWidth <= 1024) {
+        this.isSidebarOpen = false;
+      }
       return;
     }
 
     event.preventDefault();
     event.stopPropagation();
+
+    if (window.innerWidth <= 1024) {
+      this.isSidebarOpen = false;
+    }
+
     this.router.navigate([this.getBlockedAccountRoute()]);
   }
 

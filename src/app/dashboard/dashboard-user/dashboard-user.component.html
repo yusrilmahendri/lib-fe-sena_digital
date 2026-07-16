@@ -1,12 +1,16 @@
 <div class="dashboard-container dashboard-layout user-dashboard-layout user-dashboard-shell">
   <!-- Overlay for mobile -->
-  <div class="sidebar-overlay dashboard-sidebar-backdrop"
-       *ngIf="isSidebarOpen"
-       (click)="closeSidebar()"></div>
+  <div
+    *ngIf="isSidebarOpen && isMobileView()"
+    class="sidebar-overlay dashboard-sidebar-backdrop active"
+    (click)="closeSidebar()"
+    aria-hidden="true">
+  </div>
 
   <!-- Enhanced Toggle Button for Mobile -->
   <button class="menu-toggle dashboard-menu-toggle"
-          (click)="toggleSidebar()"
+          type="button"
+          (click)="$event.preventDefault(); $event.stopPropagation(); toggleSidebar()"
           [class.active]="isSidebarOpen"
           aria-label="Toggle sidebar menu">
     <span class="hamburger-line"></span>
