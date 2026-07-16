@@ -62,7 +62,7 @@
         >
 
         <div class="ruby-quote-content">
-          <h2>Bismillahirrahmanirrahim</h2>
+          <h2>{{ getOpeningHeading() }}</h2>
           <div class="ruby-quote-line"></div>
 
           <p class="ruby-quote-opening invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
@@ -418,11 +418,7 @@
         <img class="ruby-footer-frame" src="assets/thema-1/frame-8.png" alt="" aria-hidden="true">
 
         <div class="ruby-footer-content">
-          <p class="ruby-footer-message">
-            Merupakan suatu kehormatan dan kebahagiaan<br>
-            bagi kami apabila Bapak/Ibu/Saudara/i berkenan<br>
-            hadir dan memberikan doa restu.
-          </p>
+          <p class="ruby-footer-message" [innerText]="getClosingText()"></p>
 
           <p class="ruby-footer-label">KAMI YANG BERBAHAGIA</p>
 

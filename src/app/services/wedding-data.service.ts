@@ -132,6 +132,24 @@ export interface WeddingSettings {
   };
 }
 
+export interface ReligionContentMap {
+  [key: string]: string | null | undefined;
+}
+
+export interface ReligionContentData {
+  religion_code?: string | null;
+  religion_label?: string | null;
+  defaults?: ReligionContentMap | null;
+  custom?: ReligionContentMap | null;
+  resolved?: ReligionContentMap | null;
+  quote?: string | null;
+  message?: string | null;
+  whatsapp_text?: string | null;
+  salam?: string | null;
+  penutup?: string | null;
+  [key: string]: any;
+}
+
 export interface FilterUndangan {
   id: number;
   halaman_sampul: number;
@@ -201,6 +219,8 @@ export interface WeddingData {
   gallery: GalleryItem[];
   bank_accounts: BankAccount[];
   settings: WeddingSettings;
+  religion_content?: ReligionContentData | null;
+  religionContent?: ReligionContentData | null;
   filter_undangan: FilterUndangan;
   guest_wishes: GuestWish[];
   guest_book: any[];

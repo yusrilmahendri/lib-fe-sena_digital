@@ -11,6 +11,11 @@ import {
   DEFAULT_SALAM_PEMBUKA,
   normalizeSalamValue,
 } from 'src/app/shared/salam-defaults';
+import {
+  getReligionContentFromData,
+  getResolvedReligionValue,
+  ReligionContentLike,
+} from 'src/app/shared/religion-content.util';
 
 @Component({
   selector: 'wc-pengaturan',
@@ -41,6 +46,7 @@ export class PengaturanComponent implements OnInit {
   settingData: any;
   filterData: any;
   isFilterExisting = false;
+  religionContent: ReligionContentLike = {};
 
   readonly filterItems = [
     {
@@ -167,9 +173,10 @@ export class PengaturanComponent implements OnInit {
         this.dataFilter = res?.['data'];
         this.settingData = res?.['setting'];
         this.filterData = res?.['filter_undangan'];
+        this.religionContent = getReligionContentFromData(res);
 
         this.populateFormsWithData();
-        this.isInitialLoading = false;
+        this.loadReligionContentFallback();
       },
       error: (err) => {
 
@@ -179,27 +186,47 @@ export class PengaturanComponent implements OnInit {
     });
   }
 
+  private loadReligionContentFallback(): void {
+    if (this.hasReligionContent()) {
+      this.isInitialLoading = false;
+      return;
+    }
+
+    this.dashboardSvc.getReligionContent().subscribe({
+      next: (response) => {
+        this.religionContent = getReligionContentFromData(response);
+        this.populateFormsWithData();
+        this.isInitialLoading = false;
+      },
+      error: () => {
+        this.isInitialLoading = false;
+      },
+    });
+  }
+
   private populateFormsWithData(): void {
     if (this.settingData) {
       this.domainTokenForm.patchValue({
         domain: this.settingData.domain || '',
         token: this.settingData.token || ''
       });
-      this.salamForm.patchValue({
-        salam_pembuka: this.normalizeSalamValue(
-          this.settingData.salam_pembuka,
-          this.DEFAULT_SALAM_PEMBUKA
-        ),
-        salam_atas: this.normalizeSalamValue(
-          this.settingData.salam_atas,
-          this.DEFAULT_SALAM_ATAS
-        ),
-        salam_bawah: this.normalizeSalamValue(
-          this.settingData.salam_bawah,
-          this.DEFAULT_SALAM_BAWAH
-        ),
-      });
     }
+
+    this.salamForm.patchValue({
+      salam_pembuka: this.normalizeSalamValue(
+        this.getReligionText('invitation_intro', 'salam_pembuka') || this.settingData?.salam_pembuka,
+        this.DEFAULT_SALAM_PEMBUKA
+      ),
+      salam_atas: this.normalizeSalamValue(
+        this.getReligionText('whatsapp_opening', 'opening_greeting', 'salam_atas') || this.settingData?.salam_atas,
+        this.DEFAULT_SALAM_ATAS
+      ),
+      salam_bawah: this.normalizeSalamValue(
+        this.getReligionText('whatsapp_closing', 'closing_greeting', 'salam_bawah') || this.settingData?.salam_bawah,
+        this.DEFAULT_SALAM_BAWAH
+      ),
+    });
+
     // Patch filterForm with boolean values from backend (0/1 or '0'/'1')
     if (this.filterData) {
       this.isFilterExisting = true;
@@ -259,6 +286,18 @@ export class PengaturanComponent implements OnInit {
     return normalizeSalamValue(value, fallback);
   }
 
+  hasReligionContent(): boolean {
+    return !!(
+      this.getReligionText('invitation_intro', 'salam_pembuka') ||
+      this.getReligionText('whatsapp_opening', 'opening_greeting', 'salam_atas') ||
+      this.getReligionText('whatsapp_closing', 'closing_greeting', 'salam_bawah')
+    );
+  }
+
+  private getReligionText(...keys: string[]): string {
+    return getResolvedReligionValue(this.religionContent, ...keys);
+  }
+
   getMusicStatusLabel(): string {
     const source = String(
       this.settingData?.music_source_type ||
@@ -292,6 +331,11 @@ export class PengaturanComponent implements OnInit {
   }
 
   saveSalam(): void {
+    if (this.hasReligionContent()) {
+      this.notyf.error('Pesan agama dikelola dari halaman Penyesuaian Agama.');
+      return;
+    }
+
     if (!this.salamForm.valid) {
       this.notyf.error('Mohon lengkapi semua field salam');
       return;

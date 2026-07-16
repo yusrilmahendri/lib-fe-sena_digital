@@ -202,8 +202,8 @@ export function getThemePreviewDummyData(slug: ThemeSlug): WeddingData {
     quotes: [
       {
         id: 1,
-        name: 'QS. Ar-Rum: 21',
-        qoute: 'Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan hidup.',
+        name: 'Doa terbaik untuk kedua mempelai',
+        qoute: 'Semoga cinta ini menjadi rumah yang teduh, penuh kasih, dan kebaikan.',
         created_at: '2026-01-01T00:00:00.000Z',
       },
     ],
@@ -304,7 +304,7 @@ export function getThemePreviewDummyData(slug: ThemeSlug): WeddingData {
       id: 0,
       domain: '',
       musik: PREVIEW_MUSIC_URL,
-      salam_pembuka: 'Assalamu alaikum Warahmatullahi Wabarakatuh. Dengan memohon rahmat Tuhan Yang Maha Esa, kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami.',
+      salam_pembuka: 'Dengan penuh syukur dan kebahagiaan, kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami.',
       salam_atas: 'Kepada Yth. Bapak/Ibu/Saudara/i',
       salam_bawah: 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila berkenan hadir dan memberikan doa restu.',
       resolved_music_url: PREVIEW_MUSIC_URL,
@@ -314,6 +314,22 @@ export function getThemePreviewDummyData(slug: ThemeSlug): WeddingData {
       music_source_type: 'preview',
       can_upload_custom_music: false,
       music_stream_url: PREVIEW_MUSIC_URL,
+    },
+    religion_content: {
+      religion_code: 'umum',
+      religion_label: 'Umum',
+      resolved: {
+        opening_greeting: 'Salam hangat penuh sukacita',
+        closing_greeting: 'Terima kasih atas doa dan restu yang diberikan.',
+        invitation_intro: 'Dengan penuh syukur dan kebahagiaan, kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami.',
+        whatsapp_message: 'Dengan penuh syukur, kami mengundang Bapak/Ibu/Saudara/i untuk hadir di hari bahagia kami.',
+        quote_text: 'Semoga cinta ini menjadi rumah yang teduh, penuh kasih, dan kebaikan.',
+        quote_source: 'Doa terbaik untuk kedua mempelai',
+        prayer_text: 'Semoga perjalanan baru ini dipenuhi kasih, damai, dan kebahagiaan.',
+        blessing_text: 'Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila berkenan hadir dan memberikan doa restu.',
+      },
+      custom: {},
+      defaults: {},
     },
     filter_undangan: {
       id: 0,

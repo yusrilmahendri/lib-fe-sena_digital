@@ -275,7 +275,7 @@
     <section class="sapphire-footer" [style.background-image]="'url(' + getCoverPhoto() + ')'">
       <div class="sapphire-footer__overlay"></div>
       <div class="sapphire-footer__content">
-        <p class="sapphire-footer__thanks">Terima kasih atas doa dan restu yang diberikan.</p>
+        <p class="sapphire-footer__thanks">{{ getClosingText() }}</p>
         <span class="sapphire-footer__label">KAMI YANG BERBAHAGIA</span>
         <h2 class="sapphire-footer__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h2>
         <time class="sapphire-footer__date">{{ getWeddingDate() }}</time>

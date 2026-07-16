@@ -46,7 +46,7 @@
         <div class="diamond-prayer__overlay"></div>
 
         <div class="diamond-prayer__content">
-          <h2>Bismillahirrahmanirrahim</h2>
+          <h2>{{ getOpeningHeading() }}</h2>
 
           <p class="diamond-prayer__intro invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
 
@@ -602,11 +602,7 @@
         <div class="diamond-footer__overlay"></div>
 
         <div class="diamond-footer__content">
-          <p class="diamond-footer__intro">
-            Merupakan suatu kehormatan dan kebahagiaan<br />
-            bagi kami apabila Bapak/Ibu/Saudara/i berkenan<br />
-            hadir dan memberikan doa restu.
-          </p>
+          <p class="diamond-footer__intro" [innerText]="getClosingText()"></p>
 
           <p class="diamond-footer__label">KAMI YANG BERBAHAGIA</p>
 

@@ -8,11 +8,25 @@ import {
 } from 'src/app/shared/guest-checkin/guest-checkin.utils';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
+import {
+  getReligionContentFromData,
+  getResolvedReligionValue,
+  ReligionContentLike,
+} from 'src/app/shared/religion-content.util';
 import * as XLSX from 'xlsx';
 
 interface ImportedGuestRow {
   name: string;
   slug?: string;
+}
+
+interface WhatsappTemplateContext {
+  guestName: string;
+  brideName: string;
+  groomName: string;
+  eventDate: string;
+  eventLocation: string;
+  invitationUrl: string;
 }
 
 @Component({
@@ -44,6 +58,7 @@ export class BagiUndanganComponent implements OnInit {
 
   private weddingData: any = {};
   private salamSetting: Record<string, any> = {};
+  private religionContent: ReligionContentLike = {};
   private readonly storagePrefix = 'guest_invitations';
   private readonly legacyStoragePrefix = 'generated_guest_invitations';
   private readonly maxStoredGuests = 500;
@@ -89,13 +104,29 @@ export class BagiUndanganComponent implements OnInit {
       {};
 
     this.salamSetting = { ...setting };
+    this.religionContent = getReligionContentFromData(response);
 
     this.weddingData = {
       setting: this.salamSetting,
       settings: this.salamSetting,
+      religion_content: this.religionContent,
       filter_undangan: response?.filter_undangan || response?.data?.filter_undangan || {},
       data: response || {}
     };
+  }
+
+  private loadReligionContent(onComplete?: () => void): void {
+    this.dashboardService.getReligionContent().subscribe({
+      next: (religionResponse) => {
+        this.religionContent = getReligionContentFromData(religionResponse);
+        this.weddingData = {
+          ...this.weddingData,
+          religion_content: this.religionContent,
+        };
+        onComplete?.();
+      },
+      error: () => onComplete?.(),
+    });
   }
 
   private normalizeWeddingDomain(value: any): string {
@@ -141,6 +172,9 @@ export class BagiUndanganComponent implements OnInit {
 
   public copyGuestInvitation(guestOrUrl?: GuestInvitationRecord | string): void {
     const url = this.getGuestInvitationUrl(guestOrUrl);
+    const guestName = typeof guestOrUrl === 'object'
+      ? String(guestOrUrl?.name || '').trim()
+      : this.extractGuestNameFromInvitationUrl(url) || String(this.guestName || '').trim();
 
     if (!url) {
       this.showNotice('Link undangan belum tersedia.');
@@ -148,7 +182,7 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     this.ensureInvitationGreetingSettings(() => {
-      const message = this.buildShareMessage(url);
+      const message = this.buildShareMessage(url, guestName);
       this.copyTextToClipboard(message);
     });
   }
@@ -168,7 +202,7 @@ export class BagiUndanganComponent implements OnInit {
     }
 
     this.ensureInvitationGreetingSettings(() => {
-      const message = this.buildShareMessage(invitationUrl);
+      const message = this.buildShareMessage(invitationUrl, resolvedGuestName);
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     });
   }
@@ -326,7 +360,7 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   public buildWhatsappUrl(guestName: string, guestUrl: string): string {
-    const message = this.buildShareMessage(guestUrl);
+    const message = this.buildShareMessage(guestUrl, guestName);
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   }
 
@@ -444,11 +478,31 @@ export class BagiUndanganComponent implements OnInit {
     return this.normalizeInvitationLineBreaks(raw);
   }
 
+  private getResolvedReligionValue(...keys: string[]): string {
+    return getResolvedReligionValue(
+      this.religionContent || this.weddingData?.religion_content,
+      ...keys
+    );
+  }
+
+  private hasResolvedReligionContent(): boolean {
+    return !!(
+      this.getResolvedReligionValue('whatsapp_opening', 'opening_greeting', 'salam_atas') ||
+      this.getResolvedReligionValue('whatsapp_message', 'invitation_intro', 'message') ||
+      this.getResolvedReligionValue('whatsapp_closing', 'closing_greeting', 'salam_bawah')
+    );
+  }
+
   private normalizeText(value: unknown, fallback: string): string {
     return normalizeSalamValue(value, fallback);
   }
 
   private getWhatsappOpeningText(): string {
+    const religionText = this.getResolvedReligionValue('whatsapp_opening', 'opening_greeting', 'salam_atas');
+    if (religionText) {
+      return this.normalizeInvitationLineBreaks(religionText);
+    }
+
     return this.normalizeInvitationLineBreaks(
       this.normalizeText(
         this.salamSetting?.['salam_atas'] ??
@@ -459,7 +513,18 @@ export class BagiUndanganComponent implements OnInit {
     );
   }
 
+  private getWhatsappMessageText(): string {
+    return this.normalizeInvitationLineBreaks(
+      this.getResolvedReligionValue('whatsapp_message', 'invitation_intro', 'message')
+    );
+  }
+
   private getWhatsappClosingText(): string {
+    const religionText = this.getResolvedReligionValue('whatsapp_closing', 'closing_greeting', 'salam_bawah');
+    if (religionText) {
+      return this.normalizeInvitationLineBreaks(religionText);
+    }
+
     return this.normalizeInvitationLineBreaks(
       this.normalizeText(
         this.salamSetting?.['salam_bawah'] ??
@@ -471,43 +536,216 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   private ensureInvitationGreetingSettings(onReady: () => void): void {
-    if (
-      this.getSettingText('salam_atas') ||
-      this.getSettingText('salam_bawah')
-    ) {
+    if (this.hasResolvedReligionContent()) {
       onReady();
+      return;
+    }
+
+    if (this.getSettingText('salam_atas') || this.getSettingText('salam_bawah')) {
+      this.loadReligionContent(onReady);
       return;
     }
 
     this.dashboardService.list(DashboardServiceType.SETTINGS_GET_FILTER).subscribe({
       next: (response: any) => {
         this.applyInvitationGreetingSettings(response);
-        onReady();
+        if (this.hasResolvedReligionContent()) {
+          onReady();
+          return;
+        }
+
+        this.loadReligionContent(onReady);
       },
       error: () => onReady()
     });
   }
 
-  private buildShareMessage(url: string): string {
-    const salamAtas = this.getWhatsappOpeningText();
-    let salamBawah = this.getWhatsappClosingText();
+  private buildShareMessage(url: string, guestName = ''): string {
     const invitationUrl = String(url || '').trim();
+    const context = this.buildWhatsappTemplateContext(invitationUrl, guestName);
+    const openingTemplate = this.getWhatsappOpeningText();
+    const messageTemplate = this.getWhatsappMessageText();
+    const closingTemplate = this.getWhatsappClosingText();
+    const opening = this.renderWhatsappTemplate(openingTemplate, context);
+    const message = this.renderWhatsappTemplate(messageTemplate, context);
+    const closing = this.renderWhatsappTemplate(closingTemplate, context);
+    const messageContainsUrl =
+      (!!context.invitationUrl && message.includes(context.invitationUrl)) ||
+      /\{\{\s*invitation_url\s*\}\}/i.test(messageTemplate);
+    const normalizedOpening = this.normalizeMessagePart(opening);
+    const normalizedMessage = this.normalizeMessagePart(message);
+    const openingAlreadyIncluded =
+      !!normalizedOpening &&
+      normalizedMessage.includes(normalizedOpening);
+    const openingPart = openingAlreadyIncluded ? '' : opening;
+    const combinedBeforeClosing = [openingPart, message].filter(Boolean).join('\n\n');
+    const normalizedBeforeClosing = this.normalizeMessagePart(combinedBeforeClosing);
+    const normalizedClosing = this.normalizeMessagePart(closing);
+    const closingAlreadyIncluded =
+      !!normalizedClosing &&
+      normalizedBeforeClosing.includes(normalizedClosing);
+    const result = [
+      openingPart,
+      message,
+      messageContainsUrl ? '' : context.invitationUrl,
+      closingAlreadyIncluded ? '' : closing
+    ]
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .join('\n\n');
 
-    if (
-      salamAtas &&
-      salamBawah &&
-      salamAtas.trim().toLowerCase() === salamBawah.trim().toLowerCase()
-    ) {
-      salamBawah = '';
+    return this.cleanupWhatsappMessage(result);
+  }
+
+  private renderWhatsappTemplate(template: string, context: WhatsappTemplateContext): string {
+    const replacements: Record<string, string> = {
+      '{{guest_name}}': context.guestName || 'Bapak/Ibu/Saudara/i',
+      '{{bride_name}}': context.brideName || '',
+      '{{groom_name}}': context.groomName || '',
+      '{{event_date}}': context.eventDate || '',
+      '{{event_location}}': context.eventLocation || '',
+      '{{invitation_url}}': context.invitationUrl || '',
+    };
+
+    return Object.entries(replacements).reduce(
+      (result, [placeholder, value]) => {
+        const key = placeholder.replace(/[{}]/g, '');
+        return result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'), value);
+      },
+      String(template || '')
+    ).trim();
+  }
+
+  private buildWhatsappTemplateContext(invitationUrl: string, guestName = ''): WhatsappTemplateContext {
+    const source = this.weddingData || {};
+    const data = source?.data || {};
+    const event = this.getPrimaryInvitationEvent(source);
+
+    return {
+      guestName: this.resolveGuestName(guestName, invitationUrl),
+      brideName: this.readFirstDeepText(source, [
+        'mempelai.wanita.nama_panggilan',
+        'mempelai.wanita.nama_lengkap',
+        'mempelai_wanita',
+        'bride.name',
+        'bride.nama',
+        'wanita.nama_panggilan',
+        'wanita.nama_lengkap',
+        'nama_mempelai_wanita',
+        'data.mempelai.wanita.nama_panggilan',
+        'data.mempelai.wanita.nama_lengkap',
+        'data.mempelai_wanita',
+        'data.bride.name',
+        'data.wanita.nama_panggilan',
+        'data.nama_mempelai_wanita',
+      ]),
+      groomName: this.readFirstDeepText(source, [
+        'mempelai.pria.nama_panggilan',
+        'mempelai.pria.nama_lengkap',
+        'mempelai_pria',
+        'groom.name',
+        'groom.nama',
+        'pria.nama_panggilan',
+        'pria.nama_lengkap',
+        'nama_mempelai_pria',
+        'data.mempelai.pria.nama_panggilan',
+        'data.mempelai.pria.nama_lengkap',
+        'data.mempelai_pria',
+        'data.groom.name',
+        'data.pria.nama_panggilan',
+        'data.nama_mempelai_pria',
+      ]),
+      eventDate: this.readFirstDeepText(event, [
+        'tanggal_formatted',
+        'date_formatted',
+        'tanggal',
+        'date',
+        'tanggal_acara',
+        'event_date',
+      ]) || this.readFirstDeepText(data, [
+        'tanggal_formatted',
+        'date_formatted',
+        'tanggal',
+        'date',
+        'tanggal_acara',
+        'event_date',
+      ]),
+      eventLocation: this.readFirstDeepText(event, [
+        'lokasi',
+        'location',
+        'alamat',
+        'address',
+        'lokasi_acara',
+        'event_location',
+      ]) || this.readFirstDeepText(data, [
+        'lokasi',
+        'location',
+        'alamat',
+        'address',
+        'lokasi_acara',
+        'event_location',
+      ]),
+      invitationUrl,
+    };
+  }
+
+  private resolveGuestName(guestName: string, invitationUrl: string): string {
+    return String(
+      guestName ||
+      this.extractGuestNameFromInvitationUrl(invitationUrl) ||
+      this.guestName ||
+      this.readFirstDeepText(this.weddingData, ['guest_name', 'nama_tamu', 'guest.name', 'guest.nama', 'name']) ||
+      ''
+    ).trim();
+  }
+
+  private getPrimaryInvitationEvent(source: any): Record<string, any> {
+    const candidates = [
+      source?.events,
+      source?.event,
+      source?.acara,
+      source?.data?.events,
+      source?.data?.event,
+      source?.data?.acara,
+      source?.data?.data?.events,
+      source?.data?.data?.acara,
+    ];
+    const event = candidates.find((item) => Array.isArray(item) ? item.length : !!item);
+
+    return Array.isArray(event) ? event[0] || {} : event || {};
+  }
+
+  private readFirstDeepText(source: any, paths: string[]): string {
+    for (const path of paths) {
+      const value = this.readDeepValue(source, path);
+      const text = String(value ?? '').trim();
+      if (text) {
+        return text;
+      }
     }
 
-    return [
-      salamAtas,
-      `Silakan buka undangan berikut:\n${invitationUrl}`,
-      salamBawah
-    ]
-      .filter((item) => !!String(item || '').trim())
-      .join('\n\n');
+    return '';
+  }
+
+  private readDeepValue(source: any, path: string): any {
+    return String(path || '')
+      .split('.')
+      .reduce((value, key) => value?.[key], source);
+  }
+
+  private normalizeMessagePart(value: string): string {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  private cleanupWhatsappMessage(value: string): string {
+    return String(value || '')
+      .replace(/\{\{[^}]+\}\}/g, '')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   }
 
   private copyTextToClipboard(message: string): void {

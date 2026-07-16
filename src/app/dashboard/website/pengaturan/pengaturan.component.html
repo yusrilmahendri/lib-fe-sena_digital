@@ -99,6 +99,7 @@
             rows="5"
             formControlName="salam_pembuka"
             [disabled]="isLoadingSalam"
+            [readonly]="hasReligionContent()"
             aria-describedby="salam-pembuka-help salam-pembuka-count"
           ></textarea>
           <small id="salam-pembuka-count" class="char-count">{{ getControlLength('salam_pembuka') }} karakter</small>
@@ -112,6 +113,7 @@
             rows="5"
             formControlName="salam_atas"
             [disabled]="isLoadingSalam"
+            [readonly]="hasReligionContent()"
             aria-describedby="salam-atas-help salam-atas-count"
           ></textarea>
           <small id="salam-atas-count" class="char-count">{{ getControlLength('salam_atas') }} karakter</small>
@@ -125,13 +127,14 @@
             rows="5"
             formControlName="salam_bawah"
             [disabled]="isLoadingSalam"
+            [readonly]="hasReligionContent()"
             aria-describedby="salam-bawah-help salam-bawah-count"
           ></textarea>
           <small id="salam-bawah-count" class="char-count">{{ getControlLength('salam_bawah') }} karakter</small>
         </div>
 
         <div class="card-actions card-actions--right">
-          <button type="submit" class="btn-action btn-action--primary" [disabled]="isLoadingSalam || !salamForm.valid">
+          <button type="submit" class="btn-action btn-action--primary" [disabled]="isLoadingSalam || hasReligionContent() || !salamForm.valid">
             <span *ngIf="isLoadingSalam" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <i *ngIf="!isLoadingSalam" class="fas fa-save" aria-hidden="true"></i>
             {{ isLoadingSalam ? 'Menyimpan...' : 'Simpan Pesan' }}

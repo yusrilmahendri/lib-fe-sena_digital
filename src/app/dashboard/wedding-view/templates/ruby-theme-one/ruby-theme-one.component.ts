@@ -317,18 +317,19 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     img.style.display = 'none';
   }
 
-  getOpeningHeading(): string {
-    return 'Bismillahirrahmanirrahim';
+  override getOpeningHeading(): string {
+    return super.getOpeningHeading();
   }
 
 
   getQuoteText(): string {
-    return ((this.weddingData?.quotes || []).find((item) => item?.qoute)?.qoute || '').trim();
+    return this.getReligionQuoteText()
+      || ((this.weddingData?.quotes || []).find((item) => item?.qoute)?.qoute || '').trim();
   }
 
   getQuoteSource(): string {
     const quote = (this.weddingData?.quotes || []).find((item) => item?.qoute) as any;
-    return (
+    return this.getReligionQuoteSource() || (
       quote?.source
       || quote?.reference
       || quote?.referensi
@@ -349,17 +350,19 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   getQuoteName(): string {
     const quote = (this.weddingData?.quotes || []).find((item) => item?.qoute) as any;
-    return (quote?.name || '').trim();
+    return this.getReligionQuoteSource() || (quote?.name || '').trim();
   }
 
   getQuranQuote(): string {
     const quote = (this.weddingData?.quotes || []).find((item) => item?.qoute);
-    return quote?.qoute
-      || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu agar kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.';
+    return this.getReligionQuoteText(
+      quote?.qoute
+      || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu agar kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.'
+    );
   }
 
   getQuranSource(): string {
-    return 'QS. Ar-Rum: 21';
+    return this.getReligionQuoteSource('QS. Ar-Rum: 21');
   }
 
   getBrideParentLine(): string {

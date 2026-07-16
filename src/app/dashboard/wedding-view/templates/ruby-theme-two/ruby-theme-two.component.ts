@@ -169,13 +169,15 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   getQuranQuote(): string {
     const quote = this.getPrimaryQuote();
-    return quote?.text
-      || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu agar kamu cenderung dan merasa tenteram kepadanya.';
+    return this.getReligionQuoteText(
+      quote?.text
+      || 'Dan di antara tanda-tanda kebesaran-Nya ialah Dia menciptakan pasangan-pasangan untukmu agar kamu cenderung dan merasa tenteram kepadanya.'
+    );
   }
 
   getQuranSource(): string {
     const quote = this.getPrimaryQuote();
-    return quote ? quote.source : 'QS. Ar-Rum: 21';
+    return this.getReligionQuoteSource(quote ? quote.source : 'QS. Ar-Rum: 21');
   }
 
   getBrideInstagram(): string | null {

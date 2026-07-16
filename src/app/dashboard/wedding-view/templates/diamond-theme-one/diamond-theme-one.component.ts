@@ -850,7 +850,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       ? data?.quotes?.[0]
       : data?.quotes;
 
-    return String(quote?.quote || quote?.pesan || quote?.text || this.getDiamondQuoteText() || '').trim();
+    return this.getReligionQuoteText(
+      String(quote?.quote || quote?.pesan || quote?.text || this.getDiamondQuoteText() || '').trim()
+    );
   }
 
   getMainQuoteSource(): string {
@@ -859,7 +861,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       ? data?.quotes?.[0]
       : data?.quotes;
 
-    return String(quote?.name || quote?.source || quote?.sumber || this.getDiamondQuoteSource() || '').trim();
+    return this.getReligionQuoteSource(
+      String(quote?.name || quote?.source || quote?.sumber || this.getDiamondQuoteSource() || '').trim()
+    );
   }
 
   getBrideData(): any {

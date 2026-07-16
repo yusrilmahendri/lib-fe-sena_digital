@@ -9,12 +9,19 @@ import {
 } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
+import {
+  RELIGION_DEFAULT_TEMPLATES,
+  normalizeReligionCode,
+  readReligionMapValue,
+} from 'src/app/shared/religion-content.util';
 
 type ReligionFieldKey =
   | 'opening_greeting'
   | 'closing_greeting'
   | 'invitation_intro'
+  | 'whatsapp_opening'
   | 'whatsapp_message'
+  | 'whatsapp_closing'
   | 'quote_text'
   | 'quote_source'
   | 'prayer_text'
@@ -77,10 +84,22 @@ export class PenyesuaianAgamaComponent implements OnInit {
       rows: 4,
     },
     {
+      key: 'whatsapp_opening',
+      label: 'Salam pembuka WhatsApp',
+      helper: 'Teks paling atas saat undangan dibagikan via WhatsApp.',
+      rows: 3,
+    },
+    {
       key: 'whatsapp_message',
       label: 'Pesan WhatsApp',
       helper: 'Template pesan saat undangan dibagikan via WhatsApp.',
       rows: 5,
+    },
+    {
+      key: 'whatsapp_closing',
+      label: 'Salam penutup WhatsApp',
+      helper: 'Teks penutup setelah link undangan pada pesan WhatsApp.',
+      rows: 3,
     },
     {
       key: 'quote_text',
@@ -120,7 +139,9 @@ export class PenyesuaianAgamaComponent implements OnInit {
     opening_greeting: '',
     closing_greeting: '',
     invitation_intro: '',
+    whatsapp_opening: '',
     whatsapp_message: '',
+    whatsapp_closing: '',
     quote_text: '',
     quote_source: '',
     prayer_text: '',
@@ -129,8 +150,10 @@ export class PenyesuaianAgamaComponent implements OnInit {
   private readonly aliases: Record<ReligionFieldKey, string[]> = {
     opening_greeting: ['opening_greeting', 'salam_pembuka', 'salam', 'salam_atas'],
     closing_greeting: ['closing_greeting', 'salam_penutup', 'salam_bawah'],
-    invitation_intro: ['invitation_intro', 'intro_undangan', 'intro', 'message'],
+    invitation_intro: ['invitation_intro', 'intro_undangan', 'intro', 'message', 'opening_prayer'],
+    whatsapp_opening: ['whatsapp_opening', 'opening_greeting', 'salam_atas', 'salam'],
     whatsapp_message: ['whatsapp_message', 'whatsapp_text', 'pesan_whatsapp', 'message'],
+    whatsapp_closing: ['whatsapp_closing', 'closing_greeting', 'salam_bawah', 'penutup'],
     quote_text: ['quote_text', 'quote'],
     quote_source: ['quote_source', 'quote_author', 'quote_reference', 'source'],
     prayer_text: ['prayer_text', 'prayer', 'doa'],
@@ -151,7 +174,9 @@ export class PenyesuaianAgamaComponent implements OnInit {
       opening_greeting: [''],
       closing_greeting: [''],
       invitation_intro: [''],
+      whatsapp_opening: [''],
       whatsapp_message: [''],
+      whatsapp_closing: [''],
       quote_text: [''],
       quote_source: [''],
       prayer_text: [''],
@@ -180,11 +205,24 @@ export class PenyesuaianAgamaComponent implements OnInit {
   }
 
   chooseReligion(code: string): void {
-    this.form.patchValue({ religion_code: code });
+    const religionCode = normalizeReligionCode(code);
+    const currentContent = this.content || this.normalizeContent({
+      religion_code: religionCode,
+      custom: this.buildCustomPayload(),
+    });
+
+    this.form.patchValue({ religion_code: religionCode });
+    this.content = this.resolveContentForReligion(
+      {
+        ...currentContent,
+        custom: this.buildCustomPayload(),
+      },
+      religionCode
+    );
   }
 
   saveChanges(): void {
-    const religionCode = this.form.get('religion_code')?.value;
+    const religionCode = normalizeReligionCode(this.form.get('religion_code')?.value);
 
     if (!religionCode) {
       this.notyf.error('Pilih agama terlebih dahulu.');
@@ -285,11 +323,11 @@ export class PenyesuaianAgamaComponent implements OnInit {
     return field.key;
   }
 
-  private buildCustomPayload(): ReligionContentMap {
+  private buildCustomPayload(): Record<ReligionFieldKey, string> {
     return this.fields.reduce((payload, field) => {
       payload[field.key] = this.getCustom(field.key).trim();
       return payload;
-    }, {} as ReligionContentMap);
+    }, { ...this.emptyContent });
   }
 
   private patchForm(content: NormalizedReligionContent): void {
@@ -301,11 +339,23 @@ export class PenyesuaianAgamaComponent implements OnInit {
 
   private normalizeContent(raw: ReligionContentData | undefined): NormalizedReligionContent {
     const data = raw || {};
-    const defaults = this.normalizeMap(data.defaults || {}, data);
-    const custom = this.normalizeMap(data.custom || {}, data);
-    const resolved = this.normalizeMap(data.resolved || {}, data);
+    const religionCode = normalizeReligionCode(data.religion_code || this.form.get('religion_code')?.value || '');
+    const templateDefaults = this.getDefaultTemplate(religionCode);
+    const defaults = this.normalizeMap(
+      {
+        ...templateDefaults,
+        ...(data['default'] || {}),
+        ...(data.defaults || {}),
+      },
+      data
+    );
+    const custom = this.normalizeMap(data.custom || {}, {} as ReligionContentData);
+    const apiResolved = this.normalizeMap(data['resolved_final'] || data.resolved || {}, data);
+    const resolved = this.fields.reduce((result, field) => {
+      result[field.key] = custom[field.key] || apiResolved[field.key] || defaults[field.key] || '';
+      return result;
+    }, { ...this.emptyContent });
     const flags = this.normalizeFlags(data.flags || {}, custom);
-    const religionCode = String(data.religion_code || this.form.get('religion_code')?.value || '').trim();
 
     return {
       religionCode,
@@ -315,6 +365,37 @@ export class PenyesuaianAgamaComponent implements OnInit {
       resolved,
       flags,
     };
+  }
+
+  private resolveContentForReligion(
+    content: NormalizedReligionContent,
+    religionCode: string
+  ): NormalizedReligionContent {
+    const defaults = this.getDefaultTemplate(religionCode);
+    const custom = this.normalizeMap(content.custom || {}, {} as ReligionContentData);
+    const resolved = this.fields.reduce((result, field) => {
+      result[field.key] = custom[field.key] || defaults[field.key] || '';
+      return result;
+    }, { ...this.emptyContent });
+    const flags = this.normalizeFlags({}, custom);
+
+    return {
+      religionCode,
+      religionLabel: this.labelForReligion(religionCode),
+      defaults,
+      custom,
+      resolved,
+      flags,
+    };
+  }
+
+  private getDefaultTemplate(religionCode: string): Record<ReligionFieldKey, string> {
+    const template = RELIGION_DEFAULT_TEMPLATES[normalizeReligionCode(religionCode)] || {};
+
+    return this.fields.reduce((result, field) => {
+      result[field.key] = readReligionMapValue(template, field.key);
+      return result;
+    }, { ...this.emptyContent });
   }
 
   private normalizeMap(

@@ -3,6 +3,7 @@ import {
   GalleryItem,
   GuestWish,
   MempelaiPerson,
+  ReligionContentData,
   WeddingData,
   WeddingEvent,
   WeddingQuote,
@@ -13,6 +14,10 @@ import {
   resolveSalamBawah,
   resolveSalamPembuka,
 } from '../../../../shared/salam-defaults';
+import {
+  getReligionContentFromData,
+  getResolvedReligionValue,
+} from '../../../../shared/religion-content.util';
 import {
   getFeaturedGalleryPhoto,
   getOrderedCollagePhotos,
@@ -217,23 +222,36 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
     );
   }
 
-  getInvitationOpeningText(): string {
+  getReligionText(key: string, fallback: string = ''): string {
+    return getResolvedReligionValue(this.getReligionContent(), key) || fallback || '';
+  }
+
+  getInvitationText(key: string, fallback: string = ''): string {
     const source = this.getTestimoniSetting();
-    const text = String(source['salam_pembuka'] ?? '').trim();
+    const keys = this.getReligionKeyAliases(key);
+
+    return (
+      this.getReligionText(key, '') ||
+      this.readFirstText(source, keys) ||
+      fallback ||
+      ''
+    );
+  }
+
+  getInvitationOpeningText(): string {
+    const text = this.getInvitationText('salam_pembuka', '');
 
     return resolveSalamPembuka(text);
   }
 
   getWhatsappOpeningText(): string {
-    const source = this.getTestimoniSetting();
-    const text = String(source['salam_atas'] ?? '').trim();
+    const text = this.getInvitationText('salam_atas', '');
 
     return resolveSalamAtas(text);
   }
 
   getWhatsappClosingText(): string {
-    const source = this.getTestimoniSetting();
-    const text = String(source['salam_bawah'] ?? '').trim();
+    const text = this.getInvitationText('salam_bawah', '');
 
     return resolveSalamBawah(text);
   }
@@ -251,7 +269,56 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   getClosingText(): string {
-    return 'Merupakan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.';
+    return this.getReligionText(
+      'penutup',
+      'Merupakan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.'
+    );
+  }
+
+  getOpeningHeading(): string {
+    return this.getReligionText('salam', 'Bismillahirrahmanirrahim');
+  }
+
+  getReligionQuoteText(fallback: string = ''): string {
+    return this.getReligionText('quote', fallback);
+  }
+
+  getReligionQuoteSource(fallback: string = ''): string {
+    return this.getReligionText('quote_source', fallback);
+  }
+
+  private getReligionContent(): ReligionContentData {
+    const data: any = this.weddingData || {};
+    return getReligionContentFromData(data) as ReligionContentData;
+  }
+
+  private getReligionKeyAliases(key: string): string[] {
+    const aliases: Record<string, string[]> = {
+      salam_pembuka: ['salam_pembuka', 'invitation_intro', 'opening_prayer', 'message', 'opening_greeting'],
+      opening_prayer: ['opening_prayer', 'invitation_intro', 'prayer_text', 'blessing_text', 'message', 'salam_pembuka'],
+      salam_atas: ['salam_atas', 'opening_greeting', 'salam', 'salam_pembuka'],
+      salam: ['salam', 'opening_greeting', 'salam_atas'],
+      salam_bawah: ['salam_bawah', 'closing_greeting', 'salam_penutup', 'penutup', 'blessing_text'],
+      penutup: ['penutup', 'closing_greeting', 'salam_bawah', 'blessing_text'],
+      quote: ['quote', 'quote_text'],
+      quote_text: ['quote_text', 'quote'],
+      quote_source: ['quote_source', 'quote_author', 'quote_reference', 'source'],
+      message: ['message', 'invitation_intro', 'opening_prayer'],
+      whatsapp_text: ['whatsapp_text', 'whatsapp_message', 'pesan_whatsapp'],
+    };
+
+    return aliases[key] || [key];
+  }
+
+  private readFirstText(source: Record<string, any>, keys: string[]): string {
+    for (const key of keys) {
+      const value = String(source?.[key] ?? '').trim();
+      if (value) {
+        return value;
+      }
+    }
+
+    return '';
   }
 
   getParentsText(person: MempelaiPerson | null, gender: 'pria' | 'wanita'): string {

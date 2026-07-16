@@ -6,6 +6,7 @@ import { DashboardService, DashboardServiceType } from 'src/app/dashboard.servic
 import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
 import { MusicTrack, resolveInvitationMusicSourceType, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
 import { normalizeInvitationMediaUrl } from '../../shared/user-photo.model';
+import { getReligionContentFromData } from '../../shared/religion-content.util';
 import { QRCodeModalComponent } from '../../shared/modal/qr-code-modal/qr-code-modal.component';
 import { LavenderBloomThemeComponent } from './themes/lavender-bloom/lavender-bloom-theme.component';
 import { RubyThemeOneComponent } from './templates/ruby-theme-one/ruby-theme-one.component';
@@ -513,7 +514,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
           });
 
           this.domain = cleanDomain;
-          this.weddingData = this.applyGuestNameToWeddingData(weddingPayload);
+          this.weddingData = this.applyGuestNameToWeddingData(
+            this.attachReligionContentToWeddingData(weddingPayload, response)
+          );
           this.weddingDataService.setWeddingData(this.weddingData);
 
           this.updateWeddingContent(this.weddingData);
@@ -630,6 +633,24 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     } as WeddingData;
 
     return enriched;
+  }
+
+  private attachReligionContentToWeddingData(data: WeddingData, response?: any): WeddingData {
+    const existingReligion =
+      (data as any)?.religion_content ||
+      (data as any)?.religionContent;
+    const responseReligion = getReligionContentFromData(response);
+    const religionContent = existingReligion || responseReligion;
+
+    if (!religionContent || !Object.keys(religionContent).length) {
+      return data;
+    }
+
+    return {
+      ...(data as any),
+      religion_content: religionContent,
+      religionContent: religionContent,
+    } as WeddingData;
   }
 
   getInvitationQrUrl(): string {

@@ -1,6 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { WeddingData } from '../../../services/wedding-data.service';
 import { resolveSalamPembuka } from '../../../shared/salam-defaults';
+import {
+  getReligionContentFromData,
+  getResolvedReligionValue,
+} from '../../../shared/religion-content.util';
 
 @Component({
   selector: 'wc-couple-view',
@@ -42,6 +46,19 @@ export class CoupleViewComponent implements OnInit {
 
   getOpeningText(): string {
     const data: any = this.weddingData || {};
+    const religionText = getResolvedReligionValue(
+      getReligionContentFromData(data),
+      'salam_pembuka',
+      'invitation_intro',
+      'opening_prayer',
+      'message',
+      'opening_greeting'
+    );
+
+    if (religionText) {
+      return resolveSalamPembuka(religionText);
+    }
+
     const source =
       data?.settings ||
       data?.setting ||
