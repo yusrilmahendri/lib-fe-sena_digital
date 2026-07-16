@@ -43,7 +43,7 @@ export class ProfileComponent implements OnInit {
     });
 
     this.profileForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
       phone: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(15)]]
     });
@@ -288,7 +288,7 @@ export class ProfileComponent implements OnInit {
       // Display first error message for each field
       for (const field in errors) {
         if (errors[field] && errors[field].length > 0) {
-          this.notyf.error(errors[field][0]);
+          this.notyf.error(this.translateValidationMessage(errors[field][0], field));
           break; // Show only the first error to avoid spam
         }
       }
@@ -307,6 +307,16 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  private translateValidationMessage(message: string, field?: string): string {
+    const lower = String(message || '').toLowerCase();
+    if (field === 'name' || lower.includes('name')) {
+      if (lower.includes('required') || lower.includes('wajib')) return 'Nama pengguna wajib diisi.';
+      if (lower.includes('at least') || lower.includes('min') || lower.includes('minimal')) return 'Nama pengguna minimal 3 karakter.';
+      if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
+    }
+    return message;
+  }
+
   /**
    * Get form control error message
    */
@@ -315,16 +325,20 @@ export class ProfileComponent implements OnInit {
 
     if (control?.errors && control.touched) {
       if (control.errors['required']) {
-        return `${controlName === 'name' ? 'Nama' : controlName === 'email' ? 'Email' : 'Nomor HP'} wajib diisi`;
+        return controlName === 'name'
+          ? 'Nama pengguna wajib diisi.'
+          : `${controlName === 'email' ? 'Email' : 'Nomor HP'} wajib diisi`;
       }
       if (control.errors['email']) {
         return 'Format email tidak valid';
       }
       if (control.errors['minlength']) {
+        if (controlName === 'name') return 'Nama pengguna minimal 3 karakter.';
         const requiredLength = control.errors['minlength'].requiredLength;
         return `Minimal ${requiredLength} karakter`;
       }
       if (control.errors['maxlength']) {
+        if (controlName === 'name') return 'Nama pengguna maksimal 100 karakter.';
         const requiredLength = control.errors['maxlength'].requiredLength;
         return `Maksimal ${requiredLength} karakter`;
       }

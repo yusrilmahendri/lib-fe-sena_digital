@@ -17,6 +17,20 @@
   <!-- Form Section -->
   <form [formGroup]="formRegis" (ngSubmit)="submit()" class="dr-form">
     <div class="dr-form-group">
+      <label for="name" class="dr-label">Nama Pengguna</label>
+      <input
+        type="text"
+        class="dr-input"
+        id="name"
+        formControlName="name"
+        placeholder="Masukkan nama lengkap Anda"
+        autocomplete="name">
+      <div class="dr-error-message" *ngIf="getNameErrorMessage()">
+        {{ getNameErrorMessage() }}
+      </div>
+    </div>
+
+    <div class="dr-form-group">
       <label for="paket_undangan_id" class="dr-label">Paket Undangan</label>
       <div class="dr-select-wrapper">
         <ngx-select

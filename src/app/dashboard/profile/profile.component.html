@@ -80,10 +80,11 @@
     <form [formGroup]="profileForm" (ngSubmit)="onSubmitProfile()">
       <div class="row g-3">
         <div class="col-12 col-sm-6">
-          <label for="name" class="form-label">Nama <span class="text-danger">*</span></label>
+          <label for="name" class="form-label">Nama Pengguna <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="name" formControlName="name"
                  [class.is-invalid]="profileForm.get('name')?.touched && profileForm.get('name')?.invalid"
-                 placeholder="Masukkan nama lengkap" />
+                 placeholder="Masukkan nama lengkap Anda"
+                 autocomplete="name" />
           <div class="invalid-feedback">
             {{ getErrorMessage('name') }}
           </div>

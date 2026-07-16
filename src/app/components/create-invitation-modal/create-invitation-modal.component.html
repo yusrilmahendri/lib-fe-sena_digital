@@ -162,6 +162,21 @@
       </div>
 
       <form class="ci-form" [formGroup]="accountForm" (ngSubmit)="submitCreateInvitation()" novalidate>
+        <label class="ci-label" for="ci-name">Nama Pengguna</label>
+        <div class="ci-field">
+          <input
+            id="ci-name"
+            class="ci-input"
+            type="text"
+            placeholder="Masukkan nama lengkap Anda"
+            formControlName="name"
+            autocomplete="name"
+          />
+        </div>
+        <p class="ci-field__error" *ngIf="getAccountNameErrorMessage()">
+          {{ getAccountNameErrorMessage() }}
+        </p>
+
         <label class="ci-label" for="ci-couple-name">Nama pasangan</label>
         <div class="ci-field">
           <input

@@ -18,6 +18,21 @@
         </div>
   
         <form [formGroup]="loginForm" (ngSubmit)="onRegister()">
+          <!-- Name Input -->
+          <div class="form-group">
+            <label for="register-name">Nama Pengguna</label>
+            <input
+              id="register-name"
+              type="text"
+              formControlName="name"
+              placeholder="Masukkan nama lengkap Anda"
+              autocomplete="name"
+            />
+            <span *ngIf="getNameErrorMessage()">
+              {{ getNameErrorMessage() }}
+            </span>
+          </div>
+
           <!-- Email Input -->
           <div class="form-group">
             <input

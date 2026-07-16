@@ -167,6 +167,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
     // Mirrors legacy DataRegistrasiComponent validators & field names.
     this.accountForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       coupleName: ['', [Validators.required]],
       domain: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
@@ -190,6 +191,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
     this.accountForm.get('password')?.valueChanges.subscribe((password) => {
       this.accountPasswordDraft = password || '';
+    });
+
+    this.accountForm.valueChanges.subscribe((value) => {
+      this.persistAccountDraft(value);
     });
   }
 
@@ -238,7 +243,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.domainTouched = false;
     this.activeCategory = prefilledTheme?.tier || this.resolvePrefillTier(prefill?.tier);
     this.coupleDetailForm.reset();
-    this.accountForm.reset({ terms: false });
+    this.accountForm.reset({ terms: false }, { emitEvent: false });
+    this.restoreAccountDraft();
     this.selectedTheme =
       prefilledTheme ||
       this.themesByCategory[this.activeCategory][0] ||
@@ -618,8 +624,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     payload.append('paket_undangan_id', String(paket.id));
     payload.append('price', String(paket.price ?? ''));
     payload.append('domain', domain);
+    payload.append('name', String(account.name || '').trim());
     payload.append('email', account.email);
     payload.append('password', account.password);
+    payload.append('password_confirmation', account.password);
     payload.append('phone', account.phone);
     payload.append('kode_pemesanan', '');
     // --- Additive theme fields (do not affect legacy semantics) ---
@@ -744,6 +752,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     const groomName = String(this.coupleDetailForm.value.groomName || '').trim();
 
     const registrasiValues = {
+      name: String(account.name || '').trim(),
       paket_undangan_id: paket.id,
       price: paket.price,
       domain,
@@ -786,6 +795,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     try {
       localStorage.setItem('formData', JSON.stringify(formData));
       localStorage.setItem('formRegis', JSON.stringify(registrasi));
+      sessionStorage.removeItem('createInvitationAccountDraft');
       if (userId != null) {
         localStorage.setItem('oneStepUserId', String(userId));
       }
@@ -803,13 +813,56 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       const firstKey = Object.keys(errors)[0];
       const firstVal = firstKey ? errors[firstKey] : null;
       if (Array.isArray(firstVal) && firstVal.length) {
-        return firstVal[0];
+        return this.translateBackendMessage(firstVal[0], firstKey);
       }
       if (typeof firstVal === 'string') {
-        return firstVal;
+        return this.translateBackendMessage(firstVal, firstKey);
       }
     }
-    return null;
+    return this.translateBackendMessage(err?.error?.message, undefined) || null;
+  }
+
+  getAccountNameErrorMessage(): string {
+    const control = this.accountForm.get('name');
+    if (!control?.touched || !control.errors) return '';
+    if (control.errors['required']) return 'Nama pengguna wajib diisi.';
+    if (control.errors['minlength']) return 'Nama pengguna minimal 3 karakter.';
+    if (control.errors['maxlength']) return 'Nama pengguna maksimal 100 karakter.';
+    return '';
+  }
+
+  private persistAccountDraft(value: any): void {
+    try {
+      const draft = { ...value };
+      delete draft.password;
+      sessionStorage.setItem('createInvitationAccountDraft', JSON.stringify(draft));
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  private restoreAccountDraft(): void {
+    try {
+      const raw = sessionStorage.getItem('createInvitationAccountDraft');
+      if (!raw) return;
+      this.accountForm.patchValue(JSON.parse(raw), { emitEvent: false });
+    } catch {
+      /* non-critical */
+    }
+  }
+
+  private translateBackendMessage(message: unknown, field?: string): string {
+    const text = String(message || '').trim();
+    const lower = text.toLowerCase();
+    if (!text) return '';
+    if (field === 'name' || lower.includes('name')) {
+      if (lower.includes('required') || lower.includes('wajib')) return 'Nama pengguna wajib diisi.';
+      if (lower.includes('at least') || lower.includes('min') || lower.includes('minimal')) return 'Nama pengguna minimal 3 karakter.';
+      if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
+    }
+    if (lower.includes('email') && (lower.includes('taken') || lower.includes('already'))) return 'Email sudah terdaftar.';
+    if (lower.includes('password') && lower.includes('confirmation')) return 'Konfirmasi kata sandi tidak cocok.';
+    return text;
   }
 
   private resolvePrefillTier(tier?: string | null): ThemeTier {

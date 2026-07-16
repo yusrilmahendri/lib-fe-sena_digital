@@ -43,6 +43,7 @@ export class DataRegistrasiComponent implements OnInit {
     this.initMasterDataPaket();
 
     this.formRegis = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       paket_undangan_id: ['', Validators.required],
       price: [this.selectedPrice],
       domain: ['', [Validators.required, Validators.minLength(3)]],
@@ -139,7 +140,7 @@ export class DataRegistrasiComponent implements OnInit {
         this.notyf.success(res?.message || 'Data berhasil disimpan.');
       },
       error: (err) => {
-        this.notyf.error(err?.message || 'Ada kesalahan dalam sistem.');
+        this.notyf.error(this.getBackendErrorMessage(err));
       }
     })
   }
@@ -160,6 +161,38 @@ export class DataRegistrasiComponent implements OnInit {
       delete persisted.formData.password;
     }
     localStorage.setItem(key, JSON.stringify(persisted));
+  }
+
+  getNameErrorMessage(): string {
+    const control = this.formRegis?.get('name');
+    if (!control?.touched || !control.errors) return '';
+    if (control.errors['required']) return 'Nama pengguna wajib diisi.';
+    if (control.errors['minlength']) return 'Nama pengguna minimal 3 karakter.';
+    if (control.errors['maxlength']) return 'Nama pengguna maksimal 100 karakter.';
+    return '';
+  }
+
+  private getBackendErrorMessage(error: any): string {
+    const errors = error?.error?.errors;
+    if (errors && typeof errors === 'object') {
+      const firstKey = Object.keys(errors)[0];
+      const firstValue = firstKey ? errors[firstKey] : null;
+      const message = Array.isArray(firstValue) ? firstValue[0] : firstValue;
+      if (message) return this.translateBackendMessage(String(message), firstKey);
+    }
+
+    return this.translateBackendMessage(error?.error?.message || error?.message || 'Ada kesalahan dalam sistem.');
+  }
+
+  private translateBackendMessage(message: string, field?: string): string {
+    const lower = message.toLowerCase();
+    if (field === 'name' || lower.includes('name')) {
+      if (lower.includes('required') || lower.includes('wajib')) return 'Nama pengguna wajib diisi.';
+      if (lower.includes('at least') || lower.includes('min') || lower.includes('minimal')) return 'Nama pengguna minimal 3 karakter.';
+      if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
+    }
+    if (lower.includes('email') && (lower.includes('taken') || lower.includes('already'))) return 'Email sudah terdaftar.';
+    return message || 'Ada kesalahan dalam sistem.';
   }
 
 }

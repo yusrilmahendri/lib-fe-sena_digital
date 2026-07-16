@@ -324,5 +324,34 @@
   </div>
 </div>
 
+<div class="name-required-modal" *ngIf="requireNameModalOpen" role="dialog" aria-modal="true" aria-labelledby="name-required-title">
+  <div class="name-required-modal__card">
+    <h2 id="name-required-title">Lengkapi Nama Pengguna</h2>
+    <p>Lengkapi nama pengguna terlebih dahulu sebelum melanjutkan pembayaran.</p>
+
+    <form [formGroup]="nameCompletionForm" (ngSubmit)="submitNameCompletion()" novalidate>
+      <label for="name-completion-input">Nama Pengguna</label>
+      <input
+        id="name-completion-input"
+        type="text"
+        formControlName="name"
+        placeholder="Masukkan nama lengkap Anda"
+        autocomplete="name"
+        [class.is-invalid]="nameCompletionForm.get('name')?.touched && nameCompletionForm.get('name')?.invalid"
+      />
+      <span class="name-required-modal__error" *ngIf="getNameCompletionErrorMessage()">
+        {{ getNameCompletionErrorMessage() }}
+      </span>
+      <span class="name-required-modal__error" *ngIf="nameCompletionError">
+        {{ nameCompletionError }}
+      </span>
+
+      <button type="submit" [disabled]="nameCompletionForm.invalid || isSavingName">
+        {{ isSavingName ? 'Menyimpan...' : 'Simpan Nama' }}
+      </button>
+    </form>
+  </div>
+</div>
+
 <!-- Toast Notifications -->
 <wc-toast></wc-toast>

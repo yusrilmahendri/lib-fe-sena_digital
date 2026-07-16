@@ -1,4 +1,5 @@
 import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { trigger, state, style, transition, animate, query, stagger } from '@angular/animations';
 import {
@@ -56,13 +57,22 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   userData: ProfileData | null = null;
   isPaymentActive = false;
   accountStatus: AccountAccessStatus = 'onboarding';
+  requireNameModalOpen = false;
+  nameCompletionForm: FormGroup;
+  isSavingName = false;
+  nameCompletionError = '';
 
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private DashBoardSvc: DashboardService,
-    private idleTimeoutService: IdleTimeoutService
-  ) {}
+    private idleTimeoutService: IdleTimeoutService,
+    private fb: FormBuilder
+  ) {
+    this.nameCompletionForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+    });
+  }
 
   ngOnInit(): void {
     // Initialize sidebar state based on screen size
@@ -106,6 +116,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
         const paymentState = resolvePaymentState(response);
         this.accountStatus = paymentState.accountStatus;
         this.isPaymentActive = paymentState.accountStatus === 'active';
+        this.syncNameCompletionModal();
         // console.log('User profile data:', this.userData);
       },
       error: (error) => {
@@ -317,6 +328,77 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
    */
   refreshProfile(): void {
     this.getUserProfile();
+  }
+
+  submitNameCompletion(): void {
+    if (this.nameCompletionForm.invalid || this.isSavingName || !this.userData) {
+      this.nameCompletionForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingName = true;
+    this.nameCompletionError = '';
+
+    const payload = {
+      name: String(this.nameCompletionForm.get('name')?.value || '').trim(),
+      email: this.userData.email,
+      phone: this.userData.phone,
+    };
+
+    this.DashBoardSvc.updateProfile(payload).subscribe({
+      next: (response) => {
+        this.userData = response.data;
+        this.requireNameModalOpen = false;
+        this.isSavingName = false;
+        this.nameCompletionError = '';
+        window.dispatchEvent(new CustomEvent('profileUpdated', {
+          detail: { profileData: this.userData }
+        }));
+      },
+      error: (error) => {
+        this.isSavingName = false;
+        this.nameCompletionError = this.getNameCompletionBackendError(error);
+      },
+    });
+  }
+
+  getNameCompletionErrorMessage(): string {
+    const control = this.nameCompletionForm.get('name');
+    if (!control?.touched || !control.errors) return '';
+    if (control.errors['required']) return 'Nama pengguna wajib diisi.';
+    if (control.errors['minlength']) return 'Nama pengguna minimal 3 karakter.';
+    if (control.errors['maxlength']) return 'Nama pengguna maksimal 100 karakter.';
+    return '';
+  }
+
+  private syncNameCompletionModal(): void {
+    const name = String(this.userData?.name || '').trim();
+    this.requireNameModalOpen = !name;
+    if (!name) {
+      this.nameCompletionForm.patchValue({ name: '' }, { emitEvent: false });
+    }
+  }
+
+  private getNameCompletionBackendError(error: any): string {
+    const errors = error?.error?.errors;
+    if (errors && typeof errors === 'object') {
+      const firstKey = Object.keys(errors)[0];
+      const firstValue = firstKey ? errors[firstKey] : null;
+      const message = Array.isArray(firstValue) ? firstValue[0] : firstValue;
+      if (message) return this.translateNameBackendMessage(String(message), firstKey);
+    }
+
+    return this.translateNameBackendMessage(error?.error?.message || error?.message || 'Nama pengguna gagal disimpan.');
+  }
+
+  private translateNameBackendMessage(message: string, field?: string): string {
+    const lower = message.toLowerCase();
+    if (field === 'name' || lower.includes('name')) {
+      if (lower.includes('required') || lower.includes('wajib')) return 'Nama pengguna wajib diisi.';
+      if (lower.includes('at least') || lower.includes('min') || lower.includes('minimal')) return 'Nama pengguna minimal 3 karakter.';
+      if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
+    }
+    return message || 'Nama pengguna gagal disimpan.';
   }
 
   /**
