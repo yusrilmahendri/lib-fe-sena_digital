@@ -4,6 +4,7 @@ import { AuthService, VerificationChannel, VerificationProfile } from '../auth.s
 import { DashboardService } from '../dashboard.service';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { resolvePaymentState } from '../shared/payment-status.util';
 
 @Component({ selector: 'wc-verify-account', templateUrl: './verify-account.component.html', styleUrls: ['./verify-account.component.scss'] })
 export class VerifyAccountComponent implements OnInit {
@@ -22,7 +23,7 @@ export class VerifyAccountComponent implements OnInit {
       next: ({ status, profile }) => {
         this.profile = { ...status.data, email: profile.data.email, phone: profile.data.phone };
         this.loading = false;
-        if (status.data.is_verified) this.router.navigate(['/verify-account/success']);
+        if (status.data.is_verified) this.router.navigateByUrl(this.resolveNextRoute(profile));
       },
       error: () => { this.loading = false; this.errorMessage = 'Status akun tidak dapat dimuat. Silakan coba lagi.'; }
     });
@@ -75,4 +76,15 @@ export class VerifyAccountComponent implements OnInit {
   }
   private maskEmail(value: string): string { const [name = '', domain = ''] = (value || '').split('@'); return domain ? `${name.slice(0, 2)}${'*'.repeat(Math.max(2, name.length - 2))}@${domain}` : 'Email akun Anda'; }
   private maskPhone(value: string): string { const clean = value || ''; return clean.length > 7 ? `${clean.slice(0, 4)}****${clean.slice(-3)}` : 'Nomor akun Anda'; }
+
+  private resolveNextRoute(profile: any): string {
+    const redirectUrl = String(profile?.data?.redirect_url || profile?.redirect_url || '').trim();
+    if (redirectUrl) return redirectUrl;
+
+    const state = resolvePaymentState(profile);
+    if (state.accountStatus === 'active') return '/dashboard/overview';
+    if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';
+    if (state.accountStatus === 'expired') return '/dashboard/account-expired';
+    return '/buat-undangan/payment';
+  }
 }

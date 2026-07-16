@@ -682,26 +682,11 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   }
 
 
-  /** Resume legacy wizard at step 2 (informasi mempelai). */
-  continueToBuatUndangan(): void {
+  continueToVerification(): void {
     this.detailStepIndex = 0;
     this.logInvitationDetailStep();
-    try {
-      sessionStorage.setItem(
-        'landingOnboardingNotice',
-        'Data dasar berhasil dibuat. Silakan pilih metode pembayaran untuk melanjutkan.'
-      );
-    } catch {
-      /* non-critical */
-    }
     this.closeModal();
-    this.router.navigate(['/buat-undangan/payment'], {
-      state: {
-        registrationDraft: {
-          password: this.accountPasswordDraft,
-        },
-      },
-    });
+    this.router.navigate(['/verify-account']);
   }
 
   private logInvitationDetailStep(): void {

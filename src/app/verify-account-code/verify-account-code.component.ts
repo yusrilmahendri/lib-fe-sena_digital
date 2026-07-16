@@ -115,14 +115,14 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     this.channel = 'email';
     sessionStorage.setItem('verification_channel', 'email');
     this.auth.verifyAccountCode('email', this.otpCode).subscribe({
-      next: () => {
+      next: (response: any) => {
         this.submitting = false;
         this.digits = ['', '', '', '', '', ''];
         this.syncInputValues();
         sessionStorage.removeItem('verification_channel');
         sessionStorage.removeItem('verification_resend_at');
         sessionStorage.removeItem('verification_email_sent_at');
-        this.navigateAfterVerification();
+        this.navigateAfterVerification(response);
       },
       error: (error) => {
         console.error('[Verify Account] failed', error);
@@ -196,7 +196,13 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     return code === 'VERIFICATION_CODE_EXPIRED' || code === 'OTP_EXPIRED';
   }
 
-  private navigateAfterVerification(): void {
+  private navigateAfterVerification(verificationResponse?: any): void {
+    const redirectUrl = this.getBackendRedirectUrl(verificationResponse);
+    if (redirectUrl) {
+      this.router.navigateByUrl(redirectUrl);
+      return;
+    }
+
     this.dashboard.getProfile().subscribe({
       next: (profile) => this.router.navigateByUrl(this.resolveNextRoute(profile)),
       error: () => this.router.navigateByUrl('/buat-undangan/payment'),
@@ -204,10 +210,21 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   }
 
   private resolveNextRoute(profile: any): string {
+    const redirectUrl = this.getBackendRedirectUrl(profile);
+    if (redirectUrl) return redirectUrl;
+
     const state = resolvePaymentState(profile);
     if (state.accountStatus === 'active') return '/dashboard/overview';
     if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';
     if (state.accountStatus === 'expired') return '/dashboard/account-expired';
     return '/buat-undangan/payment';
+  }
+
+  private getBackendRedirectUrl(response: any): string {
+    return String(
+      response?.data?.redirect_url ||
+      response?.redirect_url ||
+      ''
+    ).trim();
   }
 }

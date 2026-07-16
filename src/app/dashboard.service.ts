@@ -1157,6 +1157,8 @@ export interface ProfileData {
   paket_status?: string | null;
   is_payment_confirmed?: boolean;
   is_expired?: boolean;
+  is_profile_complete?: boolean;
+  profile_completion_required?: boolean;
   feature_access?: any;
   status_tagihan?: string | null;
   no_invoice?: string | null;

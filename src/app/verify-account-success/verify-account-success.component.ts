@@ -31,6 +31,9 @@ export class VerifyAccountSuccessComponent implements OnInit {
   }
 
   private resolveNextRoute(profile: any): string {
+    const redirectUrl = String(profile?.data?.redirect_url || profile?.redirect_url || '').trim();
+    if (redirectUrl) return redirectUrl;
+
     const state = resolvePaymentState(profile);
     if (state.accountStatus === 'active') return '/dashboard/overview';
     if (state.accountStatus === 'pending_payment' && state.hasInvoice) return '/dashboard/payment-pending';

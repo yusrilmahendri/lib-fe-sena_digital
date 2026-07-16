@@ -28,6 +28,11 @@ export class AccountVerificationGuard implements CanActivate {
         return this.dashboardService.getProfile().pipe(
           map((profileResponse) => {
             sessionStorage.setItem('payment_intended_url', state.url);
+            const backendRedirectUrl = this.getBackendRedirectUrl(profileResponse);
+            if (backendRedirectUrl) {
+              return this.router.parseUrl(backendRedirectUrl);
+            }
+
             const paymentState = resolvePaymentState(profileResponse);
 
             if (paymentState.accountStatus === 'active') return true;
@@ -75,5 +80,13 @@ export class AccountVerificationGuard implements CanActivate {
   private isOnboardingUrl(url: string): boolean {
     const path = (url || '').split('?')[0].split('#')[0].replace(/\/+$/, '');
     return path === this.onboardingRoute || path === this.onboardingPaymentRoute;
+  }
+
+  private getBackendRedirectUrl(response: any): string {
+    return String(
+      response?.data?.redirect_url ||
+      response?.redirect_url ||
+      ''
+    ).trim();
   }
 }

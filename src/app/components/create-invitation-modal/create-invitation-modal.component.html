@@ -273,15 +273,18 @@
       </p>
     </ng-container>
 
-    <!-- ===================== LANJUT KE FORM UNDANGAN ===================== -->
+    <!-- ===================== LANJUT KE VERIFIKASI EMAIL ===================== -->
     <ng-container *ngIf="step === 'continue-wizard'">
       <div class="ci-success__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
       </div>
 
-      <h2 class="ci-modal__title">Data dasar berhasil dibuat</h2>
+      <h2 class="ci-modal__title">Akun berhasil dibuat</h2>
       <p class="ci-modal__subtitle">
-        Data dasar berhasil dibuat. Silakan lengkapi data undangan sebelum melakukan pembayaran.
+        Silakan verifikasi email Anda untuk melanjutkan ke proses pembayaran.
+      </p>
+      <p class="ci-modal__subtitle">
+        Setelah pembayaran selesai, Anda dapat melengkapi data mempelai, acara, galeri, musik, dan informasi undangan melalui dashboard.
       </p>
 
       <div class="ci-pay-summary" *ngIf="selectedPaket || selectedTheme">
@@ -297,10 +300,14 @@
           <span>Domain</span>
           <strong>sena-digital.com/{{ accountForm.get('domain')?.value }}</strong>
         </div>
+        <div class="ci-pay-summary__row">
+          <span>Email verifikasi</span>
+          <strong>{{ accountForm.get('email')?.value }}</strong>
+        </div>
       </div>
 
-      <button type="button" class="ci-btn ci-btn--primary" (click)="continueToBuatUndangan()">
-        Lengkapi Data Undangan
+      <button type="button" class="ci-btn ci-btn--primary" (click)="continueToVerification()">
+        Verifikasi Email
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
     </ng-container>

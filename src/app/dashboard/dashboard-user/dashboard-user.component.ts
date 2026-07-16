@@ -373,8 +373,12 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   private syncNameCompletionModal(): void {
     const name = String(this.userData?.name || '').trim();
-    this.requireNameModalOpen = !name;
-    if (!name) {
+    const profileCompletionRequired =
+      (this.userData as any)?.profile_completion_required === true ||
+      (this.userData as any)?.is_profile_complete === false;
+
+    this.requireNameModalOpen = profileCompletionRequired && !name;
+    if (this.requireNameModalOpen) {
       this.nameCompletionForm.patchValue({ name: '' }, { emitEvent: false });
     }
   }
