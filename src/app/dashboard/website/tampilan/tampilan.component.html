@@ -144,6 +144,71 @@
   </div>
 </section>
 
+<button
+  type="button"
+  class="tampilan-pointer-debug__inspect"
+  (click)="scanPointerDebugDom($event)">
+  Inspect
+</button>
+
+<aside class="tampilan-pointer-debug" aria-hidden="true">
+  <div class="tampilan-pointer-debug__header">
+    <strong>[TAMPILAN DEBUG]</strong>
+    <span>{{ debugLastTapEventType || '-' }} @ {{ debugLastTapPoint || '-' }}</span>
+  </div>
+
+  <section>
+    <h4>Top 10 elementsFromPoint</h4>
+    <ol>
+      <li
+        *ngFor="let element of debugElementsFromPoint; let index = index"
+        [class.tampilan-pointer-debug__blocker]="element.isPossibleBlocker">
+        <b>#{{ index + 1 }} {{ element.selector }}</b>
+        <em *ngIf="element.isPossibleBlocker">POSSIBLE BLOCKER</em>
+        <span>tag {{ element.tag }} | id {{ element.id || '-' }}</span>
+        <span>class {{ element.className || '-' }}</span>
+        <span>pos {{ element.position }} | z {{ element.zIndex }} | pe {{ element.pointerEvents }}</span>
+        <span>opacity {{ element.opacity }} | visibility {{ element.visibility }} | display {{ element.display }}</span>
+        <span>rect {{ element.rect.width | number:'1.0-0' }} x {{ element.rect.height | number:'1.0-0' }}</span>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h4>Inspect scan: {{ debugLastScanLabel }}</h4>
+    <ol>
+      <li
+        *ngFor="let element of debugScanElements"
+        [class.tampilan-pointer-debug__blocker]="element.isPossibleBlocker">
+        <b>{{ element.selector }}</b>
+        <em *ngIf="element.isPossibleBlocker">POSSIBLE BLOCKER</em>
+        <span>tag {{ element.tag }} | id {{ element.id || '-' }}</span>
+        <span>class {{ element.className || '-' }}</span>
+        <span>pos {{ element.position }} | z {{ element.zIndex }} | pe {{ element.pointerEvents }}</span>
+        <span>opacity {{ element.opacity }} | visibility {{ element.visibility }} | display {{ element.display }}</span>
+        <span>rect {{ element.rect.width | number:'1.0-0' }} x {{ element.rect.height | number:'1.0-0' }}</span>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h4>wc-tampilan ancestors</h4>
+    <ol>
+      <li
+        *ngFor="let element of debugAncestorElements"
+        [class.tampilan-pointer-debug__blocker]="element.isPossibleBlocker">
+        <b>{{ element.selector }}</b>
+        <em *ngIf="element.isPossibleBlocker">POSSIBLE BLOCKER</em>
+        <span>tag {{ element.tag }} | id {{ element.id || '-' }}</span>
+        <span>class {{ element.className || '-' }}</span>
+        <span>pos {{ element.position }} | z {{ element.zIndex }} | pe {{ element.pointerEvents }} | ta {{ element.touchAction }}</span>
+        <span>overflow {{ element.overflowX }}/{{ element.overflowY }} | transform {{ element.transform }}</span>
+        <span>rect {{ element.rect.width | number:'1.0-0' }} x {{ element.rect.height | number:'1.0-0' }}</span>
+      </li>
+    </ol>
+  </section>
+</aside>
+
 <div
   *ngIf="showSelectConfirmationModal"
   class="theme-modal-backdrop"
