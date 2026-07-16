@@ -101,6 +101,12 @@ interface TampilanPointerDebugElement {
   };
 }
 
+interface IosEventSequenceItem {
+  type: string;
+  selector: string;
+  point: string;
+}
+
 const PACKAGE_TABS: PackageTab[] = [
   { tier: 'ruby', label: 'Ruby' },
   { tier: 'sapphire', label: 'Sapphire' },
@@ -149,6 +155,7 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
   debugScanElements: TampilanPointerDebugElement[] = [];
   debugAncestorElements: TampilanPointerDebugElement[] = [];
   debugLastScanLabel = 'Belum scan';
+  debugIosEventSequence: IosEventSequenceItem[] = [];
 
   private subscriptions = new Subscription();
   private pointerDebugCleanup: Array<() => void> = [];
@@ -196,7 +203,7 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private installPointerDiagnostics(): void {
-    const eventTypes = ['pointerdown', 'touchstart', 'click'];
+    const eventTypes = ['pointerdown', 'touchstart', 'touchend', 'click'];
 
     eventTypes.forEach((eventType) => {
       const listener = (event: Event) => {
@@ -210,6 +217,7 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
           clientY: point.y,
         });
 
+        this.trackIosEventSequence(event, point);
         this.inspectPoint(point.x, point.y, event.type);
       };
 
@@ -256,10 +264,7 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  scanPointerDebugDom(event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-
+  scanPointerDebugDom(): void {
     this.auditPointerBlockers();
     this.auditSpecialPointerElements();
     this.debugAncestorElements = this.describeAncestorChain(this.elementRef.nativeElement);
@@ -275,6 +280,23 @@ export class TampilanComponent implements OnInit, AfterViewInit, OnDestroy {
     const blockerCount = this.debugScanElements.filter((element) => element.isPossibleBlocker).length;
     this.debugLastScanLabel = `${this.debugScanElements.length} positioned, ${blockerCount} possible blocker`;
     this.cdr.detectChanges();
+  }
+
+  private trackIosEventSequence(event: Event, point: { x: number; y: number }): void {
+    const target = event.target instanceof Element
+      ? this.getElementSelector(event.target)
+      : String(event.target || '-');
+
+    this.debugIosEventSequence = [
+      ...this.debugIosEventSequence.slice(-5),
+      {
+        type: event.type,
+        selector: target,
+        point: `${Math.round(point.x)}, ${Math.round(point.y)}`,
+      },
+    ];
+
+    console.log('[IOS_EVENT_SEQUENCE]', this.debugIosEventSequence);
   }
 
   private logInitialModalState(): void {

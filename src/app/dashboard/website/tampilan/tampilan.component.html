@@ -147,7 +147,7 @@
 <button
   type="button"
   class="tampilan-pointer-debug__inspect"
-  (click)="scanPointerDebugDom($event)">
+  (click)="scanPointerDebugDom()">
   Inspect
 </button>
 
@@ -156,6 +156,22 @@
     <strong>[TAMPILAN DEBUG]</strong>
     <span>{{ debugLastTapEventType || '-' }} @ {{ debugLastTapPoint || '-' }}</span>
   </div>
+
+  <section>
+    <h4>[IOS_EVENT_SEQUENCE]</h4>
+    <p class="tampilan-pointer-debug__sequence">
+      <ng-container *ngFor="let item of debugIosEventSequence; let last = last">
+        {{ item.type }}<span *ngIf="!last"> -> </span>
+      </ng-container>
+    </p>
+    <ol>
+      <li *ngFor="let item of debugIosEventSequence">
+        <b>{{ item.type }}</b>
+        <span>{{ item.selector }}</span>
+        <span>@ {{ item.point }}</span>
+      </li>
+    </ol>
+  </section>
 
   <section>
     <h4>Top 10 elementsFromPoint</h4>

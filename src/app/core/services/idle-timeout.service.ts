@@ -1,15 +1,27 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { fromEvent, merge, Subscription } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class IdleTimeoutService implements OnDestroy {
   private readonly IDLE_LIMIT = 30 * 60 * 1000;
+  private readonly activityEvents = [
+    'mousemove',
+    'mousedown',
+    'keydown',
+    'scroll',
+    'touchstart',
+    'click'
+  ] as const;
+  private readonly activityListenerOptions: AddEventListenerOptions = {
+    passive: true,
+    capture: false
+  };
+  private readonly activityHandler = (): void => {
+    this.resetTimer();
+  };
   private timer: any;
-  private eventsSub?: Subscription;
   private isRunning = false;
 
   constructor(private router: Router) {}
@@ -23,16 +35,9 @@ export class IdleTimeoutService implements OnDestroy {
     this.stop();
     this.isRunning = true;
 
-    this.eventsSub = merge(
-      fromEvent(document, 'mousemove'),
-      fromEvent(document, 'mousedown'),
-      fromEvent(document, 'keydown'),
-      fromEvent(document, 'scroll'),
-      fromEvent(document, 'touchstart'),
-      fromEvent(document, 'click')
-    )
-      .pipe(throttleTime(1000))
-      .subscribe(() => this.resetTimer());
+    this.activityEvents.forEach((eventName) => {
+      document.addEventListener(eventName, this.activityHandler, this.activityListenerOptions);
+    });
 
     console.log('[IdleTimeout]', 'started');
     this.resetTimer();
@@ -47,8 +52,9 @@ export class IdleTimeoutService implements OnDestroy {
   stop(): void {
     clearTimeout(this.timer);
     this.timer = undefined;
-    this.eventsSub?.unsubscribe();
-    this.eventsSub = undefined;
+    this.activityEvents.forEach((eventName) => {
+      document.removeEventListener(eventName, this.activityHandler, this.activityListenerOptions);
+    });
     this.isRunning = false;
   }
 
