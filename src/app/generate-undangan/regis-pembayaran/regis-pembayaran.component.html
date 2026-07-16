@@ -80,9 +80,11 @@
 
   <!-- Navigation Buttons -->
   <div class="rp-button-group">
-    <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="!selectedMethod || isStartingPayment">
-      {{ isStartingPayment ? 'Memproses…' : 'Lanjut' }}
+    <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="isNextDisabled">
+      {{ isStartingPayment ? 'Memproses…' : (isProfileLoading ? 'Memuat Profil…' : 'Lanjut') }}
     </button>
   </div>
+  <p *ngIf="profileCompletionWarning" role="alert">{{ profileCompletionWarning }}</p>
+  <p *ngIf="profileLoadError" role="alert">{{ profileLoadError }}</p>
   <p *ngIf="paymentError" role="alert">{{ paymentError }}</p>
 </div>

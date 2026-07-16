@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { take } from 'rxjs/operators';
+import { finalize, take } from 'rxjs/operators';
 import { Notyf } from 'notyf';
-import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
+import { DashboardService, DashboardServiceType, ProfileData, ProfileResponse } from 'src/app/dashboard.service';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { PaymentConfirmComponent } from 'src/app/shared/payment-confirm/payment-confirm.component';
 import { environment } from 'src/environments/environment';
@@ -39,6 +39,11 @@ export class RegisPembayaranComponent implements OnInit {
   isTrialPackage = false;
   paymentError = '';
   isStartingPayment = false;
+  isProfileLoading = false;
+  hasLoadedProfile = false;
+  profileLoadError = '';
+  userProfile: ProfileData | null = null;
+  profileCompletionWarning = '';
 
   constructor(
     private dashboardSvc: DashboardService,
@@ -77,6 +82,7 @@ export class RegisPembayaranComponent implements OnInit {
     }
     // Validate and cleanup expired redirect URLs
     this.cleanupExpiredRedirectUrls();
+    this.loadFreshProfile();
     this.getMasterPayment();
   }
 
@@ -210,6 +216,11 @@ export class RegisPembayaranComponent implements OnInit {
       return;
     }
 
+    if (this.shouldBlockPaymentForProfileCompletion()) {
+      this.paymentError = this.profileCompletionWarning;
+      return;
+    }
+
     if (Number(this.selectedMethod) === 3) {
       this.startMidtransPayment();
       return;
@@ -237,6 +248,55 @@ export class RegisPembayaranComponent implements OnInit {
         isTrialPackage: false
       }
     });
+  }
+
+  private loadFreshProfile(): void {
+    this.isProfileLoading = true;
+    this.hasLoadedProfile = false;
+    this.profileLoadError = '';
+    this.profileCompletionWarning = '';
+
+    this.dashboardSvc.getProfile().pipe(
+      take(1),
+      finalize(() => {
+        this.isProfileLoading = false;
+      })
+    ).subscribe({
+      next: (response: ProfileResponse) => {
+        this.hasLoadedProfile = true;
+        this.userProfile = response?.data || null;
+        this.syncProfileCompletionWarning(this.userProfile);
+
+        if (this.userProfile?.id != null) {
+          this.userId = this.userProfile.id;
+        }
+      },
+      error: () => {
+        this.hasLoadedProfile = false;
+        this.userProfile = null;
+        this.profileCompletionWarning = '';
+        this.profileLoadError = 'Profil terbaru tidak dapat dimuat. Silakan muat ulang halaman.';
+      },
+    });
+  }
+
+  private syncProfileCompletionWarning(profile: ProfileData | null): void {
+    const profileCompletionRequired =
+      (profile as any)?.profile_completion_required === true ||
+      (profile as any)?.is_profile_complete === false;
+    const nameIsEmpty = !String(profile?.name || '').trim();
+
+    this.profileCompletionWarning = profileCompletionRequired && nameIsEmpty
+      ? 'Profil belum lengkap. Nama pengguna wajib diisi sebelum melanjutkan pembayaran.'
+      : '';
+  }
+
+  shouldBlockPaymentForProfileCompletion(): boolean {
+    return this.hasLoadedProfile && !!this.profileCompletionWarning;
+  }
+
+  get isNextDisabled(): boolean {
+    return !this.selectedMethod || this.isStartingPayment || this.isProfileLoading || this.shouldBlockPaymentForProfileCompletion();
   }
 
   private startMidtransPayment(): void {
