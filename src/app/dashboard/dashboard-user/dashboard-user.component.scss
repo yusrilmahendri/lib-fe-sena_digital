@@ -1288,3 +1288,28 @@
     pointer-events: auto !important;
   }
 }
+@media screen and (max-width: 1024px) {
+  .dashboard-container,
+  .dashboard-layout,
+  .user-dashboard-layout,
+  .user-dashboard-shell {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+
+  .dashboard-content,
+  .content {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: visible !important;
+  }
+
+  .content .well,
+  .dashboard-user-content {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    -webkit-overflow-scrolling: auto !important;
+  }
+}

@@ -106,7 +106,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
         const paymentState = resolvePaymentState(response);
         this.accountStatus = paymentState.accountStatus;
         this.isPaymentActive = paymentState.accountStatus === 'active';
-        console.log('User profile data:', this.userData);
+        // console.log('User profile data:', this.userData);
       },
       error: (error) => {
         console.error('Error loading user profile:', error);
