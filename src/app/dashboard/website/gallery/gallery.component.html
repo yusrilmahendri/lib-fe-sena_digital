@@ -32,8 +32,27 @@
     <span>{{ successMessage }}</span>
   </div>
 
+  <section class="placement-guide" aria-label="Penempatan foto galeri">
+    <div class="placement-guide__copy">
+      <span class="guide-icon" aria-hidden="true">
+        <i class="fas fa-images"></i>
+      </span>
+      <div>
+        <p class="eyebrow">Galeri Undangan</p>
+        <h2>Foto yang Anda upload akan digunakan pada:</h2>
+        <ul>
+          <li><i class="fas fa-check"></i> Cover Gallery</li>
+          <li><i class="fas fa-check"></i> Slider Gallery</li>
+          <li><i class="fas fa-check"></i> Album Foto</li>
+          <li><i class="fas fa-check"></i> Preview Tema</li>
+        </ul>
+      </div>
+    </div>
+    <p>Urutan foto akan mengikuti urutan yang Anda atur. Geser foto untuk mengubah urutan; foto pertama menjadi Cover Gallery.</p>
+  </section>
+
   <div class="workspace-grid">
-    <form class="upload-panel" [formGroup]="uploadForm" (ngSubmit)="submitUpload()">
+    <form id="galleryUploadForm" class="upload-panel" [formGroup]="uploadForm" (ngSubmit)="submitUpload()">
       <div class="panel-title">
         <div>
           <h2>Tambah {{ activeTypeLabel }}</h2>
@@ -64,43 +83,11 @@
         <textarea formControlName="description" rows="3" placeholder="Contoh: Momen akad, foto keluarga, detail dekorasi"></textarea>
       </label>
 
-      <div class="form-row">
-        <label>
-          Posisi
-          <select formControlName="position">
-            <option *ngFor="let position of positionOptions" [ngValue]="position.value">
-              {{ position.label }}
-            </option>
-          </select>
-        </label>
-
-        <label>
-          Mode
-          <select formControlName="display_mode">
-            <option *ngFor="let mode of displayModeOptions" [ngValue]="mode.value">
-              {{ mode.label }}
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          Focal X (%)
-          <input type="number" min="0" max="100" formControlName="focal_point_x" placeholder="0 - 100" />
-        </label>
-        <label>
-          Focal Y (%)
-          <input type="number" min="0" max="100" formControlName="focal_point_y" placeholder="0 - 100" />
-        </label>
-      </div>
-
       <div class="inline-actions">
         <label class="check-control">
           <input type="checkbox" formControlName="is_featured" />
           <span>Jadikan foto utama</span>
         </label>
-        <button type="button" class="link-button" (click)="clearFocalPoint(uploadForm)">Reset focal point</button>
       </div>
 
       <div *ngIf="originalSize || compressedSize" class="size-summary">
@@ -109,12 +96,10 @@
         <span>Quality: 85%</span>
       </div>
 
-      <button type="submit" class="primary-action" [disabled]="isUploadDisabled">
-        <i class="fas" [class.fa-spinner]="isCompressing || isUploading" [class.fa-save]="!isCompressing && !isUploading"></i>
-        <span *ngIf="isCompressing">Mengompresi...</span>
-        <span *ngIf="!isCompressing && isUploading">Mengupload...</span>
-        <span *ngIf="!isCompressing && !isUploading">Simpan Foto</span>
-      </button>
+      <input type="hidden" formControlName="position" />
+      <input type="hidden" formControlName="display_mode" />
+      <input type="hidden" formControlName="focal_point_x" />
+      <input type="hidden" formControlName="focal_point_y" />
     </form>
 
     <form class="upload-panel video-panel" [formGroup]="youtubeForm" (ngSubmit)="submitYoutubeVideo()">
@@ -193,12 +178,49 @@
     <aside class="preview-panel">
       <div class="panel-title">
         <div>
-          <h2>Preview realtime</h2>
-          <p>Preset posisi langsung terlihat sebelum foto disimpan.</p>
+          <h2>Mockup Tema</h2>
+          <p>Ilustrasi sederhana posisi foto di undangan.</p>
         </div>
       </div>
 
-      <div class="preview-frame photo-preview-box">
+      <div class="theme-mockup">
+        <div class="theme-mockup__cover" [class.is-empty]="!getThemePreviewCoverUrl()">
+          <img *ngIf="getThemePreviewCoverUrl()" [src]="getThemePreviewCoverUrl()" alt="Preview cover gallery" />
+          <div *ngIf="!getThemePreviewCoverUrl()" class="theme-mockup__placeholder">
+            <i class="fas fa-camera"></i>
+            <span>Cover Gallery</span>
+          </div>
+          <span>Cover</span>
+        </div>
+        <div class="theme-mockup__label">Gallery</div>
+        <div class="theme-mockup__album">
+          <div
+            *ngFor="let photo of getThemePreviewAlbumItems(); let i = index"
+            class="theme-mockup__tile"
+            [class.is-empty]="!photo">
+            <img *ngIf="photo" [src]="photo.photo_url" [alt]="'Album foto ' + (i + 1)" />
+          </div>
+        </div>
+        <div class="theme-mockup__caption">Album</div>
+      </div>
+
+      <div class="preview-divider"></div>
+
+      <div class="panel-title panel-title--compact">
+        <div>
+          <h2>Crop Foto</h2>
+          <p>Pilih foto, geser posisi bila perlu, lalu simpan.</p>
+        </div>
+      </div>
+
+      <div
+        class="preview-frame photo-preview-box crop-surface"
+        [class.crop-surface--active]="!!previewUrl"
+        (pointerdown)="startCropDrag($event, uploadForm)"
+        (pointermove)="moveCropDrag($event)"
+        (pointerup)="endCropDrag()"
+        (pointercancel)="endCropDrag()"
+        (pointerleave)="endCropDrag()">
         <img
           #previewImage
           *ngIf="previewUrl; else previewEmpty"
@@ -212,21 +234,24 @@
         <ng-template #previewEmpty>
         <div class="preview-empty photo-preview-empty">
           <i class="fas fa-image"></i>
-          <span>Preview foto akan tampil di sini.</span>
+          <span>Upload foto untuk membuka crop otomatis.</span>
         </div>
         </ng-template>
       </div>
 
-      <dl class="preset-readout">
-        <div>
-          <dt>Object fit</dt>
-          <dd>{{ uploadForm.value.display_mode || 'cover' }}</dd>
-        </div>
-        <div>
-          <dt>Object position</dt>
-          <dd>{{ getPreviewObjectPosition(uploadForm.value) }}</dd>
-        </div>
-      </dl>
+      <p class="crop-hint" *ngIf="previewUrl">Geser foto di dalam frame untuk mengatur posisi. Area yang terlihat akan dipakai di undangan.</p>
+
+      <div class="crop-actions">
+        <button type="button" class="secondary-action" (click)="cancelUploadCrop()" [disabled]="isCompressing || isUploading">
+          Batal
+        </button>
+        <button type="submit" form="galleryUploadForm" class="primary-action" [disabled]="isUploadDisabled">
+          <i class="fas" [class.fa-spinner]="isCompressing || isUploading" [class.fa-save]="!isCompressing && !isUploading"></i>
+          <span *ngIf="isCompressing">Mengompresi...</span>
+          <span *ngIf="!isCompressing && isUploading">Menyimpan...</span>
+          <span *ngIf="!isCompressing && !isUploading">Simpan</span>
+        </button>
+      </div>
     </aside>
   </div>
 
@@ -248,8 +273,9 @@
     </div>
 
     <div *ngIf="!isLoading && activePhotos.length === 0" class="empty-state">
-      <i class="fas fa-images"></i>
-      <p>{{ activeEmptyMessage }}</p>
+      <i class="fas fa-camera"></i>
+      <h3>Belum ada foto galeri.</h3>
+      <p>Upload minimal 1 foto. Foto pertama akan menjadi Cover Gallery.</p>
     </div>
 
     <div
@@ -258,10 +284,20 @@
       [cdkDropListData]="activePhotos"
       class="photo-grid"
       (cdkDropListDropped)="dropPhoto($event)">
-      <article class="photo-card" *ngFor="let photo of activePhotos" cdkDrag>
-        <button type="button" class="drag-handle" cdkDragHandle title="Urutkan foto">
+      <article class="photo-card" *ngFor="let photo of activePhotos; let i = index" cdkDrag>
+        <button type="button" class="drag-handle" cdkDragHandle title="Geser foto untuk mengubah urutan">
           <i class="fas fa-grip-vertical"></i>
         </button>
+
+        <div class="photo-card__topline">
+          <strong>Foto #{{ i + 1 }}</strong>
+          <button
+            type="button"
+            class="info-button"
+            title="Foto pertama digunakan sebagai gambar utama galeri pada sebagian besar tema.">
+            <i class="fas fa-info-circle"></i>
+          </button>
+        </div>
 
         <div class="thumb" [class.is-image-missing]="!photo.photo_url">
           <img
@@ -271,6 +307,9 @@
             [style.object-fit]="photo.display_mode"
             [style.object-position]="getPhotoObjectPosition(photo)"
             (error)="onPhotoImageError($event)" />
+          <span class="placement-badge" [ngClass]="getPlacementBadgeClass(i)">
+            {{ getPlacementBadgeLabel(i) }}
+          </span>
           <span *ngIf="photo.is_featured" class="featured-badge">Featured</span>
           <button *ngIf="hasPhotoVideo(photo)" type="button" class="video-play-badge" (click)="openPhotoVideo(photo)" title="Buka video YouTube">
             <i class="fas fa-play"></i>
@@ -278,6 +317,14 @@
         </div>
 
         <div class="photo-body">
+          <div class="placement-summary">
+            <span>Posisi:</span>
+            <strong>{{ getPlacementTitle(i) }}</strong>
+          </div>
+          <div class="placement-tags">
+            <span *ngFor="let label of getPlacementUses(i)" class="placement-tag">{{ label }}</span>
+          </div>
+          <p class="placement-note">{{ getPlacementDescription(i) }}</p>
           <p class="description">{{ photo.description || 'Tanpa deskripsi' }}</p>
           <div class="meta-grid">
             <span>Tipe</span><strong>{{ photo.photo_type }}</strong>
@@ -323,7 +370,13 @@
 
       <div class="edit-layout">
         <div>
-          <div class="preview-frame compact">
+          <div
+            class="preview-frame compact crop-surface crop-surface--active"
+            (pointerdown)="startCropDrag($event, editForm)"
+            (pointermove)="moveCropDrag($event)"
+            (pointerup)="endCropDrag()"
+            (pointercancel)="endCropDrag()"
+            (pointerleave)="endCropDrag()">
             <img
               *ngIf="editPreviewUrl"
               [src]="editPreviewUrl"
@@ -331,6 +384,7 @@
               [style.object-fit]="editForm.value.display_mode || 'cover'"
               [style.object-position]="getPreviewObjectPosition(editForm.value)" />
           </div>
+          <p class="crop-hint">Geser foto untuk mengatur posisi crop.</p>
 
           <button type="button" class="secondary-action full" (click)="browseEditFiles()">
             <i class="fas fa-image"></i>
@@ -355,44 +409,17 @@
             <textarea formControlName="description" rows="3"></textarea>
           </label>
 
-          <div class="form-row">
-            <label>
-              Posisi
-              <select formControlName="position">
-                <option *ngFor="let position of positionOptions" [ngValue]="position.value">
-                  {{ position.label }}
-                </option>
-              </select>
-            </label>
-
-            <label>
-              Mode
-              <select formControlName="display_mode">
-                <option *ngFor="let mode of displayModeOptions" [ngValue]="mode.value">
-                  {{ mode.label }}
-                </option>
-              </select>
-            </label>
-          </div>
-
-          <div class="form-row">
-            <label>
-              Focal X (%)
-              <input type="number" min="0" max="100" formControlName="focal_point_x" />
-            </label>
-            <label>
-              Focal Y (%)
-              <input type="number" min="0" max="100" formControlName="focal_point_y" />
-            </label>
-          </div>
-
           <div class="inline-actions">
             <label class="check-control">
               <input type="checkbox" formControlName="is_featured" />
               <span>Jadikan foto utama</span>
             </label>
-            <button type="button" class="link-button" (click)="clearFocalPoint(editForm)">Reset focal point</button>
           </div>
+
+          <input type="hidden" formControlName="position" />
+          <input type="hidden" formControlName="display_mode" />
+          <input type="hidden" formControlName="focal_point_x" />
+          <input type="hidden" formControlName="focal_point_y" />
         </div>
       </div>
 

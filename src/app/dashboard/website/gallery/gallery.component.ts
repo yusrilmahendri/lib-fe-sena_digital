@@ -100,6 +100,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   private readonly allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   private readonly allowedCoverExtensions = ['jpg', 'jpeg', 'png', 'webp'];
   private readonly notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
+  private activeCropForm: FormGroup | null = null;
 
   constructor(private dashboardSvc: DashboardService) {}
 
@@ -127,6 +128,51 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   get activeEmptyMessage(): string {
     return this.photoTypes.find((item) => item.value === this.activeType)?.empty || 'Belum ada foto.';
+  }
+
+  getPlacementBadgeLabel(index: number): string {
+    if (index === 0) {
+      return '★ Cover Gallery';
+    }
+
+    return index < 3 ? 'Slide' : 'Album';
+  }
+
+  getPlacementBadgeClass(index: number): string {
+    if (index === 0) {
+      return 'placement-badge--cover';
+    }
+
+    return index < 3 ? 'placement-badge--slide' : 'placement-badge--album';
+  }
+
+  getPlacementTitle(index: number): string {
+    return index === 0 ? 'Cover Gallery' : index < 3 ? 'Slider Gallery' : 'Album Foto';
+  }
+
+  getPlacementUses(index: number): string[] {
+    return index === 0 ? ['Cover Gallery', 'Slider', 'Album'] : ['Slider', 'Album'];
+  }
+
+  getPlacementDescription(index: number): string {
+    if (index === 0) {
+      return 'Foto pertama akan digunakan sebagai gambar utama galeri pada beberapa tema.';
+    }
+
+    return 'Foto berikutnya akan muncul pada slider atau album sesuai tema yang digunakan.';
+  }
+
+  getThemePreviewCoverUrl(): string {
+    return this.activePhotos[0]?.photo_url || this.previewUrl || '';
+  }
+
+  getThemePreviewAlbumItems(): Array<UserPhoto | null> {
+    const items: Array<UserPhoto | null> = this.activePhotos.slice(0, 4);
+    while (items.length < 4) {
+      items.push(null);
+    }
+
+    return items;
   }
 
   get isPremiumPhotoPackage(): boolean {
@@ -490,6 +536,38 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     form.patchValue({ focal_point_x: null, focal_point_y: null });
   }
 
+  startCropDrag(event: PointerEvent, form: FormGroup): void {
+    if (!this.hasCropImageForForm(form)) {
+      return;
+    }
+
+    event.preventDefault();
+    this.activeCropForm = form;
+    (event.currentTarget as HTMLElement)?.setPointerCapture?.(event.pointerId);
+    this.updateCropFocusFromEvent(event, form);
+  }
+
+  moveCropDrag(event: PointerEvent): void {
+    if (!this.activeCropForm) {
+      return;
+    }
+
+    event.preventDefault();
+    this.updateCropFocusFromEvent(event, this.activeCropForm);
+  }
+
+  endCropDrag(): void {
+    this.activeCropForm = null;
+  }
+
+  cancelUploadCrop(): void {
+    if (this.isCompressing || this.isUploading) {
+      return;
+    }
+
+    this.resetUploadForm();
+  }
+
   private loadInitialData(): void {
     this.isLoading = true;
     forkJoin({
@@ -509,6 +587,33 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  private updateCropFocusFromEvent(event: PointerEvent, form: FormGroup): void {
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    const x = this.clamp(Math.round(((event.clientX - rect.left) / rect.width) * 100), 0, 100);
+    const y = this.clamp(Math.round(((event.clientY - rect.top) / rect.height) * 100), 0, 100);
+
+    form.patchValue({
+      position: 'center',
+      display_mode: 'cover',
+      focal_point_x: x,
+      focal_point_y: y,
+    });
+  }
+
+  private hasCropImageForForm(form: FormGroup): boolean {
+    return form === this.uploadForm ? !!this.previewUrl : !!this.editPreviewUrl;
+  }
+
+  private clamp(value: number, min: number, max: number): number {
+    return Math.min(max, Math.max(min, value));
   }
 
   private loadPhotos(type: PhotoType): void {
