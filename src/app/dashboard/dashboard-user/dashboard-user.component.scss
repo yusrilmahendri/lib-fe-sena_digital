@@ -1173,122 +1173,6 @@
   }
 }
 @media screen and (max-width: 1024px) {
-  .dashboard-menu-toggle,
-  .menu-toggle {
-    pointer-events: auto !important;
-    z-index: 1400 !important;
-  }
-
-  .dashboard-sidebar,
-  .sidebar {
-    z-index: 1300 !important;
-  }
-
-  .dashboard-sidebar:not(.open):not(.active):not(.show):not(.is-open),
-  .sidebar:not(.open):not(.active):not(.show):not(.is-open) {
-    pointer-events: none !important;
-    transform: translateX(-100%) !important;
-  }
-
-  .sidebar-overlay:not(.active):not(.open):not(.show):not(.is-open),
-  .dashboard-sidebar-backdrop:not(.active):not(.open):not(.show):not(.is-open),
-  .dashboard-overlay:not(.active):not(.open):not(.show):not(.is-open) {
-    opacity: 0 !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-
-  .dashboard-content,
-  .content,
-  .content .well {
-    position: relative;
-    z-index: 1;
-    pointer-events: auto !important;
-  }
-}
-@media screen and (max-width: 1024px) {
-  .dashboard-menu-toggle,
-  .menu-toggle {
-    z-index: 1400 !important;
-    pointer-events: auto !important;
-  }
-
-  .dashboard-sidebar,
-  .sidebar {
-    z-index: 1300 !important;
-  }
-
-  .sidebar-overlay,
-  .dashboard-sidebar-backdrop {
-    z-index: 1200 !important;
-  }
-
-  .dashboard-sidebar:not(.open):not(.is-open),
-  .sidebar:not(.open):not(.is-open) {
-    pointer-events: none !important;
-    transform: translateX(-100%) !important;
-  }
-
-  .dashboard-sidebar.open,
-  .dashboard-sidebar.is-open,
-  .sidebar.open,
-  .sidebar.is-open {
-    pointer-events: auto !important;
-    transform: translateX(0) !important;
-  }
-
-  .dashboard-content,
-  .content,
-  .content .well {
-    position: relative;
-    z-index: 1;
-    pointer-events: auto !important;
-  }
-}
-@media screen and (max-width: 1024px) {
-  .sidebar-overlay,
-  .dashboard-sidebar-backdrop {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 1200 !important;
-    pointer-events: auto !important;
-  }
-
-  .dashboard-sidebar,
-  .sidebar {
-    z-index: 1300 !important;
-  }
-
-  .dashboard-menu-toggle,
-  .menu-toggle {
-    z-index: 1400 !important;
-    pointer-events: auto !important;
-  }
-
-  .dashboard-sidebar:not(.open):not(.is-open),
-  .sidebar:not(.open):not(.is-open) {
-    transform: translateX(-110%) !important;
-    pointer-events: none !important;
-  }
-
-  .dashboard-sidebar.open,
-  .dashboard-sidebar.is-open,
-  .sidebar.open,
-  .sidebar.is-open {
-    transform: translateX(0) !important;
-    pointer-events: auto !important;
-  }
-
-  .dashboard-content,
-  .content,
-  .content .well,
-  .dashboard-user-content {
-    position: relative !important;
-    z-index: 1 !important;
-    pointer-events: auto !important;
-  }
-}
-@media screen and (max-width: 1024px) {
   .dashboard-container,
   .dashboard-layout,
   .user-dashboard-layout,
@@ -1302,14 +1186,66 @@
   .content {
     height: auto !important;
     min-height: 100dvh;
+    position: relative !important;
+    z-index: auto !important;
     overflow: visible !important;
+    pointer-events: auto !important;
   }
 
   .content .well,
   .dashboard-user-content {
     height: auto !important;
     min-height: 0 !important;
+    position: relative !important;
+    z-index: auto !important;
     overflow: visible !important;
     -webkit-overflow-scrolling: auto !important;
+    pointer-events: auto !important;
+  }
+
+  .sidebar-overlay,
+  .dashboard-sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1200 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  .sidebar-overlay.active,
+  .sidebar-overlay.open,
+  .sidebar-overlay.show,
+  .sidebar-overlay.is-open,
+  .dashboard-sidebar-backdrop.active,
+  .dashboard-sidebar-backdrop.open,
+  .dashboard-sidebar-backdrop.show,
+  .dashboard-sidebar-backdrop.is-open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-sidebar,
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    transform: translateX(-100%) !important;
+    z-index: 1300 !important;
+    pointer-events: none !important;
+  }
+
+  .dashboard-sidebar.open,
+  .dashboard-sidebar.is-open,
+  .sidebar.open,
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+    pointer-events: auto !important;
+  }
+
+  .dashboard-menu-toggle,
+  .menu-toggle {
+    z-index: 1400 !important;
+    pointer-events: auto !important;
   }
 }

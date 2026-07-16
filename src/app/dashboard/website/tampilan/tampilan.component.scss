@@ -149,6 +149,10 @@
   filter: brightness(0.75);
 }
 
+.theme-card--locked .theme-card__media::after {
+  pointer-events: none;
+}
+
 .theme-card__media {
   aspect-ratio: 1 / 1;
   border-radius: 20px;
@@ -885,21 +889,19 @@
     font-size: 0.8rem;
   }
 
-.theme-picker__footer {
-  position: relative !important;
-  inset: auto !important;
-  bottom: auto !important;
-  z-index: 1 !important;
-
-  background: #ffffff;
-  border: 1px solid #f2dce6;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(120, 71, 97, 0.08);
-  margin-top: 16px;
-  padding: 12px;
-
-  pointer-events: auto;
-}
+  .theme-picker__footer {
+    position: relative !important;
+    inset: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
+    background: #ffffff;
+    border: 1px solid #f2dce6;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(120, 71, 97, 0.08);
+    margin-top: 16px;
+    padding: 12px;
+    pointer-events: auto;
+  }
 
   .theme-picker__selection {
     display: none;
@@ -1036,67 +1038,39 @@
     margin-top: 22px;
   }
 }
-/* FIX MOBILE/TABLET CLICK ISSUE - PAGE TAMPILAN */
-/* iOS REAL DEVICE TOUCH FIX */
 @media (max-width: 1024px) {
   :host,
-  .theme-picker,
-  .theme-picker__shell,
-  .theme-tabs,
-  .theme-grid,
-  .theme-card,
-  .theme-card__media,
-  .theme-card__body,
-  .theme-card__actions {
-    pointer-events: auto !important;
-  }
-
   .theme-picker,
   .theme-picker__shell,
   .theme-grid {
     position: relative;
     z-index: auto;
+    pointer-events: auto;
   }
 
   .theme-card {
     position: relative;
     z-index: auto;
-    isolation: auto;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .theme-card__media {
-    position: relative;
-    z-index: auto;
-  }
-
-  .theme-card__body {
-    position: relative;
-    z-index: auto;
-  }
-
-  .theme-card--locked .theme-card__media::after {
-    pointer-events: none !important;
+    pointer-events: auto;
   }
 
   .theme-tabs__button,
+  .theme-card,
   .theme-card__preview,
   .theme-card__action,
   .theme-picker__submit {
-    pointer-events: auto !important;
+    pointer-events: auto;
     touch-action: manipulation;
-    position: relative;
-  }
-
-  .theme-card__preview {
-    position: absolute;
-    z-index: 2;
   }
 
   .theme-picker__footer {
     position: relative !important;
     inset: auto !important;
+    bottom: auto !important;
     z-index: auto !important;
+  }
+
+  .theme-card--locked .theme-card__media::after {
+    pointer-events: none !important;
   }
 }
