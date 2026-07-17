@@ -104,9 +104,9 @@
           (click)="onCardClick(card.id)" role="button" tabindex="0" (keydown.enter)="onCardClick(card.id)"
           (keydown.space)="onCardClick(card.id)">
           <div *ngIf="card.active" class="position-absolute top-0 end-0 mt-2 me-2">
-            <div class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
+            <!-- <div class="badge bg-primary rounded-pill px-2 py-1" style="font-size: 0.7rem;">
               Aktif
-            </div>
+            </div> -->
           </div>
           <h3>{{ card.title }}</h3>
           <div class="d-flex align-items-center gap-2">

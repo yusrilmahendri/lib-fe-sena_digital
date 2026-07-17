@@ -42,26 +42,63 @@ export class AuthInterceptor implements HttpInterceptor {
       : req;
 
     return next.handle(authReq).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 403 && error.error?.code === 'ACCOUNT_NOT_VERIFIED') {
-          sessionStorage.setItem('verification_intended_url', this.router.url);
-          this.toast.showToast('Verifikasi akun terlebih dahulu untuk melanjutkan.', 'warning');
-          this.router.navigate(['/verify-account']);
-          return throwError(() => error);
+      catchError((err: HttpErrorResponse) => {
+        const currentUrl = this.router.url;
+
+        // Backend tidak dapat dihubungi.
+        // Jangan anggap akun belum diverifikasi.
+        if (err.status === 0) {
+          console.error('[Auth Interceptor] API tidak dapat dihubungi', {
+            url: err.url,
+            message: err.message,
+          });
+
+          return throwError(() => err);
         }
-        // 401 = not authenticated / session expired. Prompt the landing login
-        // modal (never /login). We skip auth endpoints themselves (login /
-        // forgot / reset / register) so a wrong-password attempt shows its own
-        // inline error instead of re-triggering the modal (avoids a loop).
-        if (error.status === 401 && !this.isAuthEndpoint(req.url)) {
-          this.landingModal.requestLogin(
-            'Sesi Anda telah berakhir. Silakan masuk kembali untuk melanjutkan.'
+
+        // Token tidak valid atau sudah kedaluwarsa.
+        if (err.status === 401) {
+          localStorage.removeItem('access_token');
+
+          if (
+            currentUrl !== '/login' &&
+            !currentUrl.startsWith('/register')
+          ) {
+            this.router.navigate(['/login']);
+          }
+
+          return throwError(() => err);
+        }
+
+        // Redirect verifikasi hanya jika backend secara tegas
+        // menyatakan akun belum diverifikasi.
+        const errorCode = String(
+          err.error?.code ??
+          err.error?.error_code ??
+          ''
+        ).toUpperCase();
+
+        const requiresVerification =
+          err.status === 403 &&
+          (
+            errorCode === 'ACCOUNT_NOT_VERIFIED' ||
+            errorCode === 'EMAIL_NOT_VERIFIED' ||
+            err.error?.account_verified === false ||
+            err.error?.is_verified === false
           );
+
+        if (requiresVerification) {
+          if (
+            currentUrl !== '/verify-account' &&
+            currentUrl !== '/verify-account-code'
+          ) {
+            this.router.navigate(['/verify-account']);
+          }
+
+          return throwError(() => err);
         }
-        // 403 = forbidden / wrong role/status — the user IS logged in. Do NOT
-        // open the login modal, redirect, logout, or clear the token. Forward
-        // the error so the calling component can show a clear message.
-        return throwError(() => error);
+
+        return throwError(() => err);
       })
     );
   }

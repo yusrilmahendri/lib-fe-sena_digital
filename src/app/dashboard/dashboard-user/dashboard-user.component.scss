@@ -1087,10 +1087,6 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .dashboard-user-content {
-    padding: 14px !important;
-  }
-
   .user-header,
   .dashboard-header,
   .header {
@@ -1172,89 +1168,6 @@
   }
 }
 
-@media screen and (max-width: 480px) {
-  .content .well {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-  }
-
-  .user-header,
-  .dashboard-header,
-  .header {
-    padding: 12px 14px 12px 64px !important;
-  }
-
-  .account-display-name,
-  .user-email,
-  .profile-email,
-  .account-name {
-    display: inline-block !important;
-    max-width: 105px !important;
-    font-size: 13px !important;
-    font-weight: 700;
-  }
-
-  .user-profile::before,
-  .user-menu::before,
-  .profile-menu::before,
-  .account-menu::before {
-    content: none !important;
-  }
-
-  :host ::ng-deep .dashboard-content .card,
-  :host ::ng-deep .dashboard-content .section-card,
-  :host ::ng-deep .dashboard-content .form-card,
-  :host ::ng-deep .dashboard-content .content-card,
-  :host ::ng-deep .dashboard-content .panel,
-  :host ::ng-deep .dashboard-content .website-card,
-  :host ::ng-deep .dashboard-content .event-card,
-  :host ::ng-deep .dashboard-content .rekening-card,
-  :host ::ng-deep .dashboard-content .music-card,
-  :host ::ng-deep .dashboard-content .gallery-card,
-  :host ::ng-deep .dashboard-content .testimoni-card,
-  :host ::ng-deep .dashboard-content .guest-card,
-  :host ::ng-deep .dashboard-content .share-card,
-  :host ::ng-deep .dashboard-content .ucapan-card {
-    max-width: calc(100vw - 20px) !important;
-    width: calc(100vw - 20px) !important;
-  }
-}
-
-@media screen and (max-width: 360px) {
-  .content .well {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-  }
-
-  .dashboard-user-content {
-    padding: 10px !important;
-  }
-
-  .account-display-name,
-  .user-email,
-  .profile-email,
-  .account-name {
-    max-width: 90px !important;
-  }
-
-  :host ::ng-deep .dashboard-content .card,
-  :host ::ng-deep .dashboard-content .section-card,
-  :host ::ng-deep .dashboard-content .form-card,
-  :host ::ng-deep .dashboard-content .content-card,
-  :host ::ng-deep .dashboard-content .panel,
-  :host ::ng-deep .dashboard-content .website-card,
-  :host ::ng-deep .dashboard-content .event-card,
-  :host ::ng-deep .dashboard-content .rekening-card,
-  :host ::ng-deep .dashboard-content .music-card,
-  :host ::ng-deep .dashboard-content .gallery-card,
-  :host ::ng-deep .dashboard-content .testimoni-card,
-  :host ::ng-deep .dashboard-content .guest-card,
-  :host ::ng-deep .dashboard-content .share-card,
-  :host ::ng-deep .dashboard-content .ucapan-card {
-    max-width: calc(100vw - 20px) !important;
-    width: calc(100vw - 20px) !important;
-  }
-}
 @media screen and (max-width: 1024px) {
   .dashboard-container,
   .dashboard-layout,
@@ -1332,3 +1245,48 @@
     pointer-events: auto !important;
   }
 }
+
+@media screen and (max-width: 360px) {
+  .content .well.dashboard-user-content {
+    padding: 10px !important;
+  }
+}
+@media screen and (max-width: 768px) {
+  .content .well.dashboard-user-content {
+    padding: 14px !important;
+  }
+}
+@media screen and (max-width: 768px) {
+  .dashboard-user-content,
+  .content .well {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    overflow-x: hidden !important;
+  }
+
+  :host ::ng-deep .dashboard-user-content > *,
+  :host ::ng-deep .dashboard-user-content .card,
+  :host ::ng-deep .dashboard-user-content .section-card,
+  :host ::ng-deep .dashboard-user-content .form-card,
+  :host ::ng-deep .dashboard-user-content .content-card,
+  :host ::ng-deep .dashboard-user-content .panel,
+  :host ::ng-deep .dashboard-user-content .website-card,
+  :host ::ng-deep .dashboard-user-content .event-card,
+  :host ::ng-deep .dashboard-user-content .rekening-card,
+  :host ::ng-deep .dashboard-user-content .music-card,
+  :host ::ng-deep .dashboard-user-content .gallery-card,
+  :host ::ng-deep .dashboard-user-content .testimoni-card,
+  :host ::ng-deep .dashboard-user-content .guest-card,
+  :host ::ng-deep .dashboard-user-content .share-card,
+  :host ::ng-deep .dashboard-user-content .ucapan-card {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
