@@ -14,6 +14,11 @@
           {{ getDiamondCoverDateLabel() || 'Tanggal belum tersedia' }}
         </p>
 
+        <div class="diamond-opening__guest">
+          <span>Kepada Yth. Bapak/Ibu/Saudara/i</span>
+          <strong>{{ getResolvedGuestName() }}</strong>
+        </div>
+
         <button type="button" class="diamond-opening__button" (click)="openInvitation($event)">
           Buka Undangan
         </button>

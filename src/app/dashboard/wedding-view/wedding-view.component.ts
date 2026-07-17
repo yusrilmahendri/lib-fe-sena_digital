@@ -127,6 +127,8 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   guestCode: string | null = null;
+  guestToken: string | null = null;
+  guestSlug: string | null = null;
   isLoading: boolean = false;
   errorMessage: string | null = null;
 
@@ -177,8 +179,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   private listenForGuestName(): void {
     const querySubscription = this.route.queryParams.subscribe(params => {
       const previousGuestCode = this.guestCode;
-      this.guestCode = this.sanitizeRouteValue(params['to']);
-      this.guestName = formatGuestNameFromQuery(this.guestCode) || 'Tamu Undangan';
+      this.guestToken = this.sanitizeRouteValue(params['guest'] || params['guest_token']);
+      this.guestSlug = this.sanitizeRouteValue(params['to']);
+      this.guestCode = this.guestToken || this.guestSlug;
+      this.guestName = formatGuestNameFromQuery(this.guestSlug) || 'Tamu Undangan';
 
       if (this.weddingData && this.domain && previousGuestCode !== this.guestCode) {
         this.loadWeddingDataFromAPI(this.domain, false, true);
@@ -387,12 +391,19 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     // Get route params first (check if domain is passed via route)
     const routeSubscription = this.route.params.subscribe(params => {
       const routeDomain = this.sanitizeRouteValue(params['coupleName'] || params['domain']); // Support both old and new param names
-      this.guestCode = this.sanitizeRouteValue(this.route.snapshot.queryParamMap.get('to'));
+      this.guestToken = this.sanitizeRouteValue(
+        this.route.snapshot.queryParamMap.get('guest') ||
+        this.route.snapshot.queryParamMap.get('guest_token')
+      );
+      this.guestSlug = this.sanitizeRouteValue(this.route.snapshot.queryParamMap.get('to'));
+      this.guestCode = this.guestToken || this.guestSlug;
 
       console.log('Route params:', {
         coupleName: params['coupleName'],
         domain: params['domain'],
         routeDomain,
+        guestToken: this.guestToken,
+        guestSlug: this.guestSlug,
         guestCode: this.guestCode
       });
 
@@ -472,7 +483,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     useLegacyEndpoint: boolean = false
   ): void {
     const cleanDomain = this.sanitizeRouteValue(domain);
-    const cleanGuestCode = includeGuestCode ? this.sanitizeRouteValue(this.guestCode) : null;
+    const cleanGuestToken = includeGuestCode ? this.sanitizeRouteValue(this.guestToken) : null;
+    const cleanGuestSlug = includeGuestCode ? this.sanitizeRouteValue(this.guestSlug) : null;
+    const cleanGuestCode = cleanGuestToken || cleanGuestSlug;
 
     if (!cleanDomain) {
       this.handleDataNotFound('Domain undangan tidak valid');
@@ -485,11 +498,11 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     const apiPath = `/${encodeURIComponent(cleanDomain)}`;
-    const queryParams = cleanGuestCode ? { to: cleanGuestCode } : undefined;
+    const queryParams = this.buildPublicWeddingQueryParams(cleanGuestToken, cleanGuestSlug);
     const endpointType = useLegacyEndpoint
       ? DashboardServiceType.WEDDING_VIEW_COUPLE
       : DashboardServiceType.WEDDING_PUBLIC_BY_DOMAIN;
-    const apiUrl = `${this.dashboardService.getUrl(endpointType)}${apiPath}${cleanGuestCode ? `?to=${encodeURIComponent(cleanGuestCode)}` : ''}`;
+    const apiUrl = `${this.dashboardService.getUrl(endpointType)}${apiPath}${queryParams ? `?${new URLSearchParams(queryParams as Record<string, string>).toString()}` : ''}`;
 
     console.log('Loading fresh wedding data from API for domain:', cleanDomain, isBackgroundUpdate ? '(background)' : '');
     console.log('[PUBLIC_WEDDING]', { domain: cleanDomain, guestCode: cleanGuestCode, apiUrl });
@@ -638,6 +651,23 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     } as WeddingData;
 
     return enriched;
+  }
+
+  private buildPublicWeddingQueryParams(guestToken?: string | null, guestSlug?: string | null): Record<string, string> | undefined {
+    const params: Record<string, string> = {};
+    const cleanGuestToken = this.sanitizeRouteValue(guestToken);
+    const cleanGuestSlug = this.sanitizeRouteValue(guestSlug);
+
+    if (cleanGuestToken) {
+      params['guest'] = cleanGuestToken;
+      params['guest_token'] = cleanGuestToken;
+    }
+
+    if (cleanGuestSlug) {
+      params['to'] = cleanGuestSlug;
+    }
+
+    return Object.keys(params).length ? params : undefined;
   }
 
   private attachReligionContentToWeddingData(data: WeddingData, response?: any): WeddingData {
@@ -947,7 +977,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private resolveGuestNameFromWeddingData(data: any): string {
-    return resolveGuestName(data, formatGuestNameFromQuery(this.guestCode));
+    return resolveGuestName(data, formatGuestNameFromQuery(this.guestSlug));
   }
 
   /**

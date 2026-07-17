@@ -50,12 +50,12 @@ const INVALID_TEXT = new Set(['', '-', 'null', 'undefined']);
 
 export function resolveGuestName(data: any, queryGuestName?: string | null): string {
   const candidates = [
+    data?.guest_name,
+    data?.nama_tamu,
     data?.guest?.name,
     data?.guest?.nama,
     data?.guest?.guest_name,
     data?.guest?.nama_tamu,
-    data?.guest_name,
-    data?.nama_tamu,
     data?.filter_undangan?.guest_name,
     data?.filter_undangan?.nama_tamu,
     data?.guest_book?.[0]?.nama,

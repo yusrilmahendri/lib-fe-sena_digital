@@ -245,6 +245,28 @@
   text-transform: uppercase;
 }
 
+.diamond-opening__guest {
+  margin-top: 22px;
+  display: grid;
+  gap: 6px;
+  color: #fff;
+}
+
+.diamond-opening__guest span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, .82);
+}
+
+.diamond-opening__guest strong {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #fff;
+}
+
 .diamond-opening__button {
   margin-top: 34px;
   width: 190px;

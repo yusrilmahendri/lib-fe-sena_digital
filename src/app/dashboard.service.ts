@@ -501,7 +501,7 @@ export class DashboardService {
       case DashboardServiceType.WEDDING_VIEW_CORE:
         return `${this.BASE_URL_API}/v1/wedding-profile/public`;
       case DashboardServiceType.WEDDING_PUBLIC_BY_DOMAIN:
-        return `${this.BASE_URL_API}/v1/public/wedding`;
+        return `${this.BASE_URL_API}/v1/wedding`;
       case DashboardServiceType.WEDDING_VIEW_COUPLE:
         return `${this.BASE_URL_API}/v1/wedding-profile/couple`;
       case DashboardServiceType.ATTENDANCE:

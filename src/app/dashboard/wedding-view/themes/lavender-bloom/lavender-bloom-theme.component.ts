@@ -175,6 +175,10 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
     return resolveGuestName(this.weddingData);
   }
 
+  getResolvedGuestName(): string {
+    return resolveGuestName(this.weddingData);
+  }
+
   getCoverPhoto(): string {
     const featuredGalleryPhoto = this.getFeaturedGalleryItem();
     const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';

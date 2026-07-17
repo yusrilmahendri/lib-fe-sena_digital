@@ -11,6 +11,7 @@ import {
   getResolvedReligionValue,
   ReligionContentLike,
 } from 'src/app/shared/religion-content.util';
+import { resolveGuestName } from 'src/app/shared/wedding-theme-data.util';
 import * as XLSX from 'xlsx';
 
 interface ImportedGuestRow {
@@ -67,6 +68,7 @@ export class BagiUndanganComponent implements OnInit {
       next: (response: ProfileResponse) => {
         this.publicWeddingDomain = this.normalizeWeddingDomain(response?.data?.domain_info?.domain);
         this.loadGuestsFromBackend();
+        this.loadPublicWeddingData();
 
         if (!this.publicWeddingDomain) {
           this.showNotice('Domain undangan belum tersedia.');
@@ -99,12 +101,79 @@ export class BagiUndanganComponent implements OnInit {
     this.religionContent = getReligionContentFromData(response);
 
     this.weddingData = {
+      ...this.weddingData,
       setting: this.salamSetting,
       settings: this.salamSetting,
       religion_content: this.religionContent,
       filter_undangan: response?.filter_undangan || response?.data?.filter_undangan || {},
-      data: response || {}
+      settings_response: response || {}
     };
+  }
+
+  private loadPublicWeddingData(): void {
+    const domain = this.publicWeddingDomain;
+    if (!domain) {
+      return;
+    }
+
+    this.dashboardService.getParam(
+      DashboardServiceType.WEDDING_PUBLIC_BY_DOMAIN,
+      `/${encodeURIComponent(domain)}`
+    ).subscribe({
+      next: (response: any) => {
+        const payload = this.resolveWeddingDataPayload(response);
+        if (!payload) {
+          return;
+        }
+
+        this.weddingData = {
+          ...payload,
+          ...this.weddingData,
+          public_wedding: payload,
+          religion_content: this.religionContent || (payload as any)?.religion_content,
+          setting: {
+            ...((payload as any)?.setting || {}),
+            ...this.salamSetting,
+          },
+          settings: {
+            ...((payload as any)?.settings || {}),
+            ...this.salamSetting,
+          },
+        };
+      },
+      error: () => {
+        // Existing settings fallback is enough for sharing when public data is unavailable.
+      }
+    });
+  }
+
+  private resolveWeddingDataPayload(response: any): any | null {
+    const candidates = [
+      response?.data?.wedding,
+      response?.data?.invitation,
+      response?.data?.undangan,
+      response?.data,
+      response?.wedding,
+      response?.invitation,
+      response?.undangan,
+      response,
+    ];
+
+    return candidates.find((candidate) => {
+      if (!candidate || typeof candidate !== 'object') {
+        return false;
+      }
+
+      return !!(
+        candidate?.mempelai ||
+        candidate?.events ||
+        candidate?.acara ||
+        candidate?.settings ||
+        candidate?.setting ||
+        candidate?.domain ||
+        candidate?.slug
+      );
+    }) || null;
   }
 
   private loadReligionContent(onComplete?: () => void): void {
@@ -469,7 +538,7 @@ export class BagiUndanganComponent implements OnInit {
     const invitationUrl = String(url || '').trim();
     const context = this.buildWhatsappTemplateContext(invitationUrl, guestName);
     const openingTemplate = this.getWhatsappOpeningText();
-    const messageTemplate = this.getWhatsappMessageText();
+    const messageTemplate = this.getSafeWhatsappMessageTemplate(this.getWhatsappMessageText(), context);
     const closingTemplate = this.getWhatsappClosingText();
     const opening = this.renderWhatsappTemplate(openingTemplate, context);
     const message = this.renderWhatsappTemplate(messageTemplate, context);
@@ -521,45 +590,133 @@ export class BagiUndanganComponent implements OnInit {
     ).trim();
   }
 
+  private getSafeWhatsappMessageTemplate(template: string, context: WhatsappTemplateContext): string {
+    const raw = String(template || '').trim();
+    const hasTemplate = !!raw;
+    const hasCompleteEventDetails = !!(
+      context.brideName &&
+      context.groomName &&
+      context.eventDate &&
+      context.eventLocation
+    );
+
+    if (!hasTemplate) {
+      return hasCompleteEventDetails
+        ? 'Dengan bahagia kami mengundang Anda untuk hadir di pernikahan {{bride_name}} dan {{groom_name}} pada {{event_date}} di {{event_location}}.'
+        : 'Dengan bahagia kami mengundang Anda untuk menghadiri acara pernikahan kami.';
+    }
+
+    const detailPlaceholders = ['bride_name', 'groom_name', 'event_date', 'event_location'];
+    const usesMissingDetail = detailPlaceholders.some((key) => {
+      const value = (context as any)[this.toContextKey(key)];
+      return !value && new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'i').test(raw);
+    });
+
+    if (!usesMissingDetail) {
+      return raw;
+    }
+
+    const guestGreeting = raw
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .find((line) => /\{\{\s*guest_name\s*\}\}/i.test(line) && !/\{\{\s*(bride_name|groom_name|event_date|event_location)\s*\}\}/i.test(line));
+    const safeMessage = 'Dengan bahagia kami mengundang Anda untuk menghadiri acara pernikahan kami.';
+
+    return guestGreeting ? `${guestGreeting}\n\n${safeMessage}` : safeMessage;
+  }
+
+  private toContextKey(placeholder: string): keyof WhatsappTemplateContext {
+    const map: Record<string, keyof WhatsappTemplateContext> = {
+      guest_name: 'guestName',
+      bride_name: 'brideName',
+      groom_name: 'groomName',
+      event_date: 'eventDate',
+      event_location: 'eventLocation',
+      invitation_url: 'invitationUrl',
+    };
+
+    return map[placeholder] || 'guestName';
+  }
+
   private buildWhatsappTemplateContext(invitationUrl: string, guestName = ''): WhatsappTemplateContext {
     const source = this.weddingData || {};
-    const data = source?.data || {};
+    const data = source?.public_wedding || source?.data || {};
     const event = this.getPrimaryInvitationEvent(source);
+    const resolvedInvitationUrl = this.readFirstDeepText(source, [
+      'invitation_url',
+      'personal_invitation_url',
+      'personal_url',
+      'guest.invitation_url',
+      'guest.url',
+      'public_wedding.invitation_url',
+      'public_wedding.personal_invitation_url',
+      'data.invitation_url',
+      'data.personal_invitation_url',
+    ]) || invitationUrl;
+    const guestDisplayName = this.resolveGuestName(guestName, invitationUrl);
+    const brideName = this.readFirstDeepText(source, [
+      'mempelai.wanita.nama',
+      'mempelai.wanita.name',
+      'mempelai.wanita.nama_panggilan',
+      'mempelai.wanita.nama_lengkap',
+      'bride.name',
+      'bride.nama',
+      'female_name',
+      'nama_wanita',
+      'mempelai.female_name',
+      'mempelai.nama_wanita',
+      'mempelai_wanita',
+      'mempelai_wanita.nama',
+      'mempelai_wanita.nama_lengkap',
+      'wanita.nama',
+      'wanita.name',
+      'wanita.nama_panggilan',
+      'wanita.nama_lengkap',
+      'public_wedding.mempelai.wanita.nama',
+      'public_wedding.bride.name',
+      'public_wedding.female_name',
+      'public_wedding.nama_wanita',
+      'data.mempelai.wanita.nama',
+      'data.mempelai.wanita.nama_panggilan',
+      'data.mempelai.wanita.nama_lengkap',
+      'data.bride.name',
+      'data.female_name',
+      'data.nama_wanita',
+    ]);
+    const groomName = this.readFirstDeepText(source, [
+      'mempelai.pria.nama',
+      'mempelai.pria.name',
+      'mempelai.pria.nama_panggilan',
+      'mempelai.pria.nama_lengkap',
+      'groom.name',
+      'groom.nama',
+      'male_name',
+      'nama_pria',
+      'mempelai.male_name',
+      'mempelai.nama_pria',
+      'mempelai_pria',
+      'mempelai_pria.nama',
+      'mempelai_pria.nama_lengkap',
+      'pria.nama',
+      'pria.name',
+      'pria.nama_panggilan',
+      'pria.nama_lengkap',
+      'public_wedding.mempelai.pria.nama',
+      'public_wedding.groom.name',
+      'public_wedding.male_name',
+      'public_wedding.nama_pria',
+      'data.mempelai.pria.nama',
+      'data.mempelai.pria.nama_panggilan',
+      'data.mempelai.pria.nama_lengkap',
+      'data.groom.name',
+      'data.male_name',
+      'data.nama_pria',
+    ]);
 
     return {
-      guestName: this.resolveGuestName(guestName, invitationUrl),
-      brideName: this.readFirstDeepText(source, [
-        'mempelai.wanita.nama_panggilan',
-        'mempelai.wanita.nama_lengkap',
-        'mempelai_wanita',
-        'bride.name',
-        'bride.nama',
-        'wanita.nama_panggilan',
-        'wanita.nama_lengkap',
-        'nama_mempelai_wanita',
-        'data.mempelai.wanita.nama_panggilan',
-        'data.mempelai.wanita.nama_lengkap',
-        'data.mempelai_wanita',
-        'data.bride.name',
-        'data.wanita.nama_panggilan',
-        'data.nama_mempelai_wanita',
-      ]),
-      groomName: this.readFirstDeepText(source, [
-        'mempelai.pria.nama_panggilan',
-        'mempelai.pria.nama_lengkap',
-        'mempelai_pria',
-        'groom.name',
-        'groom.nama',
-        'pria.nama_panggilan',
-        'pria.nama_lengkap',
-        'nama_mempelai_pria',
-        'data.mempelai.pria.nama_panggilan',
-        'data.mempelai.pria.nama_lengkap',
-        'data.mempelai_pria',
-        'data.groom.name',
-        'data.pria.nama_panggilan',
-        'data.nama_mempelai_pria',
-      ]),
+      guestName: guestDisplayName,
+      brideName,
+      groomName,
       eventDate: this.readFirstDeepText(event, [
         'tanggal_formatted',
         'date_formatted',
@@ -568,6 +725,14 @@ export class BagiUndanganComponent implements OnInit {
         'tanggal_acara',
         'event_date',
       ]) || this.readFirstDeepText(data, [
+        'event_utama.tanggal',
+        'event_utama.date',
+        'main_event.tanggal',
+        'main_event.date',
+        'events.0.tanggal',
+        'events.0.date',
+        'acara.0.tanggal',
+        'acara.0.date',
         'tanggal_formatted',
         'date_formatted',
         'tanggal',
@@ -583,6 +748,12 @@ export class BagiUndanganComponent implements OnInit {
         'lokasi_acara',
         'event_location',
       ]) || this.readFirstDeepText(data, [
+        'events.0.lokasi',
+        'events.0.location',
+        'events.0.alamat',
+        'acara.0.lokasi',
+        'acara.0.location',
+        'acara.0.alamat',
         'lokasi',
         'location',
         'alamat',
@@ -590,25 +761,34 @@ export class BagiUndanganComponent implements OnInit {
         'lokasi_acara',
         'event_location',
       ]),
-      invitationUrl,
+      invitationUrl: resolvedInvitationUrl,
     };
   }
 
   private resolveGuestName(guestName: string, invitationUrl: string): string {
-    return String(
-      guestName ||
-      this.extractGuestNameFromInvitationUrl(invitationUrl) ||
-      this.guestName ||
-      this.readFirstDeepText(this.weddingData, ['guest_name', 'nama_tamu', 'guest.name', 'guest.nama', 'name']) ||
-      ''
-    ).trim();
+    return resolveGuestName(
+      {
+        ...(this.weddingData || {}),
+        guest_name: guestName || this.weddingData?.guest_name,
+      },
+      this.extractGuestNameFromInvitationUrl(invitationUrl) || this.guestName
+    );
   }
 
   private getPrimaryInvitationEvent(source: any): Record<string, any> {
     const candidates = [
+      source?.event_utama,
+      source?.main_event,
       source?.events,
       source?.event,
       source?.acara,
+      source?.public_wedding?.event_utama,
+      source?.public_wedding?.main_event,
+      source?.public_wedding?.events,
+      source?.public_wedding?.event,
+      source?.public_wedding?.acara,
+      source?.data?.event_utama,
+      source?.data?.main_event,
       source?.data?.events,
       source?.data?.event,
       source?.data?.acara,
@@ -635,7 +815,13 @@ export class BagiUndanganComponent implements OnInit {
   private readDeepValue(source: any, path: string): any {
     return String(path || '')
       .split('.')
-      .reduce((value, key) => value?.[key], source);
+      .reduce((value, key) => {
+        if (Array.isArray(value) && /^\d+$/.test(key)) {
+          return value[Number(key)];
+        }
+
+        return value?.[key];
+      }, source);
   }
 
   private normalizeMessagePart(value: string): string {
@@ -646,8 +832,25 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   private cleanupWhatsappMessage(value: string): string {
+    const seenUrls = new Set<string>();
+
     return String(value || '')
       .replace(/\{\{[^}]+\}\}/g, '')
+      .split('\n')
+      .filter((line) => {
+        const text = line.trim();
+        if (!/^https?:\/\/\S+$/i.test(text)) {
+          return true;
+        }
+
+        if (seenUrls.has(text)) {
+          return false;
+        }
+
+        seenUrls.add(text);
+        return true;
+      })
+      .join('\n')
       .replace(/[ \t]+\n/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
