@@ -71,14 +71,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     event?.preventDefault();
     event?.stopPropagation();
 
-    this.isInvitationOpened = true;
-    this.openInvitationRequested.emit();
+    if (this.invitationOpened) {
+      return;
+    }
+
     this.hasOpened = true;
+    this.isOpening = false;
+
     document.body.classList.remove('modal-open');
-    setTimeout(() => {
-      const main = document.querySelector('.diamond-main');
-      main?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 300);
+    document.body.style.overflow = '';
+
+    this.openInvitationRequested.emit();
   }
 
   override getPrimaryDisplayName(): string {
@@ -511,11 +514,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private debugDiamondMap(): void {
-    console.log('[DiamondThemeOne] map link:', this.getEventMapLink());
-    console.log(
-      '[DiamondThemeOne] map embed:',
-      this.buildGoogleMapsEmbedUrl(this.getEventMapLink(), this.getEventAddress(), this.getEventVenueName())
-    );
+
   }
 
   getEventPhotoUrl(): string {
@@ -625,25 +624,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private debugDiamondDate(): void {
-    console.log('[DiamondThemeOne] cover date raw:', this.getDiamondCoverRawDate());
-    console.log('[DiamondThemeOne] cover date label:', this.getDiamondCoverDateLabel());
-    console.log('[DiamondThemeOne] events for cover date:', this.weddingData?.events);
-    console.log('[DiamondThemeOne] date events:', this.getWeddingEvents());
-    console.log('[DiamondThemeOne] raw date:', this.getWeddingMainDateValue());
-    console.log('[DiamondThemeOne] hero date label:', this.getHeroDateLabel());
+
   }
 
   private debugDiamondEvents(): void {
-    console.log('[DiamondThemeOne] events:', this.getEvents());
-    console.log('[DiamondThemeOne] akad:', this.getAkadEvent());
-    console.log('[DiamondThemeOne] resepsi:', this.getResepsiEvent());
-    console.log('[DiamondThemeOne] day:', this.getMainEventDayName());
-    console.log('[DiamondThemeOne] long date:', this.getMainEventLongDate());
-    console.log('[DiamondThemeOne] akad time:', this.getAkadTimeLabel());
-    console.log('[DiamondThemeOne] resepsi time:', this.getResepsiTimeLabel());
-    console.log('[DiamondThemeOne] venue:', this.getEventVenueName());
-    console.log('[DiamondThemeOne] address:', this.getEventAddress());
-    console.log('[DiamondThemeOne] maps:', this.getEventMapLink());
+
   }
 
   getCountdownPhotoUrl(): string {
@@ -1501,9 +1486,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private syncInvitationState(): void {
-    this.isInvitationOpened = this.invitationOpened;
     if (this.invitationOpened) {
       this.hasOpened = true;
+      this.isOpening = false;
     }
   }
 

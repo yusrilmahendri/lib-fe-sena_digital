@@ -79,7 +79,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override ngOnInit(): void {
-    console.log('[Soft Ivory] ngOnInit');
     super.ngOnInit();
     this.setupRubyReceptionFromEvents();
     this.initCountdown();
@@ -89,7 +88,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
-    console.log('[Soft Ivory] ngOnChanges');
+    super.ngOnChanges(changes);
     if (changes['weddingData']) {
       this.setupRubyReceptionFromEvents();
       this.initCountdown();
@@ -229,7 +228,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
-    console.log('[RubyGalleryPhotos]', photos);
+
     return photos;
   }
 
@@ -278,11 +277,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   override getGalleryPhotoUrl(item: any): string {
     const resolved = resolveInvitationPhotoUrl(item);
 
-    console.log('[ImageUrlDebug]', {
-      context: 'ruby-theme-one',
-      raw: item,
-      resolved
-    });
+
 
     return resolved;
   }

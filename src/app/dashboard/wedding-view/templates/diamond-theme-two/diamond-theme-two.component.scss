@@ -2879,3 +2879,22 @@
   gap: 8px !important;
   cursor: pointer !important;
 }
+/* Champagne Rose: decorative layers must not block the button */
+.diamond-opening__bg,
+.diamond-opening__overlay {
+  pointer-events: none !important;
+}
+
+.diamond-opening__content {
+  position: relative;
+  z-index: 3;
+  pointer-events: auto !important;
+}
+
+.diamond-opening__button {
+  position: relative;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  cursor: pointer;
+}
