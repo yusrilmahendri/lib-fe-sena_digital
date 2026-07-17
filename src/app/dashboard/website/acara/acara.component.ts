@@ -9,6 +9,7 @@ import { ModalComponent } from 'src/app/shared/modal/modal.component';
 
 interface Acara {
   id: string | null;
+  jenis_acara?: string;
   nama_acara: string;
   tanggal_acara: string | Date | null;
   start_acara: string;
@@ -40,7 +41,8 @@ export class AcaraComponent implements OnInit {
 
   events: ReadonlyArray<{ id: string | null; name: string }> = [];
   bsConfig!: Partial<BsDatepickerConfig>;
-
+  eventTypeOptions: Record<string, string> = {};
+  availableEventTypes: Record<string, string> = {};
   modalRef?: BsModalRef;
 
   private notyf: Notyf;
@@ -84,29 +86,60 @@ export class AcaraComponent implements OnInit {
     return this.dynamicEventForm.get('dynamicEvents') as FormArray;
   }
 
-  private createDynamicEventForm(eventData?: Partial<Acara>): FormGroup {
-    const normalizedLocation = this.normalizeLocationData(eventData);
+  private createDynamicEventForm(
+    eventData?: Partial<Acara>
+  ): FormGroup {
+    const normalizedLocation =
+      this.normalizeLocationData(eventData);
 
     return this.fb.group({
       id: [eventData?.id ?? null],
-      nama_acara: [eventData?.nama_acara ?? '', Validators.required],
+
+      jenis_acara: [
+        eventData?.jenis_acara ??
+          this.getDefaultEventType(),
+        Validators.required,
+      ],
+
+      nama_acara: [
+        eventData?.nama_acara ?? '',
+        Validators.required,
+      ],
+
       tanggal_acara: [
         eventData?.tanggal_acara
           ? new Date(eventData.tanggal_acara)
           : null,
         Validators.required,
       ],
-      start_acara: [eventData?.start_acara ?? '', Validators.required],
-      end_acara: [eventData?.end_acara ?? '', Validators.required],
+
+      start_acara: [
+        eventData?.start_acara ?? '',
+        Validators.required,
+      ],
+
+      end_acara: [
+        eventData?.end_acara ?? '',
+        Validators.required,
+      ],
+
       alamat: [normalizedLocation.address],
       address: [normalizedLocation.address],
-      location_name: [normalizedLocation.location_name],
+      location_name: [
+        normalizedLocation.location_name
+      ],
       latitude: [normalizedLocation.latitude],
       longitude: [normalizedLocation.longitude],
-      link_maps: [normalizedLocation.google_maps_url],
-      google_maps_url: [normalizedLocation.google_maps_url],
+      link_maps: [
+        normalizedLocation.google_maps_url
+      ],
+      google_maps_url: [
+        normalizedLocation.google_maps_url
+      ],
       place_id: [normalizedLocation.place_id],
-    }, { validators: this.locationValidator });
+    }, {
+      validators: this.locationValidator,
+    });
   }
 
   addDynamicEvent(): void {
@@ -162,35 +195,67 @@ export class AcaraComponent implements OnInit {
 
   fetchInitialData(): void {
     this.isLoading = true;
+
     this.dashboardSvc.list(DashboardServiceType.ACARA_DATA).subscribe({
       next: (res) => {
         this.isLoading = false;
-        this.data = (res?.data?.acaras as Acara[]) ?? [];
 
-        if (this.data.length > 0) {
-          this.countdownData = this.data[0].countdown ?? null;
-          this.userID = res?.data?.acaras[0].user_id ?? null;
-          this.staticEventForm.patchValue({
-            selectedEvent: this.countdownData?.name_countdown ?? null,
-          });
+        const responseData = res?.data ?? {};
+        this.eventTypeOptions = responseData?.event_type_options ?? {};
+        this.availableEventTypes = responseData?.available_event_types ?? {};
+        const acaraList = Array.isArray(responseData?.acaras)
+          ? responseData.acaras as Acara[]
+          : [];
 
-          while (this.dynamicEvents.length !== 0) {
-            this.dynamicEvents.removeAt(0);
-          }
+        this.data = acaraList;
 
-          this.data.forEach((acara) => {
-            this.dynamicEvents.push(this.createDynamicEventForm(acara));
+        this.countdownData = responseData?.countdown
+          ? {
+              id: String(responseData.countdown.id ?? ''),
+              name_countdown: String(
+                responseData.countdown.name_countdown ?? ''
+              ).trim(),
+            }
+          : null;
+
+        this.userID =
+          responseData?.countdown?.user_id ??
+          (acaraList[0] as any)?.user_id ??
+          null;
+
+        this.staticEventForm.patchValue({
+          selectedEvent: this.countdownData?.name_countdown ?? null,
+        });
+
+        while (this.dynamicEvents.length > 0) {
+          this.dynamicEvents.removeAt(0);
+        }
+
+        if (acaraList.length > 0) {
+          acaraList.forEach((acara) => {
+            this.dynamicEvents.push(
+              this.createDynamicEventForm(acara)
+            );
           });
         } else {
-          this.dynamicEvents.push(this.createDynamicEventForm());
+          this.dynamicEvents.push(
+            this.createDynamicEventForm()
+          );
         }
       },
       error: (err) => {
         this.isLoading = false;
         this.notyf.error(getFriendlyErrorMessage(err));
-        if (this.dynamicEvents.length === 0) {
-          this.dynamicEvents.push(this.createDynamicEventForm());
+
+        this.countdownData = null;
+
+        while (this.dynamicEvents.length > 0) {
+          this.dynamicEvents.removeAt(0);
         }
+
+        this.dynamicEvents.push(
+          this.createDynamicEventForm()
+        );
       },
     });
   }
@@ -266,15 +331,56 @@ export class AcaraComponent implements OnInit {
   }
 
   submitStaticEventForm(): void {
-    if (this.staticEventForm.valid) {
-      this.isLoading = true;
-      const { selectedEvent } = this.staticEventForm.value;
-      const payload = { name_countdown: selectedEvent };
+    if (!this.staticEventForm.valid) {
+      this.staticEventForm.markAllAsTouched();
+      this.notyf.error('Nama countdown acara wajib diisi.');
+      return;
+    }
 
-      this.dashboardSvc.create(DashboardServiceType.ACARA_SUBMIT_COUNTDOWN, payload).subscribe({
+    this.isLoading = true;
+
+    const selectedEvent = String(
+      this.staticEventForm.get('selectedEvent')?.value ?? ''
+    ).trim();
+
+    const payload = {
+      name_countdown: selectedEvent,
+    };
+
+    this.dashboardSvc
+      .create(DashboardServiceType.ACARA_SUBMIT_COUNTDOWN, payload)
+      .subscribe({
         next: (res) => {
           this.isLoading = false;
-          this.notyf.success(res?.message ?? 'Countdown berhasil disimpan.');
+
+          const savedCountdown =
+            res?.name_countdown ??
+            res?.data?.countdown ??
+            res?.data?.name_countdown ??
+            null;
+
+          if (savedCountdown && typeof savedCountdown === 'object') {
+            this.countdownData = {
+              id: String(savedCountdown.id ?? ''),
+              name_countdown: String(
+                savedCountdown.name_countdown ?? selectedEvent
+              ).trim(),
+            };
+          } else {
+            this.countdownData = {
+              id: '',
+              name_countdown: selectedEvent,
+            };
+          }
+
+          this.staticEventForm.patchValue({
+            selectedEvent: this.countdownData.name_countdown,
+          });
+
+          this.notyf.success(
+            res?.message ?? 'Countdown berhasil disimpan.'
+          );
+
           this.fetchInitialData();
         },
         error: (err) => {
@@ -282,7 +388,6 @@ export class AcaraComponent implements OnInit {
           this.notyf.error(getFriendlyErrorMessage(err));
         },
       });
-    }
   }
 
   updateStaticEventForm(): void {
@@ -330,7 +435,11 @@ submitDynamicEventForm(): void {
 
     if (eventsToCreate.length > 0) {
       const createPayload = {
-        jenis_acara: eventsToCreate.map(event => (event as any).jenis_acara || event.nama_acara || ''),
+        jenis_acara: eventsToCreate.map(event =>
+          String(
+            event.jenis_acara || this.getDefaultEventType()
+          ).trim()
+        ),
         nama_acara: eventsToCreate.map(event => event.nama_acara || (event as any).jenis_acara || ''),
         tanggal_acara: eventsToCreate.map(event =>
           event.tanggal_acara instanceof Date
@@ -548,6 +657,26 @@ submitDynamicEventForm(): void {
     return mapsUrl || (latitude && longitude ? this.buildGoogleMapsUrl(latitude, longitude) : '');
   }
 
+  private getDefaultEventType(): string {
+    const availableTypes = Object.keys(
+      this.availableEventTypes || {}
+    );
+
+    if (availableTypes.length > 0) {
+      return availableTypes[0];
+    }
+
+    const allTypes = Object.keys(
+      this.eventTypeOptions || {}
+    );
+
+    if (allTypes.length > 0) {
+      return allTypes[0];
+    }
+
+    return 'akad';
+  }
+
   private normalizeLocationData(eventData?: Partial<Acara>): Required<Pick<Acara, 'alamat' | 'address' | 'location_name' | 'link_maps' | 'google_maps_url' | 'place_id'>> & Pick<Acara, 'latitude' | 'longitude'> {
     const data = eventData as any;
     const address = String(data?.address || data?.alamat || data?.location_name || '').trim();
@@ -599,10 +728,25 @@ submitDynamicEventForm(): void {
   }
 
   private hasSelectedCountdown(): boolean {
-    const savedCountdownId = String(this.countdownData?.id || '').trim();
-    const savedCountdown = String(this.countdownData?.name_countdown || '').trim();
+    const savedCountdownId = String(
+      this.countdownData?.id ?? ''
+    ).trim();
 
-    return !!(savedCountdownId || savedCountdown);
+    const savedCountdownName = String(
+      this.countdownData?.name_countdown ?? ''
+    ).trim();
+
+    const selectedEvent = String(
+      this.staticEventForm
+        ?.get('selectedEvent')
+        ?.value ?? ''
+    ).trim();
+
+    return !!(
+      savedCountdownId ||
+      savedCountdownName ||
+      selectedEvent
+    );
   }
 
   private hasMinimumLocationData(): boolean {
