@@ -70,14 +70,28 @@ export class MempelaiComponent implements OnInit {
 
   getDataMempelai(): void {
     this.isLoading = true;
-    this.dashboardSvc.list(DashboardServiceType.MEMPELAI_DATA).subscribe({
+
+    this.dashboardSvc.list(
+      DashboardServiceType.MEMPELAI_DATA
+    ).subscribe({
       next: (res) => {
-        console.log('Response data:', res);
-        this.data = res['data'][0];
+        const items = Array.isArray(res?.data) ? res.data : [];
+
+        this.data = items.length > 0 ? items[0] : null;
+
         if (this.data) {
           this.populateFormsWithData(this.data);
           this.setPhotoPreviewsFromData(this.data);
+        } else {
+          this.coverPhotoForm.patchValue({
+            urutan_mempelai: 'pria'
+          });
+
+          this.coverPhotoPreview = '';
+          this.groomPhotoPreview = '';
+          this.bridePhotoPreview = '';
         }
+
         this.isLoading = false;
       },
       error: (err) => {
@@ -232,29 +246,21 @@ export class MempelaiComponent implements OnInit {
   }
 
   private updateCoverPhoto(): void {
-    if (!this.data?.id) {
-      this.notyf.error('ID data tidak ditemukan');
-      return;
-    }
-
     this.isUpdating = true;
     const formData = this.createCoverPhotoFormData();
 
-    console.log('Cover Photo Update Payload:');
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        console.log(`${key}:`, `File - ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`${key}:`, value);
-      }
-    });
-
     this.dashboardSvc.create(
-      DashboardServiceType.MEMPELAI_UPDATE,formData
+      DashboardServiceType.MEMPELAI_UPDATE,
+      formData
     ).subscribe({
       next: (res) => {
-        this.notyf.success(res?.message || 'Cover photo berhasil diperbarui');
-        this.getDataMempelai(); // Refresh data
+        this.data = res?.data ?? this.data;
+
+        this.notyf.success(
+          res?.message || 'Cover pasangan berhasil diperbarui'
+        );
+
+        this.getDataMempelai();
         this.isUpdating = false;
         this.modalRef?.hide();
       },
@@ -262,34 +268,27 @@ export class MempelaiComponent implements OnInit {
         console.error('Error updating cover photo:', err);
         this.notyf.error(getFriendlyErrorMessage(err));
         this.isUpdating = false;
+        this.modalRef?.hide();
       }
     });
   }
 
   private updateDataMempelai(): void {
-    if (!this.data?.id) {
-      this.notyf.error('ID data tidak ditemukan');
-      return;
-    }
-
     this.isUpdating = true;
     const formData = this.createMempelaiFormData();
 
-    console.log('Mempelai Data Update Payload:');
-    formData.forEach((value, key) => {
-      if (value instanceof File) {
-        console.log(`${key}:`, `File - ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`${key}:`, value);
-      }
-    });
-
     this.dashboardSvc.create(
-      DashboardServiceType.MEMPELAI_UPDATE,formData
+      DashboardServiceType.MEMPELAI_UPDATE,
+      formData
     ).subscribe({
       next: (res) => {
-        this.notyf.success(res?.message || 'Data mempelai berhasil diperbarui');
-        this.getDataMempelai(); // Refresh data
+        this.data = res?.data ?? this.data;
+
+        this.notyf.success(
+          res?.message || 'Data mempelai berhasil diperbarui'
+        );
+
+        this.getDataMempelai();
         this.isUpdating = false;
         this.modalRef?.hide();
       },
@@ -297,6 +296,7 @@ export class MempelaiComponent implements OnInit {
         console.error('Error updating mempelai data:', err);
         this.notyf.error(getFriendlyErrorMessage(err));
         this.isUpdating = false;
+        this.modalRef?.hide();
       }
     });
   }
