@@ -47,7 +47,6 @@ export class IdleTimeoutService implements OnDestroy {
   resetTimer(): void {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => this.logoutByIdle(), this.IDLE_LIMIT);
-    console.log('[IdleTimeout]', 'reset');
   }
 
   stop(): void {

@@ -638,10 +638,75 @@ export class BagiUndanganComponent implements OnInit {
     return map[placeholder] || 'guestName';
   }
 
+  private formatInvitationDate(
+      value: string | Date | null | undefined
+    ): string {
+      if (!value) {
+        return '';
+      }
+
+      const date = value instanceof Date
+        ? value
+        : new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value).trim();
+      }
+
+      const weekday = new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        timeZone: 'Asia/Jakarta',
+      }).format(date);
+
+      const datePart = new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta',
+      })
+        .format(date)
+        .replace(/\//g, '-');
+
+      return `${
+        weekday.charAt(0).toUpperCase() +
+        weekday.slice(1)
+      }, ${datePart}`;
+  }
+
   private buildWhatsappTemplateContext(invitationUrl: string, guestName = ''): WhatsappTemplateContext {
     const source = this.weddingData || {};
     const data = source?.public_wedding || source?.data || {};
     const event = this.getPrimaryInvitationEvent(source);
+    const rawEventDate =
+      this.readFirstDeepText(event, [
+        'tanggal_formatted',
+        'date_formatted',
+        'tanggal',
+        'date',
+        'tanggal_acara',
+        'event_date',
+      ]) ||
+      this.readFirstDeepText(data, [
+        'event_utama.tanggal',
+        'event_utama.date',
+        'main_event.tanggal',
+        'main_event.date',
+        'events.0.tanggal',
+        'events.0.date',
+        'events.0.tanggal_acara',
+        'acara.0.tanggal',
+        'acara.0.date',
+        'acara.0.tanggal_acara',
+        'tanggal_formatted',
+        'date_formatted',
+        'tanggal',
+        'date',
+        'tanggal_acara',
+        'event_date',
+      ]);
+
+    const formattedEventDate = this.formatInvitationDate(rawEventDate);
+
     const resolvedInvitationUrl = this.readFirstDeepText(source, [
       'invitation_url',
       'personal_invitation_url',
@@ -717,29 +782,7 @@ export class BagiUndanganComponent implements OnInit {
       guestName: guestDisplayName,
       brideName,
       groomName,
-      eventDate: this.readFirstDeepText(event, [
-        'tanggal_formatted',
-        'date_formatted',
-        'tanggal',
-        'date',
-        'tanggal_acara',
-        'event_date',
-      ]) || this.readFirstDeepText(data, [
-        'event_utama.tanggal',
-        'event_utama.date',
-        'main_event.tanggal',
-        'main_event.date',
-        'events.0.tanggal',
-        'events.0.date',
-        'acara.0.tanggal',
-        'acara.0.date',
-        'tanggal_formatted',
-        'date_formatted',
-        'tanggal',
-        'date',
-        'tanggal_acara',
-        'event_date',
-      ]),
+      eventDate: formattedEventDate,
       eventLocation: this.readFirstDeepText(event, [
         'lokasi',
         'location',

@@ -215,9 +215,27 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     this.resetGuestAttendance(guest);
   }
 
-  public trackByGuest(index: number, guest: GuestInvitation): string {
-    return `${this.getGuestIdentityKey(guest) || this.getGuestName(guest)}-${index}`;
-  }
+  // public trackByGuest(index: number, guest: GuestInvitation): string {
+  //   return `${this.getGuestIdentityKey(guest) || this.getGuestName(guest)}-${index}`;
+  // }
+  public readonly trackByGuest = (
+      index: number,
+      guest: GuestInvitation
+    ): string => {
+      const identity =
+        guest?.id ??
+        guest?.['attendance_id'] ??
+        guest?.['guest_id'] ??
+        guest?.['invitation_guest_id'] ??
+        guest?.['guest_token'] ??
+        guest?.['token'] ??
+        guest?.slug ??
+        guest?.name ??
+        guest?.['guest_name'] ??
+        index;
+
+      return String(identity);
+    };
 
   public getGuestName(guest: GuestInvitation): string {
     return String(
@@ -327,6 +345,82 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     }
   }
 
+  private upsertScannedGuest(
+  response: any,
+  scan: ScanResult,
+  domain: string,
+  guestCode: string
+): void {
+  const rawGuest =
+    response?.data?.attendance ??
+    response?.data?.scan ??
+    response?.data?.guest ??
+    response?.attendance ??
+    response?.guest ??
+    response?.data ??
+    {};
+
+  const guest = this.normalizeBackendAttendance(
+    {
+      ...rawGuest,
+      id:
+        rawGuest?.id ??
+        rawGuest?.attendance_id ??
+        rawGuest?.guest_id ??
+        guestCode,
+      name:
+        rawGuest?.guest_name ??
+        rawGuest?.nama_tamu ??
+        rawGuest?.name ??
+        scan.guestName,
+      guest_token:
+        rawGuest?.guest_token ??
+        rawGuest?.token ??
+        guestCode,
+      invitation_url:
+        rawGuest?.invitation_url ??
+        rawGuest?.invitation_link ??
+        scan.invitationUrl,
+      checked_in_at:
+        rawGuest?.checked_in_at ??
+        rawGuest?.scanned_at ??
+        scan.scannedAt,
+      last_scan_at:
+        rawGuest?.last_scan_at ??
+        rawGuest?.scanned_at ??
+        scan.scannedAt,
+      scan_count:
+        rawGuest?.scan_count ??
+        rawGuest?.checkin_count ??
+        1,
+      status:
+        rawGuest?.status ?? 'present',
+    },
+    domain
+  );
+
+  const identity = this.getGuestIdentityKey(guest);
+
+  const existingIndex = this.attendanceList.findIndex(
+    item => this.getGuestIdentityKey(item) === identity
+  );
+
+  if (existingIndex >= 0) {
+    const updated = [...this.attendanceList];
+    updated[existingIndex] = guest;
+    this.attendanceList = updated;
+  } else {
+    this.attendanceList = [
+      guest,
+      ...this.attendanceList,
+    ];
+  }
+
+  this.attendanceTotal = this.attendanceList.length;
+  this.allGuests = [...this.attendanceList];
+  this.cdr.detectChanges();
+  }
+
   private submitAttendanceScan(scannedUrl: string, domain: string, guestToken: string, guestCode: string, scannedAt: string): void {
     this.isSubmittingScan = true;
     this.isScanPaused = true;
@@ -345,9 +439,23 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
 
     this.dashboardService.scanAttendance(payload).subscribe({
       next: (response) => {
-        const scan = this.normalizeScanResponse(response, scannedUrl, guestToken || guestCode, scannedAt);
+        const scan = this.normalizeScanResponse(
+          response,
+          scannedUrl,
+          guestToken || guestCode,
+          scannedAt
+        );
+
         this.setScanResult(scan);
         this.showNotice(scan.status);
+
+        this.upsertScannedGuest(
+          response,
+          scan,
+          domain,
+          guestToken || guestCode
+        );
+
         this.loadAttendanceListFromBackend(domain);
         this.releaseScannerAfterDelay();
       },
@@ -444,23 +552,52 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
     });
   }
 
-  private getGuestIdentityKey(guest: GuestInvitation): string {
-    return String(guest.id || guest['guest_id'] || guest.slug || this.createGuestSlug(this.getGuestName(guest))).trim();
+  private getGuestIdentityKey(
+    guest: GuestInvitation
+  ): string {
+    return String(
+      guest.id ??
+      guest['attendance_id'] ??
+      guest['guest_id'] ??
+      guest['invitation_guest_id'] ??
+      guest['guest_token'] ??
+      guest['token'] ??
+      guest.slug ??
+      this.createGuestSlug(this.getGuestName(guest))
+    ).trim();
   }
 
   private extractAttendanceRows(response: any): GuestInvitation[] {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.data?.data)) return response.data.data;
-    if (Array.isArray(response?.data?.attendances)) return response.data.attendances;
-    if (Array.isArray(response?.data?.attendance)) return response.data.attendance;
-    if (Array.isArray(response?.data?.guests)) return response.data.guests;
-    if (Array.isArray(response?.data?.items)) return response.data.items;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response?.result)) return response.result;
-    if (Array.isArray(response?.attendances)) return response.attendances;
-    if (Array.isArray(response?.attendance)) return response.attendance;
-    if (Array.isArray(response?.guests)) return response.guests;
-    return [];
+    const candidates = [
+      response,
+      response?.data,
+      response?.data?.data,
+      response?.data?.attendances,
+      response?.data?.attendance,
+      response?.data?.attendance_guests,
+      response?.data?.attendanceGuests,
+      response?.data?.guests,
+      response?.data?.items,
+      response?.data?.rows,
+      response?.data?.records,
+      response?.data?.list,
+      response?.result,
+      response?.attendances,
+      response?.attendance,
+      response?.attendance_guests,
+      response?.attendanceGuests,
+      response?.guests,
+      response?.items,
+      response?.rows,
+      response?.records,
+      response?.list,
+    ];
+
+    const rows = candidates.find(candidate =>
+      Array.isArray(candidate)
+    );
+
+    return Array.isArray(rows) ? rows : [];
   }
 
   private resolveAttendanceTotal(response: any, fallback: number): number {
