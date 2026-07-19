@@ -75,6 +75,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
       return;
     }
 
+    this.invitationOpened = true;
+    this.isInvitationOpened = true;
     this.hasOpened = true;
     this.isOpening = false;
 
@@ -1487,9 +1489,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   private syncInvitationState(): void {
     if (this.invitationOpened) {
+      this.invitationOpened = true;
+      this.isInvitationOpened = true;
       this.hasOpened = true;
       this.isOpening = false;
-      this.isInvitationOpened = true;
     }
   }
 
