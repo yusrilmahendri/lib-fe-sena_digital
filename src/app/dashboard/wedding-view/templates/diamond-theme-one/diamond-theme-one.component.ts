@@ -20,6 +20,7 @@ import {
 })
 export class DiamondThemeOneComponent extends RubyThemeOneComponent implements OnInit, OnChanges, OnDestroy {
   override isInvitationOpened = false;
+  diamondOpened = false;
   readonly apiBaseUrl = (environment as any).apiBaseUrl || (environment as any).apiUrl || '';
   countdown = {
     days: '00',
@@ -36,11 +37,13 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     toastService: ToastService
   ) {
     super(diamondSanitizer, dashboardService, toastService);
+    console.log('[DIAMOND INSTANCE]', this);
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.syncInvitationState();
+    console.log('[DIAMOND INIT]', this);
+    this.diamondOpened = Boolean(this.invitationOpened);
     this.startDiamondCountdown();
     if (!this.wishForm.kehadiran) {
       this.wishForm.kehadiran = 'hadir';
@@ -49,8 +52,8 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
-    if (changes['invitationOpened'] || changes['weddingData']) {
-      this.syncInvitationState();
+    if (changes['invitationOpened']) {
+      this.diamondOpened = Boolean(changes['invitationOpened'].currentValue);
     }
     if (changes['weddingData']) {
       this.startDiamondCountdown();
@@ -63,6 +66,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override ngOnDestroy(): void {
+    console.log('[DIAMOND DESTROY]', this);
     this.clearDiamondCountdownInterval();
     super.ngOnDestroy();
   }
@@ -71,26 +75,37 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (this.invitationOpened) {
+    console.log('[DIAMOND CLICK]', this);
+    console.log({
+      diamondOpenedBefore: this.diamondOpened
+    });
+    console.log(
+      document.querySelectorAll('wc-diamond-theme-one').length
+    );
+
+    if (this.diamondOpened) {
       return;
     }
 
-    this.invitationOpened = true;
-    this.isInvitationOpened = true;
+    this.diamondOpened = true;
+
+    console.log({
+      diamondOpenedAfter: this.diamondOpened
+    });
+    console.log(
+      document.querySelectorAll('wc-diamond-theme-one').length
+    );
+
     this.hasOpened = true;
     this.isOpening = false;
+    this.isInvitationOpened = true;
 
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 
-    this.openInvitationRequested.emit();
+    window.scrollTo(0, 0);
 
-    requestAnimationFrame(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
+    this.openInvitationRequested.emit();
   }
 
   override getPrimaryDisplayName(): string {
@@ -1492,15 +1507,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override getVisibleBankAccounts(): BankAccount[] {
     const bankAccounts = this.weddingData?.bank_accounts ?? [];
     return Array.isArray(bankAccounts) ? bankAccounts : [];
-  }
-
-  private syncInvitationState(): void {
-    if (this.invitationOpened) {
-      this.invitationOpened = true;
-      this.isInvitationOpened = true;
-      this.hasOpened = true;
-      this.isOpening = false;
-    }
   }
 
   private getCeremonyDateSource(): Date | null {
