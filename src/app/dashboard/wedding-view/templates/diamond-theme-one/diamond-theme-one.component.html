@@ -32,7 +32,10 @@
         <div class="diamond-hero__overlay"></div>
 
         <div class="diamond-hero__content">
-          <p class="diamond-hero__eyebrow">THE WEDDING OF</p>
+          <p class="diamond-hero__eyebrow">UNDANGAN TELAH DIBUKA</p>
+          <h1 class="diamond-hero__welcome">
+            {{ getOpeningHeading() || 'Selamat Datang di Undangan Pernikahan Kami' }}
+          </h1>
           <h1 class="diamond-hero__names">{{ getCoupleNames() }}</h1>
           <p class="diamond-hero__date">
             {{ getHeroDateLabel() || getFallbackWeddingDateLabel() }}

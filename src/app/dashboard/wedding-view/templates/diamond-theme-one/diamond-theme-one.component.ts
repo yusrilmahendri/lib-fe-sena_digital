@@ -84,6 +84,13 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     document.body.style.overflow = '';
 
     this.openInvitationRequested.emit();
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 
   override getPrimaryDisplayName(): string {
