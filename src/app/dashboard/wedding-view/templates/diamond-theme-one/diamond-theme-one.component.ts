@@ -1489,6 +1489,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (this.invitationOpened) {
       this.hasOpened = true;
       this.isOpening = false;
+      this.isInvitationOpened = true;
     }
   }
 
