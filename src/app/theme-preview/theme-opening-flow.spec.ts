@@ -6,6 +6,7 @@ import { DashboardService } from '../dashboard.service';
 import { RubyThemeOneComponent } from '../dashboard/wedding-view/templates/ruby-theme-one/ruby-theme-one.component';
 import { RubyThemeTwoComponent } from '../dashboard/wedding-view/templates/ruby-theme-two/ruby-theme-two.component';
 import { SapphireThemeOneComponent } from '../dashboard/wedding-view/templates/sapphire-theme-one/sapphire-theme-one.component';
+import { DiamondThemeOneComponent } from '../dashboard/wedding-view/templates/diamond-theme-one/diamond-theme-one.component';
 import { getThemePreviewDummyData } from '../shared/data/theme-preview-dummy.data';
 import { FloatingDecorationDirective } from '../shared/animations/floating-decoration.directive';
 import { ParallaxDirective } from '../shared/animations/parallax.directive';
@@ -20,6 +21,7 @@ describe('theme preview opening flow', () => {
         RubyThemeOneComponent,
         RubyThemeTwoComponent,
         SapphireThemeOneComponent,
+        DiamondThemeOneComponent,
         FloatingDecorationDirective,
         ParallaxDirective,
         RevealScopeDirective,
@@ -111,6 +113,32 @@ describe('theme preview opening flow', () => {
     expect(openRequest).toHaveBeenCalledTimes(1);
     expect(host.querySelector('.ruby-cover button')).toBeNull();
     expect(host.querySelector('.ruby-main')).not.toBeNull();
+
+    fixture.destroy();
+  });
+
+  it('opens Champagne Rose from its rendered button', () => {
+    const fixture = TestBed.createComponent(DiamondThemeOneComponent);
+    const component = fixture.componentInstance;
+    const openRequest = spyOn(component.openInvitationRequested, 'emit');
+    spyOn(component, 'getMapEmbedUrl').and.returnValue(null);
+    component.weddingData = getThemePreviewDummyData('champagne-rose');
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const button = host.querySelector<HTMLButtonElement>('.diamond-opening button');
+    expect(button).withContext('Champagne Rose opening button should render').not.toBeNull();
+
+    button?.click();
+    fixture.detectChanges();
+
+    expect(component.invitationOpened).toBeTrue();
+    expect(component.isInvitationOpened).toBeTrue();
+    expect(openRequest).toHaveBeenCalledTimes(1);
+    expect(host.querySelectorAll('.diamond-opening').length).toBe(0);
+    expect(host.querySelector('.diamond-opening')).toBeNull();
+    expect(host.querySelectorAll('.diamond-main').length).toBe(1);
+    expect(host.querySelector('.diamond-main')).not.toBeNull();
 
     fixture.destroy();
   });
