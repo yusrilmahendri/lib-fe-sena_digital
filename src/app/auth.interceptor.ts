@@ -25,7 +25,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const token = localStorage.getItem('access_token');
     const isApiRequest = this.isApiRequest(req.url);
 
-    const shouldAttachAuthHeader = !!token && this.shouldAttachAuthHeader(req.url);
+    const shouldAttachAuthHeader = this.isValidToken(token) && this.shouldAttachAuthHeader(req.url);
 
     const headers: Record<string, string> = {};
     if (isApiRequest) {
@@ -58,13 +58,18 @@ export class AuthInterceptor implements HttpInterceptor {
 
         // Token tidak valid atau sudah kedaluwarsa.
         if (err.status === 401) {
+          if (this.isAuthEndpoint(err.url || req.url)) {
+            return throwError(() => err);
+          }
+
           localStorage.removeItem('access_token');
 
-          if (
-            currentUrl !== '/login' &&
-            !currentUrl.startsWith('/register')
-          ) {
-            this.router.navigate(['/login']);
+          if (!currentUrl.startsWith('/register')) {
+            this.landingModal.requestLogin('Sesi Anda berakhir. Silakan masuk kembali.');
+            this.router.navigate(['/'], {
+              queryParams: { auth: 'login' },
+              replaceUrl: true,
+            });
           }
 
           return throwError(() => err);
@@ -114,6 +119,10 @@ export class AuthInterceptor implements HttpInterceptor {
     }
 
     return true;
+  }
+
+  private isValidToken(token: string | null): token is string {
+    return !!token && token !== 'undefined' && token !== 'null';
   }
 
   private isApiRequest(url: string): boolean {

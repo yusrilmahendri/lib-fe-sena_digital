@@ -195,25 +195,34 @@ export class AuthModalComponent implements OnChanges {
     this.auth.login({ email, password, remember }).subscribe({
       next: (res: any) => {
         this.isSubmitting = false;
+
+        if (!this.hasStoredAccessToken()) {
+          this.errorMessage = 'Login gagal. Token akses tidak ditemukan.';
+          return;
+        }
+
         this.closeAuthModal();
 
-        const roles: string[] = Array.isArray(res?.role)
-          ? res.role
-          : res?.role
-          ? [res.role]
+        const responseRole = res?.role || res?.data?.role;
+        const roles: string[] = Array.isArray(responseRole)
+          ? responseRole
+          : responseRole
+          ? [responseRole]
           : [];
 
-        if (roles.includes('admin')) {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/dashboard']);
-        }
+        const targetUrl = roles.includes('admin') ? '/admin' : '/dashboard';
+        this.router.navigateByUrl(targetUrl, { replaceUrl: true });
       },
       error: () => {
         this.isSubmitting = false;
         this.errorMessage = 'Login gagal. Periksa email dan kata sandi Anda.';
       },
     });
+  }
+
+  private hasStoredAccessToken(): boolean {
+    const token = localStorage.getItem('access_token');
+    return !!token && token !== 'undefined' && token !== 'null';
   }
 
   submitForgotPassword(): void {

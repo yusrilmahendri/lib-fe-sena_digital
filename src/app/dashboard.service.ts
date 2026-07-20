@@ -617,9 +617,24 @@ export class DashboardService {
     const body = { email, password };
     return this.httpSvc.post<LoginResponse>(this.getUrl(DashboardServiceType.USER_LOGIN), body).pipe(
       tap(response => {
-        localStorage.setItem('access_token', response.access_token);
+        const token = this.extractAccessToken(response);
+        if (!token) {
+          throw new Error('Login response did not include an access token.');
+        }
+
+        localStorage.setItem('access_token', token);
       })
     );
+  }
+
+  private extractAccessToken(response: LoginResponse): string | null {
+    const token =
+      response?.access_token ||
+      response?.token ||
+      response?.data?.access_token ||
+      response?.data?.token;
+
+    return typeof token === 'string' && token.trim() ? token : null;
   }
 
   // === Profile Management Methods ===
@@ -880,8 +895,15 @@ export interface Page {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
+  access_token?: string;
+  token?: string;
+  token_type?: string;
+  role?: string | string[];
+  data?: {
+    access_token?: string;
+    token?: string;
+    role?: string | string[];
+  };
 }
 
 export interface InvitationGuest {

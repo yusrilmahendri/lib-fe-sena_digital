@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
 import { LandingModalService } from '../../landing-modal.service';
 
 interface NavMenuItem {
@@ -23,10 +22,7 @@ export class NavbarComponent implements OnInit {
     { label: 'Testimoni', target: 'testimoni' },
   ];
 
-  constructor(
-    private router: Router,
-    public modal: LandingModalService
-  ) {}
+  constructor(public modal: LandingModalService) {}
 
   ngOnInit(): void {
     this.isMobileMenuOpen = false;
@@ -61,8 +57,7 @@ export class NavbarComponent implements OnInit {
 
   /** Kept as a backup; the old /login page is no longer the main flow. */
   goToLogin(): void {
-    this.closeMobileMenu();
-    this.router.navigate(['/login']);
+    this.openLoginModal();
   }
 
   /**

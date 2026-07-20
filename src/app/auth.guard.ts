@@ -9,12 +9,16 @@ export class AuthGuard implements CanActivate {
 
   canActivate(): boolean {
     const token = localStorage.getItem('access_token');
-    if (!token) {
+    if (!this.isValidToken(token)) {
       console.warn('Access denied. Redirecting to landing login modal...');
       // Protected routes: go to landing and open the auth modal, not /login.
       this.router.navigate(['/'], { queryParams: { auth: 'login' } });
       return false;
     }
     return true;
+  }
+
+  private isValidToken(token: string | null): boolean {
+    return !!token && token !== 'undefined' && token !== 'null';
   }
 }
