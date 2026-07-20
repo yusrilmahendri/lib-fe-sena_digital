@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -33,16 +33,15 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   constructor(
     private diamondSanitizer: DomSanitizer,
+    private diamondChangeDetector: ChangeDetectorRef,
     dashboardService: DashboardService,
     toastService: ToastService
   ) {
     super(diamondSanitizer, dashboardService, toastService);
-    console.log('[DIAMOND INSTANCE]', this);
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
-    console.log('[DIAMOND INIT]', this);
     this.diamondOpened = Boolean(this.invitationOpened);
     this.startDiamondCountdown();
     if (!this.wishForm.kehadiran) {
@@ -52,8 +51,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
-    if (changes['invitationOpened']) {
-      this.diamondOpened = Boolean(changes['invitationOpened'].currentValue);
+    if (
+      changes['invitationOpened'] &&
+      changes['invitationOpened'].currentValue === true
+    ) {
+      this.diamondOpened = true;
     }
     if (changes['weddingData']) {
       this.startDiamondCountdown();
@@ -66,7 +68,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override ngOnDestroy(): void {
-    console.log('[DIAMOND DESTROY]', this);
     this.clearDiamondCountdownInterval();
     super.ngOnDestroy();
   }
@@ -75,27 +76,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     event?.preventDefault();
     event?.stopPropagation();
 
-    console.log('[DIAMOND CLICK]', this);
-    console.log({
-      diamondOpenedBefore: this.diamondOpened
-    });
-    console.log(
-      document.querySelectorAll('wc-diamond-theme-one').length
-    );
-
     if (this.diamondOpened) {
       return;
     }
 
     this.diamondOpened = true;
-
-    console.log({
-      diamondOpenedAfter: this.diamondOpened
-    });
-    console.log(
-      document.querySelectorAll('wc-diamond-theme-one').length
-    );
-
     this.hasOpened = true;
     this.isOpening = false;
     this.isInvitationOpened = true;
@@ -103,9 +88,39 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 
-    window.scrollTo(0, 0);
-
     this.openInvitationRequested.emit();
+
+    this.diamondChangeDetector.detectChanges();
+
+    const host = document.querySelector('wc-diamond-theme-one');
+    const runtimeComponent = (window as any).ng?.getComponent?.(host);
+
+    console.log('[DIAMOND DEFINITIVE STATE]', {
+      methodThisMatchesRuntimeComponent: runtimeComponent === this,
+      diamondOpened: this.diamondOpened,
+      runtimeDiamondOpened: runtimeComponent?.diamondOpened,
+      invitationOpened: this.invitationOpened,
+      openingCount: host?.querySelectorAll('.diamond-opening').length,
+      mainCount: host?.querySelectorAll('.diamond-main').length
+    });
+
+    setTimeout(() => {
+      console.log('[DIAMOND DEFINITIVE DOM 100MS]', {
+        diamondOpened: this.diamondOpened,
+        invitationOpened: this.invitationOpened,
+        openingCount:
+          host?.querySelectorAll('.diamond-opening').length,
+        mainCount:
+          host?.querySelectorAll('.diamond-main').length
+      });
+    }, 100);
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 
   override getPrimaryDisplayName(): string {

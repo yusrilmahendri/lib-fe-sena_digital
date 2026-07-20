@@ -1,4 +1,4 @@
-import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -32,9 +32,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   constructor(
     svc: DashboardService,
     private readonly diamondGardenSanitizer: DomSanitizer,
+    diamondGardenChangeDetector: ChangeDetectorRef,
     toastService: ToastService
   ) {
-    super(diamondGardenSanitizer, svc, toastService);
+    super(diamondGardenSanitizer, diamondGardenChangeDetector, svc, toastService);
   }
 
   override ngOnInit(): void {
