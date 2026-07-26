@@ -41,35 +41,45 @@
           <span>{{ previewError }}</span>
         </div>
 
-        <label class="default-option" [class.selected]="selectedMusicId === null">
-          <input type="radio" name="music-selection" [checked]="selectedMusicId === null" (change)="selectMusic(null, 'default')" />
+        <label class="default-option" [class.selected]="isDefaultMusicSelected()">
+          <input type="radio" name="music-selection" [checked]="isDefaultMusicSelected()" (change)="selectMusic(null, 'default')" />
           <span class="default-icon"><i class="fa fa-music" aria-hidden="true"></i></span>
           <span class="default-copy">
-            <strong>Gunakan musik default</strong>
+            <span class="music-title-row">
+              <strong>Gunakan musik default</strong>
+              <span class="badge-soft">Bawaan</span>
+              <span *ngIf="isDefaultMusicSelected()" class="selected-badge">
+                {{ getDefaultMusicBadgeLabel() }}
+              </span>
+            </span>
             <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
           </span>
-          <span *ngIf="getActiveSourceType() === 'default'" class="selected-badge">Aktif</span>
           <button type="button" class="icon-button" (click)="$event.preventDefault(); $event.stopPropagation(); playDefaultPreview()" [disabled]="!canPreviewDefaultMusic()" title="Preview musik default">
             <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'default'" [class.fa-play]="previewingMusicId !== 'default' && !(isPreviewLoading && currentPreviewId === 'default')" [class.fa-pause]="previewingMusicId === 'default' && !(isPreviewLoading && currentPreviewId === 'default')" aria-hidden="true"></i>
           </button>
         </label>
 
         <div class="mt-3">
-          <h4>Daftar Lagu Sena Digital</h4>
+          <!-- <h4>Daftar Lagu Sena Digital</h4> -->
           <div *ngIf="adminCatalogTracks.length; else emptyAdminCatalog" class="music-list">
-            <label class="music-item" *ngFor="let music of adminCatalogTracks; trackBy: trackMusicById" [class.selected]="selectedMusicId === music.id">
-              <input type="radio" name="music-selection" [checked]="selectedMusicId === music.id" (change)="selectMusic(music.id, 'catalog')" />
+            <label class="music-item" *ngFor="let music of adminCatalogTracks; trackBy: trackMusicById" [class.selected]="isMusicSelected(music, 'catalog')">
+              <input type="radio" name="music-selection" [checked]="isMusicSelected(music, 'catalog')" (change)="selectMusic(music.id, 'catalog')" />
               <img *ngIf="music.thumbnail_url; else thumbnailFallback" class="music-thumb" [src]="music.thumbnail_url" [alt]="music.title" />
               <ng-template #thumbnailFallback>
                 <span class="music-thumb fallback"><i class="fa fa-headphones" aria-hidden="true"></i></span>
               </ng-template>
               <span class="music-info">
-                <strong>{{ music.title || 'Judul tidak tersedia' }}</strong>
-                <small *ngIf="getMusicMeta(music)">{{ getMusicMeta(music) }}</small>
-                <small *ngIf="music.is_default" class="badge-soft">Default</small>
-              </span>
-              <span *ngIf="musicSelection?.selected_music_id === music.id" class="selected-badge">
-                {{ isMusicSaved(music, 'catalog') ? 'Aktif' : 'Terpilih' }}
+                <span class="music-title-row">
+                  <strong>{{ music.title || 'Judul tidak tersedia' }}</strong>
+                  <span *ngIf="isSystemDefaultMusic(music)" class="badge-soft">Bawaan</span>
+                  <span *ngIf="isMusicSelected(music, 'catalog')" class="selected-badge">
+                    {{ isMusicSaved(music, 'catalog') ? 'Aktif' : 'Dipilih' }}
+                  </span>
+                </span>
+                <span class="music-meta-row">
+                  <small *ngIf="getMusicMeta(music)">{{ getMusicMeta(music) }}</small>
+                  <small class="source-label">Katalog Sena</small>
+                </span>
               </span>
              <button
                 type="button"

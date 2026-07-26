@@ -8,6 +8,10 @@
     min-height: 100px; /* Adjust this as needed */
 }
 
+.modal-body p {
+    white-space: pre-line;
+}
+
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -19,7 +23,7 @@
     background-color: #f8d7da;
     color: #333;
     border: none;
-    width: 100px;
+    min-width: 100px;
     margin-right: 10px;
 }
 
@@ -27,7 +31,7 @@
     background-color: #6c757d;
     color: white;
     border: none;
-    width: 100px;
+    min-width: 100px;
 }
 
 .modal-header {

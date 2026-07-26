@@ -16,24 +16,27 @@
 
     <!-- Account Status Banner -->
     <div
-      class="profile-status-banner"
-      [class.profile-status-banner--active]="isAccountActive"
-      [class.profile-status-banner--inactive]="!isAccountActive"
+      class="profile-status"
+      [ngClass]="accountStatusView.cssClass"
     >
-      <div class="profile-status-banner__icon">
-        <i class="fa" [ngClass]="isAccountActive ? 'fa-check-circle' : 'fa-times-circle'"></i>
+      <div class="profile-status__icon">
+        <i class="fas" [ngClass]="accountStatusView.icon"></i>
       </div>
 
-      <div class="profile-status-banner__text">
-        <strong>
-          {{ isAccountActive ? 'Status akun aktif.' : 'Status akun nonaktif.' }}
-        </strong>
-        <span>
-          {{
-            isAccountActive
-              ? 'Pembayaran telah diterima dan terverifikasi oleh sistem.'
-              : 'Silakan lakukan aktivasi ulang untuk menggunakan undangan kembali.'
-          }}
+      <div class="profile-status__text">
+        <strong>{{ accountStatusView.label }}</strong>
+        <span>{{ accountStatusView.message }}</span>
+      </div>
+
+      <div class="profile-status__action" *ngIf="shouldShowAccountStatusAction">
+        <a
+          *ngIf="accountStatus === 'pending_payment'"
+          routerLink="/dashboard/payment-pending"
+          class="btn btn-sm btn-light">
+          {{ accountStatusActionLabel }}
+        </a>
+        <span *ngIf="accountStatus === 'pending_confirmation'">
+          {{ accountStatusActionLabel }}
         </span>
       </div>
     </div>

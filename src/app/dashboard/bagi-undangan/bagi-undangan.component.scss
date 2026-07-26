@@ -141,12 +141,17 @@
 .share-invitation__primary-btn,
 .share-invitation__secondary-btn,
 .share-invitation__whatsapp-btn,
+.share-invitation__delete-btn,
 .share-invitation__excel-btn {
+  align-items: center;
   border: 0;
   border-radius: 12px;
   cursor: pointer;
+  display: inline-flex;
   font-size: 14px;
   font-weight: 700;
+  gap: 8px;
+  justify-content: center;
   min-height: 44px;
   padding: 0 16px;
   transition: transform 0.15s ease, opacity 0.15s ease;
@@ -227,6 +232,19 @@
 .share-invitation__whatsapp-btn,
 .share-invitation__guest-actions .share-invitation__whatsapp-btn {
   background: #22c55e;
+  color: #ffffff;
+}
+
+.share-invitation__delete-btn,
+.share-invitation__guest-actions .share-invitation__delete-btn {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+}
+
+.share-invitation__delete-btn--confirm {
+  background: #e11d48;
+  border-color: #e11d48;
   color: #ffffff;
 }
 
@@ -363,6 +381,69 @@
   margin-top: 0;
 }
 
+.share-invitation__modal-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1050;
+}
+
+.share-invitation__delete-modal {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+  max-width: 420px;
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+
+  h3 {
+    color: #172033;
+    font-size: 20px;
+    margin: 0 0 8px;
+  }
+
+  p {
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+.share-invitation__delete-modal-icon {
+  align-items: center;
+  background: #fff1f2;
+  border-radius: 999px;
+  color: #e11d48;
+  display: inline-flex;
+  font-size: 20px;
+  height: 48px;
+  justify-content: center;
+  margin-bottom: 14px;
+  width: 48px;
+}
+
+.share-invitation__delete-modal-note {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  color: #9a3412 !important;
+  margin-top: 12px !important;
+  padding: 10px 12px;
+}
+
+.share-invitation__delete-modal-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 22px;
+}
+
 @media (max-width: 768px) {
   .share-invitation {
     padding: 0 16px 24px;
@@ -404,6 +485,7 @@
   .share-invitation__primary-btn,
   .share-invitation__secondary-btn,
   .share-invitation__whatsapp-btn,
+  .share-invitation__delete-btn,
   .share-invitation__excel-btn {
     width: 100%;
   }
@@ -426,12 +508,35 @@
 
   .share-invitation__guest-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .share-invitation__guest-actions button {
+    min-width: 0;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
 @media (max-width: 480px) {
   .share-invitation__guest-actions {
+    grid-template-columns: repeat(3, minmax(44px, 1fr));
+  }
+
+  .share-invitation__guest-actions button span {
+    font-size: 0;
+  }
+
+  .share-invitation__guest-actions button i {
+    font-size: 15px;
+  }
+
+  .share-invitation__delete-modal {
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .share-invitation__delete-modal-actions {
     grid-template-columns: 1fr;
   }
 }
@@ -500,7 +605,6 @@
   .share-invitation__guest-actions,
   .share-invitation__excel-actions {
     display: flex;
-    flex-direction: column;
     gap: 10px;
     width: 100%;
   }
@@ -509,9 +613,24 @@
   .guest-actions button,
   .import-export-actions button,
   .share-invitation__actions button,
-  .share-invitation__guest-actions button,
   .share-invitation__excel-actions button {
     min-height: 44px;
+    width: 100%;
+  }
+
+  .share-invitation__actions,
+  .share-invitation__excel-actions {
+    flex-direction: column;
+  }
+
+  .share-invitation__guest-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(44px, 1fr));
+  }
+
+  .share-invitation__guest-actions button {
+    min-height: 44px;
+    min-width: 0;
     width: 100%;
   }
 }

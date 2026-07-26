@@ -49,6 +49,8 @@ export class AcaraComponent implements OnInit {
   selectedEvent: string | null = null;
   data: Acara[] = [];
   isLoading = false;
+  isSavingCountdown = false;
+  hasSavedCountdown = false;
   countdownData: Countdown | null = null;
   userID: any;
 
@@ -128,8 +130,8 @@ export class AcaraComponent implements OnInit {
       location_name: [
         normalizedLocation.location_name
       ],
-      latitude: [normalizedLocation.latitude],
-      longitude: [normalizedLocation.longitude],
+      latitude: [{ value: normalizedLocation.latitude, disabled: true }],
+      longitude: [{ value: normalizedLocation.longitude, disabled: true }],
       link_maps: [
         normalizedLocation.google_maps_url
       ],
@@ -209,14 +211,8 @@ export class AcaraComponent implements OnInit {
 
         this.data = acaraList;
 
-        this.countdownData = responseData?.countdown
-          ? {
-              id: String(responseData.countdown.id ?? ''),
-              name_countdown: String(
-                responseData.countdown.name_countdown ?? ''
-              ).trim(),
-            }
-          : null;
+        this.countdownData = this.normalizeCountdownData(responseData);
+        this.hasSavedCountdown = this.resolveHasSavedCountdown(responseData, this.countdownData);
 
         this.userID =
           responseData?.countdown?.user_id ??
@@ -248,6 +244,7 @@ export class AcaraComponent implements OnInit {
         this.notyf.error(getFriendlyErrorMessage(err));
 
         this.countdownData = null;
+        this.hasSavedCountdown = false;
 
         while (this.dynamicEvents.length > 0) {
           this.dynamicEvents.removeAt(0);
@@ -267,10 +264,10 @@ export class AcaraComponent implements OnInit {
   onStaticSubmitClicked(): void {
     if (this.staticEventForm.valid) {
       const initialState = {
-        message: 'Apakah anda ingin mengunggah countdown ini?',
+        message: this.hasSavedCountdown ? 'Apakah anda ingin mengubah countdown ini?' : 'Apakah anda ingin mengunggah countdown ini?',
         cancelClicked: () => '',
-        submitClicked: () => this.submitStaticEventForm(),
-        submitMessage: 'Simpan',
+        submitClicked: () => this.saveCountdown(),
+        submitMessage: this.hasSavedCountdown ? 'Ubah' : 'Simpan',
       };
 
       this.showModal(initialState);
@@ -317,6 +314,15 @@ export class AcaraComponent implements OnInit {
     }
   }
 
+  saveCountdown(): void {
+    if (this.hasSavedCountdown && this.countdownData?.id) {
+      this.updateStaticEventForm();
+      return;
+    }
+
+    this.submitStaticEventForm();
+  }
+
   private showModal(initialState: any): void {
     this.modalRef = this.modalSvc.show(ModalComponent, { initialState });
 
@@ -338,6 +344,7 @@ export class AcaraComponent implements OnInit {
     }
 
     this.isLoading = true;
+    this.isSavingCountdown = true;
 
     const selectedEvent = String(
       this.staticEventForm.get('selectedEvent')?.value ?? ''
@@ -373,6 +380,8 @@ export class AcaraComponent implements OnInit {
             };
           }
 
+          this.hasSavedCountdown = true;
+
           this.staticEventForm.patchValue({
             selectedEvent: this.countdownData.name_countdown,
           });
@@ -385,7 +394,11 @@ export class AcaraComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading = false;
+          this.isSavingCountdown = false;
           this.notyf.error(getFriendlyErrorMessage(err));
+        },
+        complete: () => {
+          this.isSavingCountdown = false;
         },
       });
   }
@@ -393,6 +406,7 @@ export class AcaraComponent implements OnInit {
   updateStaticEventForm(): void {
     if (this.staticEventForm.valid && this.countdownData?.id) {
       this.isLoading = true;
+      this.isSavingCountdown = true;
       const { selectedEvent } = this.staticEventForm.value;
       const payload = { name_countdown: selectedEvent };
 
@@ -401,12 +415,17 @@ export class AcaraComponent implements OnInit {
         .subscribe({
           next: (res) => {
             this.isLoading = false;
+            this.hasSavedCountdown = true;
             this.notyf.success(res?.message ?? 'Countdown berhasil diperbarui.');
             this.fetchInitialData();
           },
           error: (err) => {
             this.isLoading = false;
+            this.isSavingCountdown = false;
             this.notyf.error(getFriendlyErrorMessage(err));
+          },
+          complete: () => {
+            this.isSavingCountdown = false;
           },
         });
     }
@@ -424,7 +443,7 @@ submitDynamicEventForm(): void {
   }
   if (this.dynamicEventForm.valid && this.hasMinimumLocationData()) {
     this.isLoading = true;
-    const events = (this.dynamicEvents.value as Acara[]).map(event => this.prepareEventLocationPayload(event));
+    const events = (this.dynamicEvents.getRawValue() as Acara[]).map(event => this.prepareEventLocationPayload(event));
 
 
     const eventsToCreate = events.filter(event => !event.id);
@@ -695,6 +714,35 @@ submitDynamicEventForm(): void {
       google_maps_url: googleMapsUrl,
       place_id: String(data?.place_id || '').trim(),
     };
+  }
+
+  private normalizeCountdownData(responseData: any): Countdown | null {
+    const countdown = responseData?.countdown ?? responseData?.settings?.countdown ?? null;
+
+    if (!countdown) {
+      return null;
+    }
+
+    return {
+      id: String(countdown.id ?? countdown.countdown_id ?? responseData?.countdown_event_id ?? ''),
+      name_countdown: String(
+        countdown.name_countdown ??
+        countdown.nama_acara ??
+        countdown.name ??
+        responseData?.countdown_name ??
+        ''
+      ).trim(),
+    };
+  }
+
+  private resolveHasSavedCountdown(responseData: any, countdown: Countdown | null): boolean {
+    return Boolean(
+      countdown?.id ||
+      countdown?.name_countdown ||
+      responseData?.countdown?.id ||
+      responseData?.countdown?.nama_acara ||
+      responseData?.countdown_event_id
+    );
   }
 
   private prepareEventLocationPayload(event: Acara): Acara {

@@ -1,0 +1,363 @@
+<section class="religion-template-page">
+  <header class="page-header">
+    <div class="page-header__identity">
+      <span class="page-header__icon" aria-hidden="true">
+        <i class="fas fa-book-open"></i>
+      </span>
+      <div>
+        <span class="page-header__eyebrow">Pengaturan Konten</span>
+        <h1>Template Agama</h1>
+        <p>Kelola pembuka, penutup, quote, dan pesan WhatsApp default untuk undangan.</p>
+      </div>
+    </div>
+
+    <div class="page-header__actions">
+      <span class="page-header__summary">
+        {{ activeTemplateCount }} template aktif
+      </span>
+      <button type="button" class="btn-primary" (click)="openCreateModal()">
+        <i class="fas fa-plus" aria-hidden="true"></i>
+        Template Baru
+      </button>
+    </div>
+  </header>
+
+  <div class="religion-template-layout">
+    <aside class="template-sidebar">
+      <div class="template-toolbar">
+        <label class="search-field">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <input type="search" [(ngModel)]="searchTerm" placeholder="Cari agama atau key" />
+        </label>
+
+        <label class="filter-field">
+          <span>Status</span>
+          <select [(ngModel)]="statusFilter">
+            <option value="all">Semua</option>
+            <option value="active">Aktif</option>
+            <option value="inactive">Nonaktif</option>
+          </select>
+        </label>
+      </div>
+
+      <div *ngIf="isLoading" class="state-box">
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+        Memuat template...
+      </div>
+
+      <div *ngIf="!isLoading && !filteredTemplates.length" class="state-box state-box--empty">
+        <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <span>Belum ada template agama.</span>
+      </div>
+
+      <div class="template-list" *ngIf="!isLoading && filteredTemplates.length">
+        <article
+          class="template-list-card"
+          *ngFor="let template of filteredTemplates; trackBy: trackByTemplateId"
+          [class.is-selected]="selectedTemplate?.id === template.id && !isCreating"
+          (click)="selectTemplate(template)">
+          <div class="template-list-card__header">
+            <div>
+              <h3>{{ template.religion_name }}</h3>
+              <span>{{ template.religion_key }}</span>
+            </div>
+            <span class="status-badge" [class.status-badge--active]="template.active">
+              {{ getStatusLabel(template) }}
+            </span>
+          </div>
+
+          <div class="template-list-card__meta">
+            <span>Versi {{ template.version || '-' }}</span>
+            <span [title]="formatFullDate(template.updated_at)">
+              {{ formatShortDate(template.updated_at) }}
+            </span>
+          </div>
+
+          <div class="template-list-card__footer">
+            <span>{{ template.updated_by_name || template.updated_by || template.admin_name || 'Admin belum tercatat' }}</span>
+            <details class="template-menu" (click)="$event.stopPropagation()">
+              <summary aria-label="Aksi template">
+                <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+              </summary>
+              <div class="template-menu__panel">
+                <button type="button" (click)="selectTemplate(template)">
+                  <i class="fas fa-edit" aria-hidden="true"></i>
+                  Edit
+                </button>
+                <button type="button" (click)="activePreviewTab = 'invitation'; selectTemplate(template)">
+                  <i class="fas fa-eye" aria-hidden="true"></i>
+                  Preview
+                </button>
+                <button type="button" class="danger-link" (click)="deleteTemplate(template)">
+                  <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                  Hapus
+                </button>
+              </div>
+            </details>
+          </div>
+        </article>
+      </div>
+    </aside>
+
+    <main class="editor-card">
+      <ng-container *ngIf="selectedTemplate || isCreating; else emptyEditor">
+        <form class="template-form" [formGroup]="form" (ngSubmit)="saveTemplate()">
+          <div class="editor-header">
+            <div>
+              <span class="editor-header__eyebrow">{{ isCreating ? 'Buat Template' : 'Edit Template' }}</span>
+              <h2>{{ form.get('religion_name')?.value || 'Template Agama' }}</h2>
+              <p>
+                Versi {{ selectedTemplate?.version || '-' }}
+                <span aria-hidden="true">·</span>
+                diperbarui
+                <span [title]="formatFullDate(selectedTemplate?.updated_at)">
+                  {{ formatShortDate(selectedTemplate?.updated_at) }}
+                </span>
+              </p>
+            </div>
+
+            <div class="editor-header__actions">
+              <span *ngIf="form.dirty" class="unsaved-badge">Belum disimpan</span>
+              <button type="submit" class="btn-save" [disabled]="form.invalid || isSaving">
+                <span *ngIf="isSaving" class="spinner-border spinner-border-sm" role="status"></span>
+                {{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
+              </button>
+            </div>
+          </div>
+
+          <section class="template-settings">
+            <div class="compact-fields">
+              <label>
+                <span>Religion key</span>
+                <select formControlName="religion_key">
+                  <option value="islam">islam</option>
+                  <option value="kristen">kristen</option>
+                  <option value="katolik">katolik</option>
+                  <option value="hindu">hindu</option>
+                  <option value="buddha">buddha</option>
+                  <option value="konghucu">konghucu</option>
+                  <option value="universal">universal</option>
+                </select>
+              </label>
+
+              <label>
+                <span>Nama agama</span>
+                <input type="text" formControlName="religion_name" placeholder="Islam" />
+              </label>
+            </div>
+
+            <div class="status-control">
+              <div>
+                <strong>Template aktif</strong>
+                <span>Digunakan sebagai default untuk agama ini.</span>
+              </div>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="form.get('active')?.value"
+                  (change)="onEditorActiveToggle($event)" />
+                <span class="switch__slider"></span>
+              </label>
+            </div>
+          </section>
+
+          <nav class="editor-tabs" aria-label="Bagian editor template">
+            <button type="button" [class.active]="activeEditorTab === 'opening'" (click)="setEditorTab('opening')">Pembuka</button>
+            <button type="button" [class.active]="activeEditorTab === 'closing'" (click)="setEditorTab('closing')">Penutup</button>
+            <button type="button" [class.active]="activeEditorTab === 'quote'" (click)="setEditorTab('quote')">Quote</button>
+            <button type="button" [class.active]="activeEditorTab === 'whatsapp'" (click)="setEditorTab('whatsapp')">WhatsApp</button>
+          </nav>
+
+          <section class="placeholder-panel">
+            <div>
+              <strong>Placeholder tersedia</strong>
+              <span>Klik chip untuk menyisipkan ke field aktif.</span>
+            </div>
+            <div class="placeholder-panel__chips">
+              <button
+                type="button"
+                class="placeholder-chip"
+                *ngFor="let placeholder of allowedPlaceholders"
+                title="Klik untuk menyisipkan"
+                (click)="insertPlaceholder(placeholder)">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                {{ placeholder }}
+              </button>
+            </div>
+          </section>
+
+          <section class="editor-panel" *ngIf="activeEditorTab === 'opening'">
+            <label>
+              <span>Opening heading</span>
+              <input
+                type="text"
+                formControlName="opening_heading"
+                placeholder="Assalamu'alaikum"
+                (focus)="setPlaceholderTarget('opening_heading')" />
+            </label>
+            <label>
+              <span>Opening text</span>
+              <textarea
+                rows="7"
+                formControlName="opening_text"
+                (focus)="setPlaceholderTarget('opening_text')"></textarea>
+            </label>
+          </section>
+
+          <section class="editor-panel" *ngIf="activeEditorTab === 'closing'">
+            <label>
+              <span>Closing text</span>
+              <textarea
+                rows="9"
+                formControlName="closing_text"
+                (focus)="setPlaceholderTarget('closing_text')"></textarea>
+            </label>
+          </section>
+
+          <section class="editor-panel" *ngIf="activeEditorTab === 'quote'">
+            <label>
+              <span>Quote text</span>
+              <textarea
+                rows="7"
+                formControlName="quote_text"
+                (focus)="setPlaceholderTarget('quote_text')"></textarea>
+            </label>
+            <label>
+              <span>Quote source</span>
+              <input
+                type="text"
+                formControlName="quote_source"
+                placeholder="QS. Ar-Rum: 21"
+                (focus)="setPlaceholderTarget('quote_source')" />
+            </label>
+          </section>
+
+          <section class="editor-panel" *ngIf="activeEditorTab === 'whatsapp'">
+            <label>
+              <span>Pesan WhatsApp</span>
+              <textarea
+                rows="10"
+                formControlName="whatsapp_message"
+                (focus)="setPlaceholderTarget('whatsapp_message')"></textarea>
+            </label>
+          </section>
+        </form>
+      </ng-container>
+
+      <ng-template #emptyEditor>
+        <div class="empty-editor">
+          <span aria-hidden="true">
+            <i class="fas fa-book-open"></i>
+          </span>
+          <h2>Pilih template agama</h2>
+          <p>Pilih salah satu template dari daftar untuk mulai mengedit konten default.</p>
+          <button type="button" class="btn-primary" (click)="openCreateModal()">
+            <i class="fas fa-plus" aria-hidden="true"></i>
+            Template Baru
+          </button>
+        </div>
+      </ng-template>
+    </main>
+
+    <aside class="preview-card">
+      <div class="preview-card__header">
+        <div>
+          <span>Live Preview</span>
+          <h2>{{ form.get('religion_name')?.value || 'Template Agama' }}</h2>
+        </div>
+        <span class="status-badge" [class.status-badge--active]="form.get('active')?.value">
+          {{ form.get('active')?.value ? 'Aktif' : 'Nonaktif' }}
+        </span>
+      </div>
+
+      <nav class="preview-tabs" aria-label="Tipe preview">
+        <button type="button" [class.active]="activePreviewTab === 'invitation'" (click)="activePreviewTab = 'invitation'">Undangan</button>
+        <button type="button" [class.active]="activePreviewTab === 'whatsapp'" (click)="activePreviewTab = 'whatsapp'">WhatsApp</button>
+      </nav>
+
+      <div class="invitation-preview" *ngIf="activePreviewTab === 'invitation'">
+        <span class="invitation-preview__eyebrow">{{ preview('opening_heading') || 'Salam Pembuka' }}</span>
+        <h3>{{ preview('opening_heading') || form.get('religion_name')?.value || 'Template Agama' }}</h3>
+        <p>{{ preview('opening_text') || 'Konten pembuka akan tampil di sini.' }}</p>
+        <blockquote *ngIf="preview('quote_text')">
+          {{ preview('quote_text') }}
+          <small *ngIf="preview('quote_source')">{{ preview('quote_source') }}</small>
+        </blockquote>
+        <p class="invitation-preview__closing">{{ preview('closing_text') || 'Konten penutup akan tampil di sini.' }}</p>
+      </div>
+
+      <div class="whatsapp-preview" *ngIf="activePreviewTab === 'whatsapp'">
+        <div class="whatsapp-preview__header">
+          <i class="fab fa-whatsapp" aria-hidden="true"></i>
+          <span>Preview WhatsApp</span>
+        </div>
+        <div class="whatsapp-preview__chat">
+          <div class="whatsapp-preview__bubble">
+            {{ resolvedWhatsappPreview }}
+            <span class="whatsapp-preview__time">12.30</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-meta">
+        <span>Admin: {{ selectedAdminLabel }}</span>
+        <span [title]="formatFullDate(selectedTemplate?.updated_at)">
+          Update: {{ formatShortDate(selectedTemplate?.updated_at) }}
+        </span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="create-modal-backdrop" *ngIf="showCreateModal" (click)="closeCreateModal()">
+    <section class="create-modal" (click)="$event.stopPropagation()">
+      <div class="create-modal__header">
+        <div>
+          <span class="page-header__eyebrow">Template Baru</span>
+          <h2>Buat Template Agama</h2>
+          <p>Tentukan identitas template terlebih dahulu, lalu lanjutkan isi konten di editor.</p>
+        </div>
+        <button type="button" class="icon-button" aria-label="Tutup" (click)="closeCreateModal()">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <form class="create-modal__body" [formGroup]="createForm" (ngSubmit)="createTemplateDraft()">
+        <label>
+          <span>Religion key</span>
+          <select formControlName="religion_key">
+            <option value="islam">islam</option>
+            <option value="kristen">kristen</option>
+            <option value="katolik">katolik</option>
+            <option value="hindu">hindu</option>
+            <option value="buddha">buddha</option>
+            <option value="konghucu">konghucu</option>
+            <option value="universal">universal</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Nama agama</span>
+          <input type="text" formControlName="religion_name" placeholder="Universal" />
+        </label>
+
+        <div class="status-control">
+          <div>
+            <strong>Template aktif</strong>
+            <span>Template baru akan aktif setelah disimpan.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" formControlName="active" />
+            <span class="switch__slider"></span>
+          </label>
+        </div>
+
+        <footer class="create-modal__footer">
+          <button type="button" class="btn-secondary" (click)="closeCreateModal()">Batal</button>
+          <button type="submit" class="btn-primary" [disabled]="createForm.invalid">
+            Buat Template
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+</section>

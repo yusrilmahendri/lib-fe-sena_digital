@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl } from '@angular/forms';
 import { finalize, take } from 'rxjs/operators';
 import { Notyf } from 'notyf';
-import { DashboardService, DashboardServiceType, ProfileData, ProfileResponse } from 'src/app/dashboard.service';
+import { DashboardService, DashboardServiceType, ProfileData, ProfileResponse, UserPaymentConfig } from 'src/app/dashboard.service';
 import { BsModalService } from 'ngx-bootstrap/modal';
 import { PaymentConfirmComponent } from 'src/app/shared/payment-confirm/payment-confirm.component';
 import { environment } from 'src/environments/environment';
+
+type ActivePaymentMethod = 'manual' | 'midtrans' | null;
 
 @Component({
   selector: 'wc-regis-pembayaran',
@@ -19,26 +20,19 @@ export class RegisPembayaranComponent implements OnInit {
 
   @Output() prev = new EventEmitter<void>();
 
-
-  events: any = [];
-  selectedMethod: any;
   bill: any;
   manualBill: any;
   private notyf: Notyf
 
-
-  selectOptions: any = {
-    payment: {
-      items: [],
-      defaultValue: [],
-      FormControl: new FormControl(),
-    }
-  };
   userId: any;
   invitationId: number | null = null;
   isTrialPackage = false;
   paymentError = '';
   isStartingPayment = false;
+  activePaymentMethod: ActivePaymentMethod = null;
+  paymentConfig: UserPaymentConfig | null = null;
+  isLoadingPaymentConfig = false;
+  paymentConfigError = '';
   isProfileLoading = false;
   hasLoadedProfile = false;
   profileLoadError = '';
@@ -83,91 +77,76 @@ export class RegisPembayaranComponent implements OnInit {
     // Validate and cleanup expired redirect URLs
     this.cleanupExpiredRedirectUrls();
     this.loadFreshProfile();
-    this.getMasterPayment();
+    this.loadPaymentConfig();
   }
 
-  getMasterPayment() {
+  loadPaymentConfig(): void {
     this.paymentError = '';
+    this.paymentConfigError = '';
 
-    // Trial packages only show Trial method
     if (this.isTrialPackage) {
-      this.dashboardSvc.getParam(DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD, '').subscribe({
-        next: (response: any) => {
-          const expectedMethodId = 4;
-          const activeMethods = this.mapActivePaymentMethods(response);
-          const expectedMethod = activeMethods.find(
-            (method: any) => Number(method.id) === expectedMethodId
-          );
-
-          if (expectedMethod) {
-            this.selectOptions.payment.items = [expectedMethod];
-            this.selectedMethod = expectedMethod.id;
-            return;
-          }
-
-          this.loadPackagePaymentMethod(4);
-        },
-        error: (err: any) => {
-          this.paymentError = this.getApiErrorMessage(err);
-          this.loadPackagePaymentMethod(4);
-        },
-      });
+      this.activePaymentMethod = null;
+      this.paymentConfig = null;
+      this.bill = [];
       return;
     }
 
-    // Paid packages: Load all methods from master list, show Manual (1) + Midtrans (3)
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
-      next: (response: any) => {
-        const methods = Array.isArray(response?.data) ? response.data : [];
-        // Filter to show only Manual (1) and Midtrans (3), exclude Tripay (2)
-        const allowedMethods = methods.filter(
-          (method: any) => [1, 3].includes(Number(method.id))
-        );
-        this.selectOptions.payment.items = allowedMethods.length > 0 ? allowedMethods : [];
-        // Auto-select first available method
-        if (allowedMethods.length > 0) {
-          this.selectedMethod = allowedMethods[0].id;
+    this.isLoadingPaymentConfig = true;
+    this.dashboardSvc.getUserPaymentConfig().pipe(
+      take(1),
+      finalize(() => {
+        this.isLoadingPaymentConfig = false;
+      })
+    ).subscribe({
+      next: (response: UserPaymentConfig) => {
+        const config = this.normalizePaymentConfig(response);
+
+        if (!config || !['manual', 'midtrans'].includes(config.payment_method)) {
+          this.activePaymentMethod = null;
+          this.paymentConfig = null;
+          this.bill = [];
+          this.paymentConfigError = 'Metode pembayaran belum diaktifkan oleh admin. Silakan hubungi admin.';
+          return;
         }
+
+        this.activePaymentMethod = config.payment_method;
+        this.paymentConfig = config;
+        this.initializeActivePaymentFlow();
       },
       error: (err: any) => {
-        this.paymentError = this.getApiErrorMessage(err);
-        this.selectOptions.payment.items = [];
+        this.activePaymentMethod = null;
+        this.paymentConfig = null;
+        this.bill = [];
+        this.paymentConfigError = err?.error?.message || 'Metode pembayaran belum dapat dimuat.';
       },
     });
   }
 
-  private mapActivePaymentMethods(response: any): any[] {
-    const rawData = Array.isArray(response?.data)
-      ? response.data
-      : response?.data
-        ? [response.data]
-        : [];
+  private initializeActivePaymentFlow(): void {
+    if (this.activePaymentMethod === 'manual') {
+      this.initializeManualPayment();
+      return;
+    }
 
-    return rawData
-      .filter((item: any) => item?.is_active !== false)
-      .map((item: any) =>
-        item?.metode_transaction || item?.metodeTransaction || item
-      )
-      .filter((item: any) => item?.id != null && item?.name);
+    if (this.activePaymentMethod === 'midtrans') {
+      this.initializeMidtransPayment();
+    }
   }
 
-  private loadPackagePaymentMethod(expectedMethodId: number): void {
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
-      next: (response: any) => {
-        const methods = Array.isArray(response?.data) ? response.data : [];
-        const expectedMethod = methods.find(
-          (method: any) => Number(method.id) === expectedMethodId
-        );
-        this.selectOptions.payment.items = expectedMethod ? [expectedMethod] : [];
-        if (expectedMethod) {
-          this.selectedMethod = expectedMethod.id;
-        }
-      },
-      error: (err: any) => {
-        this.selectOptions.payment.items = [];
-        this.paymentError = this.getApiErrorMessage(err);
-      },
-    });
+  private initializeManualPayment(): void {
+    const manualPayment = this.paymentConfig?.manual_payment;
+    this.bill = manualPayment
+      ? [{
+        nama_bank: manualPayment.bank_name || '-',
+        nomor_rekening: manualPayment.account_number || '-',
+        nama_pemilik: manualPayment.account_name || '-',
+        account_photo_url: manualPayment.account_photo_url || null,
+      }]
+      : [];
+  }
+
+  private initializeMidtransPayment(): void {
+    this.bill = [];
   }
 
   private resolveIsTrialPackage(invitation: any): boolean {
@@ -181,29 +160,6 @@ export class RegisPembayaranComponent implements OnInit {
     const snapshot = invitation?.package_features_snapshot || {};
     const packageName = `${snapshot?.jenis_paket || ''} ${snapshot?.name_paket || ''}`;
     return /trial/i.test(packageName);
-  }
-
-  getMasterMethod() {
-    this.dashboardSvc.getParam(DashboardServiceType.MNL_MD_METHOD, '').subscribe(res => {
-      this.events = res?.data;
-    })
-  }
-
-  getDetailMethod() {
-    if ([3, 4].includes(Number(this.selectedMethod))) {
-      this.bill = [];
-      return;
-    }
-    const query = `?id_methode_pembayaran=${this.selectedMethod}`
-    this.dashboardSvc.getParam(DashboardServiceType.MNL_MD_METHOD_DETAIL, query).subscribe(res => {
-      this.bill = res?.data;
-    })
-  }
-
-  onMetodeSelect(event: any) {
-    this.paymentError = '';
-    this.selectedMethod = Number(event);
-    this.getDetailMethod();
   }
 
   goToPreviousStep(): void {
@@ -221,12 +177,7 @@ export class RegisPembayaranComponent implements OnInit {
       return;
     }
 
-    if (Number(this.selectedMethod) === 3) {
-      this.startMidtransPayment();
-      return;
-    }
-
-    if (Number(this.selectedMethod) === 4 && this.isTrialPackage) {
+    if (this.isTrialPackage) {
       this.modalService.show(PaymentConfirmComponent, {
         initialState: {
           userId: this.userId,
@@ -236,8 +187,18 @@ export class RegisPembayaranComponent implements OnInit {
       return;
     }
 
-    if (Number(this.selectedMethod) === 1) {
-      this.handleManualPayment();
+    if (!this.activePaymentMethod) {
+      this.paymentConfigError = 'Metode pembayaran belum diaktifkan oleh admin. Silakan hubungi admin.';
+      return;
+    }
+
+    if (this.activePaymentMethod === 'midtrans') {
+      this.validateActivePaymentMethod('midtrans', () => this.startMidtransPayment());
+      return;
+    }
+
+    if (this.activePaymentMethod === 'manual') {
+      this.validateActivePaymentMethod('manual', () => this.handleManualPayment());
     }
   }
 
@@ -296,7 +257,13 @@ export class RegisPembayaranComponent implements OnInit {
   }
 
   get isNextDisabled(): boolean {
-    return !this.selectedMethod || this.isStartingPayment || this.isProfileLoading || this.shouldBlockPaymentForProfileCompletion();
+    return (
+      this.isStartingPayment ||
+      this.isProfileLoading ||
+      this.isLoadingPaymentConfig ||
+      this.shouldBlockPaymentForProfileCompletion() ||
+      (!this.isTrialPackage && !this.activePaymentMethod)
+    );
   }
 
   private startMidtransPayment(): void {
@@ -371,7 +338,8 @@ export class RegisPembayaranComponent implements OnInit {
           }
         }
 
-        this.paymentError = this.getApiErrorMessage(err);
+        this.paymentError = this.getPaymentActionErrorMessage(err);
+        this.loadPaymentConfig();
       },
     });
   }
@@ -506,6 +474,58 @@ export class RegisPembayaranComponent implements OnInit {
 
   private getApiErrorMessage(err: any): string {
     return err?.error?.message || err?.message || String(err);
+  }
+
+  private getPaymentActionErrorMessage(err: any): string {
+    return err?.error?.message || 'Metode pembayaran telah berubah. Silakan muat ulang halaman.';
+  }
+
+  private normalizePaymentConfig(response: any): UserPaymentConfig | null {
+    const raw = response?.data || response;
+    const method = raw?.payment_method;
+    if (method !== 'manual' && method !== 'midtrans') {
+      return null;
+    }
+
+    return {
+      payment_method: method,
+      manual_payment: raw?.manual_payment,
+      midtrans: raw?.midtrans,
+    };
+  }
+
+  private validateActivePaymentMethod(expectedMethod: Exclude<ActivePaymentMethod, null>, onValid: () => void): void {
+    if (this.isLoadingPaymentConfig || this.isStartingPayment) {
+      return;
+    }
+
+    this.paymentError = '';
+    this.paymentConfigError = '';
+    this.isLoadingPaymentConfig = true;
+
+    this.dashboardSvc.getUserPaymentConfig().pipe(
+      take(1),
+      finalize(() => {
+        this.isLoadingPaymentConfig = false;
+      })
+    ).subscribe({
+      next: (response: UserPaymentConfig) => {
+        const config = this.normalizePaymentConfig(response);
+        this.paymentConfig = config;
+        this.activePaymentMethod = config?.payment_method || null;
+        this.initializeActivePaymentFlow();
+
+        if (this.activePaymentMethod !== expectedMethod) {
+          this.paymentConfigError = 'Metode pembayaran telah berubah. Silakan muat ulang halaman.';
+          return;
+        }
+
+        onValid();
+      },
+      error: (err: any) => {
+        this.paymentConfigError = err?.error?.message || 'Metode pembayaran belum dapat dimuat.';
+      },
+    });
   }
 
   copyToClipboard(text: string) {

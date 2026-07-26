@@ -11,6 +11,49 @@
 
   <div class="settings-grid">
     <div class="settings-grid__left">
+      <section class="dashboard-card domain-card">
+        <div class="card-title-row">
+          <span class="card-icon" aria-hidden="true">
+            <i class="fas fa-globe"></i>
+          </span>
+          <div>
+            <h2>Domain Undangan</h2>
+            <p>Kelola alamat website undangan yang dibagikan ke tamu.</p>
+          </div>
+        </div>
+
+        <div class="domain-summary" *ngIf="currentDomain; else emptyDomainState">
+          <span>Domain aktif</span>
+          <strong>{{ currentDomain }}</strong>
+          <a [href]="currentDomainUrl" target="_blank" rel="noopener noreferrer">
+            {{ currentDomainUrl }}
+          </a>
+        </div>
+
+        <ng-template #emptyDomainState>
+          <div class="domain-summary domain-summary--empty">
+            <span>Status domain</span>
+            <strong>Domain undangan belum dibuat.</strong>
+          </div>
+        </ng-template>
+
+        <div class="domain-actions">
+          <button type="button" class="btn-action btn-action--primary" (click)="openDomainEditor()">
+            <i class="fas fa-edit" aria-hidden="true"></i>
+            {{ currentDomain ? 'Ubah Domain' : 'Buat Domain' }}
+          </button>
+          <a
+            *ngIf="currentDomain"
+            class="btn-action btn-action--cyan"
+            [href]="currentDomainUrl"
+            target="_blank"
+            rel="noopener noreferrer">
+            <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+            Lihat Website
+          </a>
+        </div>
+      </section>
+
       <section class="dashboard-card music-card">
         <div class="card-title-row">
           <span class="card-icon" aria-hidden="true">
@@ -86,7 +129,7 @@
         </span>
         <div>
           <h2>Pesan Undangan dan WhatsApp</h2>
-          <p>Sesuaikan kalimat yang muncul di undangan dan pesan saat dibagikan.</p>
+          <p>Edit pesan WhatsApp melalui menu Penyesuaian Agama. Setelah pesan diedit melalui menu Penyesuaian Agama, fitur edit pada menu ini akan otomatis dinonaktifkan (disabled)</p>
         </div>
       </div>
 
@@ -149,5 +192,93 @@
       <div class="spinner-border" aria-hidden="true"></div>
       <p>Memuat data pengaturan...</p>
     </div>
+  </div>
+
+  <div
+    class="domain-modal-backdrop"
+    *ngIf="showDomainEditor"
+    role="presentation"
+    (click)="closeDomainEditor()">
+    <section
+      class="domain-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="domain-modal-title"
+      (click)="$event.stopPropagation()">
+      <div class="domain-modal__header">
+        <div class="domain-modal__title-group">
+          <span class="domain-modal__icon" aria-hidden="true">
+            <i class="fas fa-globe"></i>
+          </span>
+          <div>
+            <h2 id="domain-modal-title">{{ currentDomain ? 'Ubah Domain Undangan' : 'Buat Domain Undangan' }}</h2>
+            <p>Masukkan slug domain baru untuk alamat website undangan.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="domain-modal__close"
+          aria-label="Tutup"
+          [disabled]="isLoadingDomain"
+          (click)="closeDomainEditor()">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <form [formGroup]="domainForm" (ngSubmit)="saveDomainChange()">
+        <div class="domain-modal__body">
+          <label class="domain-field-label" for="domain-slug">Alamat undangan</label>
+          <div class="domain-input-group">
+            <span class="domain-input-prefix">https://www.sena-digital.com/wedding/</span>
+            <input
+              id="domain-slug"
+              type="text"
+              formControlName="domain"
+              maxlength="80"
+              autocomplete="off"
+              placeholder="yusril-dan-nova"
+              (blur)="onDomainInputBlur()" />
+          </div>
+
+          <p
+            class="domain-availability"
+            [class.domain-availability--checking]="isCheckingDomain"
+            [class.domain-availability--success]="isDomainAvailable === true"
+            [class.domain-availability--error]="isDomainAvailable === false || (domainForm.get('domain')?.touched && domainForm.invalid)">
+            <i
+              class="fas"
+              [class.fa-spinner]="isCheckingDomain"
+              [class.fa-spin]="isCheckingDomain"
+              [class.fa-check-circle]="!isCheckingDomain && isDomainAvailable === true"
+              [class.fa-info-circle]="!isCheckingDomain && isDomainAvailable !== true"
+              aria-hidden="true"></i>
+            {{ domainAvailabilityMessage || 'Domain akan dicek otomatis setelah diketik.' }}
+          </p>
+
+          <div class="domain-modal__preview" *ngIf="pendingDomain">
+            <span>Preview URL baru</span>
+            <strong>{{ pendingDomainUrl }}</strong>
+          </div>
+        </div>
+
+        <div class="domain-modal__footer">
+          <button
+            type="button"
+            class="btn-action btn-action--ghost"
+            [disabled]="isLoadingDomain"
+            (click)="closeDomainEditor()">
+            Batal
+          </button>
+          <button
+            type="submit"
+            class="btn-action btn-action--primary"
+            [disabled]="!canSubmitDomain()">
+            <span *ngIf="isLoadingDomain" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <i *ngIf="!isLoadingDomain" class="fas fa-save" aria-hidden="true"></i>
+            {{ isLoadingDomain ? 'Menyimpan...' : 'Simpan Domain' }}
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 </div>

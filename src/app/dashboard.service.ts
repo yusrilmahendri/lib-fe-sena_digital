@@ -28,6 +28,7 @@ export enum DashboardServiceType {
   MNL_MD_METHOD_DETAIL,
   MNL_MD_PACK_INVITATION,
   MNL_ACTIVE_PAYMENT_METHOD,
+  USER_PAYMENT_CONFIG,
   MIDTRANS_CREATE_SNAP_TOKEN,
   MIDTRANS_CHECK_STATUS,
 
@@ -103,6 +104,7 @@ export enum DashboardServiceType {
   ADM_GET_CATEGORY,
   RDM_CONFIRM_PAYMENT,
   ADMIN_USER_UPGRADE_PACKAGE,
+  ADMIN_RELIGION_TEMPLATES,
 
   // === User Settings Endpoints ===
   // Manages user preferences like domain, music, and filters.
@@ -115,6 +117,8 @@ export enum DashboardServiceType {
   USER_SETTINGS_SUBMIT_FILTER_UPDATE,
   USER_SETTINGS_SUBMIT_LIST_FILTER,
   USER_SETTINGS_DELETE_MUSIC,
+  SETTINGS_DOMAIN,
+  SETTINGS_DOMAIN_CHECK,
   USER_MUSIC_OPTIONS,
   USER_MUSIC_SELECTION,
   USER_CUSTOM_MUSIC,
@@ -186,6 +190,7 @@ export enum DashboardServiceType {
   USER_PHOTOS_SORT,
   USER_RELIGION_CONTENT,
   USER_RELIGION_CONTENT_RESET,
+  WEDDING_GUESTS,
   DELETE_REKENING_ADMIN,
   UPDATE_REKENING_ADMIN,
 }
@@ -251,6 +256,20 @@ export interface TestimonialBulkStatusRequest {
   status: boolean;
 }
 
+export interface UserPaymentConfig {
+  payment_method: 'manual' | 'midtrans';
+  manual_payment?: {
+    bank_name?: string;
+    account_number?: string;
+    account_name?: string;
+    account_photo_url?: string | null;
+  };
+  midtrans?: {
+    enabled?: boolean;
+  };
+  data?: UserPaymentConfig;
+}
+
 export { MusicTrack, UserMusicSelection };
 
 @Injectable({
@@ -301,6 +320,9 @@ export class DashboardService {
 
       case DashboardServiceType.MNL_ACTIVE_PAYMENT_METHOD:
         return `${this.BASE_URL_API}/v1/active-payment-method`;
+
+      case DashboardServiceType.USER_PAYMENT_CONFIG:
+        return `${this.BASE_URL_API}/v1/user/payment-config`;
 
       case DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN:
         return `${this.BASE_URL_API}/v1/midtrans/create-snap-token`;
@@ -457,6 +479,8 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/update/status-bayar`;
       case DashboardServiceType.ADMIN_USER_UPGRADE_PACKAGE:
         return `${this.BASE_URL_API}/v1/admin/users`;
+      case DashboardServiceType.ADMIN_RELIGION_TEMPLATES:
+        return `${this.BASE_URL_API}/v1/admin/religion-templates`;
 
       // Kategori
       case DashboardServiceType.ADM_ADD_CATEGORY:
@@ -490,6 +514,10 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/user/list-data-setting`;
       case DashboardServiceType.USER_SETTINGS_DELETE_MUSIC:
         return `${this.BASE_URL_API}/v1/user/music/delete`;
+      case DashboardServiceType.SETTINGS_DOMAIN:
+        return `${this.BASE_URL_API}/v1/settings/domain`;
+      case DashboardServiceType.SETTINGS_DOMAIN_CHECK:
+        return `${this.BASE_URL_API}/v1/settings/domain/check`;
       case DashboardServiceType.USER_MUSIC_OPTIONS:
         return `${this.BASE_URL_API}/v1/user/music-options`;
       case DashboardServiceType.USER_MUSIC_SELECTION:
@@ -604,6 +632,8 @@ export class DashboardService {
         return `${this.BASE_URL_API}/v1/user/religion-content`;
       case DashboardServiceType.USER_RELIGION_CONTENT_RESET:
         return `${this.BASE_URL_API}/v1/user/religion-content/reset`;
+      case DashboardServiceType.WEDDING_GUESTS:
+        return `${this.BASE_URL_API}/v1/wedding-guests`;
 
       default:
         return '';
@@ -641,6 +671,10 @@ export class DashboardService {
   // Methods for user and admin profile operations.
   getProfile(): Observable<ProfileResponse> {
     return this.httpSvc.get<ProfileResponse>(this.getUrl(DashboardServiceType.PROFILE_GET));
+  }
+
+  getUserPaymentConfig(): Observable<UserPaymentConfig> {
+    return this.httpSvc.get<UserPaymentConfig>(this.getUrl(DashboardServiceType.USER_PAYMENT_CONFIG));
   }
 
   /**
@@ -710,6 +744,30 @@ export class DashboardService {
     return this.httpSvc.post<PasswordChangeResponse>(this.getUrl(DashboardServiceType.ADMIN_PROFILE_CHANGE_PASSWORD), data);
   }
 
+  getAdminReligionTemplates(params?: any): Observable<any> {
+    return this.list(DashboardServiceType.ADMIN_RELIGION_TEMPLATES, params);
+  }
+
+  getAdminReligionTemplate(id: number | string): Observable<any> {
+    return this.httpSvc.get(`${this.getUrl(DashboardServiceType.ADMIN_RELIGION_TEMPLATES)}/${encodeURIComponent(String(id))}`);
+  }
+
+  createAdminReligionTemplate(payload: any): Observable<any> {
+    return this.httpSvc.post(this.getUrl(DashboardServiceType.ADMIN_RELIGION_TEMPLATES), payload);
+  }
+
+  updateAdminReligionTemplate(id: number | string, payload: any): Observable<any> {
+    return this.httpSvc.put(`${this.getUrl(DashboardServiceType.ADMIN_RELIGION_TEMPLATES)}/${encodeURIComponent(String(id))}`, payload);
+  }
+
+  updateAdminReligionTemplateStatus(id: number | string, active: boolean): Observable<any> {
+    return this.httpSvc.patch(`${this.getUrl(DashboardServiceType.ADMIN_RELIGION_TEMPLATES)}/${encodeURIComponent(String(id))}/status`, { active });
+  }
+
+  deleteAdminReligionTemplate(id: number | string): Observable<any> {
+    return this.httpSvc.delete(`${this.getUrl(DashboardServiceType.ADMIN_RELIGION_TEMPLATES)}/${encodeURIComponent(String(id))}`);
+  }
+
   createInvitationGuest(payload: { name: string }): Observable<InvitationGuestResponse> {
     return this.httpSvc.post<InvitationGuestResponse>(
       `${this.BASE_URL_API}/v1/user/invitation-guests`,
@@ -720,6 +778,12 @@ export class DashboardService {
   getInvitationGuests(): Observable<InvitationGuestListResponse | any> {
     return this.httpSvc.get<InvitationGuestListResponse | any>(
       `${this.BASE_URL_API}/v1/user/invitation-guests`
+    );
+  }
+
+  deleteInvitationGuest(guestId: number | string): Observable<any> {
+    return this.httpSvc.delete<any>(
+      `${this.getUrl(DashboardServiceType.WEDDING_GUESTS)}/${encodeURIComponent(String(guestId))}`
     );
   }
 
@@ -827,6 +891,14 @@ export class DashboardService {
 
   getMusicSelection(): Observable<any> {
     return this.httpSvc.get(this.getUrl(DashboardServiceType.USER_MUSIC_SELECTION));
+  }
+
+  checkInvitationDomain(domain: string): Observable<any> {
+    return this.list(DashboardServiceType.SETTINGS_DOMAIN_CHECK, { domain });
+  }
+
+  updateInvitationDomain(domain: string): Observable<any> {
+    return this.httpSvc.put(this.getUrl(DashboardServiceType.SETTINGS_DOMAIN), { domain });
   }
 
   updateMusicSelection(musicId: number | null): Observable<any> {

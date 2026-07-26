@@ -321,6 +321,14 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     return this.selectedMusicSourceHint;
   }
 
+  isDefaultMusicSelected(): boolean {
+    return this.selectedMusicId === null && this.getPendingSourceType() === 'default';
+  }
+
+  getDefaultMusicBadgeLabel(): string {
+    return this.getActiveSourceType() === 'default' ? 'Aktif' : 'Dipilih';
+  }
+
   getSourceTypeLabel(sourceType: MusicSourceType): string {
     switch (sourceType) {
       case 'custom':
@@ -330,7 +338,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       case 'global_catalog':
         return 'Global';
       default:
-        return 'Default';
+        return 'Bawaan';
     }
   }
 
@@ -351,6 +359,14 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
 
   isMusicSaved(track: MusicTrack, sourceType: MusicSourceType): boolean {
     return this.musicSelection?.selected_music_id === track.id && this.getActiveSourceType() === sourceType;
+  }
+
+  isMusicSelected(track: MusicTrack, sourceType: MusicSourceType): boolean {
+    return this.selectedMusicId === track.id && this.getPendingSourceType() === sourceType;
+  }
+
+  isSystemDefaultMusic(track: MusicTrack): boolean {
+    return track.is_default === true;
   }
 
   getCustomMusicSizeLabel(): string | null {

@@ -2,26 +2,14 @@
   <header class="photo-header">
     <div>
       <p class="eyebrow">Manajemen Foto</p>
-      <h1>Kelola foto undangan</h1>
-      <p class="subtitle">Upload, atur preset tampilan, pilih foto utama, dan susun urutan foto untuk galeri maupun kolase.</p>
+      <h1>Gallery, Foto &amp; Video</h1>
+      <p class="subtitle">Upload foto langsung dari mockup. Foto pertama otomatis menjadi Cover Gallery.</p>
     </div>
     <div class="package-limit">
       <span>Batas upload</span>
       <strong>{{ maxUploadSizeMb }} MB</strong>
     </div>
   </header>
-
-  <div class="segmented-control" role="tablist" aria-label="Jenis foto">
-    <button
-      *ngFor="let type of photoTypes"
-      type="button"
-      role="tab"
-      [class.active]="activeType === type.value"
-      [attr.aria-selected]="activeType === type.value"
-      (click)="setActiveType(type.value)">
-      {{ type.label }}
-    </button>
-  </div>
 
   <div *ngIf="errorMessage" class="alert-message error">
     <i class="fas fa-exclamation-circle"></i>
@@ -38,94 +26,253 @@
         <i class="fas fa-images"></i>
       </span>
       <div>
-        <p class="eyebrow">Galeri Undangan</p>
-        <h2>Foto yang Anda upload akan digunakan pada:</h2>
+        <p class="eyebrow">Gallery Undangan</p>
+        <h2>Foto pertama menjadi Cover Gallery</h2>
         <ul>
-          <li><i class="fas fa-check"></i> Cover Gallery</li>
-          <li><i class="fas fa-check"></i> Slider Gallery</li>
-          <li><i class="fas fa-check"></i> Album Foto</li>
-          <li><i class="fas fa-check"></i> Preview Tema</li>
+          <li><i class="fas fa-check"></i> Cover 1:1</li>
+          <li><i class="fas fa-check"></i> Grid Foto</li>
+          <li><i class="fas fa-check"></i> Drag Urutan</li>
+          <li><i class="fas fa-check"></i> Video Terpisah</li>
         </ul>
       </div>
     </div>
-    <p>Urutan foto akan mengikuti urutan yang Anda atur. Geser foto untuk mengubah urutan; foto pertama menjadi Cover Gallery.</p>
+    <p>Gunakan slot kosong untuk upload. Drag foto untuk mengatur urutan atau dengan cara mengubah pada edit photo. posisi pertama selalu menjadi Cover Gallery.</p>
   </section>
 
-  <div class="workspace-grid">
-    <form id="galleryUploadForm" class="upload-panel" [formGroup]="uploadForm" (ngSubmit)="submitUpload()">
+  <input
+    #coverInput
+    type="file"
+    accept="image/*"
+    hidden
+    (change)="onCoverSelected($event)" />
+
+  <input
+    #galleryInput
+    type="file"
+    accept="image/*"
+    multiple
+    hidden
+    (change)="onGalleryFilesSelected($event)" />
+
+  <input
+    #replacePhotoInput
+    type="file"
+    accept="image/*"
+    hidden
+    (change)="onReplacePhotoSelected($event)" />
+
+  <section class="gallery-builder">
       <div class="panel-title">
         <div>
-          <h2>Tambah {{ activeTypeLabel }}</h2>
-          <p>Foto baru otomatis memakai tipe tab aktif.</p>
+          <h2>Mockup Tema</h2>
+        <p>{{ activePhotos.length }} foto tersimpan. Klik slot kosong untuk upload; klik foto untuk edit posisi.</p>
+        </div>
+        <span *ngIf="isSorting || isSlotUploading" class="saving-indicator">
+          <i class="fas fa-spinner"></i>
+        {{ isSlotUploading ? 'Mengupload foto' : 'Menyimpan urutan' }}
+      </span>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-state">
+      <i class="fas fa-spinner"></i>
+      <span>Memuat foto...</span>
+    </div>
+
+    <div *ngIf="!isLoading" class="theme-mockup theme-mockup--interactive">
+      <div class="mockup-cover-wrap">
+        <p class="theme-mockup__label">Cover Gallery</p>
+        <div
+          class="gallery-upload-slot gallery-upload-slot--cover"
+          role="button"
+          tabindex="0"
+          [class.is-filled]="coverPhoto"
+          [class.is-uploading]="isSlotUploading && uploadingSlot === 'cover'"
+          (click)="handleCoverSlotClick(coverInput)"
+          (keydown)="onCoverSlotKeydown($event, coverInput)">
+          <ng-container *ngIf="coverPhoto; else emptyCover">
+            <img
+              [src]="coverPhoto.photo_url"
+              alt="Cover Gallery"
+              [style.object-fit]="getLivePhotoObjectFit(coverPhoto)"
+              [style.object-position]="getLivePhotoObjectPosition(coverPhoto)"
+              (error)="onPhotoImageError($event)" />
+            <span class="slot-badge">Cover</span>
+            <div class="slot-actions">
+              <button type="button" (click)="openEditFromAction(coverPhoto, $event)">
+                <i class="fas fa-crop-alt"></i>
+                Edit
+              </button>
+              <button type="button" (click)="triggerReplacePhoto(coverPhoto, $event, replacePhotoInput)">
+                <i class="fas fa-sync-alt"></i>
+                Ganti
+              </button>
+              <button type="button" class="danger" (click)="removeCover($event)">
+                <i class="fas fa-trash"></i>
+                Hapus
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-template #emptyCover>
+            <div class="theme-mockup__placeholder">
+              <i class="fas fa-camera"></i>
+              <span>Upload Cover Gallery</span>
+              <small>Rasio 1:1</small>
+            </div>
+          </ng-template>
+
+          <span *ngIf="isSlotUploading && uploadingSlot === 'cover'" class="slot-loading">
+            <i class="fas fa-spinner"></i>
+          </span>
         </div>
       </div>
 
-      <div
-        class="drop-zone"
-        (dragover)="preventDropDefault($event)"
-        (drop)="onDropFile($event)"
-        (click)="browseFiles()">
-        <input
-          id="photoFileInput"
-          class="sr-only"
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          (change)="onFileSelected($event)" />
-        <i class="fas fa-cloud-upload-alt"></i>
-        <strong>Pilih atau seret foto</strong>
-        <span>JPG, PNG, WEBP, GIF. Maksimal {{ maxUploadSizeMb }} MB.</span>
+      <div class="mockup-gallery-wrap">
+        <div class="theme-mockup__label-row">
+          <p class="theme-mockup__label">Gallery Foto</p>
+          <button
+            *ngIf="hiddenAlbumPhotoCount > 0"
+            type="button"
+            class="link-button"
+            (click)="toggleAllGalleryPhotos()">
+            {{ showAllGalleryPhotos ? 'Ringkas' : 'Lihat Semua Foto' }}
+          </button>
+        </div>
+
+        <div
+          cdkDropList
+          [cdkDropListData]="activePhotos"
+          [cdkDropListDisabled]="isSorting"
+          class="gallery-photo-grid"
+          (cdkDropListDropped)="dropPhoto($event)">
+          <article
+            *ngIf="coverPhoto"
+            class="gallery-photo-item gallery-photo-item--cover"
+            role="button"
+            tabindex="0"
+            (click)="openEdit(coverPhoto)"
+            (keydown)="onPhotoTileKeydown($event, coverPhoto)"
+            cdkDrag
+            [cdkDragDisabled]="isSorting"
+            [cdkDragStartDelay]="{ touch: 120, mouse: 0 }">
+            <button type="button" class="drag-handle gallery-photo-item__drag-handle" cdkDragHandle title="Geser untuk mengubah urutan" aria-label="Geser untuk mengubah urutan" (click)="$event.stopPropagation()">
+              <i class="fas fa-grip-vertical"></i>
+            </button>
+            <img
+              [src]="coverPhoto.photo_url"
+              alt="Cover Gallery"
+              [style.object-fit]="getLivePhotoObjectFit(coverPhoto)"
+              [style.object-position]="getLivePhotoObjectPosition(coverPhoto)"
+              (error)="onPhotoImageError($event)" />
+            <span class="slot-badge gallery-photo-item__order">#{{ coverPhoto.sort_order || 1 }} Cover</span>
+            <div class="tile-actions">
+              <button type="button" (click)="openEditFromAction(coverPhoto, $event)" aria-label="Edit Posisi Cover Gallery" title="Edit Posisi">
+                <i class="fas fa-crop-alt"></i>
+              </button>
+              <button type="button" (click)="triggerReplacePhoto(coverPhoto, $event, replacePhotoInput)" aria-label="Ganti Cover Gallery" title="Ganti Foto">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+              <button type="button" class="danger" (click)="removeCover($event)" aria-label="Hapus Cover Gallery">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </article>
+
+          <article
+            *ngFor="let photo of visibleAlbumPhotos; trackBy: trackByPhoto"
+            class="gallery-photo-item"
+            role="button"
+            tabindex="0"
+            (click)="openEdit(photo)"
+            (keydown)="onPhotoTileKeydown($event, photo)"
+            cdkDrag
+            [cdkDragDisabled]="isSorting"
+            [cdkDragStartDelay]="{ touch: 120, mouse: 0 }">
+            <button type="button" class="drag-handle gallery-photo-item__drag-handle" cdkDragHandle title="Geser untuk mengubah urutan" aria-label="Geser untuk mengubah urutan" (click)="$event.stopPropagation()">
+              <i class="fas fa-grip-vertical"></i>
+            </button>
+            <img
+              [src]="photo.photo_url"
+              [alt]="photo.description || 'Foto gallery'"
+              [style.object-fit]="getLivePhotoObjectFit(photo)"
+              [style.object-position]="getLivePhotoObjectPosition(photo)"
+              (error)="onPhotoImageError($event)" />
+            <span class="slot-badge gallery-photo-item__order">#{{ photo.sort_order }}</span>
+            <div class="tile-actions">
+              <button type="button" (click)="openEditFromAction(photo, $event)" aria-label="Edit Posisi foto gallery" title="Edit Posisi">
+                <i class="fas fa-crop-alt"></i>
+              </button>
+              <button type="button" (click)="triggerReplacePhoto(photo, $event, replacePhotoInput)" aria-label="Ganti foto gallery" title="Ganti Foto">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+              <button type="button" class="danger" (click)="removeGalleryPhoto(photo, $event)" aria-label="Hapus foto gallery">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </article>
+
+          <button
+            type="button"
+            class="gallery-upload-slot gallery-upload-slot--tile"
+            [class.is-uploading]="isSlotUploading && uploadingSlot === 'gallery'"
+            (click)="galleryInput.click()">
+            <i class="fas fa-plus"></i>
+            <span>Upload Foto</span>
+            <small>Bisa pilih beberapa foto</small>
+            <span *ngIf="isSlotUploading && uploadingSlot === 'gallery'" class="slot-loading">
+              <i class="fas fa-spinner"></i>
+            </span>
+          </button>
+        </div>
+
+        <p *ngIf="hiddenAlbumPhotoCount > 0 && !showAllGalleryPhotos" class="gallery-limit-note">
+          {{ hiddenAlbumPhotoCount }} foto lain disembunyikan agar halaman tetap ringkas.
+        </p>
       </div>
+    </div>
+  </section>
 
-      <input type="hidden" formControlName="file" />
+  <section class="video-section" aria-label="Video Undangan">
+    <div class="panel-title">
+      <div>
+        <h2>Video Undangan</h2>
+        <p>Video dipisahkan dari grid foto. Gunakan link YouTube dan thumbnail sesuai flow existing.</p>
+      </div>
+    </div>
 
-      <label>
-        Deskripsi
-        <textarea formControlName="description" rows="3" placeholder="Contoh: Momen akad, foto keluarga, detail dekorasi"></textarea>
-      </label>
-
-      <div class="inline-actions">
-        <label class="check-control">
-          <input type="checkbox" formControlName="is_featured" />
-          <span>Jadikan foto utama</span>
+    <form class="video-panel" [formGroup]="youtubeForm" (ngSubmit)="submitYoutubeVideo()">
+      <div class="video-fields">
+        <label>
+          Link YouTube
+          <input
+            type="text"
+            formControlName="url_video"
+            placeholder="https://www.youtube.com/watch?v=..." />
         </label>
-      </div>
-
-      <div *ngIf="originalSize || compressedSize" class="size-summary">
-        <span>Asli: {{ formatFileSize(originalSize) }}</span>
-        <span>Hasil kompresi: {{ formatFileSize(compressedSize) }}</span>
-        <span>Quality: 85%</span>
-      </div>
-
-      <input type="hidden" formControlName="position" />
-      <input type="hidden" formControlName="display_mode" />
-      <input type="hidden" formControlName="focal_point_x" />
-      <input type="hidden" formControlName="focal_point_y" />
-    </form>
-
-    <form class="upload-panel video-panel" [formGroup]="youtubeForm" (ngSubmit)="submitYoutubeVideo()">
-      <div class="panel-title">
-        <div>
-          <h2>Video YouTube</h2>
-          <p>Tambahkan link YouTube dan cover video untuk ditampilkan di galeri undangan.</p>
+        <small class="field-hint">Mendukung youtube.com/watch?v=, youtu.be/, atau youtube.com/embed/.</small>
+        <div *ngIf="youtubeForm.get('url_video')?.invalid && youtubeForm.get('url_video')?.dirty" class="field-error">
+          Link YouTube tidak valid.
         </div>
-      </div>
 
-      <label>
-        Link YouTube
-        <input
-          type="text"
-          formControlName="url_video"
-          placeholder="https://www.youtube.com/watch?v=..." />
-      </label>
-      <small class="field-hint">Mendukung youtube.com/watch?v=, youtu.be/, atau youtube.com/embed/.</small>
-      <div *ngIf="youtubeForm.get('url_video')?.invalid && youtubeForm.get('url_video')?.dirty" class="field-error">
-        Link YouTube tidak valid.
-      </div>
+        <label>
+          Deskripsi
+          <textarea formControlName="description" rows="2" placeholder="Contoh: Video prewedding"></textarea>
+        </label>
 
-      <label>
-        Deskripsi
-        <textarea formControlName="description" rows="2" placeholder="Contoh: Video prewedding"></textarea>
-      </label>
+        <div *ngIf="youtubeErrorMessage" class="alert-message error">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>{{ youtubeErrorMessage }}</span>
+        </div>
+        <div *ngIf="youtubeSuccessMessage" class="alert-message success">
+          <i class="fas fa-check-circle"></i>
+          <span>{{ youtubeSuccessMessage }}</span>
+        </div>
+
+        <button type="submit" class="primary-action" [disabled]="isYoutubeSaveDisabled">
+          <i class="fas" [class.fa-spinner]="isSavingYoutubeVideo" [class.fa-save]="!isSavingYoutubeVideo"></i>
+          <span>{{ isSavingYoutubeVideo ? 'Menyimpan...' : 'Simpan Video' }}</span>
+        </button>
+      </div>
 
       <div
         class="drop-zone video-cover-zone"
@@ -145,213 +292,31 @@
                 class="video-cover-preview"
                 (load)="onYoutubeCoverPreviewLoad($event)"
                 (error)="onYoutubeCoverPreviewError($event)"/>
-          <span>Ganti Cover Video / Thumbnail YouTube</span>
+          <span>Ganti Thumbnail Video</span>
         </ng-container>
 
         <ng-template #youtubeCoverEmpty>
           <i class="fas fa-play-circle"></i>
-          <strong>Upload Cover Video / Thumbnail YouTube</strong>
+          <strong>Upload Thumbnail Video</strong>
           <span>JPG, JPEG, PNG, WEBP. Maksimal {{ maxUploadSizeMb }} MB.</span>
         </ng-template>
       </div>
-
-      <div *ngIf="youtubeCoverOriginalSize || youtubeCoverCompressedSize" class="size-summary">
-        <span>Asli: {{ formatFileSize(youtubeCoverOriginalSize) }}</span>
-        <span>Hasil kompresi: {{ formatFileSize(youtubeCoverCompressedSize) }}</span>
-      </div>
-
-      <div *ngIf="youtubeErrorMessage" class="alert-message error">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>{{ youtubeErrorMessage }}</span>
-      </div>
-      <div *ngIf="youtubeSuccessMessage" class="alert-message success">
-        <i class="fas fa-check-circle"></i>
-        <span>{{ youtubeSuccessMessage }}</span>
-      </div>
-
-      <button type="submit" class="primary-action" [disabled]="isYoutubeSaveDisabled">
-        <i class="fas" [class.fa-spinner]="isSavingYoutubeVideo" [class.fa-save]="!isSavingYoutubeVideo"></i>
-        <span>{{ isSavingYoutubeVideo ? 'Menyimpan...' : 'Simpan Video' }}</span>
-      </button>
     </form>
 
-    <aside class="preview-panel">
-      <div class="panel-title">
+    <div *ngIf="videoItems.length" class="video-list">
+      <article *ngFor="let video of videoItems" class="video-item">
+        <button type="button" class="video-thumb" (click)="openPhotoVideo(video)" title="Buka video YouTube">
+          <img *ngIf="video.photo_url" [src]="video.photo_url" [alt]="video.description || 'Thumbnail video'" />
+          <i class="fas fa-play"></i>
+        </button>
         <div>
-          <h2>Mockup Tema</h2>
-          <p>Ilustrasi sederhana posisi foto di undangan.</p>
+          <strong>{{ video.description || 'Video Undangan' }}</strong>
+          <span>{{ video.url_video || video.video_url || video.link_video }}</span>
         </div>
-      </div>
-
-      <div class="theme-mockup">
-        <div class="theme-mockup__cover" [class.is-empty]="!getThemePreviewCoverUrl()">
-          <img *ngIf="getThemePreviewCoverUrl()" [src]="getThemePreviewCoverUrl()" alt="Preview cover gallery" />
-          <div *ngIf="!getThemePreviewCoverUrl()" class="theme-mockup__placeholder">
-            <i class="fas fa-camera"></i>
-            <span>Cover Gallery</span>
-          </div>
-          <span>Cover</span>
-        </div>
-        <div class="theme-mockup__label">Gallery</div>
-        <div class="theme-mockup__album">
-          <div
-            *ngFor="let photo of getThemePreviewAlbumItems(); let i = index"
-            class="theme-mockup__tile"
-            [class.is-empty]="!photo">
-            <img *ngIf="photo" [src]="photo.photo_url" [alt]="'Album foto ' + (i + 1)" />
-          </div>
-        </div>
-        <div class="theme-mockup__caption">Album</div>
-      </div>
-
-      <div class="preview-divider"></div>
-
-      <div class="panel-title panel-title--compact">
-        <div>
-          <h2>Crop Foto</h2>
-          <p>Pilih foto, geser posisi bila perlu, lalu simpan.</p>
-        </div>
-      </div>
-
-      <div
-        class="preview-frame photo-preview-box crop-surface"
-        [class.crop-surface--active]="!!previewUrl"
-        (pointerdown)="startCropDrag($event, uploadForm)"
-        (pointermove)="moveCropDrag($event)"
-        (pointerup)="endCropDrag()"
-        (pointercancel)="endCropDrag()"
-        (pointerleave)="endCropDrag()">
-        <img
-          #previewImage
-          *ngIf="previewUrl; else previewEmpty"
-          [src]="previewUrl"
-          alt="Preview foto"
-          class="photo-preview-image"
-          [style.object-fit]="uploadForm.value.display_mode || 'cover'"
-          [style.object-position]="getPreviewObjectPosition(uploadForm.value)"
-          (load)="onPreviewImageLoad($event)"
-          (error)="onPreviewImageError($event)" />
-        <ng-template #previewEmpty>
-        <div class="preview-empty photo-preview-empty">
-          <i class="fas fa-image"></i>
-          <span>Upload foto untuk membuka crop otomatis.</span>
-        </div>
-        </ng-template>
-      </div>
-
-      <p class="crop-hint" *ngIf="previewUrl">Geser foto di dalam frame untuk mengatur posisi. Area yang terlihat akan dipakai di undangan.</p>
-
-      <div class="crop-actions">
-        <button type="button" class="secondary-action" (click)="cancelUploadCrop()" [disabled]="isCompressing || isUploading">
-          Batal
+        <button type="button" class="danger-action" (click)="deletePhoto(video)">
+          <i class="fas fa-trash"></i>
+          Hapus
         </button>
-        <button type="submit" form="galleryUploadForm" class="primary-action" [disabled]="isUploadDisabled">
-          <i class="fas" [class.fa-spinner]="isCompressing || isUploading" [class.fa-save]="!isCompressing && !isUploading"></i>
-          <span *ngIf="isCompressing">Mengompresi...</span>
-          <span *ngIf="!isCompressing && isUploading">Menyimpan...</span>
-          <span *ngIf="!isCompressing && !isUploading">Simpan</span>
-        </button>
-      </div>
-    </aside>
-  </div>
-
-  <section class="photo-list-section">
-    <div class="list-header">
-      <div>
-        <h2>{{ activeTypeLabel }}</h2>
-        <p>{{ activePhotos.length }} foto tersimpan. Drag card untuk mengubah urutan.</p>
-      </div>
-      <span *ngIf="isSorting" class="saving-indicator">
-        <i class="fas fa-spinner"></i>
-        Menyimpan urutan
-      </span>
-    </div>
-
-    <div *ngIf="isLoading" class="loading-state">
-      <i class="fas fa-spinner"></i>
-      <span>Memuat foto...</span>
-    </div>
-
-    <div *ngIf="!isLoading && activePhotos.length === 0" class="empty-state">
-      <i class="fas fa-camera"></i>
-      <h3>Belum ada foto galeri.</h3>
-      <p>Upload minimal 1 foto. Foto pertama akan menjadi Cover Gallery.</p>
-    </div>
-
-    <div
-      *ngIf="!isLoading && activePhotos.length > 0"
-      cdkDropList
-      [cdkDropListData]="activePhotos"
-      class="photo-grid"
-      (cdkDropListDropped)="dropPhoto($event)">
-      <article class="photo-card" *ngFor="let photo of activePhotos; let i = index" cdkDrag>
-        <button type="button" class="drag-handle" cdkDragHandle title="Geser foto untuk mengubah urutan">
-          <i class="fas fa-grip-vertical"></i>
-        </button>
-
-        <div class="photo-card__topline">
-          <strong>Foto #{{ i + 1 }}</strong>
-          <button
-            type="button"
-            class="info-button"
-            title="Foto pertama digunakan sebagai gambar utama galeri pada sebagian besar tema.">
-            <i class="fas fa-info-circle"></i>
-          </button>
-        </div>
-
-        <div class="thumb" [class.is-image-missing]="!photo.photo_url">
-          <img
-            *ngIf="photo.photo_url"
-            [src]="photo.photo_url"
-            [alt]="photo.description || 'Foto undangan'"
-            [style.object-fit]="photo.display_mode"
-            [style.object-position]="getPhotoObjectPosition(photo)"
-            (error)="onPhotoImageError($event)" />
-          <span class="placement-badge" [ngClass]="getPlacementBadgeClass(i)">
-            {{ getPlacementBadgeLabel(i) }}
-          </span>
-          <span *ngIf="photo.is_featured" class="featured-badge">Featured</span>
-          <button *ngIf="hasPhotoVideo(photo)" type="button" class="video-play-badge" (click)="openPhotoVideo(photo)" title="Buka video YouTube">
-            <i class="fas fa-play"></i>
-          </button>
-        </div>
-
-        <div class="photo-body">
-          <div class="placement-summary">
-            <span>Posisi:</span>
-            <strong>{{ getPlacementTitle(i) }}</strong>
-          </div>
-          <div class="placement-tags">
-            <span *ngFor="let label of getPlacementUses(i)" class="placement-tag">{{ label }}</span>
-          </div>
-          <p class="placement-note">{{ getPlacementDescription(i) }}</p>
-          <p class="description">{{ photo.description || 'Tanpa deskripsi' }}</p>
-          <div class="meta-grid">
-            <span>Tipe</span><strong>{{ photo.photo_type }}</strong>
-            <span>Posisi</span><strong>{{ photo.position }}</strong>
-            <span>Mode</span><strong>{{ photo.display_mode }}</strong>
-            <span>Focal</span>
-            <strong>
-              {{ photo.focal_point_x !== null && photo.focal_point_y !== null ? photo.focal_point_x + '% ' + photo.focal_point_y + '%' : '-' }}
-            </strong>
-            <span>Ukuran</span><strong>{{ formatFileSize(photo.compressed_size) }}</strong>
-          </div>
-        </div>
-
-        <div class="card-actions">
-          <button type="button" class="secondary-action" (click)="openEdit(photo)">
-            <i class="fas fa-pen"></i>
-            Edit
-          </button>
-          <button type="button" class="secondary-action" [disabled]="photo.is_featured" (click)="setFeatured(photo)">
-            <i class="fas fa-star"></i>
-            Jadikan Utama
-          </button>
-          <button type="button" class="danger-action" (click)="deletePhoto(photo)">
-            <i class="fas fa-trash"></i>
-            Hapus
-          </button>
-        </div>
       </article>
     </div>
   </section>
@@ -360,8 +325,8 @@
     <form class="edit-modal" [formGroup]="editForm" (ngSubmit)="submitEdit()" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div>
-          <h2>Edit Foto</h2>
-          <p>Image opsional. Kosongkan jika hanya ingin mengubah metadata preset.</p>
+          <h2>Edit Posisi Foto</h2>
+          <p>Geser area fokus; hasilnya langsung terlihat di Mockup Tema.</p>
         </div>
         <button type="button" class="icon-button" (click)="closeEdit()" aria-label="Tutup modal edit">
           <i class="fas fa-times"></i>
@@ -386,28 +351,89 @@
           </div>
           <p class="crop-hint">Geser foto untuk mengatur posisi crop.</p>
 
-          <button type="button" class="secondary-action full" (click)="browseEditFiles()">
-            <i class="fas fa-image"></i>
-            Ganti image
-          </button>
-          <input
-            id="editPhotoFileInput"
-            class="sr-only"
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            (change)="onEditFileSelected($event)" />
-
-          <div *ngIf="editOriginalSize || editCompressedSize" class="size-summary stacked">
-            <span>Asli: {{ formatFileSize(editOriginalSize) }}</span>
-            <span>Hasil kompresi: {{ formatFileSize(editCompressedSize) }}</span>
+          <div class="editor-quick-actions">
+            <button type="button" class="secondary-action" (click)="triggerReplacePhoto(editingPhoto, $event, replacePhotoInput)">
+              <i class="fas fa-sync-alt"></i>
+              Ganti Foto
+            </button>
+            <button type="button" class="danger-action" (click)="removeEditingPhoto($event)">
+              <i class="fas fa-trash"></i>
+              Hapus Foto
+            </button>
           </div>
         </div>
 
         <div class="edit-fields">
-          <label>
-            Deskripsi
-            <textarea formControlName="description" rows="3"></textarea>
-          </label>
+          <div class="editor-section">
+            <span class="editor-label">Mode Tampilan</span>
+            <div class="mode-toggle" role="group" aria-label="Mode tampilan foto">
+              <button
+                type="button"
+                [class.active]="editForm.value.display_mode === 'cover'"
+                (click)="setEditDisplayMode('cover')">
+                Cover
+              </button>
+              <button
+                type="button"
+                [class.active]="editForm.value.display_mode === 'contain'"
+                (click)="setEditDisplayMode('contain')">
+                Contain
+              </button>
+            </div>
+          </div>
+
+          <div class="editor-section">
+            <label class="editor-order-field">
+              Urutan Foto
+              <select formControlName="sort_order">
+                <option *ngFor="let order of photoOrderOptions" [ngValue]="order">
+                  Posisi {{ order }}
+                </option>
+              </select>
+            </label>
+          </div>
+
+          <div class="editor-section">
+            <span class="editor-label">Geser Posisi</span>
+            <div class="nudge-pad" aria-label="Kontrol geser posisi foto">
+              <button type="button" class="nudge-up" (click)="nudgeEditPosition('up')" aria-label="Geser foto ke atas">
+                <i class="fas fa-chevron-up"></i>
+              </button>
+              <button type="button" class="nudge-left" (click)="nudgeEditPosition('left')" aria-label="Geser foto ke kiri">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button type="button" class="nudge-reset" (click)="resetEditPosition()" aria-label="Reset posisi foto">
+                Reset
+              </button>
+              <button type="button" class="nudge-right" (click)="nudgeEditPosition('right')" aria-label="Geser foto ke kanan">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+              <button type="button" class="nudge-down" (click)="nudgeEditPosition('down')" aria-label="Geser foto ke bawah">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="editor-section slider-section">
+            <label>
+              Posisi Horizontal
+              <input
+                type="range"
+                min="0"
+                max="100"
+                [value]="getEditFocalPoint('x')"
+                (input)="setEditFocalPoint('x', $any($event.target).value)" />
+            </label>
+            <label>
+              Posisi Vertikal
+              <input
+                type="range"
+                min="0"
+                max="100"
+                [value]="getEditFocalPoint('y')"
+                (input)="setEditFocalPoint('y', $any($event.target).value)" />
+            </label>
+          </div>
 
           <div class="inline-actions">
             <label class="check-control">
@@ -427,7 +453,7 @@
         <button type="button" class="secondary-action" (click)="closeEdit()">Batal</button>
         <button type="submit" class="primary-action" [disabled]="editForm.invalid || isEditCompressing || isUpdating">
           <i class="fas" [class.fa-spinner]="isEditCompressing || isUpdating" [class.fa-save]="!isEditCompressing && !isUpdating"></i>
-          Simpan Perubahan
+          Simpan Posisi
         </button>
       </div>
     </form>

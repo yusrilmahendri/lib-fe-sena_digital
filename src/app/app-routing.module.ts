@@ -45,6 +45,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
 import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
+import { ReligionTemplatesComponent } from './dashboard-admin/religion-templates/religion-templates.component';
 import { VerifyAccountComponent } from './verify-account/verify-account.component';
 import { VerifyAccountCodeComponent } from './verify-account-code/verify-account-code.component';
 import { VerifyAccountSuccessComponent } from './verify-account-success/verify-account-success.component';
@@ -124,6 +125,7 @@ const routes: Routes = [
       { path: 'testimoni', component: TestimoniesComponent },
       { path: 'website', component: WebsiteComponent },
       { path: 'music-catalog', component: MusicCatalogComponent },
+      { path: 'religion-templates', component: ReligionTemplatesComponent },
       { path: 'video', component: VideoComponent },
       {
         path: 'pengaturan',
@@ -131,6 +133,7 @@ const routes: Routes = [
           { path: 'aplikasi', component: SettingsAplicationComponent },
           { path: 'paket', component: SettingsBundleComponent },
           { path: 'pembayaran', component: SettingsPaymentComponent },
+          { path: 'template-agama', redirectTo: '/admin/religion-templates', pathMatch: 'full' },
         ],
       },
     ],

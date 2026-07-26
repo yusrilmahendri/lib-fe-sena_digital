@@ -168,8 +168,31 @@ body {
 .table-wrapper {
   max-width: 100%;
   overflow-x: auto;
+  scrollbar-color: #9ca3af #f3f4f6;
+  scrollbar-width: thin;
   width: 100%;
   -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar,
+.table-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track,
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 999px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb,
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 999px;
+}
+
+.table-scroll-hint {
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -177,8 +200,8 @@ body {
   .riwayat-ucapan-page,
   main.container {
     max-width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
     width: 100% !important;
   }
 
@@ -186,8 +209,9 @@ body {
   .guest-stats-grid,
   .ucapan-stats-grid,
   .stats-grid {
-    grid-template-columns: 1fr !important;
-    gap: 14px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
     width: 100% !important;
@@ -197,8 +221,6 @@ body {
   .guest-stat-card,
   .ucapan-stat-card,
   .stat-card,
-  .data-ucapan-card,
-  .table-card,
   .card-custom {
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -206,26 +228,223 @@ body {
     width: 100% !important;
   }
 
+  .card-custom {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    min-height: 112px;
+    overflow: hidden;
+    padding: 12px 10px 11px 12px !important;
+  }
+
+  .card-custom .side-bar {
+    height: 100%;
+    top: 0;
+    width: 4px;
+  }
+
+  .card-custom .d-flex {
+    align-items: center !important;
+    gap: 8px;
+  }
+
+  .card-custom .d-flex p {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1.25;
+    margin: 0 !important;
+  }
+
+  .card-custom i {
+    flex: 0 0 auto;
+    font-size: 0.9rem !important;
+  }
+
+  .card-custom .text-large {
+    display: block;
+    font-size: 26px !important;
+    font-weight: 900;
+    line-height: 1;
+    margin: 10px 0 6px !important;
+  }
+
+  .card-custom > p:last-child {
+    font-size: 11px !important;
+    line-height: 1.25;
+    margin: 0 !important;
+  }
+
   .data-ucapan-card,
   .table-card {
-    padding: 18px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden;
+    padding: 16px 12px !important;
+    width: 100% !important;
   }
 
   #search {
     max-width: 100% !important;
     width: 100% !important;
   }
+
+  .data-ucapan-card > .d-flex:first-child {
+    align-items: stretch !important;
+  }
+
+  .data-ucapan-card > .d-flex:first-child > div {
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .ucapan-filter,
+  .filter-buttons {
+    gap: 8px !important;
+  }
+
+  .ucapan-filter .btn,
+  .filter-buttons .btn {
+    border-radius: 10px;
+    font-size: 0.72rem;
+    min-height: 32px;
+    padding: 0.28rem 0.5rem;
+  }
+
+  .table-scroll-hint {
+    align-items: center;
+    background: #fff1f7;
+    border: 1px solid #f9a8d4;
+    border-radius: 999px;
+    color: #be185d;
+    display: inline-flex;
+    font-size: 0.76rem;
+    font-weight: 800;
+    gap: 7px;
+    line-height: 1;
+    margin: 2px 0 10px;
+    padding: 8px 12px;
+  }
+
+  .table-responsive,
+  .table-wrapper {
+    margin-top: 2px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-color: #4b5563 #e5e7eb;
+    scrollbar-width: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-responsive::-webkit-scrollbar,
+  .table-wrapper::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .table-responsive::-webkit-scrollbar-track,
+  .table-wrapper::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 10px;
+  }
+
+  .table-responsive::-webkit-scrollbar-thumb,
+  .table-wrapper::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+  }
+
+  .table-responsive table {
+    border-collapse: separate;
+    min-width: 760px;
+    white-space: nowrap;
+  }
+
+  .table-responsive th,
+  .table-responsive td {
+    font-size: 0.78rem;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  .table-responsive td .text-truncate {
+    max-width: 260px !important;
+  }
 }
 
 @media (max-width: 480px) {
-  .visitor-stat-card,
-  .guest-stat-card,
-  .ucapan-stat-card,
-  .stat-card,
   .data-ucapan-card,
-  .table-card,
-  .card-custom {
+  .table-card {
     max-width: calc(100vw - 20px) !important;
     width: calc(100vw - 20px) !important;
+  }
+
+  .ucapan-stats-grid {
+    gap: 10px !important;
+  }
+
+  .card-custom {
+    min-height: 108px;
+    padding: 11px 9px 10px 11px !important;
+  }
+
+  .card-custom .d-flex p {
+    font-size: 11px !important;
+  }
+
+  .card-custom .text-large {
+    font-size: 24px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .container,
+  .riwayat-ucapan-page,
+  main.container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .ucapan-stats-grid {
+    gap: 8px !important;
+  }
+
+  .card-custom {
+    border-radius: 12px;
+    min-height: 104px;
+    padding: 10px 8px 9px 10px !important;
+  }
+
+  .card-custom .d-flex {
+    gap: 6px;
+  }
+
+  .card-custom .d-flex p {
+    font-size: 10.5px !important;
+  }
+
+  .card-custom i {
+    font-size: 0.8rem !important;
+  }
+
+  .card-custom .text-large {
+    font-size: 23px !important;
+    margin: 9px 0 5px !important;
+  }
+
+  .card-custom > p:last-child {
+    font-size: 10px !important;
+  }
+
+  .data-ucapan-card,
+  .table-card {
+    max-width: calc(100vw - 16px) !important;
+    padding: 14px 10px !important;
+    width: calc(100vw - 16px) !important;
+  }
+
+  .table-scroll-hint {
+    font-size: 0.7rem;
+    padding: 7px 10px;
   }
 }

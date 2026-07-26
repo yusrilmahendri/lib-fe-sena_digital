@@ -198,6 +198,24 @@
   }
 }
 
+.field-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    min-width: 0;
+  }
+}
+
+.field-title__icon {
+  flex: 0 0 auto;
+  color: #25d366;
+  font-size: 17px;
+  line-height: 1;
+}
+
 .status-badge {
   background: #f1f5f9;
   color: #475569;
@@ -346,10 +364,24 @@ textarea.form-control {
   background: linear-gradient(180deg, #ecfdf5 0%, #f8fafc 100%);
 }
 
+.whatsapp-preview__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.whatsapp-preview__logo {
+  color: #25d366;
+  font-size: 20px;
+  line-height: 1;
+}
+
 .phone-bar {
   display: flex;
   gap: 5px;
-  margin-bottom: 18px;
+  margin-bottom: 0;
 
   span {
     width: 8px;

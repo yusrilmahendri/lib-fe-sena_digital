@@ -46,6 +46,9 @@ export class BagiUndanganComponent implements OnInit {
   public generatedGuests: GuestInvitationRecord[] = [];
   public isImportingGuests = false;
   public isGuestListLoading = false;
+  public deletingGuestId: number | null = null;
+  public selectedGuestForDelete: GuestInvitationRecord | null = null;
+  public showDeleteGuestModal = false;
 
   get guestStorageWarningMessage(): string {
     return 'Daftar tamu tersimpan pada akun Anda dan dapat diakses dari perangkat lain.';
@@ -271,6 +274,94 @@ export class BagiUndanganComponent implements OnInit {
 
   public trackByGuest(index: number, guest: GuestInvitationRecord): string {
     return `${guest.id || guest.guestToken || guest.createdAt}-${guest.name}-${index}`;
+  }
+
+  public confirmDeleteGuest(guest: GuestInvitationRecord, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (!this.isGuestDeletable(guest) || this.deletingGuestId !== null) {
+      return;
+    }
+
+    this.selectedGuestForDelete = guest;
+    this.showDeleteGuestModal = true;
+  }
+
+  public cancelDeleteGuest(): void {
+    if (this.deletingGuestId) {
+      return;
+    }
+
+    this.showDeleteGuestModal = false;
+    this.selectedGuestForDelete = null;
+  }
+
+  public deleteGuestLink(): void {
+    const guest = this.selectedGuestForDelete;
+    const guestId = this.getGuestPrimaryId(guest);
+
+    if (!guest || !guestId || this.deletingGuestId !== null) {
+      return;
+    }
+
+    this.deletingGuestId = guestId;
+    this.dashboardService.deleteInvitationGuest(guestId).subscribe({
+      next: (response) => {
+        this.handleGuestDeleteSuccess(guestId, response, guest);
+      },
+      error: (error) => {
+        this.handleGuestDeleteError(error);
+      },
+      complete: () => {
+        this.deletingGuestId = null;
+      }
+    });
+  }
+
+  public isDeletingGuest(guest: GuestInvitationRecord): boolean {
+    const guestId = this.getGuestPrimaryId(guest);
+    return !!guestId && this.deletingGuestId === guestId;
+  }
+
+  public isGuestDeletable(guest: GuestInvitationRecord): boolean {
+    return this.getGuestPrimaryId(guest) !== null;
+  }
+
+  private handleGuestDeleteSuccess(
+    deletedId: number,
+    response: any,
+    deletedGuest: GuestInvitationRecord
+  ): void {
+    this.generatedGuests = this.generatedGuests.filter((item) => this.getGuestPrimaryId(item) !== deletedId);
+
+    if (this.generatedGuestUrl && this.getGuestInvitationUrl(deletedGuest) === this.generatedGuestUrl) {
+      this.generatedGuestUrl = '';
+    }
+
+    this.showDeleteGuestModal = false;
+    this.selectedGuestForDelete = null;
+    this.showNotice(response?.message || 'Link tamu berhasil dihapus.');
+  }
+
+  private handleGuestDeleteError(error: any): void {
+    const status = Number(error?.status);
+    const fallbackMessage = status === 403 || status === 404
+      ? 'Link tamu tidak ditemukan atau tidak dapat dihapus.'
+      : status === 409
+        ? 'Link tamu tidak dapat dihapus saat ini.'
+        : 'Link tamu gagal dihapus. Silakan coba lagi.';
+
+    this.showNotice(error?.error?.message || fallbackMessage);
+  }
+
+  private getGuestPrimaryId(guest: GuestInvitationRecord | null | undefined): number | null {
+    const id = Number(guest?.id);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  }
+
+  public getDeleteGuestName(): string {
+    return String(this.selectedGuestForDelete?.name || 'tamu ini').trim();
   }
 
   public downloadGuestTemplate(): void {

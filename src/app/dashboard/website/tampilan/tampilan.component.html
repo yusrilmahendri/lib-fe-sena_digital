@@ -6,8 +6,31 @@
         <p>Anda dapat mengubah tema sesuai dengan paket yang Anda pilih!</p>
       </div>
 
-      <div *ngIf="userPackageTier !== 'trial'" class="theme-picker__active-package">
-        Paket aktif: <strong>{{ getPackageLabel(userPackageTier) }}</strong>
+      <div class="theme-picker__header-actions">
+        <a
+          class="view-invitation-button"
+          *ngIf="invitationWebsiteUrl; else disabledInvitationButton"
+          [href]="invitationWebsiteUrl"
+          target="_blank"
+          rel="noopener noreferrer">
+          <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+          Lihat Website Undangan
+        </a>
+
+        <ng-template #disabledInvitationButton>
+          <button
+            type="button"
+            class="view-invitation-button"
+            disabled
+            title="Domain undangan belum tersedia">
+            <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+            Lihat Website Undangan
+          </button>
+        </ng-template>
+
+        <div *ngIf="userPackageTier !== 'trial'" class="theme-picker__active-package">
+          Paket aktif: <strong>{{ getPackageLabel(userPackageTier) }}</strong>
+        </div>
       </div>
     </header>
 
@@ -66,32 +89,35 @@
               loading="lazy"
               (error)="onImageError($event, theme)" />
 
-            <span class="theme-card__badge">{{ getPackageLabel(theme.requiredPackageTier || activeTab) }}</span>
-
-            <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__ribbon">TEMA DIGUNAKAN</span>
-
-            <button
-              type="button"
-              class="theme-card__preview"
-              [disabled]="!canPreviewTheme(theme)"
-              (click)="onPreviewClick(theme, $event)">
-              <i class="far fa-eye" aria-hidden="true"></i>
-              Preview
-            </button>
-
             <div *ngIf="isCardLocked(theme)" class="theme-card__lock">
               <i class="fas fa-lock" aria-hidden="true"></i>
             </div>
           </div>
 
           <div class="theme-card__body">
-            <h3>{{ getThemeDisplayName(theme) }}</h3>
+            <div class="theme-card__header">
+              <h3 class="theme-card__title">{{ getThemeDisplayName(theme) }}</h3>
+
+              <button
+                type="button"
+                class="theme-card__preview"
+                aria-label="Preview Tema"
+                title="Preview Tema"
+                [disabled]="!canPreviewTheme(theme)"
+                (click)="onPreviewClick(theme, $event)">
+                <i class="far fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="theme-card__meta">
+              <span class="theme-card__badge">{{ getPackageLabel(theme.requiredPackageTier || activeTab) }}</span>
+              <!-- <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__ribbon">Tema telah digunakan</span> -->
+            </div>
             <p>{{ getCardSubtitle(theme) }}</p>
             <small *ngIf="!theme.isConnectedToBackend" class="text-muted">Theme belum terhubung</small>
             <div class="theme-card__actions">
-              <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__used-label">
-                Tema Digunakan
-              </span>
+              <!-- <span *ngIf="shouldShowUsedTheme(theme)" class="theme-card__used-label">
+                Tema Digunakanss
+              </span> -->
               <button
                 *ngIf="shouldShowUseTheme(theme)"
                 type="button"

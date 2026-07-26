@@ -30,6 +30,14 @@
   margin-bottom: 20px;
 }
 
+.theme-picker__header-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
 .theme-picker__header h1 {
   color: var(--theme-text);
   font-size: 2.25rem;
@@ -45,14 +53,34 @@
 }
 
 .theme-picker__active-package,
-.theme-picker__trial-note {
+.theme-picker__trial-note,
+.view-invitation-button {
+  align-items: center;
   background: #fff2f7;
   border: 1px solid #ffd3e3;
   border-radius: 999px;
   color: #9a4d70;
+  display: inline-flex;
   font-size: 0.95rem;
+  gap: 8px;
+  justify-content: center;
   padding: 10px 16px;
   white-space: nowrap;
+}
+
+.view-invitation-button {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
+  border: 0;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.view-invitation-button:disabled {
+  background: #cbc7cb;
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .theme-picker__trial-note {
@@ -169,49 +197,36 @@
 
 .theme-card__badge,
 .theme-card__ribbon {
-  background: rgba(255, 255, 255, 0.95);
+  background: #fff2f7;
   border-radius: 999px;
   color: #9d5c7b;
-  font-size: 0.9rem;
-  left: 12px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
   letter-spacing: 0.12em;
-  padding: 8px 14px;
-  position: absolute;
+  padding: 6px 10px;
   text-transform: uppercase;
-  top: 12px;
-  z-index: 2;
 }
 
 .theme-card__ribbon {
   background: #3fb70e;
   color: #ffffff;
-  font-size: 0.82rem;
-  font-weight: 700;
   letter-spacing: 0.08em;
-  left: 12px;
-  top: 12px;
-}
-
-.theme-card__badge {
-  top: 52px;
 }
 
 .theme-card__preview {
   align-items: center;
-  background: rgba(255, 255, 255, 0.92);
+  background: #fff2f7;
   border: 0;
-  border-radius: 999px;
-  bottom: 18px;
-  color: #2f2730;
+  border-radius: 50%;
+  color: var(--theme-primary-dark);
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.98rem;
-  font-weight: 600;
-  gap: 8px;
-  left: 16px;
-  padding: 10px 16px;
-  position: absolute;
-  z-index: 2;
+  flex: 0 0 34px;
+  font-size: 0.95rem;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
 }
 
 .theme-card__lock {
@@ -233,11 +248,31 @@
   padding: 16px 4px 0;
 }
 
-.theme-card__body h3 {
+.theme-card__header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.theme-card__title {
   color: var(--theme-text);
+  flex: 1 1 auto;
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 0 0 4px;
+  line-height: 1.25;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.theme-card__meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 6px;
 }
 
 .theme-card__body p {
@@ -784,6 +819,11 @@
     margin-bottom: 14px;
   }
 
+  .theme-picker__header-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
   .theme-picker__header h1 {
     font-size: 1.55rem;
     line-height: 1.15;
@@ -800,6 +840,11 @@
     text-align: center;
     font-size: 0.85rem;
     padding: 9px 12px;
+  }
+
+  .view-invitation-button {
+    width: 100%;
+    white-space: normal;
   }
 
   .theme-tabs {
@@ -839,33 +884,25 @@
 
   .theme-card__badge,
   .theme-card__ribbon {
-    left: 8px;
-    top: 8px;
     font-size: 0.62rem;
     padding: 5px 8px;
     letter-spacing: 0.08em;
   }
 
-  .theme-card__badge {
-    top: 38px;
-  }
-
   .theme-card__preview {
-    left: 8px;
-    bottom: 8px;
-    padding: 7px 10px;
-    font-size: 0.78rem;
-    gap: 5px;
+    flex-basis: 30px;
+    font-size: 0.82rem;
+    height: 30px;
+    width: 30px;
   }
 
   .theme-card__body {
     padding: 12px;
   }
 
-  .theme-card__body h3 {
+  .theme-card__title {
     font-size: 0.95rem;
     line-height: 1.25;
-    margin-bottom: 4px;
   }
 
   .theme-card__body p {
@@ -932,6 +969,10 @@
     margin-bottom: 18px;
   }
 
+  .theme-picker__header-actions {
+    align-items: flex-end;
+  }
+
   .theme-picker__header h1 {
     font-size: 1.75rem;
     line-height: 1.15;
@@ -987,31 +1028,24 @@
 
   .theme-card__badge,
   .theme-card__ribbon {
-    left: 14px;
-    top: 14px;
     font-size: 0.72rem;
     padding: 6px 10px;
   }
 
-  .theme-card__badge {
-    top: 46px;
-  }
-
   .theme-card__preview {
-    left: 14px;
-    bottom: 14px;
-    padding: 8px 14px;
-    font-size: 0.85rem;
+    flex-basis: 34px;
+    font-size: 0.9rem;
+    height: 34px;
+    width: 34px;
   }
 
   .theme-card__body {
     padding: 18px;
   }
 
-  .theme-card__body h3 {
+  .theme-card__title {
     font-size: 1.15rem;
     line-height: 1.25;
-    margin-bottom: 6px;
   }
 
   .theme-card__body p {

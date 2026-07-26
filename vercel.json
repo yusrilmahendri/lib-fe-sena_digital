@@ -1,0 +1,27 @@
+{
+  "rewrites": [
+    {
+      "source": "/wedding/:domain",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|facebot|WhatsApp|whatsapp|TelegramBot|telegrambot|Twitterbot|twitterbot|LinkedInBot|linkedinbot|Slackbot|slackbot|Discordbot|discordbot|Pinterestbot|pinterestbot|vkShare|vkshare|SkypeUriPreview|skypeuripreview).*"
+        }
+      ],
+      "destination": "/api/og/wedding/:domain"
+    },
+    {
+      "source": "/wedding/:domain/checkin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/wedding/:domain",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

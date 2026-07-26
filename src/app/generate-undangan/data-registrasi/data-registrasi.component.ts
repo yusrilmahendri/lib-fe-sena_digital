@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges, OnChanges } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
@@ -42,16 +42,20 @@ export class DataRegistrasiComponent implements OnInit {
   ngOnInit(): void {
     this.initMasterDataPaket();
 
-    this.formRegis = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      paket_undangan_id: ['', Validators.required],
-      price: [this.selectedPrice],
-      domain: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
-      kode_pemesanan: [null],
-    });
+    this.formRegis = this.fb.group(
+      {
+        name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+        paket_undangan_id: ['', Validators.required],
+        price: [this.selectedPrice],
+        domain: ['', [Validators.required, Validators.minLength(3)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(8)]],
+        password_confirmation: ['', [Validators.required]],
+        phone: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
+        kode_pemesanan: [null],
+      },
+      { validators: this.passwordMatchValidator }
+    );
 
     if (this.formData && Object.keys(this.formData).length > 0) {
       this.formRegis.patchValue(this.formData.formData);
@@ -157,8 +161,12 @@ export class DataRegistrasiComponent implements OnInit {
   private persistWithoutPassword(key: string, value: any): void {
     const persisted = JSON.parse(JSON.stringify(value || {}));
     delete persisted.password;
+    delete persisted.password_confirmation;
     if (persisted?.formData?.password) {
       delete persisted.formData.password;
+    }
+    if (persisted?.formData?.password_confirmation) {
+      delete persisted.formData.password_confirmation;
     }
     localStorage.setItem(key, JSON.stringify(persisted));
   }
@@ -175,7 +183,11 @@ export class DataRegistrasiComponent implements OnInit {
   private getBackendErrorMessage(error: any): string {
     const errors = error?.error?.errors;
     if (errors && typeof errors === 'object') {
-      const firstKey = Object.keys(errors)[0];
+      const firstKey = errors.password_confirmation
+        ? 'password_confirmation'
+        : errors.password
+          ? 'password'
+          : Object.keys(errors)[0];
       const firstValue = firstKey ? errors[firstKey] : null;
       const message = Array.isArray(firstValue) ? firstValue[0] : firstValue;
       if (message) return this.translateBackendMessage(String(message), firstKey);
@@ -192,7 +204,28 @@ export class DataRegistrasiComponent implements OnInit {
       if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
     }
     if (lower.includes('email') && (lower.includes('taken') || lower.includes('already'))) return 'Email sudah terdaftar.';
+    if (field === 'password_confirmation' || (lower.includes('password') && lower.includes('confirmation'))) {
+      return 'Ulangi password tidak sama dengan password.';
+    }
+    if (field === 'password' && (lower.includes('at least') || lower.includes('min') || lower.includes('minimal'))) {
+      return 'Password minimal 8 karakter.';
+    }
     return message || 'Ada kesalahan dalam sistem.';
+  }
+
+  getPasswordConfirmationErrorMessage(): string {
+    const control = this.formRegis?.get('password_confirmation');
+    if (!control?.touched) return '';
+    if (control.errors?.['required']) return 'Ulangi password wajib diisi.';
+    if (this.formRegis.errors?.['passwordMismatch']) return 'Ulangi password tidak sama dengan password.';
+    return '';
+  }
+
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password')?.value;
+    const confirmation = control.get('password_confirmation')?.value;
+    if (!password || !confirmation) return null;
+    return password === confirmation ? null : { passwordMismatch: true };
   }
 
 }

@@ -7,6 +7,48 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+.payment-loading,
+.payment-config-error {
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  color: #374151;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+
+  i {
+    color: #ffa0ae;
+    font-size: 18px;
+    margin-top: 2px;
+  }
+
+  strong {
+    color: #111827;
+    display: block;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+
+  p {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.payment-config-error {
+  background: #fff7ed;
+  border-color: #fed7aa;
+
+  i {
+    color: #ea580c;
+  }
+}
+
 // Form Group Styling
 .rp-form-group {
   margin-bottom: 20px;
@@ -25,67 +67,6 @@
   line-height: 1.4;
 }
 
-// Select Field Wrapper
-.rp-select-wrapper {
-  position: relative;
-
-  .rp-select {
-    width: 100%;
-    height: 48px;
-
-    ::ng-deep {
-      .ui-select-container {
-        border: 1.5px solid #e1e5e9;
-        border-radius: 8px;
-        height: 48px;
-
-        .ui-select-placeholder {
-          padding: 0 16px;
-          line-height: 45px;
-          font-size: 16px;
-          color: #9ca3af;
-          font-weight: 400;
-        }
-
-        .ui-select-match-text {
-          padding: 0 16px;
-          line-height: 45px;
-          font-size: 16px;
-          color: #1a1a1a;
-          font-weight: 400;
-        }
-
-        &.open,
-        &:focus-within {
-          border-color: #4ea0e4;
-          box-shadow: 0 0 0 3px rgba(78, 160, 228, 0.1);
-        }
-      }
-
-      .ui-select-dropdown {
-        border: 1px solid #e1e5e9;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-top: 4px;
-
-        .ui-select-choices-row {
-          padding: 12px 16px;
-          font-size: 16px;
-
-          &:hover {
-            background: #f8fafc;
-          }
-
-          &.active {
-            background: #4ea0e4;
-            color: white;
-          }
-        }
-      }
-    }
-  }
-}
-
 // Payment Section
 .rp-payment-section {
   margin-bottom: 24px;
@@ -96,6 +77,41 @@
     border-bottom: none;
     margin-bottom: 0;
   }
+}
+
+.payment-method-badge {
+  align-items: center;
+  background: #fff1f2;
+  border-radius: 999px;
+  color: #be123c;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+}
+
+.midtrans-payment-section .payment-method-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.rp-bank-card,
+.rp-midtrans-card {
+  background: #fbfcfe;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.rp-bank-photo {
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  display: block;
+  margin-bottom: 16px;
+  object-fit: cover;
+  width: 100%;
 }
 
 .rp-section-title {
@@ -119,8 +135,10 @@
   font-size: 16px;
   color: #374151;
   box-sizing: border-box;
+  text-align: left;
 
   &.rp-copyable {
+    border: 1.5px solid #e1e5e9;
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -265,6 +283,13 @@
   &:active {
     transform: translateY(0);
   }
+}
+
+.rp-alert {
+  color: #be123c;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0 0;
 }
 
 // Responsive Design

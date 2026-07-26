@@ -24,6 +24,7 @@ type PhotoFormValue = {
   focal_point_x?: number | string | null;
   focal_point_y?: number | string | null;
   is_featured?: boolean | null;
+  sort_order?: number | string | null;
 };
 
 type YoutubeVideoFormValue = {
@@ -39,7 +40,6 @@ type YoutubeVideoFormValue = {
 export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   readonly photoTypes: Array<{ value: PhotoType; label: string; empty: string }> = [
     { value: 'gallery', label: 'Foto Galeri', empty: 'Belum ada foto galeri.' },
-    { value: 'collage', label: 'Foto Kolase', empty: 'Belum ada foto kolase.' },
   ];
 
   readonly positionOptions: Array<{ value: PhotoPosition; label: string }> = [
@@ -74,6 +74,8 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   isEditCompressing = false;
   isUpdating = false;
   isSavingYoutubeVideo = false;
+  isSlotUploading = false;
+  uploadingSlot: 'cover' | 'gallery' | null = null;
 
   previewUrl: string | null = null;
   editPreviewUrl: string | null = null;
@@ -90,6 +92,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   youtubeErrorMessage = '';
   youtubeSuccessMessage = '';
   editingPhoto: UserPhoto | null = null;
+  replaceTargetPhoto: UserPhoto | null = null;
   userData: any = null;
   previewSessionId = 0;
 
@@ -101,6 +104,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   private readonly allowedCoverExtensions = ['jpg', 'jpeg', 'png', 'webp'];
   private readonly notyf = new Notyf({ duration: 3000, position: { x: 'right', y: 'top' } });
   private activeCropForm: FormGroup | null = null;
+  showAllGalleryPhotos = false;
 
   constructor(private dashboardSvc: DashboardService) {}
 
@@ -119,7 +123,27 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   get activePhotos(): UserPhoto[] {
-    return this.activeType === 'gallery' ? this.galleryPhotos : this.collagePhotos;
+    return this.getSortedPhotos(this.galleryPhotos.filter((photo) => !this.hasPhotoVideo(photo)));
+  }
+
+  get coverPhoto(): UserPhoto | null {
+    return this.activePhotos[0] || null;
+  }
+
+  get albumPhotos(): UserPhoto[] {
+    return this.activePhotos.slice(1);
+  }
+
+  get visibleAlbumPhotos(): UserPhoto[] {
+    return this.showAllGalleryPhotos ? this.albumPhotos : this.albumPhotos.slice(0, 7);
+  }
+
+  get hiddenAlbumPhotoCount(): number {
+    return Math.max(this.albumPhotos.length - this.visibleAlbumPhotos.length, 0);
+  }
+
+  get videoItems(): UserPhoto[] {
+    return this.galleryPhotos.filter((photo) => this.hasPhotoVideo(photo));
   }
 
   get activeTypeLabel(): string {
@@ -163,12 +187,12 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   }
 
   getThemePreviewCoverUrl(): string {
-    return this.activePhotos[0]?.photo_url || this.previewUrl || '';
+    return this.coverPhoto?.photo_url || '';
   }
 
   getThemePreviewAlbumItems(): Array<UserPhoto | null> {
-    const items: Array<UserPhoto | null> = this.activePhotos.slice(0, 4);
-    while (items.length < 4) {
+    const items: Array<UserPhoto | null> = this.visibleAlbumPhotos.slice(0, 8);
+    while (items.length < 8) {
       items.push(null);
     }
 
@@ -194,6 +218,10 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   get isYoutubeSaveDisabled(): boolean {
     return this.youtubeForm.invalid || this.isSavingYoutubeVideo || this.isCompressing;
+  }
+
+  get photoOrderOptions(): number[] {
+    return this.activePhotos.map((_, index) => index + 1);
   }
 
   previewUrlForYoutubeCover: string | null = null;
@@ -248,6 +276,140 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     }
   }
 
+  onCoverSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    if (file) {
+      const targetPhoto = this.coverPhoto;
+      void this.uploadGallerySlotFile(file, {
+        slot: 'cover',
+        isFeatured: true,
+        targetPhoto,
+        description: targetPhoto?.description || 'Cover Gallery',
+        metadata: targetPhoto ? this.getPhotoMetadataValue(targetPhoto, { is_featured: true }) : undefined,
+      });
+    }
+    input.value = '';
+  }
+
+  onGalleryFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    if (files.length) {
+      void this.uploadGallerySlotFiles(files);
+    }
+    input.value = '';
+  }
+
+  onGallerySlotKeydown(event: KeyboardEvent, input: HTMLInputElement): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      input.click();
+    }
+  }
+
+  onCoverSlotKeydown(event: KeyboardEvent, input: HTMLInputElement): void {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    this.handleCoverSlotClick(input);
+  }
+
+  onPhotoTileKeydown(event: KeyboardEvent, photo: UserPhoto): void {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    this.openEdit(photo);
+  }
+
+  handleCoverSlotClick(input: HTMLInputElement): void {
+    if (this.coverPhoto) {
+      this.openEdit(this.coverPhoto);
+      return;
+    }
+
+    input.click();
+  }
+
+  openEditFromAction(photo: UserPhoto | null, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (photo) {
+      this.openEdit(photo);
+    }
+  }
+
+  triggerReplacePhoto(photo: UserPhoto | null, event: Event, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!photo || this.isSlotUploading) {
+      return;
+    }
+
+    this.replaceTargetPhoto = photo;
+    input.click();
+  }
+
+  onReplacePhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] || null;
+    const targetPhoto = this.replaceTargetPhoto;
+
+    if (file && targetPhoto) {
+      const isCover = this.coverPhoto?.id === targetPhoto.id;
+      void this.uploadGallerySlotFile(file, {
+        slot: isCover ? 'cover' : 'gallery',
+        isFeatured: isCover || targetPhoto.is_featured,
+        targetPhoto,
+        description: targetPhoto.description || (isCover ? 'Cover Gallery' : 'Foto Gallery'),
+        metadata: this.getPhotoMetadataValue(targetPhoto, {
+          is_featured: isCover || targetPhoto.is_featured,
+        }),
+      });
+    }
+
+    this.replaceTargetPhoto = null;
+    input.value = '';
+  }
+
+  removeCover(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const photo = this.coverPhoto;
+    if (photo) {
+      void this.deletePhoto(photo);
+    }
+  }
+
+  removeGalleryPhoto(photo: UserPhoto, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    void this.deletePhoto(photo);
+  }
+
+  removeEditingPhoto(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const photo = this.editingPhoto;
+    if (!photo) {
+      return;
+    }
+
+    this.closeEdit();
+    void this.deletePhoto(photo);
+  }
+
+  toggleAllGalleryPhotos(): void {
+    this.showAllGalleryPhotos = !this.showAllGalleryPhotos;
+  }
+
   preventDropDefault(event: DragEvent): void {
     event.preventDefault();
   }
@@ -276,14 +438,14 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
     this.isUploading = true;
     this.clearMessages();
-    const formData = this.buildPhotoFormData(this.uploadForm.value as PhotoFormValue, this.activeType, this.compressedFile);
+    const formData = this.buildPhotoFormData(this.uploadForm.value as PhotoFormValue, 'gallery', this.compressedFile);
 
     this.dashboardSvc.create(DashboardServiceType.USER_PHOTOS, formData).subscribe({
       next: () => {
-        this.notyf.success(`${this.activeTypeLabel} berhasil diupload.`);
-        this.successMessage = `${this.activeTypeLabel} berhasil disimpan.`;
+        this.notyf.success('Foto galeri berhasil diupload.');
+        this.successMessage = 'Foto galeri berhasil disimpan.';
         this.resetUploadForm();
-        this.loadPhotos(this.activeType);
+        this.loadPhotos('gallery');
       },
       error: (err) => {
         this.showError(this.resolveErrorMessage(err, 'Gagal upload foto.'));
@@ -349,6 +511,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       focal_point_x: photo.focal_point_x ?? null,
       focal_point_y: photo.focal_point_y ?? null,
       is_featured: photo.is_featured,
+      sort_order: this.getPhotoOrder(photo),
     });
     this.clearMessages();
   }
@@ -356,6 +519,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   closeEdit(): void {
     this.clearEditPreview();
     this.editingPhoto = null;
+    this.replaceTargetPhoto = null;
     this.editForm.reset();
   }
 
@@ -364,10 +528,23 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       return;
     }
 
+    const editingPhotoId = this.editingPhoto.id;
+    const requestedOrder = this.clamp(
+      Number((this.editForm.value as PhotoFormValue).sort_order || this.getPhotoOrder(this.editingPhoto)),
+      1,
+      Math.max(this.activePhotos.length, 1)
+    );
+    const currentOrder = this.getPhotoOrder(this.editingPhoto);
+    const shouldMovePhoto = requestedOrder !== currentOrder;
+    const metadataValue: PhotoFormValue = {
+      ...(this.editForm.value as PhotoFormValue),
+      sort_order: shouldMovePhoto ? currentOrder : requestedOrder,
+    };
+
     this.isUpdating = true;
     this.clearMessages();
     const formData = this.buildPhotoFormData(
-      this.editForm.value as PhotoFormValue,
+      metadataValue,
       this.editingPhoto.photo_type,
       this.editCompressedFile
     );
@@ -377,6 +554,13 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       next: () => {
         const type = this.editingPhoto?.photo_type || this.activeType;
         this.notyf.success('Metadata foto berhasil diperbarui.');
+        this.applyPhotoMetadataToLocal(editingPhotoId, metadataValue);
+
+        if (shouldMovePhoto) {
+          this.movePhotoToOrder(editingPhotoId, requestedOrder, { closeEditAfterSave: true });
+          return;
+        }
+
         this.closeEdit();
         this.loadPhotos(type);
       },
@@ -444,11 +628,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
             popup: 'gallery-delete-swal',
           },
         });
-        if (photo.photo_type === 'gallery') {
-          this.galleryPhotos = this.galleryPhotos.filter((item) => item.id !== photo.id);
-        } else {
-          this.collagePhotos = this.collagePhotos.filter((item) => item.id !== photo.id);
-        }
+        this.galleryPhotos = this.galleryPhotos.filter((item) => item.id !== photo.id);
       },
       error: (err) => {
         const message = this.resolveErrorMessage(err, 'Gagal hapus foto.');
@@ -476,24 +656,28 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     const previous = [...this.activePhotos];
     const next = [...this.activePhotos];
     moveItemInArray(next, event.previousIndex, event.currentIndex);
-    next.forEach((photo, index) => photo.sort_order = index + 1);
-    this.setPhotosForType(this.activeType, next);
-    this.isSorting = true;
+    this.persistPhotoOrder(this.normalizePhotoOrder(next), previous);
+  }
 
-    this.dashboardSvc.update(DashboardServiceType.USER_PHOTOS_SORT, '', {
-      items: next.map((photo) => ({ id: photo.id, sort_order: photo.sort_order })),
-    }).subscribe({
-      next: () => {
-        this.notyf.success('Urutan foto berhasil disimpan.');
-      },
-      error: (err) => {
-        this.setPhotosForType(this.activeType, previous);
-        this.showError(this.resolveErrorMessage(err, 'Gagal menyimpan urutan foto.'));
-      },
-      complete: () => {
-        this.isSorting = false;
+  movePhotoToOrder(photoId: number, targetOrder: number, options: { closeEditAfterSave?: boolean } = {}): void {
+    if (this.isSorting) {
+      return;
+    }
+
+    const previous = [...this.activePhotos];
+    const next = [...this.activePhotos];
+    const fromIndex = next.findIndex((photo) => photo.id === photoId);
+    const toIndex = this.clamp(targetOrder - 1, 0, Math.max(next.length - 1, 0));
+
+    if (fromIndex < 0 || fromIndex === toIndex) {
+      if (options.closeEditAfterSave) {
+        this.closeEdit();
       }
-    });
+      return;
+    }
+
+    moveItemInArray(next, fromIndex, toIndex);
+    this.persistPhotoOrder(this.normalizePhotoOrder(next), previous, options);
   }
 
   getPreviewObjectPosition(formValue: PhotoFormValue): string {
@@ -509,6 +693,65 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   getPhotoObjectPosition(photo: UserPhoto): string {
     return getUserPhotoObjectPosition(photo);
+  }
+
+  getLivePhotoObjectFit(photo: UserPhoto): PhotoDisplayMode {
+    if (this.isEditingPhoto(photo)) {
+      return this.editForm.value.display_mode || 'cover';
+    }
+
+    return photo.display_mode || 'cover';
+  }
+
+  getLivePhotoObjectPosition(photo: UserPhoto): string {
+    if (this.isEditingPhoto(photo)) {
+      return this.getPreviewObjectPosition(this.editForm.value as PhotoFormValue);
+    }
+
+    return this.getPhotoObjectPosition(photo);
+  }
+
+  setEditDisplayMode(mode: PhotoDisplayMode): void {
+    this.editForm.patchValue({ display_mode: mode });
+  }
+
+  getEditFocalPoint(axis: 'x' | 'y'): number {
+    const controlName = axis === 'x' ? 'focal_point_x' : 'focal_point_y';
+    return this.normalizeFocalPoint(this.editForm.value[controlName]) ?? 50;
+  }
+
+  setEditFocalPoint(axis: 'x' | 'y', value: number | string): void {
+    const controlName = axis === 'x' ? 'focal_point_x' : 'focal_point_y';
+    this.editForm.patchValue({
+      position: 'center',
+      [controlName]: this.clamp(Number(value) || 0, 0, 100),
+    });
+  }
+
+  nudgeEditPosition(direction: 'up' | 'down' | 'left' | 'right'): void {
+    const step = 5;
+    const x = this.getEditFocalPoint('x');
+    const y = this.getEditFocalPoint('y');
+
+    this.editForm.patchValue({
+      position: 'center',
+      display_mode: this.editForm.value.display_mode || 'cover',
+      focal_point_x: direction === 'left' ? this.clamp(x - step, 0, 100) : direction === 'right' ? this.clamp(x + step, 0, 100) : x,
+      focal_point_y: direction === 'up' ? this.clamp(y - step, 0, 100) : direction === 'down' ? this.clamp(y + step, 0, 100) : y,
+    });
+  }
+
+  resetEditPosition(): void {
+    this.editForm.patchValue({
+      position: 'center',
+      display_mode: 'cover',
+      focal_point_x: null,
+      focal_point_y: null,
+    });
+  }
+
+  trackByPhoto(_: number, photo: UserPhoto): number {
+    return photo.id;
   }
 
   hasPhotoVideo(photo: UserPhoto): boolean {
@@ -573,12 +816,10 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     forkJoin({
       profile: this.dashboardSvc.list(DashboardServiceType.USER_PROFILE, ''),
       gallery: this.dashboardSvc.list(DashboardServiceType.USER_PHOTOS, { type: 'gallery' }),
-      collage: this.dashboardSvc.list(DashboardServiceType.USER_PHOTOS, { type: 'collage' }),
     }).subscribe({
-      next: ({ profile, gallery, collage }) => {
+      next: ({ profile, gallery }) => {
         this.userData = profile?.data || profile;
         this.galleryPhotos = this.unwrapPhotos(gallery);
-        this.collagePhotos = this.unwrapPhotos(collage);
       },
       error: (err) => {
         this.showError(this.resolveErrorMessage(err, 'Gagal memuat data foto. Pastikan sesi login masih aktif.'));
@@ -619,8 +860,96 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
   private loadPhotos(type: PhotoType): void {
     this.dashboardSvc.list(DashboardServiceType.USER_PHOTOS, { type }).subscribe({
       next: (res) => this.setPhotosForType(type, this.unwrapPhotos(res)),
-      error: (err) => this.showError(this.resolveErrorMessage(err, `Gagal memuat ${type === 'gallery' ? 'foto galeri' : 'foto kolase'}.`)),
+      error: (err) => this.showError(this.resolveErrorMessage(err, 'Gagal memuat foto galeri.')),
     });
+  }
+
+  private async uploadGallerySlotFiles(files: File[]): Promise<void> {
+    const shouldFeatureFirstUpload = !this.coverPhoto && this.activePhotos.length === 0;
+    for (const [index, file] of files.entries()) {
+      await this.uploadGallerySlotFile(file, {
+        slot: 'gallery',
+        isFeatured: shouldFeatureFirstUpload && index === 0,
+        description: 'Foto Gallery',
+      });
+    }
+  }
+
+  private async uploadGallerySlotFile(
+    file: File,
+    options: {
+      slot: 'cover' | 'gallery';
+      isFeatured: boolean;
+      targetPhoto?: UserPhoto | null;
+      description: string;
+      metadata?: PhotoFormValue;
+    }
+  ): Promise<void> {
+    if (this.isSlotUploading) {
+      return;
+    }
+
+    this.clearMessages();
+    if (!this.validateFile(file)) {
+      return;
+    }
+
+    this.isSlotUploading = true;
+    this.uploadingSlot = options.slot;
+
+    try {
+      const compressed = await this.compressImage(file);
+      const compressedFile = this.ensureFile(compressed, this.buildCompressedFileName(file), compressed.type || 'image/webp');
+      const formData = this.buildPhotoFormData(
+        options.metadata || {
+          description: options.description,
+          position: 'center',
+          display_mode: 'cover',
+          focal_point_x: null,
+          focal_point_y: null,
+      is_featured: options.isFeatured,
+      sort_order: this.activePhotos.length + 1,
+        },
+        'gallery',
+        compressedFile
+      );
+
+      await new Promise<void>((resolve) => {
+        const request$ = options.targetPhoto
+          ? (() => {
+              formData.append('_method', 'PUT');
+              return this.dashboardSvc.createParam(DashboardServiceType.USER_PHOTOS, formData, `/${options.targetPhoto.id}`);
+            })()
+          : this.dashboardSvc.create(DashboardServiceType.USER_PHOTOS, formData);
+
+        request$.subscribe({
+          next: () => {
+            this.notyf.success(options.slot === 'cover' ? 'Cover Gallery berhasil disimpan.' : 'Foto Gallery berhasil disimpan.');
+            this.successMessage = options.slot === 'cover' ? 'Cover Gallery berhasil disimpan.' : 'Foto Gallery berhasil disimpan.';
+            if (options.targetPhoto && this.editingPhoto?.id === options.targetPhoto.id) {
+              this.closeEdit();
+            }
+            this.loadPhotos('gallery');
+          },
+          error: (err) => {
+            this.showError(this.resolveErrorMessage(err, 'Gagal upload foto gallery.'));
+            this.isSlotUploading = false;
+            this.uploadingSlot = null;
+            resolve();
+          },
+          complete: () => {
+            this.isSlotUploading = false;
+            this.uploadingSlot = null;
+            resolve();
+          }
+        });
+      });
+    } catch (error) {
+      console.error('[Gallery] slot upload compression failed', error);
+      this.showError('Gagal kompresi foto. Coba gunakan file JPG, PNG, WEBP, atau GIF lain.');
+      this.isSlotUploading = false;
+      this.uploadingSlot = null;
+    }
   }
 
   private createPhotoForm(requireFile: boolean): FormGroup {
@@ -632,6 +961,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       focal_point_x: new FormControl(null, [Validators.min(0), Validators.max(100)]),
       focal_point_y: new FormControl(null, [Validators.min(0), Validators.max(100)]),
       is_featured: new FormControl(false),
+      sort_order: new FormControl(1, [Validators.min(1)]),
     });
   }
 
@@ -876,6 +1206,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     formData.append('position', value.position || 'center');
     formData.append('display_mode', value.display_mode || 'cover');
     formData.append('is_featured', value.is_featured ? '1' : '0');
+    formData.append('sort_order', String(Number(value.sort_order || 0) || 0));
 
     const focalPointX = this.normalizeFocalPoint(value.focal_point_x);
     const focalPointY = this.normalizeFocalPoint(value.focal_point_y);
@@ -904,6 +1235,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
     formData.append('object_position', 'center center');
     formData.append('display_mode', 'cover');
     formData.append('is_featured', '0');
+    formData.append('sort_order', String(this.activePhotos.length + 1));
 
     if (selectedVideoCoverFile instanceof File) {
       formData.append('photo', selectedVideoCoverFile, selectedVideoCoverFile.name);
@@ -921,9 +1253,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
           ? response
           : [];
 
-    return raw
-      .map((photo: any) => this.normalizePhoto(photo))
-      .sort((a: UserPhoto, b: UserPhoto) => a.sort_order - b.sort_order);
+    return this.getSortedPhotos(raw.map((photo: any) => this.normalizePhoto(photo)));
   }
 
   private resolveManualPhotoUrl(photo: any): string {
@@ -993,10 +1323,90 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
 
   private setPhotosForType(type: PhotoType, photos: UserPhoto[]): void {
     if (type === 'gallery') {
-      this.galleryPhotos = photos;
+      this.galleryPhotos = this.getSortedPhotos(photos);
     } else {
-      this.collagePhotos = photos;
+      this.collagePhotos = this.getSortedPhotos(photos);
     }
+  }
+
+  private persistPhotoOrder(
+    nextPhotos: UserPhoto[],
+    previousPhotos: UserPhoto[],
+    options: { closeEditAfterSave?: boolean } = {}
+  ): void {
+    this.setPhotosForType('gallery', [...nextPhotos, ...this.videoItems]);
+    this.isSorting = true;
+
+    this.dashboardSvc.update(DashboardServiceType.USER_PHOTOS_SORT, '', {
+      items: nextPhotos.map((photo) => ({ id: photo.id, sort_order: photo.sort_order })),
+    }).subscribe({
+      next: () => {
+        this.notyf.success('Urutan foto berhasil disimpan.');
+        if (options.closeEditAfterSave) {
+          this.closeEdit();
+        }
+      },
+      error: (err) => {
+        this.setPhotosForType('gallery', [...previousPhotos, ...this.videoItems]);
+        this.showError(this.resolveErrorMessage(err, 'Gagal menyimpan urutan foto.'));
+      },
+      complete: () => {
+        this.isSorting = false;
+      }
+    });
+  }
+
+  private normalizePhotoOrder(photos: UserPhoto[]): UserPhoto[] {
+    return photos.map((photo, index) => ({
+      ...photo,
+      sort_order: index + 1,
+      is_featured: index === 0,
+    }));
+  }
+
+  private getSortedPhotos(photos: UserPhoto[]): UserPhoto[] {
+    return [...photos].sort((a, b) => this.getPhotoOrder(a) - this.getPhotoOrder(b));
+  }
+
+  private getPhotoOrder(photo: UserPhoto): number {
+    const order = Number(photo?.sort_order || 0);
+    return order > 0 ? order : Number.MAX_SAFE_INTEGER;
+  }
+
+  private applyPhotoMetadataToLocal(photoId: number, value: PhotoFormValue): void {
+    this.galleryPhotos = this.galleryPhotos.map((photo) => {
+      if (photo.id !== photoId) {
+        return photo;
+      }
+
+      return {
+        ...photo,
+        description: String(value.description || '').trim(),
+        position: value.position || 'center',
+        display_mode: value.display_mode || 'cover',
+        focal_point_x: this.normalizeFocalPoint(value.focal_point_x),
+        focal_point_y: this.normalizeFocalPoint(value.focal_point_y),
+        is_featured: !!value.is_featured,
+        sort_order: photo.sort_order,
+      };
+    });
+  }
+
+  private isEditingPhoto(photo: UserPhoto): boolean {
+    return !!this.editingPhoto && this.editingPhoto.id === photo.id;
+  }
+
+  private getPhotoMetadataValue(photo: UserPhoto, overrides: Partial<PhotoFormValue> = {}): PhotoFormValue {
+    return {
+      description: photo.description || '',
+      position: photo.position || 'center',
+      display_mode: photo.display_mode || 'cover',
+      focal_point_x: photo.focal_point_x ?? null,
+      focal_point_y: photo.focal_point_y ?? null,
+      is_featured: photo.is_featured,
+      sort_order: photo.sort_order || 1,
+      ...overrides,
+    };
   }
 
 
@@ -1009,6 +1419,7 @@ export class GalleryComponent implements AfterViewChecked, OnInit, OnDestroy {
       focal_point_x: null,
       focal_point_y: null,
       is_featured: false,
+      sort_order: 1,
     });
     this.clearPreview();
   }

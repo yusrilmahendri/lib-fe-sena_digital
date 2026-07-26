@@ -119,8 +119,69 @@
             (click)="shareGuestInvitationWhatsapp(guest.url, guest.name)">
             WhatsApp
           </button>
+          <button
+            type="button"
+            class="share-invitation__delete-btn"
+            title="Hapus Link Tamu"
+            aria-label="Hapus Link Tamu"
+            [disabled]="!isGuestDeletable(guest) || isDeletingGuest(guest)"
+            (click)="confirmDeleteGuest(guest, $event)">
+            <i
+              class="fas"
+              [class.fa-trash-alt]="!isDeletingGuest(guest)"
+              [class.fa-spinner]="isDeletingGuest(guest)"
+              [class.fa-spin]="isDeletingGuest(guest)"
+              aria-hidden="true"></i>
+            <span>{{ isDeletingGuest(guest) ? 'Menghapus...' : 'Hapus' }}</span>
+          </button>
         </div>
       </article>
     </div>
   </section>
+
+  <div
+    class="share-invitation__modal-backdrop"
+    *ngIf="showDeleteGuestModal"
+    role="presentation"
+    (click)="cancelDeleteGuest()">
+    <section
+      class="share-invitation__delete-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-guest-title"
+      (click)="$event.stopPropagation()">
+      <div class="share-invitation__delete-modal-icon" aria-hidden="true">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+      <h3 id="delete-guest-title">Hapus Link Tamu?</h3>
+      <p>
+        Link undangan untuk {{ getDeleteGuestName() }} akan dihapus dan tidak dapat digunakan kembali.
+      </p>
+      <p class="share-invitation__delete-modal-note">
+        Data kunjungan dan status kehadiran pada link ini juga akan terhapus.
+      </p>
+      <div class="share-invitation__delete-modal-actions">
+        <button
+          type="button"
+          class="share-invitation__secondary-btn"
+          [disabled]="!!deletingGuestId"
+          (click)="cancelDeleteGuest()">
+          Batal
+        </button>
+        <button
+          type="button"
+          class="share-invitation__delete-btn share-invitation__delete-btn--confirm"
+          [disabled]="!!deletingGuestId"
+          (click)="deleteGuestLink()">
+          <i
+            class="fas"
+            [class.fa-trash-alt]="!deletingGuestId"
+            [class.fa-spinner]="!!deletingGuestId"
+            [class.fa-spin]="!!deletingGuestId"
+            aria-hidden="true"></i>
+          <span>{{ deletingGuestId ? 'Menghapus...' : 'Hapus' }}</span>
+        </button>
+      </div>
+    </section>
+  </div>
 </section>

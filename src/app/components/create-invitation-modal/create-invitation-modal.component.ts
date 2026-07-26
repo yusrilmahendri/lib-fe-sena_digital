@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import {
@@ -94,6 +94,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   isSubmitting = false;
   errorMessage = '';
   showPassword = false;
+  showPasswordConfirmation = false;
 
   /** Password draft lives only for this open wizard instance. */
   private accountPasswordDraft = '';
@@ -166,36 +167,53 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     });
 
     // Mirrors legacy DataRegistrasiComponent validators & field names.
-    this.accountForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      coupleName: ['', [Validators.required]],
-      domain: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      terms: [false, [Validators.requiredTrue]],
-    });
+    this.accountForm = this.fb.group(
+      {
+        name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+        coupleName: ['', [Validators.required]],
+        domain: ['', [Validators.required, Validators.minLength(3)]],
+        email: ['', [Validators.required, Validators.email]],
+        phone: ['', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
+        password: ['', [Validators.required, Validators.minLength(8)]],
+        password_confirmation: ['', [Validators.required]],
+        terms: [false, [Validators.requiredTrue]],
+      },
+      { validators: this.passwordMatchValidator }
+    );
 
-    this.accountForm.get('coupleName')?.valueChanges.subscribe(() => {
+    const coupleNameSub = this.accountForm.get('coupleName')?.valueChanges.subscribe(() => {
       if (this.accountForm.get('coupleName')?.dirty) {
         this.coupleNameTouched = true;
       }
       this.syncAutoFieldsFromCoupleName();
     });
+    if (coupleNameSub) {
+      this.sub.add(coupleNameSub);
+    }
 
-    this.accountForm.get('domain')?.valueChanges.subscribe(() => {
+    const domainSub = this.accountForm.get('domain')?.valueChanges.subscribe(() => {
       if (this.accountForm.get('domain')?.dirty) {
         this.domainTouched = true;
       }
     });
+    if (domainSub) {
+      this.sub.add(domainSub);
+    }
 
-    this.accountForm.get('password')?.valueChanges.subscribe((password) => {
+    const passwordSub = this.accountForm.get('password')?.valueChanges.subscribe((password) => {
       this.accountPasswordDraft = password || '';
+      this.accountForm.get('password_confirmation')?.updateValueAndValidity({
+        onlySelf: true,
+        emitEvent: false,
+      });
     });
+    if (passwordSub) {
+      this.sub.add(passwordSub);
+    }
 
-    this.accountForm.valueChanges.subscribe((value) => {
+    this.sub.add(this.accountForm.valueChanges.subscribe((value) => {
       this.persistAccountDraft(value);
-    });
+    }));
   }
 
   ngOnInit(): void {
@@ -219,6 +237,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   /* ----------------------------- modal controls ----------------------------- */
   closeModal(): void {
     this.themePrefill = null;
+    this.resetAccountPasswordFields();
     this.modal.closeCreateInvitation();
   }
 
@@ -228,6 +247,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
 
   /** "Sudah punya akun? Masuk" → open the login modal instead of a route. */
   openLoginModal(): void {
+    this.resetAccountPasswordFields();
     this.modal.openLogin();
   }
 
@@ -239,6 +259,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.isSubmitting = false;
     this.errorMessage = '';
     this.showPassword = false;
+    this.showPasswordConfirmation = false;
     this.coupleNameTouched = false;
     this.domainTouched = false;
     this.activeCategory = prefilledTheme?.tier || this.resolvePrefillTier(prefill?.tier);
@@ -251,6 +272,20 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       null;
 
     this.accountPasswordDraft = '';
+  }
+
+  private resetAccountPasswordFields(): void {
+    this.accountForm.patchValue(
+      { password: '', password_confirmation: '' },
+      { emitEvent: false }
+    );
+    this.accountPasswordDraft = '';
+    this.errorMessage = '';
+    this.showPassword = false;
+    this.showPasswordConfirmation = false;
+    this.accountForm.get('password')?.markAsUntouched();
+    this.accountForm.get('password_confirmation')?.markAsUntouched();
+    this.accountForm.updateValueAndValidity({ emitEvent: false });
   }
 
   /** Currently selected package (drives price, themes, payment rules). */
@@ -600,6 +635,10 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.showPassword = !this.showPassword;
   }
 
+  togglePasswordConfirmation(): void {
+    this.showPasswordConfirmation = !this.showPasswordConfirmation;
+  }
+
   /* -------------------------------- submit ---------------------------------- */
   submitCreateInvitation(): void {
     this.errorMessage = '';
@@ -615,7 +654,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const account = this.accountForm.value;
+    const account = this.accountForm.getRawValue();
     this.accountPasswordDraft = account.password || '';
     this.isSubmitting = true;
     const domain = String(account.domain || '').trim();
@@ -627,7 +666,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     payload.append('name', String(account.name || '').trim());
     payload.append('email', account.email);
     payload.append('password', account.password);
-    payload.append('password_confirmation', account.password);
+    payload.append('password_confirmation', account.password_confirmation);
     payload.append('phone', account.phone);
     payload.append('kode_pemesanan', '');
     // --- Additive theme fields (do not affect legacy semantics) ---
@@ -795,7 +834,11 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   private firstValidationError(err: any): string | null {
     const errors = err?.error?.errors;
     if (errors && typeof errors === 'object') {
-      const firstKey = Object.keys(errors)[0];
+      const firstKey = errors.password_confirmation
+        ? 'password_confirmation'
+        : errors.password
+          ? 'password'
+          : Object.keys(errors)[0];
       const firstVal = firstKey ? errors[firstKey] : null;
       if (Array.isArray(firstVal) && firstVal.length) {
         return this.translateBackendMessage(firstVal[0], firstKey);
@@ -816,10 +859,19 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  getAccountPasswordConfirmationErrorMessage(): string {
+    const control = this.accountForm.get('password_confirmation');
+    if (!control?.touched) return '';
+    if (control.errors?.['required']) return 'Ulangi password wajib diisi.';
+    if (this.accountForm.errors?.['passwordMismatch']) return 'Ulangi password tidak sama dengan password.';
+    return '';
+  }
+
   private persistAccountDraft(value: any): void {
     try {
       const draft = { ...value };
       delete draft.password;
+      delete draft.password_confirmation;
       sessionStorage.setItem('createInvitationAccountDraft', JSON.stringify(draft));
     } catch {
       /* non-critical */
@@ -846,8 +898,20 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
       if (lower.includes('greater than') || lower.includes('max') || lower.includes('maksimal')) return 'Nama pengguna maksimal 100 karakter.';
     }
     if (lower.includes('email') && (lower.includes('taken') || lower.includes('already'))) return 'Email sudah terdaftar.';
-    if (lower.includes('password') && lower.includes('confirmation')) return 'Konfirmasi kata sandi tidak cocok.';
+    if (field === 'password_confirmation' || (lower.includes('password') && lower.includes('confirmation'))) {
+      return 'Ulangi password tidak sama dengan password.';
+    }
+    if (field === 'password' && (lower.includes('at least') || lower.includes('min') || lower.includes('minimal'))) {
+      return 'Kata sandi minimal 8 karakter.';
+    }
     return text;
+  }
+
+  private passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.get('password')?.value;
+    const confirmation = control.get('password_confirmation')?.value;
+    if (!password || !confirmation) return null;
+    return password === confirmation ? null : { passwordMismatch: true };
   }
 
   private resolvePrefillTier(tier?: string | null): ThemeTier {

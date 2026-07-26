@@ -25,6 +25,71 @@
     margin: 0 auto;
   }
 
+  .payment-admin-grid {
+    align-items: start;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr);
+  }
+
+  .payment-status-card {
+    align-items: flex-start;
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .payment-status-card__icon {
+    align-items: center;
+    background: #eff6ff;
+    border-radius: 16px;
+    color: #2563eb;
+    display: inline-flex;
+    height: 52px;
+    justify-content: center;
+    width: 52px;
+
+    i {
+      font-size: 1.35rem;
+    }
+  }
+
+  .payment-status-card__content {
+    display: grid;
+    gap: 0.3rem;
+
+    span {
+      color: #6b7280;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: #111827;
+      font-size: 1.2rem;
+      line-height: 1.25;
+    }
+
+    p,
+    small {
+      color: #6b7280;
+      line-height: 1.55;
+      margin: 0;
+    }
+  }
+
+  .manual-helper {
+    background: #fff7fb;
+    border: 1px solid #ffe4ef;
+    border-radius: 12px;
+    color: #6b7280;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    margin: 0 0 1.25rem;
+    padding: 0.9rem 1rem;
+  }
+
   // Card Styles
   .card {
     border: none;
@@ -145,7 +210,15 @@
     flex-wrap: wrap;
 
     .file-input {
-      display: none;
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
     }
 
     .file-label {
@@ -643,6 +716,11 @@
   .settings-payment-container {
     padding: 1rem;
 
+    .payment-admin-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
     .card {
       .card-header {
         padding: 1.25rem;
@@ -862,6 +940,20 @@
 @media (max-width: 575.98px) {
   .settings-payment-container {
     padding: 0.5rem;
+
+    .payment-status-card {
+      padding: 1rem;
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    .config-card .btn,
+    .file-label {
+      width: 100%;
+      justify-content: center;
+    }
 
     .card {
       margin-bottom: 1rem;

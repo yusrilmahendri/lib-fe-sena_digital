@@ -272,46 +272,105 @@ input.form-control:focus {
   }
 }
 
-.profile-status-banner {
+.profile-status {
   width: 100%;
-  max-width: 560px;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 14px 16px;
   margin-bottom: 28px;
-  border-radius: 6px;
-  font-size: 13px;
-  line-height: 1.35;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
-.profile-status-banner__icon {
-  width: 22px;
-  height: 22px;
-  flex: 0 0 22px;
+.profile-status__icon {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 18px;
 }
 
-.profile-status-banner__text {
+.profile-status__text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 0;
 }
 
-.profile-status-banner__text strong {
+.profile-status__text strong {
   font-weight: 700;
 }
 
-.profile-status-banner--active {
-  color: #15803d;
-  background: #dcfce7;
-  border: 1px solid #22c55e;
+.profile-status__action {
+  margin-left: auto;
+  flex: 0 0 auto;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 31px;
+    font-size: 12px;
+    font-weight: 700;
+  }
 }
 
-.profile-status-banner--inactive {
-  color: #dc2626;
-  background: #fff1f2;
-  border: 1px solid #ef4444;
+.profile-status--active {
+  background: #ecfdf3;
+  border: 1px solid #22c55e;
+  color: #166534;
+}
+
+.profile-status--pending {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.profile-status--warning {
+  background: #fff7ed;
+  border-color: #f59e0b;
+  color: #9a3412;
+}
+
+.profile-status--expired {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.profile-status--inactive {
+  background: #f1f5f9;
+  border-color: #64748b;
+  color: #334155;
+}
+
+.profile-status--unknown {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+@media (max-width: 576px) {
+  .profile-status {
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .profile-status__text {
+    flex: 1 1 calc(100% - 40px);
+  }
+
+  .profile-status__action {
+    margin-left: 40px;
+    width: calc(100% - 40px);
+
+    .btn {
+      width: 100%;
+    }
+  }
 }

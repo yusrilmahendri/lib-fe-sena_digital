@@ -18,7 +18,7 @@
               <span class="section-heading__icon"><i class="far fa-calendar-check"></i></span>
               <div>
                 <h2 class="title-border">Pengaturan Acara</h2>
-                <p class="section-heading__copy">Pilih nama acara yang akan digunakan sebagai countdown utama undangan.</p>
+                <p class="section-heading__copy">countdown diacara yang pertama, acara selanjutnya digunakan pada countdown.</p>
               </div>
             </div>
             <form class="countdown-form" [formGroup]="staticEventForm" (ngSubmit)="onStaticSubmitClicked()">
@@ -31,11 +31,13 @@
               </div>
               <div class="countdown-form__action">
                 <div class="action-stack">
-                  <button type="button" class="btn btn-simpan" (click)="onStaticUpdateClicked()" *ngIf="hasExistingData()" [disabled]="isLoading">
-                    Update Countdown
-                  </button>
-                  <button type="submit" class="btn btn-simpan" *ngIf="!hasExistingData()" [disabled]="isLoading">
-                    Simpan Countdown
+                  <button type="submit" class="btn btn-simpan countdown-save-button" [disabled]="isSavingCountdown || isLoading">
+                    <ng-container *ngIf="!isSavingCountdown; else savingCountdownText">
+                      {{ hasSavedCountdown ? 'Ubah Countdown' : 'Simpan Countdown' }}
+                    </ng-container>
+                    <ng-template #savingCountdownText>
+                      {{ hasSavedCountdown ? 'Mengubah...' : 'Menyimpan...' }}
+                    </ng-template>
                   </button>
                 </div>
               </div>
@@ -166,7 +168,7 @@
                   <div class="location-picker__header">
                     <div>
                       <label for="namaLokasi{{i}}" class="form-label fw-semibold">Lokasi Google Maps</label>
-                      <p class="location-picker__hint">Pilih titik lokasi dari Google Maps atau isi koordinat manual.</p>
+                      <p class="location-picker__hint">Pilih titik lokasi dari Google Maps.</p>
                     </div>
                     <button class="btn btn-google" type="button" (click)="openGoogleMapsPicker(i)" [disabled]="isLoading">
                       <i class="fa fa-map-marker"></i>
@@ -185,12 +187,12 @@
                     <div>
                       <label for="latitude{{i}}" class="form-label fw-semibold">Latitude</label>
                       <input type="text" class="form-control text-secondary" id="latitude{{i}}"
-                        placeholder="-6.200000" formControlName="latitude" [disabled]="isLoading" />
+                        placeholder="-6.200000" formControlName="latitude" readonly />
                     </div>
                     <div>
                       <label for="longitude{{i}}" class="form-label fw-semibold">Longitude</label>
                       <input type="text" class="form-control text-secondary" id="longitude{{i}}"
-                        placeholder="106.816666" formControlName="longitude" [disabled]="isLoading" />
+                        placeholder="106.816666" formControlName="longitude" readonly />
                     </div>
                   </div>
                   <div class="text-danger small mb-3" *ngIf="eventForm.hasError('coordinatePair') && (eventForm.get('latitude')?.touched || eventForm.get('longitude')?.touched)">

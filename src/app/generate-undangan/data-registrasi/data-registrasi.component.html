@@ -93,7 +93,21 @@
         placeholder="Password">
       <div class="dr-error-message"
         *ngIf="formRegis.get('password')?.invalid && formRegis.get('password')?.touched">
-        Password minimal 6 karakter.
+        Password minimal 8 karakter.
+      </div>
+    </div>
+
+    <div class="dr-form-group">
+      <label for="password_confirmation" class="dr-label">Ulangi Password</label>
+      <input
+        type="password"
+        class="dr-input"
+        id="password_confirmation"
+        formControlName="password_confirmation"
+        placeholder="Ulangi Password"
+        autocomplete="new-password">
+      <div class="dr-error-message" *ngIf="getPasswordConfirmationErrorMessage()">
+        {{ getPasswordConfirmationErrorMessage() }}
       </div>
     </div>
 

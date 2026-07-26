@@ -1,561 +1,64 @@
 <div class="settings-payment-container">
   <div class="container-fluid">
+    <div class="payment-admin-grid">
+      <section class="card payment-status-card">
+        <div class="payment-status-card__icon">
+          <i
+            class="fas"
+            [class.fa-university]="activePaymentMethod === 'manual'"
+            [class.fa-credit-card]="activePaymentMethod === 'midtrans'"
+            [class.fa-circle-info]="!activePaymentMethod"
+            aria-hidden="true">
+          </i>
+        </div>
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading && !selectedPaymentMethod" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
-      </div>
-      <p class="mt-2 text-muted">Memuat metode pembayaran...</p>
-    </div>
+        <div class="payment-status-card__content">
+          <span>Metode Pembayaran Aktif</span>
+          <strong>
+            {{
+              activePaymentMethod === 'manual'
+                ? 'Transfer Manual Aktif'
+                : activePaymentMethod === 'midtrans'
+                  ? 'Midtrans Aktif'
+                  : 'Belum tersedia'
+            }}
+          </strong>
+          <p>
+            {{
+              activePaymentMethod === 'manual'
+                ? 'User akan langsung melihat informasi rekening dan konfirmasi pembayaran manual.'
+                : 'Karena rekening manual belum lengkap, user akan langsung menggunakan Midtrans.'
+            }}
+          </p>
+          <small *ngIf="paymentStatusError">{{ paymentStatusError }}</small>
+        </div>
 
-    <!-- Main Content -->
-    <div *ngIf="!isLoading || selectedPaymentMethod" class="row">
+        <button
+          *ngIf="activePaymentMethod === 'manual'"
+          type="button"
+          class="btn btn-outline-danger"
+          (click)="openUseMidtransModal()"
+          [disabled]="isSubmitting">
+          <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
+          Gunakan Midtrans
+        </button>
+      </section>
 
-      <!-- Payment Method Selection -->
-      <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
-        <div class="card payment-method-card">
-          <div class="card-header">
-            <div class="header-content">
-              <i class="fas fa-credit-card me-2"></i>
-              <span class="header-title">Metode Pembayaran Tagihan</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label for="payment-method" class="form-label">
-                <i class="fas fa-list me-2"></i>Pilihan Pembayaran
-              </label>
-              <ngx-select
-                [items]="paymentMethods"
-                [optionTextField]="'name'"
-                [optionValueField]="'id'"
-                placeholder="Pilih metode pembayaran"
-                (select)="onPaymentMethodSelect($event)"
-                class="payment-select"
-              ></ngx-select>
-            </div>
+      <section class="card config-card">
+        <div class="card-header">
+          <div class="header-content">
+            <i class="fas fa-university me-2"></i>
+            <span class="header-title">Konfigurasi Pembayaran Manual</span>
           </div>
         </div>
-      </div>
 
-      <!-- Payment Configuration Form -->
-      <div *ngIf="selectedPaymentMethod && paymentForm" class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-4">
-        <div class="card config-card">
-          <div class="card-header">
-            <div class="header-content">
-              <i class="fas fa-cog me-2"></i>
-              <span class="header-title">Pengaturan {{ selectedPaymentMethod.name }}</span>
-            </div>
-          </div>
-          <div class="card-body">
+        <div class="card-body">
+          <p class="manual-helper">
+            Lengkapi nama bank, nomor rekening, dan nama pemilik untuk mengaktifkan pembayaran manual secara otomatis.
+            Foto rekening opsional.
+          </p>
 
-            <!-- Manual Payment Form -->
-            <form *ngIf="selectedPaymentMethod.id === 1 && paymentForm" [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
-              <div class="form-group">
-                <label class="form-label required">
-                  Nama Bank
-                </label>
-                <ngx-select
-                  [items]="bankList"
-                  [optionTextField]="'name'"
-                  [optionValueField]="'kode_bank'"
-                  placeholder="Pilih Bank"
-                  formControlName="kode_bank"
-                  (select)="onBankSelect($event)"
-                  class="bank-select"
-                ></ngx-select>
-                <div class="error-message" *ngIf="getFieldError('kode_bank')">
-                  <i class="fas fa-exclamation-circle me-1"></i>
-                  {{ getFieldError('kode_bank') }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  No Rekening
-                </label>
-                <input
-                  type="text"
-                  class="form-control"
-                  formControlName="nomor_rekening"
-                  placeholder="Contoh: 01234567890"
-                  [class.is-invalid]="getFieldError('nomor_rekening')"
-                />
-                <div class="error-message" *ngIf="getFieldError('nomor_rekening')">
-                  <i class="fas fa-exclamation-circle me-1"></i>
-                  {{ getFieldError('nomor_rekening') }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  Nama Pemilik
-                </label>
-                <input
-                  type="text"
-                  class="form-control"
-                  formControlName="nama_pemilik"
-                  placeholder="Contoh: Zayyin Alfarizi"
-                  [class.is-invalid]="getFieldError('nama_pemilik')"
-                />
-                <div class="error-message" *ngIf="getFieldError('nama_pemilik')">
-                  <i class="fas fa-exclamation-circle me-1"></i>
-                  {{ getFieldError('nama_pemilik') }}
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">
-                  Upload Foto Rekening (Opsional)
-                </label>
-                <div class="file-upload-wrapper">
-                  <input
-                    type="file"
-                    id="photoUpload"
-                    class="file-input"
-                    accept="image/jpeg,image/png,image/jpg"
-                    (change)="onFileSelected($event)"
-                  />
-                  <label for="photoUpload" class="file-label">
-                    <i class="fas fa-cloud-upload-alt me-2"></i>
-                    Choose File
-                  </label>
-                  <span class="file-info">
-                    {{ selectedPhotoFile ? selectedPhotoFile.name : 'No file chosen' }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-lg w-100"
-                  [disabled]="!isFormValid() || isSubmitting"
-                >
-                  <i class="fas fa-save me-2"></i>
-                  {{ isSubmitting ? 'Menyimpan...' : 'Simpan' }}
-                </button>
-              </div>
-            </form>
-
-            <!-- Tripay Payment Form -->
-            <form *ngIf="selectedPaymentMethod.id === 2 && paymentForm" [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
-              <div class="form-group">
-                <label class="form-label required">
-                  Kode Merchant
-                </label>
-                <input type="text" class="form-control" formControlName="kode_merchant" placeholder="Kode merchant Tripay">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  API Key
-                </label>
-                <input type="text" class="form-control" formControlName="api_key" placeholder="API Key Tripay">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  Private Key
-                </label>
-                <input type="password" class="form-control" formControlName="private_key" placeholder="Private Key Tripay">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  URL Transaksi Tripay
-                </label>
-                <input type="url" class="form-control" formControlName="url_tripay" placeholder="https://...">
-              </div>
-
-              <div class="form-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-lg w-100"
-                  [disabled]="!isFormValid() || isSubmitting"
-                >
-                  <i class="fas fa-save me-2"></i>
-                  {{ isSubmitting ? 'Menyimpan...' : 'Simpan' }}
-                </button>
-              </div>
-            </form>
-
-            <!-- Midtrans Payment Form -->
-            <form *ngIf="selectedPaymentMethod.id === 3 && paymentForm" [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
-              <div class="form-group">
-                <label class="form-label required">
-                  URL Midtrans
-                </label>
-                <input type="url" class="form-control" formControlName="url" placeholder="https://...">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  ServerKey Midtrans
-                </label>
-                <input type="password" class="form-control" formControlName="server_key" placeholder="Server Key Midtrans">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  ClientKey Midtrans
-                </label>
-                <input type="text" class="form-control" formControlName="client_key" placeholder="Client Key Midtrans">
-              </div>
-
-              <div class="form-group">
-                <label class="form-label required">
-                  Metode Production
-                </label>
-                <select class="form-control" formControlName="metode_production">
-                  <option value="">Pilih Mode</option>
-                  <option value="sandbox">Sandbox</option>
-                  <option value="production">Production</option>
-                </select>
-              </div>
-
-              <div class="form-actions">
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-lg w-100"
-                  [disabled]="!isFormValid() || isSubmitting"
-                >
-                  <i class="fas fa-save me-2"></i>
-                  {{ isSubmitting ? 'Menyimpan...' : 'Simpan' }}
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Payment Details Table -->
-    <div *ngIf="selectedPaymentMethod && hasPaymentDetails()" class="row">
-      <div class="col-12">
-        <div class="card table-card">
-          <div class="card-header table-header">
-            <div class="header-content">
-              <h3 class="table-title">
-                <i class="fas fa-table me-2"></i>
-                <span class="d-none d-md-inline">Konfigurasi {{ selectedPaymentMethod.name }}</span>
-                <span class="d-md-none">Data {{ selectedPaymentMethod.name }}</span>
-              </h3>
-            </div>
-          </div>
-
-          <div class="card-body p-0">
-            <!-- Desktop Table View -->
-            <div class="table-responsive d-none d-lg-block">
-              <table class="table payment-table" role="table" aria-label="Payment configuration table">
-                <thead>
-                  <tr>
-                    <th *ngFor="let column of getTableColumns()" scope="col">
-                      {{ getColumnHeader(column) }}
-                    </th>
-                    <th scope="col" class="text-center">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let detail of paymentDetails; let i = index">
-
-                    <!-- Manual Payment Columns -->
-                    <td *ngIf="getTableColumns().includes('pengguna')">
-                      <div class="user-info">
-                        <i class="fas fa-user text-primary me-2"></i>
-                        <span>{{ detail.pengguna }}</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('email')">
-                      <div class="email-info">
-                        <i class="fas fa-envelope text-info me-2"></i>
-                        <span>{{ detail.email }}</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('noRekening')">
-                      <div class="account-info">
-                        <i class="fas fa-credit-card text-success me-2"></i>
-                        <span class="account-number">{{ detail.noRekening }}</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('namaBank')">
-                      <div class="bank-info">
-                        <i class="fas fa-university text-warning me-2"></i>
-                        <span class="bank-name">{{ detail.namaBank }}</span>
-                      </div>
-                    </td>
-
-                    <!-- Tripay Columns -->
-                    <td *ngIf="getTableColumns().includes('urlTripay')">
-                      <div class="url-info">
-                        <i class="fas fa-link text-primary me-2"></i>
-                        <span class="url-text">{{ getDisplayValue(detail.urlTripay) }}</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('apiKey')">
-                      <div class="key-info">
-                        <i class="fas fa-key text-warning me-2"></i>
-                        <span class="key-text">{{ detail.apiKey | slice:0:10 }}...</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('kodeMerchant')">
-                      <div class="merchant-info">
-                        <i class="fas fa-store text-info me-2"></i>
-                        <span>{{ detail.kodeMerchant }}</span>
-                      </div>
-                    </td>
-
-                    <!-- Midtrans Columns -->
-                    <td *ngIf="getTableColumns().includes('url')">
-                      <div class="url-info">
-                        <i class="fas fa-link text-primary me-2"></i>
-                        <span class="url-text">{{ detail.url }}</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('serverKey')">
-                      <div class="key-info">
-                        <i class="fas fa-server text-danger me-2"></i>
-                        <span class="key-text">{{ detail.serverKey | slice:0:10 }}...</span>
-                      </div>
-                    </td>
-
-                    <td *ngIf="getTableColumns().includes('clientKey')">
-                      <div class="key-info">
-                        <i class="fas fa-desktop text-success me-2"></i>
-                        <span class="key-text">{{ detail.clientKey | slice:0:10 }}...</span>
-                      </div>
-                    </td>
-
-                    <!-- Trial Columns -->
-                    <td *ngIf="getTableColumns().includes('trialInfo')">
-                      <div class="trial-info">
-                        <i class="fas fa-flask text-secondary me-2"></i>
-                        <span class="trial-text">{{ detail.trialInfo }}</span>
-                      </div>
-                    </td>
-
-                    <!-- Payment Method Column -->
-                    <td *ngIf="getTableColumns().includes('metodePembayaran')">
-                      <span class="payment-method-badge">
-                        <i class="fas fa-tag me-1"></i>
-                        {{ detail.metodePembayaran }}
-                      </span>
-                    </td>
-
-                    <!-- Action Column -->
-                    <td class="text-center">
-                      <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline-primary me-1" title="Edit" (click)="openEditModal(detail)">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" title="Delete" (click)="openDeleteModal(detail)">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Mobile Card List View -->
-            <div class="mobile-card-list d-lg-none">
-              <div class="payment-card-item" *ngFor="let detail of paymentDetails; let i = index">
-
-                <!-- Manual Payment Card -->
-                <div *ngIf="selectedPaymentMethod.id === 1" class="payment-card manual-card">
-                  <div class="card-header-mobile">
-                    <div class="payment-method-badge-mobile">
-                      <i class="fas fa-university me-2"></i>
-                      {{ detail.metodePembayaran }}
-                    </div>
-                    <div class="action-buttons-mobile">
-                      <button class="btn btn-sm btn-outline-primary" title="Edit" (click)="openEditModal(detail)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger ms-1" title="Delete" (click)="openDeleteModal(detail)">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body-mobile">
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-user text-primary me-2"></i>Pengguna
-                      </span>
-                      <span class="info-value">{{ detail.pengguna }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-envelope text-info me-2"></i>Email
-                      </span>
-                      <span class="info-value">{{ detail.email }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-credit-card text-success me-2"></i>No Rekening
-                      </span>
-                      <span class="info-value account-number-mobile">{{ detail.noRekening }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-university text-warning me-2"></i>Bank
-                      </span>
-                      <span class="info-value">{{ detail.namaBank }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Tripay Payment Card -->
-                <div *ngIf="selectedPaymentMethod.id === 2" class="payment-card tripay-card">
-                  <div class="card-header-mobile">
-                    <div class="payment-method-badge-mobile">
-                      <i class="fas fa-link me-2"></i>
-                      {{ detail.metodePembayaran }}
-                    </div>
-                    <div class="action-buttons-mobile">
-                      <button class="btn btn-sm btn-outline-primary" title="Edit" (click)="openEditModal(detail)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger ms-1" title="Delete" (click)="openDeleteModal(detail)">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body-mobile">
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-link text-primary me-2"></i>URL Tripay
-                      </span>
-                      <span class="info-value url-mobile">{{ detail.urlTripay }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-key text-warning me-2"></i>API Key
-                      </span>
-                      <span class="info-value key-mobile">{{ detail.apiKey | slice:0:15 }}...</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-store text-info me-2"></i>Kode Merchant
-                      </span>
-                      <span class="info-value">{{ detail.kodeMerchant }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Midtrans Payment Card -->
-                <div *ngIf="selectedPaymentMethod.id === 3" class="payment-card midtrans-card">
-                  <div class="card-header-mobile">
-                    <div class="payment-method-badge-mobile">
-                      <i class="fas fa-credit-card me-2"></i>
-                      {{ detail.metodePembayaran }}
-                    </div>
-                    <div class="action-buttons-mobile">
-                      <button class="btn btn-sm btn-outline-primary" title="Edit" (click)="openEditModal(detail)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger ms-1" title="Delete" (click)="openDeleteModal(detail)">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body-mobile">
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-link text-primary me-2"></i>URL
-                      </span>
-                      <span class="info-value url-mobile">{{ detail.url }}</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-server text-danger me-2"></i>Server Key
-                      </span>
-                      <span class="info-value key-mobile">{{ detail.serverKey | slice:0:15 }}...</span>
-                    </div>
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-desktop text-success me-2"></i>Client Key
-                      </span>
-                      <span class="info-value key-mobile">{{ detail.clientKey | slice:0:15 }}...</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Trial Payment Card -->
-                <div *ngIf="selectedPaymentMethod.id === 4" class="payment-card trial-card">
-                  <div class="card-header-mobile">
-                    <div class="payment-method-badge-mobile">
-                      <i class="fas fa-flask me-2"></i>
-                      {{ detail.metodePembayaran }}
-                    </div>
-                    <div class="action-buttons-mobile">
-                      <button class="btn btn-sm btn-outline-primary" title="Edit" (click)="openEditModal(detail)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-danger ms-1" title="Delete" (click)="openDeleteModal(detail)">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="card-body-mobile">
-                    <div class="info-row">
-                      <span class="info-label">
-                        <i class="fas fa-flask text-secondary me-2"></i>Trial Info
-                      </span>
-                      <span class="info-value">{{ detail.trialInfo }}</span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- Empty State -->
-            <div *ngIf="!hasPaymentDetails()" class="empty-state text-center py-5">
-              <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-              <h5 class="text-muted">Belum ada konfigurasi pembayaran</h5>
-              <p class="text-muted">Silakan tambahkan konfigurasi pembayaran terlebih dahulu</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Loading State for Details -->
-    <div *ngIf="isLoading && selectedPaymentMethod" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
-      </div>
-      <p class="mt-2 text-muted">Memuat detail pembayaran...</p>
-    </div>
-
-  </div>
-</div>
-
-<!-- Edit Payment Modal -->
-<div class="modal fade" id="editPaymentModal" tabindex="-1" aria-labelledby="editPaymentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editPaymentModalLabel">
-          <i class="fas fa-edit me-2"></i>Edit {{ selectedPaymentMethod?.name }}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form [formGroup]="editPaymentForm" (ngSubmit)="onSubmitEditPayment()" *ngIf="editPaymentForm">
-
-          <!-- Manual Payment Edit Form -->
-          <div *ngIf="selectedPaymentMethod?.id === 1">
+          <form [formGroup]="paymentForm" (ngSubmit)="onSubmitPayment()">
             <div class="form-group">
               <label class="form-label required">Nama Bank</label>
               <ngx-select
@@ -564,18 +67,28 @@
                 [optionValueField]="'kode_bank'"
                 placeholder="Pilih Bank"
                 formControlName="kode_bank"
+                (select)="onBankSelect($event)"
                 class="bank-select"
               ></ngx-select>
+              <div class="error-message" *ngIf="getFieldError('kode_bank')">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                {{ getFieldError('kode_bank') }}
+              </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label required">No Rekening</label>
+              <label class="form-label required">Nomor Rekening</label>
               <input
                 type="text"
                 class="form-control"
                 formControlName="nomor_rekening"
+                inputmode="numeric"
                 placeholder="Contoh: 01234567890"
-              />
+                [class.is-invalid]="getFieldError('nomor_rekening')" />
+              <div class="error-message" *ngIf="getFieldError('nomor_rekening')">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                {{ getFieldError('nomor_rekening') }}
+              </div>
             </div>
 
             <div class="form-group">
@@ -585,120 +98,235 @@
                 class="form-control"
                 formControlName="nama_pemilik"
                 placeholder="Contoh: Zayyin Alfarizi"
-              />
+                [class.is-invalid]="getFieldError('nama_pemilik')" />
+              <div class="error-message" *ngIf="getFieldError('nama_pemilik')">
+                <i class="fas fa-exclamation-circle me-1"></i>
+                {{ getFieldError('nama_pemilik') }}
+              </div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Foto Rekening</label>
-              <input
-                type="file"
-                class="form-control"
-                accept="image/*"
-                (change)="onEditFileSelected($event)"
-              />
-              <div class="form-text">Format: JPEG, PNG, JPG (Maksimal 2MB)</div>
-              <div *ngIf="currentEditItem && currentEditItem.photoRek" class="mt-2">
-                <img [src]="currentEditItem.photoRek" alt="Current photo" class="img-thumbnail" style="max-width: 100px;">
-                <div class="form-text">Foto saat ini</div>
+              <label class="form-label">Foto Rekening (Opsional)</label>
+              <div class="file-upload-wrapper">
+                <input
+                  #photoInput
+                  type="file"
+                  id="photoUpload"
+                  class="file-input"
+                  accept="image/jpeg,image/png,image/jpg"
+                  (change)="onFileSelected($event)" />
+                <button type="button" class="file-label" (click)="photoInput.click()">
+                  <i class="fas fa-cloud-upload-alt me-2"></i>
+                  {{ selectedPhotoFile ? 'Ganti Foto' : 'Pilih Foto Rekening' }}
+                </button>
+                <span class="file-info" *ngIf="selectedPhotoFile">{{ selectedPhotoFile.name }}</span>
+              </div>
+              <div class="form-text">Manual aktif setelah seluruh data wajib disimpan.</div>
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg w-100"
+                [disabled]="!isFormValid() || isSubmitting">
+                <i class="fas fa-save me-2"></i>
+                {{ isSubmitting ? 'Menyimpan...' : 'Simpan Rekening Manual' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <section class="card table-card">
+      <div class="card-header table-header">
+        <div class="header-content">
+          <h3 class="table-title">
+            <i class="fas fa-table me-2"></i>
+            Rekening Manual
+          </h3>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <div *ngIf="isLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted">Memuat rekening manual...</p>
+        </div>
+
+        <ng-container *ngIf="!isLoading">
+          <div class="table-responsive d-none d-lg-block" *ngIf="hasPaymentDetails()">
+            <table class="table payment-table" role="table" aria-label="Konfigurasi rekening manual">
+              <thead>
+                <tr>
+                  <th *ngFor="let column of getTableColumns()" scope="col">
+                    {{ getColumnHeader(column) }}
+                  </th>
+                  <th scope="col" class="text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let detail of paymentDetails">
+                  <td>
+                    <div class="account-info">
+                      <i class="fas fa-credit-card text-success me-2"></i>
+                      <span class="account-number">{{ detail.noRekening }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="bank-info">
+                      <i class="fas fa-university text-warning me-2"></i>
+                      <span class="bank-name">{{ detail.namaBank }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="user-info">
+                      <i class="fas fa-user text-primary me-2"></i>
+                      <span>{{ detail.namaPemilik }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="payment-method-badge">
+                      <i class="fas fa-tag me-1"></i>
+                      {{ detail.metodePembayaran }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <div class="action-buttons">
+                      <button class="btn btn-sm btn-outline-primary me-1" title="Edit" (click)="openEditModal(detail)">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" title="Delete" (click)="openDeleteModal(detail)">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mobile-card-list d-lg-none" *ngIf="hasPaymentDetails()">
+            <div class="payment-card manual-card" *ngFor="let detail of paymentDetails">
+              <div class="card-header-mobile">
+                <div class="payment-method-badge-mobile">
+                  <i class="fas fa-university me-2"></i>
+                  Transfer Manual
+                </div>
+                <div class="action-buttons-mobile">
+                  <button class="btn btn-sm btn-outline-primary" title="Edit" (click)="openEditModal(detail)">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger ms-1" title="Delete" (click)="openDeleteModal(detail)">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body-mobile">
+                <div class="info-row">
+                  <span class="info-label"><i class="fas fa-credit-card text-success me-2"></i>No Rekening</span>
+                  <span class="info-value account-number-mobile">{{ detail.noRekening }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label"><i class="fas fa-university text-warning me-2"></i>Bank</span>
+                  <span class="info-value">{{ detail.namaBank }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label"><i class="fas fa-user text-primary me-2"></i>Nama Pemilik</span>
+                  <span class="info-value">{{ detail.namaPemilik }}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Tripay Edit Form -->
-          <div *ngIf="selectedPaymentMethod?.id === 2">
-            <div class="form-group">
-              <label class="form-label required">URL Tripay</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="url_tripay"
-                placeholder="https://tripay.co.id/api/"
-              />
-            </div>
+          <div *ngIf="!hasPaymentDetails()" class="empty-state text-center py-5">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Rekening manual belum lengkap</h5>
+            <p class="text-muted">User akan menggunakan Midtrans sampai rekening manual disimpan lengkap.</p>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+  </div>
+</div>
 
-            <div class="form-group">
-              <label class="form-label required">Private Key</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="private_key"
-                placeholder="DEV-xxxxxxxxxxxxxxxxxxxx"
-              />
-            </div>
+<!-- Edit Manual Payment Modal -->
+<div class="modal fade" id="editPaymentModal" tabindex="-1" aria-labelledby="editPaymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editPaymentModalLabel">
+          <i class="fas fa-edit me-2"></i>Edit Rekening Manual
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
 
-            <div class="form-group">
-              <label class="form-label required">API Key</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="api_key"
-                placeholder="DEV-xxxxxxxxxxxxxxxxxxxx"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Kode Merchant</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="kode_merchant"
-                placeholder="T1234"
-              />
-            </div>
+      <div class="modal-body">
+        <form [formGroup]="editPaymentForm" (ngSubmit)="onSubmitEditPayment()" *ngIf="editPaymentForm">
+          <div class="form-group">
+            <label class="form-label required">Nama Bank</label>
+            <ngx-select
+              [items]="bankList"
+              [optionTextField]="'name'"
+              [optionValueField]="'kode_bank'"
+              placeholder="Pilih Bank"
+              formControlName="kode_bank"
+              class="bank-select"
+            ></ngx-select>
           </div>
 
-          <!-- Midtrans Edit Form -->
-          <div *ngIf="selectedPaymentMethod?.id === 3">
-            <div class="form-group">
-              <label class="form-label required">URL</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="url"
-                placeholder="https://api.sandbox.midtrans.com/v2/"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Server Key</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="server_key"
-                placeholder="SB-Mid-server-xxxxxxxxxxxxxxxxxxxx"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Client Key</label>
-              <input
-                type="text"
-                class="form-control"
-                formControlName="client_key"
-                placeholder="SB-Mid-client-xxxxxxxxxxxxxxxxxxxx"
-              />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label required">Production Mode</label>
-              <select class="form-control" formControlName="metode_production">
-                <option value="">Pilih Mode</option>
-                <option value="sandbox">Sandbox</option>
-                <option value="production">Production</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label class="form-label required">Nomor Rekening</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="nomor_rekening"
+              inputmode="numeric"
+              placeholder="Contoh: 01234567890" />
           </div>
 
+          <div class="form-group">
+            <label class="form-label required">Nama Pemilik</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="nama_pemilik"
+              placeholder="Contoh: Zayyin Alfarizi" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Foto Rekening (Opsional)</label>
+            <div class="file-upload-wrapper">
+              <input
+                #editPhotoInput
+                type="file"
+                class="file-input"
+                accept="image/*"
+                (change)="onEditFileSelected($event)" />
+              <button type="button" class="file-label" (click)="editPhotoInput.click()">
+                <i class="fas fa-cloud-upload-alt me-2"></i>
+                {{ selectedEditPhotoFile ? 'Ganti Foto' : 'Pilih Foto Rekening' }}
+              </button>
+              <span class="file-info" *ngIf="selectedEditPhotoFile">{{ selectedEditPhotoFile.name }}</span>
+            </div>
+            <div *ngIf="currentEditItem && currentEditItem.photoRek" class="mt-2">
+              <img [src]="currentEditItem.photoRek" alt="Foto rekening saat ini" class="img-thumbnail" style="max-width: 100px;">
+              <div class="form-text">Foto saat ini</div>
+            </div>
+          </div>
         </form>
       </div>
+
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
         <button
           type="button"
           class="btn btn-primary"
           (click)="onSubmitEditPayment()"
-          [disabled]="isSubmitting || !editPaymentForm?.valid"
-        >
+          [disabled]="isSubmitting || !editPaymentForm?.valid">
           <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan' }}
         </button>
@@ -707,13 +335,13 @@
   </div>
 </div>
 
-<!-- Delete Payment Modal -->
+<!-- Delete Manual Payment Modal -->
 <div class="modal fade" id="deletePaymentModal" tabindex="-1" aria-labelledby="deletePaymentModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="deletePaymentModalLabel">
-          <i class="fas fa-trash me-2"></i>Hapus {{ selectedPaymentMethod?.name }}
+          <i class="fas fa-trash me-2"></i>Hapus Rekening Manual
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -722,44 +350,19 @@
           <i class="fas fa-exclamation-triangle me-2"></i>
           <strong>Peringatan!</strong> Tindakan ini tidak dapat dibatalkan.
         </div>
-        <p>Apakah Anda yakin ingin menghapus data pembayaran ini?</p>
-        <div *ngIf="currentEditItem" class="payment-detail-preview">
-          <!-- Manual Payment Preview -->
-          <div *ngIf="selectedPaymentMethod?.id === 1" class="border rounded p-3 bg-light">
-            <div class="row">
-              <div class="col-sm-6"><strong>Bank:</strong></div>
-              <div class="col-sm-6">{{ getBankName(currentEditItem.kodeBank || '') }}</div>
-            </div>
-            <div class="row">
-              <div class="col-sm-6"><strong>No Rekening:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.noRekening }}</div>
-            </div>
-            <div class="row">
-              <div class="col-sm-6"><strong>Nama Pemilik:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.namaPemilik }}</div>
-            </div>
+        <p>Apakah Anda yakin ingin menghapus rekening manual ini?</p>
+        <div *ngIf="currentEditItem" class="payment-detail-preview border rounded p-3 bg-light">
+          <div class="row">
+            <div class="col-sm-6"><strong>Bank:</strong></div>
+            <div class="col-sm-6">{{ getBankName(currentEditItem.kodeBank || '') }}</div>
           </div>
-          <!-- Tripay Preview -->
-          <div *ngIf="selectedPaymentMethod?.id === 2" class="border rounded p-3 bg-light">
-            <div class="row">
-              <div class="col-sm-6"><strong>URL:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.urlTripay }}</div>
-            </div>
-            <div class="row">
-              <div class="col-sm-6"><strong>Merchant:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.kodeMerchant }}</div>
-            </div>
+          <div class="row">
+            <div class="col-sm-6"><strong>No Rekening:</strong></div>
+            <div class="col-sm-6">{{ currentEditItem.noRekening }}</div>
           </div>
-          <!-- Midtrans Preview -->
-          <div *ngIf="selectedPaymentMethod?.id === 3" class="border rounded p-3 bg-light">
-            <div class="row">
-              <div class="col-sm-6"><strong>URL:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.url }}</div>
-            </div>
-            <div class="row">
-              <div class="col-sm-6"><strong>Mode:</strong></div>
-              <div class="col-sm-6">{{ currentEditItem.metodeProduction }}</div>
-            </div>
+          <div class="row">
+            <div class="col-sm-6"><strong>Nama Pemilik:</strong></div>
+            <div class="col-sm-6">{{ currentEditItem.namaPemilik }}</div>
           </div>
         </div>
       </div>
@@ -769,10 +372,33 @@
           type="button"
           class="btn btn-danger"
           (click)="onConfirmDelete()"
-          [disabled]="isSubmitting"
-        >
+          [disabled]="isSubmitting">
           <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
           {{ isSubmitting ? 'Menghapus...' : 'Hapus' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Use Midtrans Modal -->
+<div class="modal fade" id="useMidtransModal" tabindex="-1" aria-labelledby="useMidtransModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="useMidtransModalLabel">
+          <i class="fas fa-credit-card me-2"></i>Gunakan Midtrans?
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Data rekening manual akan dinonaktifkan. Pembayaran baru user akan otomatis menggunakan Midtrans.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-danger" (click)="confirmUseMidtrans()" [disabled]="isSubmitting">
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isSubmitting ? 'Memproses...' : 'Gunakan Midtrans' }}
         </button>
       </div>
     </div>

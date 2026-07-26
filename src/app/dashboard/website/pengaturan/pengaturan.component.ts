@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { BsModalRef, BsModalService } from 'ngx-bootstrap/modal';
 import { Notyf } from 'notyf';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { ModalComponent } from 'src/app/shared/modal/modal.component';
@@ -22,18 +24,23 @@ import {
   templateUrl: './pengaturan.component.html',
   styleUrls: ['./pengaturan.component.scss'],
 })
-export class PengaturanComponent implements OnInit {
+export class PengaturanComponent implements OnInit, OnDestroy {
   readonly DEFAULT_SALAM_PEMBUKA = DEFAULT_SALAM_PEMBUKA;
   readonly DEFAULT_SALAM_ATAS = DEFAULT_SALAM_ATAS;
   readonly DEFAULT_SALAM_BAWAH = DEFAULT_SALAM_BAWAH;
 
   domainTokenForm!: FormGroup;
+  domainForm!: FormGroup;
   salamForm!: FormGroup;
   filterForm!: FormGroup;
 
 
   isInitialLoading = false;
   isLoadingDomain = false;
+  isCheckingDomain = false;
+  isDomainAvailable: boolean | null = null;
+  domainAvailabilityMessage = '';
+  showDomainEditor = false;
   isLoadingSalam = false;
   isLoadingFilter = false;
 
@@ -47,6 +54,12 @@ export class PengaturanComponent implements OnInit {
   filterData: any;
   isFilterExisting = false;
   religionContent: ReligionContentLike = {};
+  currentDomain = '';
+  pendingDomain = '';
+
+  private readonly domainStorageKey = 'wedding_domain';
+  private domainValueChangesSub?: Subscription;
+  private domainAvailabilitySub?: Subscription;
 
   readonly filterItems = [
     {
@@ -134,14 +147,40 @@ export class PengaturanComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.setupDomainAvailabilityCheck();
     this.loadInitialData();
+  }
+
+  ngOnDestroy(): void {
+    this.domainValueChangesSub?.unsubscribe();
+    this.domainAvailabilitySub?.unsubscribe();
   }
 
   private initializeForms(): void {
 
     this.domainTokenForm = this.fb.group({
-      domain: ['', [Validators.required]],
+      domain: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(80),
+          Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        ],
+      ],
       token: ['']
+    });
+
+    this.domainForm = this.fb.group({
+      domain: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(80),
+          Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        ],
+      ],
     });
 
     this.salamForm = this.fb.group({
@@ -205,10 +244,20 @@ export class PengaturanComponent implements OnInit {
   }
 
   private populateFormsWithData(): void {
-    if (this.settingData) {
+    const resolvedDomain = this.resolveCurrentDomain({
+      ...(this.dataFilter || {}),
+      ...(this.settingData || {}),
+      setting: this.settingData,
+    });
+
+    if (resolvedDomain) {
+      this.currentDomain = resolvedDomain;
+    }
+
+    if (this.settingData || this.currentDomain) {
       this.domainTokenForm.patchValue({
-        domain: this.settingData.domain || '',
-        token: this.settingData.token || ''
+        domain: this.currentDomain,
+        token: this.settingData?.token || ''
       });
     }
 
@@ -240,6 +289,252 @@ export class PengaturanComponent implements OnInit {
 
   private stringToBoolean(value: string | number | null | undefined): boolean {
     return value === '1' || value === 1 || value === 'true';
+  }
+
+  get currentDomainUrl(): string {
+    return this.currentDomain ? this.buildInvitationUrl(this.currentDomain) : '';
+  }
+
+  get pendingDomainUrl(): string {
+    return this.pendingDomain ? this.buildInvitationUrl(this.pendingDomain) : '';
+  }
+
+  openDomainEditor(): void {
+    const domain = this.currentDomain || '';
+    this.pendingDomain = domain;
+    this.isDomainAvailable = null;
+    this.domainAvailabilityMessage = domain
+      ? 'Masukkan domain baru untuk mengecek ketersediaan.'
+      : 'Masukkan domain undangan yang ingin digunakan.';
+    this.showDomainEditor = true;
+    this.domainForm.patchValue({ domain }, { emitEvent: false });
+    this.domainForm.markAsPristine();
+    this.domainForm.markAsUntouched();
+  }
+
+  closeDomainEditor(): void {
+    if (this.isLoadingDomain) {
+      return;
+    }
+
+    this.showDomainEditor = false;
+    this.pendingDomain = '';
+    this.isCheckingDomain = false;
+    this.isDomainAvailable = null;
+    this.domainAvailabilityMessage = '';
+    this.domainAvailabilitySub?.unsubscribe();
+  }
+
+  onDomainInputBlur(): void {
+    const normalized = this.normalizeDomain(this.domainForm.get('domain')?.value);
+
+    if (normalized !== this.domainForm.get('domain')?.value) {
+      this.domainForm.patchValue({ domain: normalized });
+    }
+  }
+
+  canSubmitDomain(): boolean {
+    const domain = this.normalizeDomain(this.domainForm.get('domain')?.value);
+
+    return this.domainForm.valid &&
+      !!domain &&
+      domain !== this.currentDomain &&
+      this.isDomainAvailable === true &&
+      !this.isCheckingDomain &&
+      !this.isLoadingDomain;
+  }
+
+  saveDomainChange(): void {
+    if (!this.canSubmitDomain()) {
+      this.notyf.error('Pastikan domain valid dan tersedia.');
+      return;
+    }
+
+    this.pendingDomain = this.normalizeDomain(this.domainForm.get('domain')?.value);
+
+    const initialState = {
+      title: 'Ubah Domain Undangan?',
+      message: `Alamat undangan akan berubah dari:\n${this.currentDomainUrl || '-'}\n\nmenjadi:\n${this.pendingDomainUrl}\n\nLink lama mungkin tidak dapat digunakan kembali.`,
+      cancelClicked: () => this.modalRef?.hide(),
+      submitClicked: () => this.submitDomainChange(),
+      submitMessage: 'Ya, Ubah Domain',
+    };
+
+    this.modalRef = this.modalSvc.show(ModalComponent, { initialState });
+  }
+
+  private submitDomainChange(): void {
+    const domain = this.normalizeDomain(this.pendingDomain || this.domainForm.get('domain')?.value);
+
+    if (!domain || domain === this.currentDomain || this.isLoadingDomain) {
+      return;
+    }
+
+    this.isLoadingDomain = true;
+
+    this.dashboardSvc.updateInvitationDomain(domain).subscribe({
+      next: (res) => {
+        const updatedDomain = this.resolveUpdatedDomain(res, domain);
+        this.applyUpdatedDomain(updatedDomain);
+        this.modalRef?.hide();
+        this.showDomainEditor = false;
+        this.notyf.success(res?.message || 'Domain undangan berhasil diperbarui.');
+        this.isLoadingDomain = false;
+      },
+      error: (err) => {
+        this.notyf.error(this.resolveDomainErrorMessage(err, 'Domain undangan gagal diperbarui.'));
+        this.isLoadingDomain = false;
+      },
+    });
+  }
+
+  private setupDomainAvailabilityCheck(): void {
+    this.domainValueChangesSub = this.domainForm.get('domain')?.valueChanges
+      .pipe(
+        debounceTime(500),
+        distinctUntilChanged()
+      )
+      .subscribe((value) => this.checkDomainAvailability(value));
+  }
+
+  private checkDomainAvailability(value: unknown): void {
+    const domain = this.normalizeDomain(value);
+    this.pendingDomain = domain;
+    this.domainAvailabilitySub?.unsubscribe();
+
+    if (!domain) {
+      this.isCheckingDomain = false;
+      this.isDomainAvailable = null;
+      this.domainAvailabilityMessage = 'Domain wajib diisi.';
+      return;
+    }
+
+    if (this.domainForm.invalid) {
+      this.isCheckingDomain = false;
+      this.isDomainAvailable = null;
+      this.domainAvailabilityMessage = 'Gunakan huruf kecil, angka, dan tanda hubung. Minimal 3 karakter.';
+      return;
+    }
+
+    if (domain === this.currentDomain) {
+      this.isCheckingDomain = false;
+      this.isDomainAvailable = null;
+      this.domainAvailabilityMessage = 'Domain ini sedang aktif. Masukkan domain yang berbeda.';
+      return;
+    }
+
+    this.isCheckingDomain = true;
+    this.isDomainAvailable = null;
+    this.domainAvailabilityMessage = 'Memeriksa domain...';
+
+    this.domainAvailabilitySub = this.dashboardSvc.checkInvitationDomain(domain).subscribe({
+      next: (res) => {
+        const available = this.resolveDomainAvailability(res);
+        this.isDomainAvailable = available;
+        this.domainAvailabilityMessage = this.resolveDomainAvailabilityMessage(
+          res,
+          available ? 'Domain tersedia.' : 'Domain sudah digunakan.'
+        );
+        this.isCheckingDomain = false;
+      },
+      error: (err) => {
+        this.isDomainAvailable = false;
+        this.domainAvailabilityMessage = this.resolveDomainErrorMessage(err, 'Domain tidak dapat digunakan.');
+        this.isCheckingDomain = false;
+      },
+    });
+  }
+
+  normalizeDomain(value: unknown): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  private buildInvitationUrl(domain: string): string {
+    const origin = window.location.origin.replace(/\/$/, '');
+    return `${origin}/wedding/${encodeURIComponent(domain)}`;
+  }
+
+  private resolveCurrentDomain(source: any): string {
+    return this.normalizeDomain(
+      source?.domain ||
+      source?.wedding_domain ||
+      source?.website_domain ||
+      source?.domain_info?.domain ||
+      source?.settings?.domain ||
+      source?.setting?.domain ||
+      source?.invitation?.domain
+    );
+  }
+
+  private resolveUpdatedDomain(response: any, fallback: string): string {
+    return this.normalizeDomain(
+      response?.data?.domain ||
+      response?.domain ||
+      response?.data?.setting?.domain ||
+      response?.setting?.domain ||
+      fallback
+    );
+  }
+
+  private resolveDomainAvailability(response: any): boolean {
+    const raw = response?.available ??
+      response?.is_available ??
+      response?.data?.available ??
+      response?.data?.is_available ??
+      response?.data?.status;
+
+    if (typeof raw === 'boolean') return raw;
+    if (typeof raw === 'number') return raw === 1;
+    if (typeof raw === 'string') {
+      const normalized = raw.toLowerCase();
+      return normalized === 'available' || normalized === 'tersedia' || normalized === 'true' || normalized === '1';
+    }
+
+    return response?.success === true;
+  }
+
+  private resolveDomainAvailabilityMessage(response: any, fallback: string): string {
+    return String(
+      response?.message ||
+      response?.data?.message ||
+      fallback
+    );
+  }
+
+  private resolveDomainErrorMessage(error: any, fallback: string): string {
+    const status = Number(error?.status);
+
+    if (error?.error?.message) return error.error.message;
+    if (status === 401) return 'Sesi login berakhir. Silakan login kembali.';
+    if (status === 403) return 'Anda tidak memiliki akses untuk mengubah domain.';
+    if (status === 409) return 'Domain sudah digunakan.';
+    if (status === 422) return 'Format domain tidak valid.';
+    if (status === 500) return 'Gagal menyimpan domain. Silakan coba lagi.';
+
+    return getFriendlyErrorMessage(error) || fallback;
+  }
+
+  private applyUpdatedDomain(domain: string): void {
+    this.currentDomain = domain;
+    this.pendingDomain = domain;
+    this.isDomainAvailable = null;
+    this.domainAvailabilityMessage = '';
+
+    this.settingData = {
+      ...(this.settingData || {}),
+      domain,
+    };
+
+    this.domainTokenForm.patchValue({ domain }, { emitEvent: false });
+    this.domainForm.patchValue({ domain }, { emitEvent: false });
+    localStorage.setItem(this.domainStorageKey, domain);
+    localStorage.removeItem('wedding_data');
   }
 
 

@@ -9,6 +9,21 @@ import {
 } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 
+type ProfileAccountStatus =
+  | 'active'
+  | 'pending_payment'
+  | 'pending_confirmation'
+  | 'expired'
+  | 'inactive'
+  | 'unknown';
+
+interface ProfileStatusView {
+  label: string;
+  message: string;
+  icon: string;
+  cssClass: string;
+}
+
 @Component({
   selector: 'wc-profile',
   templateUrl: './profile.component.html',
@@ -26,6 +41,7 @@ export class ProfileComponent implements OnInit {
   photoPreview: string | null = null;
   isUploadingPhoto = false;
   public isAccountActive = false;
+  public accountStatus: ProfileAccountStatus = 'unknown';
 
   private notyf: Notyf;
 
@@ -82,27 +98,217 @@ export class ProfileComponent implements OnInit {
   }
 
   /**
-   * Derive the account active/inactive status from the profile response.
-   * Purely presentational — does not mutate any data or call endpoints.
+   * Derive account status from backend payment/account fields.
+   * Do not infer active status from package/domain existence.
    */
   private updateAccountStatus(profile: any): void {
-    const data = profile?.data || profile;
+    this.accountStatus = this.normalizeAccountStatus(profile);
+    this.isAccountActive = this.accountStatus === 'active';
+  }
 
-    const paymentStatus =
-      data?.package_info?.payment_status ||
-      data?.invitation_package?.payment_status ||
-      data?.payment_status ||
-      '';
+  get accountStatusView(): ProfileStatusView {
+    switch (this.accountStatus) {
+      case 'active':
+        return {
+          label: 'Akun Aktif',
+          message: 'Pembayaran telah diterima dan dikonfirmasi.',
+          icon: 'fa-check-circle',
+          cssClass: 'profile-status--active',
+        };
+      case 'pending_payment':
+        return {
+          label: 'Menunggu Pembayaran',
+          message: 'Silakan selesaikan pembayaran agar akun dapat diaktifkan.',
+          icon: 'fa-clock',
+          cssClass: 'profile-status--pending',
+        };
+      case 'pending_confirmation':
+        return {
+          label: 'Menunggu Konfirmasi',
+          message: 'Pembayaran sudah dikirim dan sedang diperiksa oleh admin.',
+          icon: 'fa-hourglass-half',
+          cssClass: 'profile-status--warning',
+        };
+      case 'expired':
+        return {
+          label: 'Akun Kedaluwarsa',
+          message: 'Masa aktif paket telah berakhir.',
+          icon: 'fa-exclamation-circle',
+          cssClass: 'profile-status--expired',
+        };
+      case 'inactive':
+        return {
+          label: 'Akun Tidak Aktif',
+          message: 'Akun belum dapat digunakan.',
+          icon: 'fa-ban',
+          cssClass: 'profile-status--inactive',
+        };
+      default:
+        return {
+          label: 'Status Belum Tersedia',
+          message: 'Status akun belum dapat dimuat.',
+          icon: 'fa-info-circle',
+          cssClass: 'profile-status--unknown',
+        };
+    }
+  }
 
-    const domainActive =
-      data?.domain_info?.is_active ??
-      data?.invitation_package?.is_domain_active ??
-      data?.is_domain_active ??
-      null;
+  get accountStatusActionLabel(): string {
+    if (this.accountStatus === 'pending_payment') return 'Lakukan Pembayaran';
+    if (this.accountStatus === 'pending_confirmation') return 'Sedang diperiksa admin';
+    return '';
+  }
 
-    this.isAccountActive =
-      domainActive === true ||
-      String(paymentStatus).toLowerCase() === 'paid';
+  get shouldShowAccountStatusAction(): boolean {
+    return this.accountStatus === 'pending_payment' || this.accountStatus === 'pending_confirmation';
+  }
+
+  private normalizeAccountStatus(profile: any): ProfileAccountStatus {
+    const data = profile?.data || profile || {};
+    const statusValues = [
+      data?.account_status,
+      data?.invitation_status,
+      data?.payment_status,
+      data?.order?.status,
+      data?.invitation?.status,
+      data?.status_bayar,
+      data?.status_pembayaran,
+      data?.status_tagihan,
+      data?.transaction_status,
+      data?.package_info?.account_status,
+      data?.package_info?.payment_status,
+      data?.package_info?.status_pembayaran,
+      data?.package_info?.status_tagihan,
+      data?.invitation_package?.account_status,
+      data?.invitation_package?.payment_status,
+      data?.invitation_package?.status_pembayaran,
+      data?.tagihan?.status_bayar,
+      data?.tagihan?.payment_status,
+      data?.tagihan?.invoice_status,
+      data?.tagihan?.status_pembayaran,
+      data?.tagihan?.transaction_status,
+      data?.invoice?.payment_status,
+      data?.invoice?.invoice_status,
+      data?.invoice?.status_pembayaran,
+      data?.invoice?.transaction_status,
+      data?.transaction?.status,
+      data?.transaction?.payment_status,
+      data?.transaction?.transaction_status,
+    ];
+
+    for (const value of statusValues) {
+      const mapped = this.mapRawAccountStatus(value);
+      if (mapped !== 'unknown') return mapped;
+    }
+
+    if (
+      data?.is_expired === true ||
+      this.isPastDate(data?.expired_at || data?.expires_at || data?.domain_info?.expires_at)
+    ) {
+      return 'expired';
+    }
+
+    if (
+      data?.payment_confirmed === true ||
+      data?.is_payment_confirmed === true ||
+      data?.is_paid === true ||
+      data?.paid_at ||
+      data?.confirmed_at ||
+      data?.payment_confirmed_at ||
+      data?.domain_info?.payment_confirmed_at
+    ) {
+      return 'active';
+    }
+
+    return 'unknown';
+  }
+
+  private mapRawAccountStatus(value: unknown): ProfileAccountStatus {
+    const raw = String(value ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_');
+    if (!raw) return 'unknown';
+
+    if ([
+      'active',
+      'aktif',
+      'paid',
+      'success',
+      'sukses',
+      'settlement',
+      'capture',
+      'confirmed',
+      'terkonfirmasi',
+      'completed',
+      'lunas',
+      'sb',
+    ].includes(raw)) {
+      return 'active';
+    }
+
+    if ([
+      'pending_confirmation',
+      'waiting_confirmation',
+      'menunggu_konfirmasi',
+      'menunggu_verifikasi',
+      'waiting_verification',
+      'uploaded',
+      'proof_uploaded',
+      'bukti_terkirim',
+      'mk',
+    ].includes(raw)) {
+      return 'pending_confirmation';
+    }
+
+    if ([
+      'pending_payment',
+      'pending',
+      'unpaid',
+      'not_paid',
+      'belum_bayar',
+      'belum_lunas',
+      'waiting_payment',
+      'menunggu_pembayaran',
+      'menunggu',
+      'bl',
+    ].includes(raw)) {
+      return 'pending_payment';
+    }
+
+    if ([
+      'expired',
+      'expire',
+      'kedaluwarsa',
+      'kadaluarsa',
+      'account_expired',
+      'package_expired',
+      'ex',
+    ].includes(raw)) {
+      return 'expired';
+    }
+
+    if ([
+      'inactive',
+      'nonactive',
+      'non_active',
+      'nonaktif',
+      'disabled',
+      'cancel',
+      'cancelled',
+      'canceled',
+      'deny',
+      'denied',
+      'failed',
+      'gagal',
+    ].includes(raw)) {
+      return 'inactive';
+    }
+
+    return 'unknown';
+  }
+
+  private isPastDate(value: unknown): boolean {
+    if (!value) return false;
+    const date = new Date(String(value));
+    return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
   }
 
   /**
@@ -133,6 +339,7 @@ export class ProfileComponent implements OnInit {
     this.dashboardService.updateProfile(formData).subscribe({
       next: (response) => {
         this.profileData = response.data;
+        this.updateAccountStatus(response);
         this.notyf.success(response.message || 'Profil berhasil diperbarui');
         this.isSubmitting = false;
         // Trigger profile update event for other components

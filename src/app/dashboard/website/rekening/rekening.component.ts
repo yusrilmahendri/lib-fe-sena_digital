@@ -40,6 +40,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
   maxRekening = 2;
   isLoading = false;
   isSubmitting = false;  // Modal state
+  activeAccountIndex: number | null = null;
   pendingDeleteAccountId: number | null = null;
   pendingDeleteIndex: number | null = null;
 
@@ -118,10 +119,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
       this.accounts.push(this.createAccountFormGroup(account));
     });
 
-    // Add empty form if less than max and no accounts exist
-    if (this.accounts.length === 0) {
-      this.addNewAccountForm();
-    }
+    this.activeAccountIndex = null;
   }
 
   canAddNewAccount(): boolean {
@@ -142,6 +140,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
   addNewAccountForm(): void {
     if (this.canAddNewAccount()) {
       this.accounts.push(this.createAccountFormGroup());
+      this.activeAccountIndex = this.accounts.length - 1;
     }
   }
 
@@ -307,6 +306,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
   private submitBankAccountAtIndex(accounts: BankAccountFormData[], index: number): void {
     if (index >= accounts.length) {
       this.notyf.success('Rekening berhasil ditambahkan');
+      this.closeAccountEditor();
       this.loadBankAccounts();
       this.isSubmitting = false;
       return;
@@ -330,6 +330,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
 
   onEdit(index: number): void {
     this.accounts.at(index).get('editMode')?.setValue(true);
+    this.activeAccountIndex = index;
   }
 
   onCancelEdit(index: number): void {
@@ -343,6 +344,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
         editMode: false
       });
     }
+    this.closeAccountEditor();
   }
 
   onUpdate(index: number): void {
@@ -377,6 +379,7 @@ export class RekeningComponent implements OnInit, OnDestroy {
       next: (res: any) => {
         this.notyf.success(res?.message || 'Rekening berhasil diperbarui');
         accountForm.get('editMode')?.setValue(false);
+        this.closeAccountEditor();
         this.loadBankAccounts();
         this.isSubmitting = false;
       },
@@ -477,6 +480,115 @@ export class RekeningComponent implements OnInit, OnDestroy {
   // Utility methods
   isFormValid(index: number): boolean {
     return this.accounts.at(index).valid;
+  }
+
+  get activeAccountControl(): FormGroup | null {
+    if (this.activeAccountIndex === null) {
+      return null;
+    }
+
+    return this.accounts.at(this.activeAccountIndex) as FormGroup;
+  }
+
+  get isActiveAccountNew(): boolean {
+    return !this.activeAccountControl?.get('id')?.value;
+  }
+
+  get activeEditorTitle(): string {
+    return this.isActiveAccountNew ? 'Tambah Rekening' : 'Edit Rekening';
+  }
+
+  openAccountEditor(index: number): void {
+    const account = this.accounts.at(index);
+    if (!account) {
+      return;
+    }
+
+    if (account.get('id')?.value) {
+      this.onEdit(index);
+      return;
+    }
+
+    this.activeAccountIndex = index;
+  }
+
+  closeAccountEditor(): void {
+    this.activeAccountIndex = null;
+  }
+
+  cancelActiveEditor(): void {
+    const index = this.activeAccountIndex;
+    if (index === null) {
+      return;
+    }
+
+    const account = this.accounts.at(index);
+    if (!account) {
+      this.closeAccountEditor();
+      return;
+    }
+
+    if (!account.get('id')?.value) {
+      this.accounts.removeAt(index);
+      this.closeAccountEditor();
+      return;
+    }
+
+    this.onCancelEdit(index);
+  }
+
+  saveActiveEditor(): void {
+    const index = this.activeAccountIndex;
+    if (index === null) {
+      return;
+    }
+
+    if (this.isActiveAccountNew) {
+      this.markFormGroupTouched(this.accounts.at(index) as FormGroup);
+      this.onSubmit();
+      return;
+    }
+
+    this.onUpdate(index);
+  }
+
+  maskAccountNumber(value: any): string {
+    const accountNumber = String(value || '').replace(/\s+/g, '');
+    if (!accountNumber) {
+      return 'Nomor belum diisi';
+    }
+
+    if (accountNumber.length <= 6) {
+      return accountNumber.replace(/.(?=.{2})/g, '*');
+    }
+
+    const start = accountNumber.slice(0, 4);
+    const end = accountNumber.slice(-4);
+    return `${start} **** ${end}`;
+  }
+
+  getOwnerName(value: any): string {
+    return String(value || '').trim() || 'Nama pemilik belum diisi';
+  }
+
+  getActivePhotoUploadLabel(): string {
+    const photo = this.activeAccountControl?.get('photo_rek')?.value;
+
+    if (!photo) {
+      return 'Pilih Foto Rekening';
+    }
+
+    return photo instanceof File ? this.getFileName(photo) : 'Ganti Foto';
+  }
+
+  getActivePhotoStatusLabel(): string {
+    const photo = this.activeAccountControl?.get('photo_rek')?.value;
+
+    if (!photo) {
+      return '';
+    }
+
+    return photo instanceof File ? this.getFileName(photo) : 'Foto tersimpan';
   }
 
   getFieldError(index: number, fieldName: string): string | null {

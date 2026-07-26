@@ -63,7 +63,13 @@
       <article class="field-card" *ngFor="let field of fields; trackBy: trackByField">
         <div class="field-card-header">
           <div>
-            <h3>{{ field.label }}</h3>
+            <h3 class="field-title">
+              <i
+                *ngIf="field.key === 'whatsapp_opening' || field.key === 'whatsapp_message' || field.key === 'whatsapp_closing'"
+                class="fab fa-whatsapp field-title__icon"
+                aria-hidden="true"></i>
+              <span>{{ field.label }}</span>
+            </h3>
             <p>{{ field.helper }}</p>
           </div>
           <span class="status-badge" [class.custom]="isCustom(field.key)">
@@ -131,10 +137,13 @@
         </div>
 
         <div class="whatsapp-preview">
-          <div class="phone-bar">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div class="whatsapp-preview__header">
+            <div class="phone-bar" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <i class="fab fa-whatsapp whatsapp-preview__logo" aria-hidden="true"></i>
           </div>
           <div class="chat-bubble">
             {{ getResolved('whatsapp_opening') }}

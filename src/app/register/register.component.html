@@ -35,60 +35,89 @@
 
           <!-- Email Input -->
           <div class="form-group">
+            <label for="register-email">Email</label>
             <input
+              id="register-email"
               type="email"
               formControlName="email"
               placeholder="Email"
+              autocomplete="email"
             />
             <span *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.invalid">
-              Email is required and must be valid.
+              Email wajib diisi dan harus valid.
             </span>
           </div>
   
           <!-- Password Input -->
           <div class="form-group">
-            <input
-              type="password"
-              formControlName="password"
-              placeholder="Password"
-            />
+            <label for="register-password">Password</label>
+            <div class="password-field">
+              <input
+                id="register-password"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Password"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                [attr.aria-label]="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                (click)="togglePasswordVisibility()"
+              >
+                <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
             <span *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
-              Password is required and must be at least 6 characters.
+              Password wajib diisi dan minimal 8 karakter.
             </span>
           </div>
   
           <!-- Password Confirmation Input -->
           <div class="form-group">
-            <input
-              type="password"
-              formControlName="password_confirmation"
-              placeholder="Repeat Password"
-            />
-            <span
-              *ngIf="
-                loginForm.get('password_confirmation')?.touched &&
-                loginForm.get('password_confirmation')?.value !== loginForm.get('password')?.value
-              "
-            >
-              Passwords must match.
+            <label for="register-password-confirmation">Ulangi Password</label>
+            <div class="password-field">
+              <input
+                id="register-password-confirmation"
+                [type]="showPasswordConfirmation ? 'text' : 'password'"
+                formControlName="password_confirmation"
+                placeholder="Ulangi Password"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-field__toggle"
+                [attr.aria-label]="showPasswordConfirmation ? 'Sembunyikan ulangi password' : 'Tampilkan ulangi password'"
+                (click)="togglePasswordConfirmationVisibility()"
+              >
+                <i [class]="showPasswordConfirmation ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
+            <span *ngIf="getPasswordConfirmationErrorMessage()">
+              {{ getPasswordConfirmationErrorMessage() }}
             </span>
           </div>
   
           <!-- Phone Input -->
           <div class="form-group">
+            <label for="register-phone">Nomor HP/WA</label>
             <input
+              id="register-phone"
               type="text"
               formControlName="phone"
-              placeholder="Phone"
+              placeholder="Nomor HP/WA"
+              autocomplete="tel"
             />
             <span *ngIf="loginForm.get('phone')?.touched && loginForm.get('phone')?.invalid">
-              Phone is required.
+              Nomor HP/WA wajib diisi.
             </span>
           </div>
   
           <!-- Submit Button -->
           <div class="login-actions">
-            <button type="submit" [disabled]="loginForm.invalid">Daftar</button>
+            <button type="submit" [disabled]="loginForm.invalid || isRegistering">
+              {{ isRegistering ? 'Memproses...' : 'Daftar' }}
+            </button>
           </div>
         </form>
   

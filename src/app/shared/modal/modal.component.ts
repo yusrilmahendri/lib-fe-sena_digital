@@ -6,6 +6,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   styleUrls: ['./modal.component.scss']
 })
 export class ModalComponent implements OnInit {
+  @Input() title: string = '';
   @Input() message: string = '';
   @Input() cancelClicked: () => void = () => {};
   @Input() submitClicked: (data: any) => void = (data: any) => {};

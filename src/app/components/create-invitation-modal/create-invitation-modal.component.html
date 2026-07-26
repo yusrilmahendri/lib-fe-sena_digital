@@ -251,7 +251,31 @@
           </button>
         </div>
         <p class="ci-field__error" *ngIf="accountForm.get('password')?.touched && accountForm.get('password')?.invalid">
-          Kata sandi minimal 6 karakter.
+          Kata sandi minimal 8 karakter.
+        </p>
+
+        <label class="ci-label" for="ci-password-confirmation">Ulangi kata sandi</label>
+        <div class="ci-field ci-field--password">
+          <input
+            id="ci-password-confirmation"
+            class="ci-input ci-input--password"
+            [type]="showPasswordConfirmation ? 'text' : 'password'"
+            placeholder="Ulangi kata sandi"
+            formControlName="password_confirmation"
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            class="ci-eye"
+            [attr.aria-label]="showPasswordConfirmation ? 'Sembunyikan ulangi kata sandi' : 'Tampilkan ulangi kata sandi'"
+            (click)="togglePasswordConfirmation()"
+          >
+            <svg *ngIf="!showPasswordConfirmation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg *ngIf="showPasswordConfirmation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 7 10 7a13.2 13.2 0 0 1-2.6 3.3M6.6 6.6A13.3 13.3 0 0 0 2 11s3.5 7 10 7a9 9 0 0 0 4.4-1.1M3 3l18 18"/></svg>
+          </button>
+        </div>
+        <p class="ci-field__error" *ngIf="getAccountPasswordConfirmationErrorMessage()">
+          {{ getAccountPasswordConfirmationErrorMessage() }}
         </p>
 
         <label class="ci-check">

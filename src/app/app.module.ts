@@ -108,6 +108,7 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
 import { MusicCatalogComponent } from './dashboard-admin/music-catalog/music-catalog.component';
 import { PenyesuaianAgamaComponent } from './dashboard/penyesuaian-agama/penyesuaian-agama.component';
+import { ReligionTemplatesComponent } from './dashboard-admin/religion-templates/religion-templates.component';
 import { RevealDirective } from './shared/animations/reveal.directive';
 import { RevealScopeDirective } from './shared/animations/reveal-scope.directive';
 import { RevealStaggerDirective } from './shared/animations/reveal-stagger.directive';
@@ -212,6 +213,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
     ThemePreviewComponent,
     MusicCatalogComponent,
     PenyesuaianAgamaComponent,
+    ReligionTemplatesComponent,
     RevealDirective,
     RevealScopeDirective,
     RevealStaggerDirective,

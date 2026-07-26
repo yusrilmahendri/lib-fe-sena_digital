@@ -1,90 +1,125 @@
 <div class="rp-container">
-  <!-- Payment Method Selection -->
-  <div class="rp-form-group">
-    <label for="payment_method" class="rp-label">Metode Pembayaran</label>
-    <div class="rp-select-wrapper">
-      <ngx-select [items]="selectOptions.payment.items" 
-                  [optionTextField]="'name'" 
-                  [optionValueField]="'id'"
-                  placeholder="Pilih metode pembayaran" 
-                  (select)="onMetodeSelect($event)"
-                  class="rp-select">
-      </ngx-select>
+  <div class="payment-loading" *ngIf="isLoadingPaymentConfig && !isTrialPackage">
+    <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+    <span>Menyiapkan metode pembayaran...</span>
+  </div>
+
+  <div class="payment-config-error" *ngIf="!isLoadingPaymentConfig && paymentConfigError">
+    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+    <div>
+      <strong>Metode pembayaran belum tersedia</strong>
+      <p>{{ paymentConfigError }}</p>
     </div>
   </div>
 
-  <!-- Manual Payment Method -->
-  <ng-container *ngIf="selectedMethod === 1">
-    <div *ngFor="let rekening of bill" class="rp-payment-section">
-      <!-- Bank Name -->
-      <div class="rp-form-group">
-        <label class="rp-label">Nama Bank Tujuan</label>
-        <div class="rp-readonly-field">
-          {{ rekening.nama_bank }}
+  <ng-container *ngIf="!isLoadingPaymentConfig && !paymentConfigError">
+    <!-- Manual Payment Method -->
+    <ng-container *ngIf="activePaymentMethod === 'manual'">
+      <section class="rp-payment-section manual-payment-section">
+        <div class="payment-method-badge">
+          <i class="fas fa-university" aria-hidden="true"></i>
+          Transfer Manual
         </div>
-      </div>
 
-      <!-- Account Number -->
-      <div class="rp-form-group">
-        <label class="rp-label">Nomer Rekening</label>
-        <div class="rp-readonly-field rp-copyable" (click)="copyToClipboard(rekening.nomor_rekening)">
-          <span>{{ rekening.nomor_rekening }}</span>
-          <svg class="rp-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
-          </svg>
+        <div *ngFor="let rekening of bill" class="rp-bank-card">
+          <img
+            *ngIf="rekening.account_photo_url"
+            class="rp-bank-photo"
+            [src]="rekening.account_photo_url"
+            alt="Foto rekening" />
+
+          <div class="rp-form-group">
+            <label class="rp-label">Nama Bank Tujuan</label>
+            <div class="rp-readonly-field">
+              {{ rekening.nama_bank }}
+            </div>
+          </div>
+
+          <div class="rp-form-group">
+            <label class="rp-label">Nomor Rekening</label>
+            <button
+              type="button"
+              class="rp-readonly-field rp-copyable"
+              (click)="copyToClipboard(rekening.nomor_rekening)">
+              <span>{{ rekening.nomor_rekening }}</span>
+              <svg class="rp-copy-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="rp-form-group">
+            <label class="rp-label">Nama Pemilik</label>
+            <div class="rp-readonly-field">
+              {{ rekening.nama_pemilik }}
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- Owner Name -->
-      <div class="rp-form-group">
-        <label class="rp-label">Nama Pemilik</label>
-        <div class="rp-readonly-field">
-          {{ rekening.nama_pemilik }}
+        <div class="rp-amount-section">
+          <div class="rp-amount-row">
+            <span class="rp-amount-label">Nominal yang harus dibayarkan</span>
+            <span class="rp-amount-value">Rp. {{ manualBill }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Amount -->
-      <div class="rp-amount-section">
-        <div class="rp-amount-row">
-          <span class="rp-amount-label">Nominal yang harus dibayarkan:</span>
-          <span class="rp-amount-value">Rp. {{ manualBill }}</span>
+        <div class="rp-instructions">
+          <p>Transfer sesuai nominal tagihan, lalu lanjutkan konfirmasi manual melalui admin.</p>
         </div>
-      </div>
+      </section>
+    </ng-container>
 
-      <!-- Instructions -->
-      <div class="rp-instructions">
-        <p>Setelah melakukan pembayaran, pastikan Anda klik "Lanjut" untuk langkah selanjutnya. Mohon untuk menyimpan bukti pembayaran.</p>
+    <!-- Midtrans Payment Method -->
+    <ng-container *ngIf="activePaymentMethod === 'midtrans'">
+      <section class="rp-payment-section midtrans-payment-section">
+        <div class="payment-method-badge">
+          <i class="fas fa-credit-card" aria-hidden="true"></i>
+          Pembayaran Otomatis
+        </div>
+
+        <div class="rp-midtrans-card">
+          <h3 class="rp-section-title">Bayar melalui Midtrans</h3>
+          <p>Transaksi diproses aman melalui Midtrans. Token pembayaran dibuat setelah Anda menekan tombol bayar.</p>
+          <div class="rp-amount-section">
+            <div class="rp-amount-row">
+              <span class="rp-amount-label">Total tagihan</span>
+              <span class="rp-amount-value">Rp. {{ manualBill }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </ng-container>
+
+    <!-- Trial Method -->
+    <ng-container *ngIf="isTrialPackage">
+      <div class="rp-trial-section">
+        <p class="rp-trial-text">
+          Anda memilih metode "Trial dulu" sehingga masa uji coba hanya berlangsung selama 3 hari.
+          Beberapa fitur tidak akan tersedia di akun Anda. Setelah masa uji coba habis,
+          Anda tidak dapat lagi mengakses undangan yang Anda buat.
+        </p>
       </div>
-    </div>
+    </ng-container>
   </ng-container>
 
-  <!-- Midtrans Payment Method -->
-  <ng-container *ngIf="selectedMethod === 3">
-    <div class="rp-payment-section">
-      <h3 class="rp-section-title">Midtrans</h3>
-      <p>Anda akan diarahkan ke halaman pembayaran Midtrans setelah menekan Lanjut.</p>
-    </div>
-  </ng-container>
-
-  <!-- Trial Method -->
-  <ng-container *ngIf="selectedMethod === 4">
-    <div class="rp-trial-section">
-      <p class="rp-trial-text">
-        Anda memilih metode "Trial dulu" sehingga masa uji coba hanya berlangsung selama 3 hari. 
-        Beberapa fitur tidak akan tersedia di akun Anda. Setelah masa uji coba habis, 
-        Anda tidak dapat lagi mengakses undangan yang Anda buat.
-      </p>
-    </div>
-  </ng-container>
-
-  <!-- Navigation Buttons -->
-  <div class="rp-button-group">
+  <div
+    class="rp-button-group"
+    *ngIf="isTrialPackage || (!isLoadingPaymentConfig && activePaymentMethod && !paymentConfigError)">
     <button type="button" class="rp-btn rp-btn-primary" (click)="onNextClicked()" [disabled]="isNextDisabled">
-      {{ isStartingPayment ? 'Memproses…' : (isProfileLoading ? 'Memuat Profil…' : 'Lanjut') }}
+      <ng-container *ngIf="!isStartingPayment; else processingPayment">
+        <span *ngIf="isProfileLoading">Memuat Profil...</span>
+        <span *ngIf="!isProfileLoading && activePaymentMethod === 'midtrans'">Bayar Sekarang</span>
+        <span *ngIf="!isProfileLoading && activePaymentMethod === 'manual'">Konfirmasi Manual</span>
+        <span *ngIf="!isProfileLoading && isTrialPackage">Lanjut</span>
+      </ng-container>
+      <ng-template #processingPayment>
+        Menyiapkan pembayaran...
+      </ng-template>
     </button>
   </div>
-  <p *ngIf="profileCompletionWarning" role="alert">{{ profileCompletionWarning }}</p>
-  <p *ngIf="profileLoadError" role="alert">{{ profileLoadError }}</p>
-  <p *ngIf="paymentError" role="alert">{{ paymentError }}</p>
+
+  <p class="rp-alert" *ngIf="profileCompletionWarning" role="alert">{{ profileCompletionWarning }}</p>
+  <p class="rp-alert" *ngIf="profileLoadError" role="alert">{{ profileLoadError }}</p>
+  <p class="rp-alert" *ngIf="paymentError" role="alert">{{ paymentError }}</p>
 </div>

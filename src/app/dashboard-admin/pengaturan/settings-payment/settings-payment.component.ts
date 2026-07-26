@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { DashboardService, DashboardServiceType } from '../../../dashboard.service';
-import { FormBuilder, FormControl, FormGroup, FormArray, Validators } from '@angular/forms';
+import { DashboardService, DashboardServiceType, UserPaymentConfig } from '../../../dashboard.service';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Notyf } from 'notyf';
-import { BankAccount } from '../../../services/wedding-data.service';
 import { environment } from '../../../../environments/environment';
+import { forkJoin } from 'rxjs';
 
 /**
  * SettingsPaymentComponent
@@ -20,11 +20,6 @@ import { environment } from '../../../../environments/environment';
  * All operations support file upload for photo_rek (optional).
  * Validation includes bank code verification and file type/size checks.
  */
-
-interface PaymentMethod {
-  id: number;
-  name: string;
-}
 
 interface Bank {
   id: number;
@@ -96,9 +91,8 @@ interface ApiErrorResponse {
 export class SettingsPaymentComponent implements OnInit {
   private readonly adminRekeningBaseUrl = `${environment.apiBaseUrl}/v1/admin`;
 
-  // Payment method selection
-  paymentMethods: PaymentMethod[] = [];
-  selectedPaymentMethod: PaymentMethod | null = null;
+  activePaymentMethod: 'manual' | 'midtrans' | null = null;
+  paymentStatusError = '';
 
   // Bank list for manual payments
   bankList: Bank[] = [];
@@ -133,25 +127,10 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Initialize empty form first to prevent null errors
-    this.paymentForm = this.fb.group({});
-
-    this.loadPaymentMethods();
-  }
-
-  private loadPaymentMethods(): void {
-    this.isLoading = true;
-    this.dashboardSvc.getParam(DashboardServiceType.MD_RGS_PAYMENT, '').subscribe({
-      next: (response) => {
-        this.paymentMethods = response?.data || [];
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading payment methods:', err);
-        this.notyf.error('Gagal memuat metode pembayaran');
-        this.isLoading = false;
-      }
-    });
+    this.initializeForm();
+    this.loadBankList();
+    this.loadPaymentDetails();
+    this.loadActivePaymentStatus();
   }
 
   private loadBankList(): void {
@@ -166,90 +145,12 @@ export class SettingsPaymentComponent implements OnInit {
     });
   }
 
-  onPaymentMethodSelect(selectedItem: any): void {
-    console.log('Payment method select event:', selectedItem);
-
-    // Extract the ID from the selected item
-    const methodId = selectedItem?.id || selectedItem;
-    if (!methodId) return;
-
-    const method = this.paymentMethods.find(m => m.id === methodId);
-    if (!method) return;
-
-    console.log('Selected payment method:', method);
-
-    // Clear previous state completely
-    this.selectedPaymentMethod = null;
-    this.paymentDetails = [];
-
-    // Initialize an empty form to prevent null reference errors
-    this.paymentForm = this.fb.group({});
-
-    // Use setTimeout to ensure proper timing for state updates
-    setTimeout(() => {
-      // Set new payment method
-      this.selectedPaymentMethod = method;
-
-      // Initialize the proper form
-      this.initializeForm();
-
-      // Load data after form is properly initialized
-      setTimeout(() => {
-        this.loadPaymentDetails();
-
-        // Load bank list if manual payment is selected
-        if (methodId === 1) {
-          this.loadBankList();
-        }
-      }, 50);
-    }, 10);
-  }
-
   private initializeForm(): void {
-    if (!this.selectedPaymentMethod) {
-      this.paymentForm = this.fb.group({});
-      return;
-    }
-
-    console.log('Initializing form for payment method:', this.selectedPaymentMethod.id);
-
-    // Create the form based on payment method type
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual - According to API contract
-        this.paymentForm = this.fb.group({
-          kode_bank: new FormControl('', [Validators.required]),
-          nomor_rekening: new FormControl('', [Validators.required]),
-          nama_pemilik: new FormControl('', [Validators.required, Validators.minLength(2)])
-        });
-        break;
-
-      case 2: // Tripay
-        this.paymentForm = this.fb.group({
-          url_tripay: new FormControl('', [Validators.required]),
-          private_key: new FormControl('', [Validators.required]),
-          api_key: new FormControl('', [Validators.required]),
-          kode_merchant: new FormControl('', [Validators.required]),
-          methode_pembayaran: new FormControl('Tripay', [Validators.required]),
-          id_methode_pembayaran: new FormControl('2', [Validators.required])
-        });
-        break;
-
-      case 3: // Midtrans
-        this.paymentForm = this.fb.group({
-          url: new FormControl('', [Validators.required]),
-          server_key: new FormControl('', [Validators.required]),
-          client_key: new FormControl('', [Validators.required]),
-          metode_production: new FormControl('', [Validators.required]),
-          methode_pembayaran: new FormControl('Midtrans', [Validators.required]),
-          id_methode_pembayaran: new FormControl('3', [Validators.required])
-        });
-        break;
-
-      default:
-        this.paymentForm = this.fb.group({});
-    }
-
-    console.log('Form initialized successfully:', this.paymentForm);
+    this.paymentForm = this.fb.group({
+      kode_bank: new FormControl('', [Validators.required]),
+      nomor_rekening: new FormControl('', [Validators.required, Validators.pattern(/^[0-9]+$/)]),
+      nama_pemilik: new FormControl('', [Validators.required, Validators.minLength(2)])
+    });
   }
 
   onBankSelect(selectedItem: any): void {
@@ -281,34 +182,22 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   private loadPaymentDetails(): void {
-    if (!this.selectedPaymentMethod) return;
-
     this.isLoading = true;
+    this.loadManualPaymentDetails();
+  }
 
-    // Handle different payment methods
-    if (this.selectedPaymentMethod.id === 1) {
-      // Manual payment - use admin rekening endpoint
-      this.loadManualPaymentDetails();
-    } else {
-      // Other payment methods - use existing logic
-      const params = {
-        id_methode_pembayaran: this.selectedPaymentMethod.id,
-        name_methode_pembayaran: this.selectedPaymentMethod.name
-      };
-
-      this.dashboardSvc.list(DashboardServiceType.MNL_MD_METHOD_DETAIL, params).subscribe({
-        next: (res) => {
-          const paymentList = res?.data || [];
-          this.mapPaymentDetails(paymentList);
-          this.isLoading = false;
-        },
-        error: (err) => {
-          console.error('Error loading payment details:', err);
-          this.notyf.error('Gagal memuat detail pembayaran');
-          this.isLoading = false;
-        }
-      });
-    }
+  private loadActivePaymentStatus(): void {
+    this.paymentStatusError = '';
+    this.dashboardSvc.getUserPaymentConfig().subscribe({
+      next: (response: UserPaymentConfig) => {
+        const method = response?.payment_method || response?.data?.payment_method || null;
+        this.activePaymentMethod = method === 'manual' || method === 'midtrans' ? method : null;
+      },
+      error: (err) => {
+        this.activePaymentMethod = null;
+        this.paymentStatusError = err?.error?.message || 'Gagal memuat status metode pembayaran aktif.';
+      }
+    });
   }
 
   private loadManualPaymentDetails(): void {
@@ -352,84 +241,6 @@ export class SettingsPaymentComponent implements OnInit {
     console.log('Mapped manual payment details:', this.paymentDetails);
   }
 
-  private mapPaymentDetails(data: any[]): void {
-    console.log('Raw API data:', data); // Debug logging
-
-    this.paymentDetails = data.map((item: any) => {
-      // Set payment method info based on selected method since API response doesn't include it
-      const methodId = this.selectedPaymentMethod?.id || 1;
-      const methodName = this.selectedPaymentMethod?.name || 'Manual';
-
-      let detail: PaymentMethodDetail = {
-        id: item.id,
-        metodePembayaran: item.methode_pembayaran || methodName,
-        idMetodePembayaran: item.id_methode_pembayaran?.toString() || methodId.toString(),
-        userId: item.user_id,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at
-      };
-
-      // Map specific fields based on payment method
-      // Use selected payment method ID since API response may not include it
-      const paymentMethodId = item.id_methode_pembayaran?.toString() || methodId.toString();
-
-      switch (paymentMethodId) {
-        case '1': // Manual
-          detail = {
-            ...detail,
-            pengguna: item.nama_pemilik || item.email || '-',
-            email: item.email || '-',
-            noRekening: item.nomor_rekening || '-',
-            namaBank: this.getBankNameFromCode(item.kode_bank) || '-',
-            kodeBank: item.kode_bank || '-',
-            namaPemilik: item.nama_pemilik || '-',
-            photoRek: item.photo_rek || null
-          };
-          break;
-
-        case '2': // Tripay
-          detail = {
-            ...detail,
-            urlTripay: item.url_tripay || '-',
-            privateKey: item.private_key || '-',
-            apiKey: item.api_key || '-',
-            kodeMerchant: item.kode_merchant || '-'
-          };
-          break;
-
-        case '3': // Midtrans
-          detail = {
-            ...detail,
-            url: item.url || '-',
-            serverKey: item.server_key || '-',
-            clientKey: item.client_key || '-',
-            metodeProduction: item.metode_production || '-'
-          };
-          break;
-
-        case '4': // Trial
-          detail = {
-            ...detail,
-            trialInfo: 'Trial Mode Active'
-          };
-          break;
-      }
-
-      console.log('Mapped detail for item:', item, 'Result:', detail); // Debug logging
-      return detail;
-    });
-
-    console.log('Final mapped payment details:', this.paymentDetails); // Debug logging
-  }
-
-  private getBankNameFromCode(kodeBank: string): string {
-    if (!kodeBank || !this.bankList || this.bankList.length === 0) {
-      return 'Bank tidak ditemukan';
-    }
-    const bank = this.bankList.find(b => b.kode_bank === kodeBank);
-    return bank?.name || 'Bank tidak ditemukan';
-  }
-
   private validateFile(file: File): boolean {
     const maxSize = 2 * 1024 * 1024; // 2MB
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
@@ -448,10 +259,11 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   onSubmitPayment(): void {
-    if (!this.selectedPaymentMethod || !this.paymentForm || this.paymentForm.invalid || this.isSubmitting) {
+    if (!this.paymentForm || this.paymentForm.invalid || this.isSubmitting) {
       if (this.isSubmitting) {
         this.notyf.error('Proses sedang berlangsung, harap tunggu...');
       } else {
+        this.paymentForm?.markAllAsTouched();
         this.notyf.error('Harap lengkapi semua field yang wajib diisi');
       }
       return;
@@ -459,21 +271,7 @@ export class SettingsPaymentComponent implements OnInit {
 
     const formValues = this.paymentForm.value;
     this.isSubmitting = true;
-
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual
-        this.submitManualPayment(formValues);
-        break;
-      case 2: // Tripay
-        this.submitTripayPayment(formValues);
-        break;
-      case 3: // Midtrans
-        this.submitMidtransPayment(formValues);
-        break;
-      default:
-        this.isSubmitting = false;
-        this.notyf.error('Metode pembayaran tidak didukung');
-    }
+    this.submitManualPayment(formValues);
   }
 
   private submitManualPayment(formValues: any): void {
@@ -510,6 +308,7 @@ export class SettingsPaymentComponent implements OnInit {
         console.log('Create rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil ditambahkan');
         this.loadPaymentDetails();
+        this.loadActivePaymentStatus();
         this.resetForm();
         this.isSubmitting = false;
       },
@@ -520,58 +319,10 @@ export class SettingsPaymentComponent implements OnInit {
     });
   }
 
-  private submitTripayPayment(formValues: any): void {
-    const formData = new FormData();
-    Object.keys(formValues).forEach(key => {
-      if (formValues[key] !== null && formValues[key] !== undefined) {
-        formData.append(key, formValues[key]);
-      }
-    });
-
-    this.dashboardSvc.create(DashboardServiceType.ADM_TRIPAY_PAYMENT, formData).subscribe({
-      next: (res) => {
-        this.notyf.success(res?.message || 'Konfigurasi Tripay berhasil disimpan');
-        this.loadPaymentDetails();
-        this.resetForm();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        this.handleApiError(err);
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  private submitMidtransPayment(formValues: any): void {
-    const formData = new FormData();
-    Object.keys(formValues).forEach(key => {
-      if (formValues[key] !== null && formValues[key] !== undefined) {
-        formData.append(key, formValues[key]);
-      }
-    });
-
-    this.dashboardSvc.create(DashboardServiceType.ADM_MIDTRANS_PAYMENT, formData).subscribe({
-      next: (res) => {
-        this.notyf.success(res?.message || 'Konfigurasi Midtrans berhasil disimpan');
-        this.loadPaymentDetails();
-        this.resetForm();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        this.handleApiError(err);
-        this.isSubmitting = false;
-      }
-    });
-  }
-
   private resetForm(): void {
     if (this.paymentForm) {
       this.paymentForm.reset();
-
-      // Re-initialize manual payment form if needed
-      if (this.selectedPaymentMethod?.id === 1) {
-        this.initializeForm();
-      }
+      this.initializeForm();
     }
     this.selectedPhotoFile = null;
     this.selectedEditPhotoFile = null;
@@ -623,20 +374,7 @@ export class SettingsPaymentComponent implements OnInit {
 
   // Table display methods
   getTableColumns(): string[] {
-    if (!this.selectedPaymentMethod) return [];
-
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual
-        return ['pengguna', 'email', 'noRekening', 'namaBank', 'metodePembayaran'];
-      case 2: // Tripay
-        return ['urlTripay', 'apiKey', 'kodeMerchant', 'metodePembayaran'];
-      case 3: // Midtrans
-        return ['url', 'serverKey', 'clientKey', 'metodePembayaran'];
-      case 4: // Trial
-        return ['trialInfo', 'metodePembayaran'];
-      default:
-        return ['metodePembayaran'];
-    }
+    return ['noRekening', 'namaBank', 'namaPemilik', 'metodePembayaran'];
   }
 
   getColumnHeader(column: string): string {
@@ -645,6 +383,7 @@ export class SettingsPaymentComponent implements OnInit {
       email: 'Email',
       noRekening: 'No Rekening',
       namaBank: 'Bank',
+      namaPemilik: 'Nama Pemilik',
       urlTripay: 'URL Tripay',
       apiKey: 'API Key',
       kodeMerchant: 'Kode Merchant',
@@ -738,7 +477,9 @@ export class SettingsPaymentComponent implements OnInit {
       const modal = new (window as any).bootstrap.Modal(modalElement);
       modal.show();
     }
-  }  openDeleteModal(detail: PaymentMethodDetail): void {
+  }
+
+  openDeleteModal(detail: PaymentMethodDetail): void {
     this.currentEditItem = detail;
 
     // Show modal using Bootstrap
@@ -750,45 +491,12 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   private initializeEditForm(detail: PaymentMethodDetail): void {
-    if (!this.selectedPaymentMethod) return;
-
     console.log('Initializing edit form with detail:', detail); // Debug logging
-    console.log('Selected payment method:', this.selectedPaymentMethod); // Debug logging
-
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual
-        this.editPaymentForm = this.fb.group({
-          kode_bank: [detail.kodeBank || '', Validators.required],
-          nomor_rekening: [detail.noRekening || '', [Validators.required]],
-          nama_pemilik: [detail.namaPemilik || '', [Validators.required, Validators.minLength(2)]]
-        });
-        break;
-
-      case 2: // Tripay
-        this.editPaymentForm = this.fb.group({
-          url_tripay: [detail.urlTripay || '', Validators.required],
-          private_key: [detail.privateKey || '', Validators.required],
-          api_key: [detail.apiKey || '', Validators.required],
-          kode_merchant: [detail.kodeMerchant || '', Validators.required],
-          methode_pembayaran: ['Tripay', Validators.required],
-          id_methode_pembayaran: ['2', Validators.required]
-        });
-        break;
-
-      case 3: // Midtrans
-        this.editPaymentForm = this.fb.group({
-          url: [detail.url || '', Validators.required],
-          server_key: [detail.serverKey || '', Validators.required],
-          client_key: [detail.clientKey || '', Validators.required],
-          metode_production: [detail.metodeProduction || '', Validators.required],
-          methode_pembayaran: ['Midtrans', Validators.required],
-          id_methode_pembayaran: ['3', Validators.required]
-        });
-        break;
-
-      default:
-        this.editPaymentForm = this.fb.group({});
-    }
+    this.editPaymentForm = this.fb.group({
+      kode_bank: [detail.kodeBank || '', Validators.required],
+      nomor_rekening: [detail.noRekening || '', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
+      nama_pemilik: [detail.namaPemilik || '', [Validators.required, Validators.minLength(2)]]
+    });
 
     console.log('Edit form created:', this.editPaymentForm.value); // Debug logging
   }
@@ -807,7 +515,8 @@ export class SettingsPaymentComponent implements OnInit {
   }
 
   onSubmitEditPayment(): void {
-    if (!this.selectedPaymentMethod || !this.editPaymentForm || this.editPaymentForm.invalid) {
+    if (!this.editPaymentForm || this.editPaymentForm.invalid) {
+      this.editPaymentForm?.markAllAsTouched();
       this.notyf.error('Harap lengkapi semua field yang wajib diisi');
       return;
     }
@@ -815,21 +524,7 @@ export class SettingsPaymentComponent implements OnInit {
     const formValues = this.editPaymentForm.value;
     console.log('Form values being sent:', formValues); // Debug logging
     this.isSubmitting = true;
-
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual
-        this.updateManualPayment(formValues);
-        break;
-      case 2: // Tripay
-        this.updateTripayPayment(formValues);
-        break;
-      case 3: // Midtrans
-        this.updateMidtransPayment(formValues);
-        break;
-      default:
-        this.isSubmitting = false;
-        this.notyf.error('Metode pembayaran tidak didukung');
-    }
+    this.updateManualPayment(formValues);
   }
 
   private updateManualPayment(formValues: any): void {
@@ -864,6 +559,7 @@ export class SettingsPaymentComponent implements OnInit {
         console.log('Update rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil diperbarui');
         this.loadPaymentDetails();
+        this.loadActivePaymentStatus();
         this.closeEditModal();
         this.isSubmitting = false;
       },
@@ -874,65 +570,13 @@ export class SettingsPaymentComponent implements OnInit {
     });
   }
 
-  private updateTripayPayment(formValues: any): void {
-    // Use PUT /api/v1/admin/tripay/{id} endpoint according to API contract
-    const itemId = this.currentEditItem!.id;
-    const updateUrl = `/api/v1/admin/tripay/${itemId}`;
-
-    this.dashboardSvc.httpSvc.put(updateUrl, formValues).subscribe({
-      next: (res: any) => {
-        this.notyf.success(res?.message || 'Konfigurasi Tripay berhasil diperbarui');
-        this.loadPaymentDetails();
-        this.closeEditModal();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        this.handleApiError(err);
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  private updateMidtransPayment(formValues: any): void {
-    // Use PUT /api/v1/admin/midtrans/{id} endpoint according to API contract
-    const itemId = this.currentEditItem!.id;
-    const updateUrl = `/api/v1/admin/midtrans/${itemId}`;
-
-    this.dashboardSvc.httpSvc.put(updateUrl, formValues).subscribe({
-      next: (res: any) => {
-        this.notyf.success(res?.message || 'Konfigurasi Midtrans berhasil diperbarui');
-        this.loadPaymentDetails();
-        this.closeEditModal();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        this.handleApiError(err);
-        this.isSubmitting = false;
-      }
-    });
-  }
-
   onConfirmDelete(): void {
-    if (!this.currentEditItem || !this.selectedPaymentMethod) {
+    if (!this.currentEditItem) {
       return;
     }
 
     this.isSubmitting = true;
-
-    switch (this.selectedPaymentMethod.id) {
-      case 1: // Manual
-        this.deleteManualPayment();
-        break;
-      case 2: // Tripay
-        this.deleteTripayPayment();
-        break;
-      case 3: // Midtrans
-        this.deleteMidtransPayment();
-        break;
-      default:
-        this.isSubmitting = false;
-        this.notyf.error('Metode pembayaran tidak didukung');
-    }
+    this.deleteManualPayment();
   }
 
   private deleteManualPayment(): void {
@@ -944,6 +588,7 @@ export class SettingsPaymentComponent implements OnInit {
         console.log('Delete rekening response:', response);
         this.notyf.success(response?.message || 'Rekening berhasil dihapus');
         this.loadPaymentDetails();
+        this.loadActivePaymentStatus();
         this.closeDeleteModal();
         this.isSubmitting = false;
       },
@@ -954,39 +599,38 @@ export class SettingsPaymentComponent implements OnInit {
     });
   }
 
-  private deleteTripayPayment(): void {
-    const itemId = this.currentEditItem!.id;
-    // Use DELETE /api/v1/admin/tripay/{id} endpoint according to API contract
-    const deleteUrl = `/api/v1/admin/tripay/${itemId}`;
-
-    this.dashboardSvc.httpSvc.delete(deleteUrl).subscribe({
-      next: (res: any) => {
-        this.notyf.success(res?.message || 'Konfigurasi Tripay berhasil dihapus');
-        this.loadPaymentDetails();
-        this.closeDeleteModal();
-        this.isSubmitting = false;
-      },
-      error: (err) => {
-        this.handleApiError(err);
-        this.isSubmitting = false;
-      }
-    });
+  openUseMidtransModal(): void {
+    const modalElement = document.getElementById('useMidtransModal');
+    if (modalElement) {
+      const modal = new (window as any).bootstrap.Modal(modalElement);
+      modal.show();
+    }
   }
 
-  private deleteMidtransPayment(): void {
-    const itemId = this.currentEditItem!.id;
-    // Use DELETE /api/v1/admin/midtrans/{id} endpoint according to API contract
-    const deleteUrl = `/api/v1/admin/midtrans/${itemId}`;
+  confirmUseMidtrans(): void {
+    if (!this.paymentDetails.length || this.isSubmitting) {
+      this.closeUseMidtransModal();
+      this.loadActivePaymentStatus();
+      return;
+    }
 
-    this.dashboardSvc.httpSvc.delete(deleteUrl).subscribe({
-      next: (res: any) => {
-        this.notyf.success(res?.message || 'Konfigurasi Midtrans berhasil dihapus');
+    this.isSubmitting = true;
+    const requests = this.paymentDetails
+      .filter((item) => item.id != null)
+      .map((item) => this.dashboardSvc.httpSvc.delete(`${this.adminRekeningBaseUrl}/delete-rekening/${item.id}`));
+
+    forkJoin(requests).subscribe({
+      next: () => {
+        this.notyf.success('Pembayaran manual dinonaktifkan. User akan menggunakan Midtrans.');
+        this.paymentDetails = [];
+        this.resetForm();
         this.loadPaymentDetails();
-        this.closeDeleteModal();
+        this.loadActivePaymentStatus();
+        this.closeUseMidtransModal();
         this.isSubmitting = false;
       },
       error: (err) => {
-        this.handleApiError(err);
+        this.handleRekeningApiError(err);
         this.isSubmitting = false;
       }
     });
@@ -1013,5 +657,15 @@ export class SettingsPaymentComponent implements OnInit {
       }
     }
     this.currentEditItem = null;
+  }
+
+  private closeUseMidtransModal(): void {
+    const modalElement = document.getElementById('useMidtransModal');
+    if (modalElement) {
+      const modal = (window as any).bootstrap.Modal.getInstance(modalElement);
+      if (modal) {
+        modal.hide();
+      }
+    }
   }
 }

@@ -30,6 +30,7 @@ import {
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
 import { environment } from '../../../../environments/environment';
+import { WeddingDataService } from '../../../services/wedding-data.service';
 
 type PaidPackageTier = PaidThemePackageTier;
 
@@ -117,6 +118,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   themeFeedbackType: 'success' | 'error' = 'success';
   themeFeedbackMessage = '';
   isAccountActive = false;
+  invitationWebsiteUrl = '';
 
   private subscriptions = new Subscription();
   private themeAccessMap: ThemeAccessMap = FALLBACK_THEME_ACCESS_MAP;
@@ -134,6 +136,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   constructor(
     private dashboardService: DashboardService,
     private themeService: ThemeService,
+    private weddingDataService: WeddingDataService,
     private toastService: ToastService,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -337,7 +340,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (this.isCurrentTheme(theme)) {
-      return 'Tema digunakan';
+      return 'Tema Telah Digunakan';
     }
 
     if (theme.isLegacy) {
@@ -383,7 +386,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (this.isCurrentTheme(theme)) {
-      return 'Tema digunakan';
+      return 'Tema yang Digunakan';
     }
 
     if (this.canUseTheme(theme)) {
@@ -438,6 +441,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       }) => {
         this.userPackageTier = this.resolveUserPackageTier(profile?.data);
         this.isAccountActive = this.resolveAccountActive(profile?.data);
+        this.invitationWebsiteUrl = this.resolveInvitationWebsiteUrl(profile?.data);
         this.activeTab = this.getInitialActiveTab();
         this.packageCatalog = Array.isArray(packages?.data) ? packages.data : [];
         this.themeAccessMap = buildThemeAccessMap(this.packageCatalog);
@@ -686,6 +690,18 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.themeCards.forEach((card) => {
       card.isCurrentTheme = card.id === this.currentThemeId;
     });
+  }
+
+  private resolveInvitationWebsiteUrl(profileData: ProfileResponse['data'] | null | undefined): string {
+    const data = profileData as any;
+    const domain = String(
+      data?.domain_info?.domain ||
+      data?.domain ||
+      data?.settings?.domain ||
+      ''
+    ).trim();
+
+    return domain ? this.weddingDataService.generateWeddingUrlWithDomain(domain) : '';
   }
 
   /**
@@ -1074,7 +1090,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     if (this.shouldShowUsedTheme(theme)) {
-      return 'Tema digunakan';
+      return 'Tema yang Digunakan';
     }
 
     if (this.canUseTheme(theme)) {
