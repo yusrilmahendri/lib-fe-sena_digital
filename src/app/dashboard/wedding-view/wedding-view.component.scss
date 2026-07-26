@@ -1,17 +1,87 @@
+// :host {
+//   display: block;
+//   margin: 0;
+//   padding: 0;
+//   background:
+//     radial-gradient(circle at top left, rgba(244, 196, 206, 0.45) 0, transparent 28%),
+//     radial-gradient(circle at bottom right, rgba(233, 182, 192, 0.35) 0, transparent 30%),
+//     linear-gradient(135deg, #fffaf8 0%, #f8f1f3 45%, #f3ecef 100%);
+//   min-height: 100vh;
+//   font-family: "Georgia", "Times New Roman", serif;
+//   position: relative;
+//   background-repeat: no-repeat;
+//   background-attachment: scroll;
+// }
+
 :host {
-  display: block;
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(135deg, #f5f2f0 0%, #ede5e1 100%);
-  background-image: url('../../../assets/bg-wd.jpeg');
-  min-height: 100vh;
-  font-family: "Georgia", "Times New Roman", serif;
-  // padding-bottom: 120px;
   position: relative;
-  background-repeat: no-repeat;
-  background-size: 100vw 100vh;
-  // background-position: center center;
-  background-attachment: scroll;
+  display: block;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 24px 16px;
+  overflow: hidden;
+  font-family: "Georgia", "Times New Roman", serif;
+  background:
+    radial-gradient(circle at top left, rgba(244, 196, 206, 0.45) 0, transparent 28%),
+    radial-gradient(circle at bottom right, rgba(233, 182, 192, 0.35) 0, transparent 30%),
+    linear-gradient(135deg, #fffaf8 0%, #f8f1f3 45%, #f3ecef 100%);
+}
+
+/* Ornamen kiri atas */
+:host::before {
+  content: "";
+  position: absolute;
+  top: -30px;
+  left: -20px;
+  width: 140px;
+  height: 220px;
+  background:
+    linear-gradient(180deg, rgba(214, 170, 79, 0.55), rgba(214, 170, 79, 0.15));
+  clip-path: polygon(35% 0, 45% 8%, 52% 0, 60% 18%, 70% 5%, 80% 24%, 92% 10%, 100% 100%, 0 100%, 10% 20%, 22% 8%);
+  opacity: 0.28;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(0.2px);
+}
+
+/* Ornamen kanan bawah */
+:host::after {
+  content: "";
+  position: absolute;
+  right: -30px;
+  bottom: -40px;
+  width: 150px;
+  height: 240px;
+  background:
+    linear-gradient(180deg, rgba(214, 170, 79, 0.5), rgba(214, 170, 79, 0.12));
+  clip-path: polygon(0 0, 12% 14%, 24% 2%, 34% 18%, 44% 8%, 58% 26%, 68% 12%, 82% 30%, 100% 0, 100% 100%, 0 100%);
+  opacity: 0.24;
+  pointer-events: none;
+  z-index: 0;
+}
+.wedding-loading,
+.wedding-error {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100dvh - 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 8px;
+}
+
+.wedding-loading__card,
+.wedding-error__card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 24px;
+  box-shadow: 0 18px 45px rgba(87, 52, 70, 0.12);
+  padding: 24px 20px;
+  text-align: center;
 }
 
 .wedding-container {
@@ -699,5 +769,51 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+@media (max-width: 768px) {
+  :host {
+    padding: 18px 14px;
+  }
+
+  :host::before {
+    width: 110px;
+    height: 180px;
+    top: -20px;
+    left: -18px;
+    opacity: 0.22;
+  }
+
+  :host::after {
+    width: 120px;
+    height: 190px;
+    right: -18px;
+    bottom: -24px;
+    opacity: 0.2;
+  }
+
+  .wedding-loading__card,
+  .wedding-error__card {
+    max-width: 100%;
+    border-radius: 20px;
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :host {
+    padding: 14px 12px;
+  }
+
+  .wedding-loading,
+  .wedding-error {
+    min-height: calc(100dvh - 28px);
+    padding: 12px 0;
+  }
+
+  .wedding-loading__card,
+  .wedding-error__card {
+    border-radius: 18px;
+    padding: 18px 14px;
   }
 }

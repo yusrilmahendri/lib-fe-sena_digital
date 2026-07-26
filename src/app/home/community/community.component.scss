@@ -601,68 +601,44 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
   }
 }
-
-@media screen and (max-width: 560px) {
+@media screen and (max-width: 340px) {
   .lp-themes {
     &__inner {
-      padding: 1.75rem 1.2rem 3.5rem;
-    }
-
-    &__title {
-      font-size: 1.8rem;
+      padding-inline: 0.6rem;
     }
 
     &__grid {
-      grid-template-columns: 1fr;
+      gap: 0.55rem;
     }
   }
 
   .theme-card {
-    &__body {
-      align-items: flex-start;
+    padding: 5px;
+
+    &__img {
+      aspect-ratio: 4 / 5.2;
+    }
+
+    &__name {
+      font-size: 0.74rem;
+    }
+
+    &__tier {
+      font-size: 0.52rem;
+    }
+
+    &__badge,
+    &__preview {
+      font-size: 0.43rem;
     }
 
     &__actions {
-      width: 100%;
+      gap: 0.25rem;
 
       .theme-btn {
-        flex: 1;
+        padding: 0.35rem 0.12rem;
+        font-size: 0.52rem;
       }
     }
-  }
-
-  .theme-preview {
-    padding: 0.85rem;
-
-    &__visual,
-    &__content,
-    &__state {
-      padding: 1.4rem;
-    }
-
-    &__title {
-      font-size: 2rem;
-    }
-
-    &__features {
-      grid-template-columns: 1fr;
-      gap: 0.65rem;
-    }
-
-    &__actions {
-      flex-direction: column;
-
-      .theme-btn {
-        width: 100%;
-      }
-    }
-
-    &__state-actions {
-      flex-direction: column;
-    }
-  }
-
-  .theme-phone {
-    width: min(270px, 78vw);
   }
 }
