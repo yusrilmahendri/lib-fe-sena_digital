@@ -1656,6 +1656,7 @@ input[type='number'] {
 .gallery-upload-slot,
 .gallery-photo-item {
   position: relative;
+  isolation: isolate;
   width: 100%;
   min-width: 0;
   aspect-ratio: 1 / 1;
@@ -1713,6 +1714,8 @@ input[type='number'] {
 
 .gallery-upload-slot img,
 .gallery-photo-item img {
+  position: relative;
+  z-index: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -1767,10 +1770,10 @@ input[type='number'] {
 .tile-actions,
 .slot-actions {
   position: absolute;
-  z-index: 3;
 }
 
 .slot-badge {
+  z-index: 12;
   left: 8px;
   top: 8px;
   padding: 5px 8px;
@@ -1782,11 +1785,30 @@ input[type='number'] {
 }
 
 .gallery-photo-item__order {
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 30px;
+  padding: 5px 9px;
+  background: rgba(32, 38, 55, 0.9);
+  color: #ffffff;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  pointer-events: none;
   max-width: calc(100% - 16px);
   white-space: nowrap;
 }
 
+.slot-loading {
+  z-index: 18;
+}
+
 .slot-actions {
+  z-index: 10;
   left: 8px;
   right: 8px;
   bottom: 8px;
@@ -1817,6 +1839,7 @@ input[type='number'] {
 }
 
 .photo-remove-button {
+  z-index: 10;
   right: 8px;
   bottom: 8px;
   width: 34px;
@@ -1825,6 +1848,7 @@ input[type='number'] {
 }
 
 .tile-actions {
+  z-index: 10;
   right: 8px;
   bottom: 8px;
   display: flex;
@@ -1849,6 +1873,10 @@ input[type='number'] {
 }
 
 .gallery-photo-item__drag-handle {
+  top: 8px;
+  right: 8px;
+  left: auto;
+  z-index: 12;
   touch-action: none;
 }
 

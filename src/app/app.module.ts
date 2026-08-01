@@ -101,6 +101,7 @@ import { DiamondThemeOneComponent } from './dashboard/wedding-view/templates/dia
 import { DiamondThemeTwoComponent } from './dashboard/wedding-view/templates/diamond-theme-two/diamond-theme-two.component';
 import { LavenderBloomThemeComponent } from './dashboard/wedding-view/themes/lavender-bloom/lavender-bloom-theme.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
+import { UpgradeAkunComponent } from './dashboard/upgrade-akun/upgrade-akun.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { AuthModalComponent } from './components/auth-modal/auth-modal.component';
 import { CreateInvitationModalComponent } from './components/create-invitation-modal/create-invitation-modal.component';
@@ -206,6 +207,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
     DiamondThemeTwoComponent,
     LavenderBloomThemeComponent,
     BillUserComponent,
+    UpgradeAkunComponent,
     ProfileAdminComponent,
     AuthModalComponent,
     CreateInvitationModalComponent,

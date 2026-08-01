@@ -32,12 +32,17 @@ $lp-serif: Georgia, "Times New Roman", serif;
 
 .lp-themes {
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: linear-gradient(180deg, #fdf8f4 0%, #ffffff 45%);
 
   &__inner {
+    width: 100%;
     max-width: 1180px;
     margin: 0 auto;
     padding: 2rem 2rem 6.25rem;
+    box-sizing: border-box;
   }
 
   &__head {
@@ -115,16 +120,22 @@ $lp-serif: Georgia, "Times New Roman", serif;
 
   &__filters {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.6rem;
     margin-bottom: 2.5rem;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    column-gap: 30px;
-    row-gap: 32px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: visible;
   }
 }
 
@@ -193,6 +204,11 @@ $lp-serif: Georgia, "Times New Roman", serif;
 .theme-card {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid $lp-border;
   border-radius: 24px;
@@ -215,6 +231,9 @@ $lp-serif: Georgia, "Times New Roman", serif;
 
   &__media {
     position: relative;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 4 / 5;
     border-radius: 18px;
     overflow: hidden;
   }
@@ -222,8 +241,9 @@ $lp-serif: Georgia, "Times New Roman", serif;
   &__img {
     display: block;
     width: 100%;
-    height: 285px;
+    height: 100%;
     object-fit: cover;
+    object-position: center;
     border-radius: 18px;
   }
 
@@ -289,9 +309,12 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 
   &__actions {
-    flex: none;
-    display: flex;
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -305,6 +328,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
+  min-width: 0;
   white-space: nowrap;
   transition: all 0.2s ease;
 
@@ -564,7 +588,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
   }
 }
 
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 1024px) {
   .lp-themes {
     &__inner {
       padding: 2rem 1.5rem 4.5rem;
@@ -581,8 +605,8 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
 
     &__grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.25rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
     }
   }
 
@@ -601,6 +625,133 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
   }
 }
+
+@media screen and (max-width: 767px) {
+  .lp-themes {
+    &__inner {
+      width: 100%;
+      max-width: 100%;
+      padding-inline: 14px;
+      overflow: hidden;
+    }
+
+    &__filters {
+      margin-inline: -14px;
+      padding-inline: 14px;
+    }
+
+    &__grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+      overflow: visible;
+    }
+  }
+
+  .theme-card {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 7px;
+    border-radius: 14px;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+
+    &__media {
+      width: 100%;
+      min-width: 0;
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      border-radius: 14px;
+    }
+
+    &__img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 14px;
+    }
+
+    &__badge,
+    &__preview {
+      max-width: calc(100% - 12px);
+      padding: 0.25rem 0.45rem;
+      font-size: 0.54rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__badge {
+      top: 0.45rem;
+      left: 0.45rem;
+    }
+
+    &__preview {
+      right: 0.45rem;
+      bottom: 0.45rem;
+
+      svg {
+        display: none;
+      }
+    }
+
+    &__body {
+      display: block;
+      padding: 8px 3px 3px;
+    }
+
+    &__name {
+      margin: 0;
+      font-size: 0.82rem;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__tier {
+      margin: 3px 0 0;
+      font-size: 0.64rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    &__actions button {
+      min-width: 0;
+      width: 100%;
+      min-height: 34px;
+      padding: 5px 3px;
+      font-size: 0.62rem;
+      line-height: 1.1;
+      white-space: normal;
+    }
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .theme-card {
+    &__actions {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
 @media screen and (max-width: 340px) {
   .lp-themes {
     &__inner {
@@ -608,6 +759,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
 
     &__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.55rem;
     }
   }
@@ -616,6 +768,7 @@ $lp-serif: Georgia, "Times New Roman", serif;
     padding: 5px;
 
     &__img {
+      height: 100%;
       aspect-ratio: 4 / 5.2;
     }
 
@@ -633,12 +786,21 @@ $lp-serif: Georgia, "Times New Roman", serif;
     }
 
     &__actions {
+      grid-template-columns: 1fr;
       gap: 0.25rem;
 
       .theme-btn {
         padding: 0.35rem 0.12rem;
         font-size: 0.52rem;
       }
+    }
+  }
+}
+
+@media screen and (max-width: 319px) {
+  .lp-themes {
+    &__grid {
+      grid-template-columns: 1fr;
     }
   }
 }

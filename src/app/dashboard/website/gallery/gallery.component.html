@@ -164,7 +164,7 @@
               [style.object-fit]="getLivePhotoObjectFit(coverPhoto)"
               [style.object-position]="getLivePhotoObjectPosition(coverPhoto)"
               (error)="onPhotoImageError($event)" />
-            <span class="slot-badge gallery-photo-item__order">#{{ coverPhoto.sort_order || 1 }} Cover</span>
+            <span class="slot-badge gallery-photo-item__order">#1 Cover</span>
             <div class="tile-actions">
               <button type="button" (click)="openEditFromAction(coverPhoto, $event)" aria-label="Edit Posisi Cover Gallery" title="Edit Posisi">
                 <i class="fas fa-crop-alt"></i>
@@ -179,7 +179,7 @@
           </article>
 
           <article
-            *ngFor="let photo of visibleAlbumPhotos; trackBy: trackByPhoto"
+            *ngFor="let photo of visibleAlbumPhotos; let i = index; trackBy: trackByPhoto"
             class="gallery-photo-item"
             role="button"
             tabindex="0"
@@ -197,7 +197,7 @@
               [style.object-fit]="getLivePhotoObjectFit(photo)"
               [style.object-position]="getLivePhotoObjectPosition(photo)"
               (error)="onPhotoImageError($event)" />
-            <span class="slot-badge gallery-photo-item__order">#{{ photo.sort_order }}</span>
+            <span class="slot-badge gallery-photo-item__order">#{{ i + 2 }}</span>
             <div class="tile-actions">
               <button type="button" (click)="openEditFromAction(photo, $event)" aria-label="Edit Posisi foto gallery" title="Edit Posisi">
                 <i class="fas fa-crop-alt"></i>

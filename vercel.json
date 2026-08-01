@@ -6,7 +6,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|facebot|WhatsApp|whatsapp|TelegramBot|telegrambot|Twitterbot|twitterbot|LinkedInBot|linkedinbot|Slackbot|slackbot|Discordbot|discordbot|Pinterestbot|pinterestbot|vkShare|vkshare|SkypeUriPreview|skypeuripreview).*"
+          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|facebot|Twitterbot|twitterbot|TelegramBot|telegrambot|LinkedInBot|linkedinbot|Slackbot|slackbot|Discordbot|discordbot|Pinterest|pinterest).*"
         }
       ],
       "destination": "/api/og/wedding/:domain"

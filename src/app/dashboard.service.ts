@@ -29,6 +29,8 @@ export enum DashboardServiceType {
   MNL_MD_PACK_INVITATION,
   MNL_ACTIVE_PAYMENT_METHOD,
   USER_PAYMENT_CONFIG,
+  USER_PACKAGES,
+  USER_PACKAGE_UPGRADE,
   MIDTRANS_CREATE_SNAP_TOKEN,
   MIDTRANS_CHECK_STATUS,
 
@@ -266,6 +268,8 @@ export interface UserPaymentConfig {
   };
   midtrans?: {
     enabled?: boolean;
+    client_key?: string;
+    clientKey?: string;
   };
   data?: UserPaymentConfig;
 }
@@ -323,6 +327,12 @@ export class DashboardService {
 
       case DashboardServiceType.USER_PAYMENT_CONFIG:
         return `${this.BASE_URL_API}/v1/user/payment-config`;
+
+      case DashboardServiceType.USER_PACKAGES:
+        return `${this.BASE_URL_API}/v1/user/packages`;
+
+      case DashboardServiceType.USER_PACKAGE_UPGRADE:
+        return `${this.BASE_URL_API}/v1/user/package-upgrade`;
 
       case DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN:
         return `${this.BASE_URL_API}/v1/midtrans/create-snap-token`;

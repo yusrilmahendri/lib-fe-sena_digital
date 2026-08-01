@@ -40,6 +40,7 @@ import { GuestCheckinLandingComponent } from './guest-checkin-landing/guest-chec
 import { WeddingViewComponent } from './dashboard/wedding-view/wedding-view.component';
 import { ProfileComponent } from './dashboard/profile/profile.component';
 import { BillUserComponent } from './dashboard/bill-user/bill-user.component';
+import { UpgradeAkunComponent } from './dashboard/upgrade-akun/upgrade-akun.component';
 import { ProfileAdminComponent } from './dashboard-admin/pengaturan/profile-admin/profile-admin.component';
 import { ResetPasswordComponent } from './reset-password/reset-password.component';
 import { ThemePreviewComponent } from './theme-preview/theme-preview.component';
@@ -79,6 +80,7 @@ const routes: Routes = [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
       { path: 'profile', component: ProfileComponent },
       { path: 'bill', component: BillUserComponent, data: { accountStatusPage: 'pending_payment' } },
+      { path: 'upgrade-akun', component: UpgradeAkunComponent },
       { path: 'payment-pending', component: BillUserComponent, data: { accountStatusPage: 'pending_payment' } },
       { path: 'account-expired', component: BillUserComponent, data: { accountStatusPage: 'expired' } },
       { path: 'overview', component: OverviewComponent, canActivate: [AccountVerificationGuard] },

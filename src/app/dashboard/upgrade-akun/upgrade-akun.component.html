@@ -1,0 +1,195 @@
+<section class="upgrade-page">
+  <header class="upgrade-hero">
+    <div>
+      <span class="upgrade-eyebrow">Upgrade Akun</span>
+      <h1>Pilih paket yang sesuai dengan kebutuhan undangan Anda</h1>
+      <p>Semua informasi paket, harga, fitur, dan status mengikuti data terbaru dari backend.</p>
+    </div>
+    <button type="button" class="upgrade-refresh" (click)="refreshProfileAndPackage()" [disabled]="isRefreshingProfile || isLoading">
+      <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshingProfile" aria-hidden="true"></i>
+      <span>{{ isRefreshingProfile ? 'Memperbarui...' : 'Refresh Status' }}</span>
+    </button>
+  </header>
+
+  <div class="upgrade-alert upgrade-alert--error" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <ng-container *ngIf="isLoading; else contentReady">
+    <div class="current-package skeleton-block"></div>
+    <div class="packages-grid">
+      <article class="package-card package-card--skeleton" *ngFor="let item of [1,2,3]">
+        <div class="skeleton-thumb"></div>
+        <div class="skeleton-line skeleton-line--wide"></div>
+        <div class="skeleton-line"></div>
+        <div class="skeleton-list"></div>
+        <div class="skeleton-button"></div>
+      </article>
+    </div>
+  </ng-container>
+
+  <ng-template #contentReady>
+    <section class="current-package" *ngIf="currentPackage">
+      <div class="current-package__glow"></div>
+      <div class="current-package__content">
+        <div>
+          <span class="current-package__label">Paket Saat Ini</span>
+          <h2>{{ currentPackage.name }}</h2>
+          <p>{{ currentPackage.description || 'Paket aktif akun Anda saat ini.' }}</p>
+        </div>
+        <div class="current-package__meta">
+          <span class="status-pill" [class.status-pill--active]="userProfile?.package_info?.is_active">
+            {{ userProfile?.package_info?.is_active ? 'Aktif' : (currentPackage.statusLabel || userProfile?.package_info?.payment_status || 'Status mengikuti backend') }}
+          </span>
+          <strong>{{ currentPackage.priceLabel }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="packages-section">
+      <div class="section-heading">
+        <div>
+          <span class="upgrade-eyebrow">Daftar Paket</span>
+          <h2>Paket tersedia</h2>
+        </div>
+        <span class="package-count">{{ packages.length }} paket</span>
+      </div>
+
+      <div class="empty-state" *ngIf="!packages.length">
+        <i class="fas fa-box-open" aria-hidden="true"></i>
+        <strong>Data paket belum tersedia</strong>
+        <span>Silakan cek kembali setelah admin mengaktifkan paket.</span>
+      </div>
+
+      <div class="packages-grid" *ngIf="packages.length">
+        <article class="package-card" *ngFor="let pkg of packages; trackBy: trackByPackage" [class.package-card--current]="isCurrentPackage(pkg)">
+          <div class="package-card__media">
+            <img *ngIf="pkg.thumbnail; else packageInitial" [src]="pkg.thumbnail" [alt]="pkg.name" loading="lazy" />
+            <ng-template #packageInitial>
+              <div class="package-card__initial">{{ pkg.name.charAt(0) }}</div>
+            </ng-template>
+            <span class="package-badge" *ngIf="pkg.badge || isCurrentPackage(pkg)">
+              {{ isCurrentPackage(pkg) ? 'Paket Saat Ini' : pkg.badge }}
+            </span>
+          </div>
+
+          <div class="package-card__body">
+            <div class="package-card__title-row">
+              <h3>{{ pkg.name }}</h3>
+              <span class="package-status" *ngIf="pkg.statusLabel">{{ pkg.statusLabel }}</span>
+            </div>
+            <p class="package-description" *ngIf="pkg.description">{{ pkg.description }}</p>
+            <strong class="package-price">{{ pkg.priceLabel }}</strong>
+
+            <ul class="feature-list" *ngIf="pkg.features.length">
+              <li *ngFor="let feature of pkg.features">
+                <i class="fas fa-check" aria-hidden="true"></i>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <button
+            type="button"
+            class="package-action"
+            [class.package-action--disabled]="getPackageAction(pkg) !== 'upgrade'"
+            [disabled]="getPackageAction(pkg) !== 'upgrade'"
+            (click)="openUpgradeModal(pkg)">
+            {{ getActionLabel(pkg) }}
+          </button>
+        </article>
+      </div>
+    </section>
+  </ng-template>
+</section>
+
+<div class="upgrade-modal-backdrop" *ngIf="isModalOpen" (click)="closeUpgradeModal()"></div>
+<section class="upgrade-modal" *ngIf="isModalOpen" role="dialog" aria-modal="true" aria-labelledby="upgrade-modal-title">
+  <header class="upgrade-modal__header">
+    <div>
+      <span class="upgrade-eyebrow">Konfirmasi Upgrade</span>
+      <h2 id="upgrade-modal-title">{{ modalTitle }}</h2>
+    </div>
+    <button type="button" class="modal-close" aria-label="Tutup modal" (click)="closeUpgradeModal()">×</button>
+  </header>
+
+  <div class="upgrade-modal__body" *ngIf="selectedPackage">
+    <div class="modal-summary">
+      <div>
+        <span>Harga</span>
+        <strong>{{ selectedPackage.priceLabel }}</strong>
+      </div>
+      <div>
+        <span>Metode pembayaran</span>
+        <strong *ngIf="activePaymentMethod === 'manual'">Transfer Manual</strong>
+        <strong *ngIf="activePaymentMethod === 'midtrans'">Snap Midtrans</strong>
+        <strong *ngIf="!activePaymentMethod">Ditentukan backend</strong>
+      </div>
+    </div>
+
+    <div class="modal-features" *ngIf="selectedPackage.features.length">
+      <h3>Fitur</h3>
+      <ul>
+        <li *ngFor="let feature of selectedPackage.features">
+          <i class="fas fa-check-circle" aria-hidden="true"></i>
+          <span>{{ feature }}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="payment-loading" *ngIf="isCreatingInvoice">
+      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+      <span>Membuat transaksi upgrade...</span>
+    </div>
+
+    <div class="payment-box payment-box--manual" *ngIf="!isCreatingInvoice && activePaymentMethod === 'manual'">
+      <div class="payment-box__title">
+        <i class="fas fa-university" aria-hidden="true"></i>
+        <strong>Transfer Manual</strong>
+      </div>
+      <dl>
+        <div>
+          <dt>Bank</dt>
+          <dd>{{ manualPayment.bank_name || manualPayment.nama_bank || '-' }}</dd>
+        </div>
+        <div>
+          <dt>Nomor Rekening</dt>
+          <dd>
+            <button type="button" class="copy-value" (click)="copyToClipboard(manualPayment.account_number || manualPayment.nomor_rekening)">
+              {{ manualPayment.account_number || manualPayment.nomor_rekening || '-' }}
+            </button>
+          </dd>
+        </div>
+        <div>
+          <dt>Nama Pemilik</dt>
+          <dd>{{ manualPayment.account_name || manualPayment.nama_pemilik || '-' }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="payment-box payment-box--midtrans" *ngIf="!isCreatingInvoice && activePaymentMethod === 'midtrans'">
+      <div class="payment-box__title">
+        <i class="fas fa-credit-card" aria-hidden="true"></i>
+        <strong>Snap Midtrans</strong>
+      </div>
+      <p>Snap Midtrans akan langsung dibuka setelah invoice upgrade dibuat.</p>
+    </div>
+
+    <div class="upgrade-alert upgrade-alert--error" *ngIf="paymentError">
+      <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+      <span>{{ paymentError }}</span>
+    </div>
+    <div class="upgrade-alert upgrade-alert--success" *ngIf="paymentInfoMessage">
+      <i class="fas fa-check-circle" aria-hidden="true"></i>
+      <span>{{ paymentInfoMessage }}</span>
+    </div>
+  </div>
+
+  <footer class="upgrade-modal__footer">
+    <button type="button" class="modal-secondary" (click)="closeUpgradeModal()" [disabled]="isCreatingInvoice">Batal</button>
+    <button type="button" class="modal-primary" (click)="confirmUpgrade()" [disabled]="isCreatingInvoice || !!invoiceData">
+      {{ isCreatingInvoice ? 'Memproses...' : (invoiceData ? 'Transaksi Dibuat' : 'Upgrade') }}
+    </button>
+  </footer>
+</section>
