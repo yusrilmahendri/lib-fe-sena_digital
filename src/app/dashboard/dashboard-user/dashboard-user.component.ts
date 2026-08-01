@@ -63,6 +63,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   nameCompletionError = '';
   isProfileLoading = false;
   hasLoadedProfile = false;
+  private previousBodyOverflow: string | null = null;
 
   constructor(
     private router: Router,
@@ -87,7 +88,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
       this.setRoutePath();
       this.syncSubmenuStateWithRoute();
       if (window.innerWidth <= 1024) {
-        this.isSidebarOpen = false;
+        this.setSidebarOpen(false);
         this.isDropdownOpen = false;
       }
       // Refresh profile data when navigating back from profile page
@@ -108,7 +109,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   private initializeSidebarState(): void {
     // Sidebar should be open by default on desktop (>1024px)
-    this.isSidebarOpen = window.innerWidth > 1024;
+    this.setSidebarOpen(window.innerWidth > 1024);
   }
 
   getUserProfile(): void {
@@ -140,12 +141,32 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
-    this.isSidebarOpen = !this.isSidebarOpen;
+    this.setSidebarOpen(!this.isSidebarOpen);
   }
 
   closeSidebar(): void {
     if (window.innerWidth <= 1024) {
-      this.isSidebarOpen = false;
+      this.setSidebarOpen(false);
+    }
+  }
+
+  private setSidebarOpen(isOpen: boolean): void {
+    this.isSidebarOpen = isOpen;
+    this.updateBodyScrollLock();
+  }
+
+  private updateBodyScrollLock(): void {
+    const shouldLock = this.isSidebarOpen && window.innerWidth <= 1024;
+
+    if (shouldLock && this.previousBodyOverflow === null) {
+      this.previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return;
+    }
+
+    if (!shouldLock && this.previousBodyOverflow !== null) {
+      document.body.style.overflow = this.previousBodyOverflow;
+      this.previousBodyOverflow = null;
     }
   }
 
@@ -223,7 +244,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   onProtectedMenuClick(event: Event): void {
     if (this.isPaymentActive) {
       if (window.innerWidth <= 1024) {
-        this.isSidebarOpen = false;
+        this.setSidebarOpen(false);
       }
       return;
     }
@@ -232,7 +253,7 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     event.stopPropagation();
 
     if (window.innerWidth <= 1024) {
-      this.isSidebarOpen = false;
+      this.setSidebarOpen(false);
     }
 
     this.router.navigate([this.getBlockedAccountRoute()]);
@@ -289,9 +310,9 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     const windowWidth = event.target.innerWidth;
 
     if (windowWidth > 1024) {
-      this.isSidebarOpen = true;
+      this.setSidebarOpen(true);
     } else {
-      this.isSidebarOpen = false;
+      this.setSidebarOpen(false);
     }
   }
 
@@ -451,5 +472,6 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
     // Cleanup event listeners
     window.removeEventListener('storage', this.handleStorageChange.bind(this));
     window.removeEventListener('profileUpdated', this.handleProfileUpdate.bind(this));
+    this.setSidebarOpen(false);
   }
 }

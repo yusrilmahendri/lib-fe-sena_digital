@@ -12,6 +12,8 @@
           type="button"
           (click)="$event.preventDefault(); $event.stopPropagation(); toggleSidebar()"
           [class.active]="isSidebarOpen"
+          [class.is-hidden]="isSidebarOpen && isMobileView()"
+          [attr.aria-expanded]="isSidebarOpen"
           aria-label="Toggle sidebar menu">
     <span class="hamburger-line"></span>
     <span class="hamburger-line"></span>
@@ -24,14 +26,22 @@
        [class.is-open]="isSidebarOpen">
 
     <!-- Logo Section -->
-    <div class="logo-section">
-      <div class="logo-container">
-        <img src="assets/landing/logo.svg" alt="Sena Digital" />
-        <div class="logo-text">
+    <div class="logo-section mobile-sidebar__header">
+      <div class="logo-container mobile-sidebar__brand">
+        <img class="mobile-sidebar__logo" src="assets/landing/logo.svg" alt="Sena Digital" />
+        <div class="logo-text mobile-sidebar__brand-text">
           <h1>Sena</h1>
           <h2>Digital</h2>
         </div>
       </div>
+      <button
+        *ngIf="isMobileView()"
+        type="button"
+        class="mobile-sidebar__close"
+        aria-label="Tutup menu navigasi"
+        (click)="closeSidebar()">
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
     </div>
 
     <!-- Navigation Menu -->
