@@ -1,4 +1,18 @@
 {
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/woocommerce"
+      }
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    }
+  ],
   "rewrites": [
     {
       "source": "/wedding/:domain",
@@ -6,7 +20,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|facebot|Twitterbot|twitterbot|TelegramBot|telegrambot|LinkedInBot|linkedinbot|Slackbot|slackbot|Discordbot|discordbot|Pinterest|pinterest).*"
+          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|facebot|Twitterbot|twitterbot|Slackbot|slackbot|Discordbot|discordbot|LinkedInBot|linkedinbot|TelegramBot|telegrambot|SkypeUriPreview|skypeuripreview|Googlebot|googlebot|bingbot|Bingbot|DuckDuckBot|duckduckbot).*"
         }
       ],
       "destination": "/api/og/wedding/:domain"
