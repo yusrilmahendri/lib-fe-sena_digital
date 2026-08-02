@@ -8,11 +8,11 @@
   </div>
 
   <!-- Enhanced Toggle Button for Mobile -->
-  <button class="menu-toggle dashboard-menu-toggle"
+  <button *ngIf="!isSidebarOpen || !isMobileView()"
+          class="menu-toggle dashboard-menu-toggle"
           type="button"
           (click)="$event.preventDefault(); $event.stopPropagation(); toggleSidebar()"
           [class.active]="isSidebarOpen"
-          [class.is-hidden]="isSidebarOpen && isMobileView()"
           [attr.aria-expanded]="isSidebarOpen"
           aria-label="Toggle sidebar menu">
     <span class="hamburger-line"></span>
@@ -22,30 +22,32 @@
 
   <!-- Sidebar with Animation -->
   <div class="sidebar dashboard-sidebar user-sidebar"
+       [class.mobile-sidebar]="isMobileView()"
        [class.open]="isSidebarOpen"
        [class.is-open]="isSidebarOpen">
 
     <!-- Logo Section -->
-    <div class="logo-section mobile-sidebar__header">
-      <div class="logo-container mobile-sidebar__brand">
-        <img class="mobile-sidebar__logo" src="assets/landing/logo.svg" alt="Sena Digital" />
-        <div class="logo-text mobile-sidebar__brand-text">
-          <h1>Sena</h1>
-          <h2>Digital</h2>
-        </div>
-      </div>
+    <div class="logo-section mobile-sidebar-header">
       <button
         *ngIf="isMobileView()"
         type="button"
-        class="mobile-sidebar__close"
+        class="mobile-sidebar-close-primary"
         aria-label="Tutup menu navigasi"
         (click)="closeSidebar()">
         <i class="fas fa-times" aria-hidden="true"></i>
       </button>
+
+      <div class="logo-container mobile-sidebar-brand">
+        <img class="mobile-sidebar-logo" src="assets/landing/logo.svg" alt="Sena Digital" />
+        <div class="logo-text mobile-sidebar-brand-text">
+          <strong>Sena</strong>
+          <span>Digital</span>
+        </div>
+      </div>
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="navigation-menu" role="navigation" aria-label="Main navigation">
+    <nav class="navigation-menu mobile-sidebar-content" role="navigation" aria-label="Main navigation">
       <!-- Dashboard -->
       <div class="menu-section">
         <a class="menu-item"
