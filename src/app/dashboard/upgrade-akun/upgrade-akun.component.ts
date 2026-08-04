@@ -1,5 +1,6 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { finalize, forkJoin, Subject, take, takeUntil } from 'rxjs';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { catchError, finalize, forkJoin, of, Subject, take, takeUntil } from 'rxjs';
 import {
   DashboardService,
   DashboardServiceType,
@@ -10,7 +11,8 @@ import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { environment } from 'src/environments/environment';
 
 type PaymentMethod = 'manual' | 'midtrans' | null;
-type PackageAction = 'current' | 'downgrade' | 'upgrade' | 'unavailable';
+type SelectablePaymentMethod = 'manual' | 'midtrans';
+type PackageAction = 'current' | 'downgrade' | 'upgrade' | 'renew' | 'subscribe' | 'select' | 'unavailable';
 
 interface UpgradePackage {
   id: number | string | null;
@@ -24,10 +26,21 @@ interface UpgradePackage {
   statusLabel: string;
   features: string[];
   isCurrent: boolean;
+  isLastPackage: boolean;
+  subscriptionStatus: string;
+  canSelect: boolean;
   canUpgrade: boolean;
   canDowngrade: boolean;
+  action: PackageAction | null;
+  disabledReason: string;
   pendingMessage: string;
   raw: any;
+}
+
+interface PaymentMethodOption {
+  type: SelectablePaymentMethod;
+  label: string;
+  details: any;
 }
 
 @Component({
@@ -36,26 +49,52 @@ interface UpgradePackage {
   styleUrls: ['./upgrade-akun.component.scss']
 })
 export class UpgradeAkunComponent implements OnInit, OnDestroy {
+  @ViewChildren('packageCard') packageCardElements!: QueryList<ElementRef<HTMLElement>>;
+
   packages: UpgradePackage[] = [];
   currentPackage: UpgradePackage | null = null;
+  lastPackage: UpgradePackage | null = null;
   userProfile: ProfileData | null = null;
+  activeSubscription: any = null;
+  latestTransaction: any = null;
   isLoading = true;
   isRefreshingProfile = false;
   errorMessage = '';
 
   selectedPackage: UpgradePackage | null = null;
   activePaymentMethod: PaymentMethod = null;
+  paymentMethods: PaymentMethodOption[] = [];
+  isLoadingPaymentMethods = false;
+  paymentMethodsError = '';
   isModalOpen = false;
   isCreatingInvoice = false;
   paymentError = '';
   paymentInfoMessage = '';
   invoiceData: any = null;
+  requestedPackage = '';
+  requestedTheme = '';
+  returnUrl = '';
+  requiredPackageMessage = '';
 
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((params) => {
+        this.requestedPackage = String(params?.['package'] || '').trim().toLowerCase();
+        this.requestedTheme = String(params?.['theme'] || '').trim();
+        this.returnUrl = String(params?.['returnUrl'] || '').trim();
+        this.requiredPackageMessage = this.buildRequiredPackageMessage();
+        this.scrollToRequestedPackage();
+      });
+
     this.loadData();
   }
 
@@ -71,17 +110,16 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     forkJoin({
       profile: this.dashboardService.getProfile(),
       packages: this.dashboardService.list(DashboardServiceType.USER_PACKAGES),
+      paymentConfig: this.dashboardService.getUserPaymentConfig().pipe(catchError(() => of(null))),
     })
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => this.isLoading = false)
       )
       .subscribe({
-        next: ({ profile, packages }) => {
-          this.userProfile = profile?.data || null;
-          this.packages = this.extractArray(packages)
-            .map((item, index) => this.mapPackage(item, index));
-          this.currentPackage = this.resolveCurrentPackage();
+        next: ({ profile, packages, paymentConfig }) => {
+          this.applyDashboardState(profile, packages, paymentConfig);
+          this.scrollToRequestedPackage();
         },
         error: (error) => {
           this.errorMessage = getFriendlyErrorMessage(error);
@@ -94,16 +132,17 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     forkJoin({
       profile: this.dashboardService.getProfile(),
       packages: this.dashboardService.list(DashboardServiceType.USER_PACKAGES),
+      paymentConfig: this.dashboardService.getUserPaymentConfig().pipe(catchError(() => of(null))),
     })
       .pipe(
         take(1),
         finalize(() => this.isRefreshingProfile = false)
       )
       .subscribe({
-        next: ({ profile, packages }: { profile: ProfileResponse; packages: any }) => {
-          this.userProfile = profile?.data || null;
-          this.packages = this.extractArray(packages).map((item, index) => this.mapPackage(item, index));
-          this.currentPackage = this.resolveCurrentPackage();
+        next: ({ profile, packages, paymentConfig }: { profile: ProfileResponse; packages: any; paymentConfig: any }) => {
+          this.applyDashboardState(profile, packages, paymentConfig);
+          this.scrollToRequestedPackage();
+          this.redirectBackWhenUpgradeIsActive();
           window.dispatchEvent(new CustomEvent('profileUpdated', {
             detail: { profileData: this.userProfile }
           }));
@@ -116,7 +155,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   openUpgradeModal(pkg: UpgradePackage): void {
-    if (this.getPackageAction(pkg) !== 'upgrade') return;
+    if (this.isPackageDisabled(pkg)) return;
 
     this.selectedPackage = pkg;
     this.isModalOpen = true;
@@ -124,6 +163,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.paymentError = '';
     this.paymentInfoMessage = '';
     this.invoiceData = null;
+    this.refreshPaymentMethodsForCheckout();
   }
 
   closeUpgradeModal(): void {
@@ -136,14 +176,15 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.invoiceData = null;
   }
 
-  confirmUpgrade(): void {
-    if (!this.selectedPackage || this.isCreatingInvoice) return;
+  startPayment(method: SelectablePaymentMethod): void {
+    if (!this.selectedPackage || this.isCreatingInvoice || !this.hasPaymentMethod(method)) return;
 
     this.isCreatingInvoice = true;
+    this.activePaymentMethod = method;
     this.paymentError = '';
     this.paymentInfoMessage = '';
 
-    const payload = this.buildUpgradePayload(this.selectedPackage);
+    const payload = this.buildUpgradePayload(this.selectedPackage, method);
     this.dashboardService.create(DashboardServiceType.USER_PACKAGE_UPGRADE, payload)
       .pipe(
         take(1),
@@ -152,10 +193,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.invoiceData = response?.data || response || {};
-          this.activePaymentMethod = this.resolveResponsePaymentMethod(this.invoiceData);
+          this.activePaymentMethod = this.resolveResponsePaymentMethod(this.invoiceData) || method;
 
           if (this.activePaymentMethod === 'manual') {
-            this.paymentInfoMessage = response?.message || 'Invoice upgrade berhasil dibuat. Silakan lakukan transfer manual sesuai instruksi.';
+            this.paymentInfoMessage = response?.message || 'Transaksi upgrade dibuat dan menunggu konfirmasi admin.';
             this.refreshProfileAndPackage();
             return;
           }
@@ -174,7 +215,19 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   getPackageAction(pkg: UpgradePackage): PackageAction {
+    const action = pkg.action;
+
+    if (this.isSubscriptionExpired()) {
+      if (!pkg.canSelect) return 'unavailable';
+      if (action === 'renew' || pkg.isLastPackage) return 'renew';
+      if (action === 'upgrade' || action === 'downgrade' || action === 'subscribe' || action === 'select') return action;
+      return 'subscribe';
+    }
+
     if (pkg.isCurrent) return 'current';
+    if (!pkg.canSelect) return 'unavailable';
+
+    if (action === 'upgrade' || action === 'downgrade' || action === 'renew' || action === 'subscribe' || action === 'select') return action;
     if (pkg.canUpgrade) return 'upgrade';
     if (pkg.canDowngrade) return 'downgrade';
     return 'unavailable';
@@ -183,17 +236,52 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   getActionLabel(pkg: UpgradePackage): string {
     const action = this.getPackageAction(pkg);
     if (action === 'current') return 'Paket Saat Ini';
-    if (action === 'downgrade') return 'Tidak dapat downgrade';
-    if (action === 'unavailable') return pkg.pendingMessage || 'Tidak tersedia';
+    if (action === 'downgrade') return 'Downgrade';
+    if (action === 'renew') return 'Perpanjang';
+    if (action === 'subscribe' || action === 'select') return 'Pilih Paket';
+    if (action === 'unavailable') return pkg.disabledReason || pkg.pendingMessage || 'Tidak tersedia';
     return 'Upgrade';
   }
 
+  isPackageDisabled(pkg: UpgradePackage): boolean {
+    const action = this.getPackageAction(pkg);
+    return action === 'current' || action === 'unavailable';
+  }
+
   isCurrentPackage(pkg: UpgradePackage): boolean {
-    return pkg.isCurrent;
+    return pkg.isCurrent && !this.isSubscriptionExpired();
+  }
+
+  isLastExpiredPackage(pkg: UpgradePackage): boolean {
+    return pkg.isLastPackage && this.isSubscriptionExpired();
+  }
+
+  getPackageBadge(pkg: UpgradePackage): string {
+    if (this.isCurrentPackage(pkg)) return 'Paket Saat Ini';
+    if (this.isLastExpiredPackage(pkg)) return 'Paket Terakhir - Kedaluwarsa';
+    return pkg.badge;
   }
 
   trackByPackage(index: number, pkg: UpgradePackage): string {
     return String(pkg.id ?? pkg.code ?? index);
+  }
+
+  isRequestedPackage(pkg: UpgradePackage): boolean {
+    if (!this.requestedPackage) return false;
+    const candidates = [
+      pkg.code,
+      pkg.name,
+      pkg.raw?.package_code,
+      pkg.raw?.code,
+      pkg.raw?.kode_paket,
+      pkg.raw?.package_tier,
+      pkg.raw?.name_paket,
+      pkg.raw?.jenis_paket,
+    ];
+
+    return candidates
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(this.requestedPackage));
   }
 
   copyToClipboard(value: string | number | null | undefined): void {
@@ -206,8 +294,153 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return this.invoiceData?.manual_payment || this.invoiceData?.rekening || this.invoiceData?.bank_account || {};
   }
 
+  get manualAccounts(): any[] {
+    const invoiceAccounts = this.normalizeManualAccounts(this.manualPayment);
+    if (invoiceAccounts.length) return invoiceAccounts;
+
+    const manualMethod = this.paymentMethods.find((method) => method.type === 'manual');
+    return this.normalizeManualAccounts(manualMethod?.details);
+  }
+
+  get primaryManualAccount(): any {
+    return this.manualAccounts[0] || {};
+  }
+
+  get manualInstructions(): string[] {
+    const candidates = [
+      this.invoiceData?.instructions,
+      this.invoiceData?.instruction,
+      this.invoiceData?.manual_payment?.instructions,
+      this.invoiceData?.manual_payment?.instruction,
+      this.paymentMethods.find((method) => method.type === 'manual')?.details?.instructions,
+      this.paymentMethods.find((method) => method.type === 'manual')?.details?.instruction,
+    ];
+    const value = candidates.find((candidate) => !!candidate);
+    if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+    if (typeof value === 'string') return value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+    return [];
+  }
+
+  get invoiceNumber(): string {
+    const value = this.invoiceData?.invoice_number || this.invoiceData?.order_number || this.invoiceData?.order_id || this.invoiceData?.transaction_code;
+    return String(value || '').trim();
+  }
+
+  get invoiceAmount(): string {
+    const value = this.invoiceData?.amount || this.invoiceData?.total || this.invoiceData?.gross_amount || this.selectedPackage?.price;
+    return this.formatPrice(value, this.invoiceData?.amount_label || this.invoiceData?.total_label);
+  }
+
+  get latestTransactionStatus(): string {
+    const status = this.latestTransaction?.status || this.latestTransaction?.payment_status || this.invoiceData?.status || this.invoiceData?.payment_status;
+    return String(status || '').trim();
+  }
+
   get modalTitle(): string {
-    return this.selectedPackage ? `Upgrade ke ${this.selectedPackage.name}` : 'Upgrade Akun';
+    if (!this.selectedPackage) return 'Upgrade Akun';
+    const action = this.getPackageAction(this.selectedPackage);
+    if (action === 'renew') return `Perpanjang ${this.selectedPackage.name}`;
+    if (action === 'downgrade') return `Downgrade ke ${this.selectedPackage.name}`;
+    if (action === 'subscribe' || action === 'select') return `Pilih ${this.selectedPackage.name}`;
+    return `Upgrade ke ${this.selectedPackage.name}`;
+  }
+
+  get isDowngradeSelection(): boolean {
+    return !!this.selectedPackage && this.getPackageAction(this.selectedPackage) === 'downgrade';
+  }
+
+  get downgradeConfirmationMessage(): string {
+    if (!this.selectedPackage) return '';
+    const packageInfo: any = this.userProfile?.package_info || {};
+    const currentName = this.currentPackage?.name || packageInfo.name || packageInfo.name_paket || 'paket saat ini';
+    return `Anda akan berpindah dari ${currentName} ke ${this.selectedPackage.name}. Beberapa fitur dan tema mungkin tidak lagi dapat digunakan setelah paket baru aktif.`;
+  }
+
+  hasPaymentMethod(method: SelectablePaymentMethod): boolean {
+    return this.paymentMethods.some((item) => item.type === method);
+  }
+
+  private buildRequiredPackageMessage(): string {
+    if (!this.requestedPackage || !this.requestedTheme) return '';
+    return `Paket ${this.humanizePackage(this.requestedPackage)} diperlukan untuk menggunakan tema ${this.humanizeThemeSlug(this.requestedTheme)}.`;
+  }
+
+  private scrollToRequestedPackage(): void {
+    if (!this.requestedPackage || !this.packages.length) return;
+
+    setTimeout(() => {
+      const index = this.packages.findIndex((pkg) => this.isRequestedPackage(pkg));
+      const element = this.packageCardElements?.toArray()?.[index]?.nativeElement;
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+
+  private redirectBackWhenUpgradeIsActive(): void {
+    if (!this.returnUrl || !this.requestedPackage || !this.isRequestedPackageActive()) return;
+
+    this.router.navigateByUrl(this.buildReturnUrlWithSuccess());
+  }
+
+  private isRequestedPackageActive(): boolean {
+    const paidStatuses = ['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'];
+    const latestStatus = String(this.latestTransaction?.status || this.latestTransaction?.payment_status || '').toLowerCase().trim();
+    const backendSaysPaid = paidStatuses.includes(latestStatus);
+    const currentMatches = !!this.currentPackage && this.isRequestedPackage(this.currentPackage);
+    return currentMatches || backendSaysPaid;
+  }
+
+  private buildReturnUrlWithSuccess(): string {
+    const separator = this.returnUrl.includes('?') ? '&' : '?';
+    const query = [
+      'upgradeSuccess=1',
+      `package=${encodeURIComponent(this.requestedPackage)}`,
+      this.requestedTheme ? `theme=${encodeURIComponent(this.requestedTheme)}` : '',
+    ].filter(Boolean).join('&');
+
+    return `${this.returnUrl}${separator}${query}`;
+  }
+
+  private humanizePackage(value: string): string {
+    const normalized = String(value || '').trim();
+    return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'paket tujuan';
+  }
+
+  private humanizeThemeSlug(value: string): string {
+    return String(value || 'tema')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  private refreshPaymentMethodsForCheckout(): void {
+    this.isLoadingPaymentMethods = true;
+    this.paymentMethodsError = '';
+
+    this.dashboardService.getUserPaymentConfig()
+      .pipe(
+        take(1),
+        finalize(() => this.isLoadingPaymentMethods = false)
+      )
+      .subscribe({
+        next: (response) => {
+          this.paymentMethods = this.normalizePaymentMethods(response);
+        },
+        error: (error) => {
+          this.paymentMethods = [];
+          this.paymentMethodsError = getFriendlyErrorMessage(error);
+        },
+      });
+  }
+
+  private applyDashboardState(profile: ProfileResponse, packages: any, paymentConfig: any): void {
+    this.userProfile = profile?.data || null;
+    this.activeSubscription = this.extractActiveSubscription(packages, profile);
+    this.latestTransaction = this.extractLatestTransaction(packages, profile);
+    this.packages = this.extractArray(packages).map((item, index) => this.mapPackage(item, index));
+    this.currentPackage = this.resolveCurrentPackage();
+    this.lastPackage = this.resolveLastPackage();
+    this.paymentMethods = this.normalizePaymentMethods(paymentConfig);
   }
 
   private extractArray(response: any): any[] {
@@ -222,6 +455,33 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
     const list = candidates.find((candidate) => Array.isArray(candidate));
     return Array.isArray(list) ? list : [];
+  }
+
+  private extractActiveSubscription(packages: any, profile: ProfileResponse): any {
+    const data = this.unwrapData(packages);
+    const profileData: any = profile?.data || {};
+    return data?.active_subscription ||
+      data?.subscription ||
+      data?.current_subscription ||
+      packages?.active_subscription ||
+      packages?.subscription ||
+      profileData?.active_subscription ||
+      profileData?.subscription ||
+      profileData?.package_info ||
+      null;
+  }
+
+  private extractLatestTransaction(packages: any, profile: ProfileResponse): any {
+    const data = this.unwrapData(packages);
+    const profileData: any = profile?.data || {};
+    return data?.latest_transaction ||
+      data?.pending_transaction ||
+      data?.upgrade_transaction ||
+      packages?.latest_transaction ||
+      packages?.pending_transaction ||
+      profileData?.latest_transaction ||
+      profileData?.pending_transaction ||
+      null;
   }
 
   private mapPackage(raw: any, index: number): UpgradePackage {
@@ -249,20 +509,47 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       statusLabel: String(raw?.status_label ?? raw?.status ?? raw?.is_active_label ?? '').trim(),
       features: this.resolveFeatures(raw),
       isCurrent: this.toBoolean(raw?.is_current),
+      isLastPackage: this.toBoolean(raw?.is_last_package),
+      subscriptionStatus: String(raw?.subscription_status ?? raw?.subscription?.status ?? '').trim(),
+      canSelect: raw?.can_select === undefined ? this.toBoolean(raw?.can_upgrade) : this.toBoolean(raw?.can_select),
       canUpgrade: this.toBoolean(raw?.can_upgrade),
       canDowngrade: this.toBoolean(raw?.can_downgrade),
+      action: this.normalizePackageAction(raw?.action ?? raw?.button_action ?? raw?.selection_action),
+      disabledReason: String(raw?.disabled_reason ?? raw?.disable_reason ?? '').trim(),
       pendingMessage: String(raw?.pending_message ?? raw?.upgrade_message ?? raw?.message ?? '').trim(),
       raw,
     };
   }
 
   private resolveCurrentPackage(): UpgradePackage | null {
+    if (this.isSubscriptionExpired()) return null;
+
     const matched = this.packages.find((pkg) => pkg.isCurrent);
     if (matched) return matched;
 
     const profile: any = this.userProfile || {};
     const currentRaw = profile.package_info || profile.invitation_package || profile.paket_undangan || null;
     return currentRaw ? this.mapPackage({ ...currentRaw, is_current: true }, 0) : null;
+  }
+
+  private resolveLastPackage(): UpgradePackage | null {
+    const matched = this.packages.find((pkg) => pkg.isLastPackage);
+    if (matched) return matched;
+
+    const profile: any = this.userProfile || {};
+    const lastRaw = profile.last_package || profile.package_info || profile.invitation_package || null;
+    return lastRaw ? this.mapPackage({ ...lastRaw, is_last_package: true }, 0) : null;
+  }
+
+  isSubscriptionExpired(): boolean {
+    const status = String(
+      this.activeSubscription?.subscription_status ||
+      this.activeSubscription?.status ||
+      this.userProfile?.package_info?.payment_status ||
+      ''
+    ).trim().toLowerCase();
+
+    return ['expired', 'kedaluwarsa', 'kadaluarsa', 'inactive', 'non_active', 'nonaktif', 'ended', 'lapsed'].includes(status);
   }
 
   private resolveFeatures(raw: any): string[] {
@@ -286,7 +573,9 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       'description', 'deskripsi', 'short_description', 'thumbnail', 'image', 'image_url',
       'photo', 'photo_url', 'badge', 'label', 'status', 'status_label', 'is_active',
       'created_at', 'updated_at', 'deleted_at', 'sort_order', 'order', 'urutan', 'level',
-      'rank', 'priority', 'accessible_categories'
+      'rank', 'priority', 'accessible_categories', 'is_current', 'is_last_package',
+      'subscription_status', 'can_select', 'can_upgrade', 'can_downgrade', 'action',
+      'disabled_reason', 'pending_message', 'upgrade_message'
     ]);
 
     return Object.keys(raw || {})
@@ -347,10 +636,12 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return NaN;
   }
 
-  private buildUpgradePayload(pkg: UpgradePackage): any {
-    return {
+  private buildUpgradePayload(pkg: UpgradePackage, method: SelectablePaymentMethod): any {
+    const payload: any = {
       package_id: pkg.id,
     };
+    payload.payment_method = method;
+    return payload;
   }
 
   private openMidtransPayment(data: any, fallbackMessage?: string): void {
@@ -388,12 +679,14 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   private payWithSnap(snapToken: string, fallbackMessage?: string): void {
     (window as any).snap.pay(snapToken, {
       onSuccess: () => this.handlePaymentSuccess(fallbackMessage),
-      onPending: () => this.handlePaymentSuccess(fallbackMessage || 'Pembayaran sedang diproses.'),
+      onPending: () => this.handlePaymentPending(fallbackMessage || 'Pembayaran sedang diproses dan menunggu verifikasi backend.'),
       onError: () => {
         this.paymentError = 'Pembayaran Midtrans belum berhasil. Silakan coba lagi.';
+        this.refreshProfileAndPackage();
       },
       onClose: () => {
         this.paymentInfoMessage = 'Jendela pembayaran ditutup. Anda dapat melanjutkan pembayaran kapan saja.';
+        this.refreshProfileAndPackage();
       },
     });
   }
@@ -467,13 +760,132 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private handlePaymentSuccess(message?: string): void {
-    this.paymentInfoMessage = message || 'Pembayaran diterima oleh Snap. Status paket akan mengikuti verifikasi backend.';
-    this.refreshProfileAndPackage();
+    this.paymentInfoMessage = message || 'Pembayaran berhasil diterima dan sedang diverifikasi.';
+    this.refreshPaymentStatus();
+  }
+
+  private handlePaymentPending(message: string): void {
+    this.paymentInfoMessage = message;
+    this.refreshPaymentStatus();
+  }
+
+  private refreshPaymentStatus(): void {
+    const orderId = this.resolveOrderId(this.invoiceData);
+    if (!orderId) {
+      this.refreshProfileAndPackage();
+      return;
+    }
+
+    this.dashboardService.create(DashboardServiceType.MIDTRANS_CHECK_STATUS, { order_id: orderId })
+      .pipe(take(1))
+      .subscribe({
+        next: () => this.refreshProfileAndPackage(),
+        error: () => this.refreshProfileAndPackage(),
+      });
+  }
+
+  private resolveOrderId(data: any): string {
+    const candidates = [
+      data?.order_id,
+      data?.order_number,
+      data?.transaction_id,
+      data?.invoice?.order_id,
+      data?.payment?.order_id,
+      data?.midtrans?.order_id,
+    ];
+    return String(candidates.find((candidate) => typeof candidate === 'string' || typeof candidate === 'number') || '').trim();
   }
 
   private resolveResponsePaymentMethod(data: any): PaymentMethod {
     const method = data?.payment_method || data?.payment?.payment_method || data?.invoice?.payment_method;
     return method === 'manual' || method === 'midtrans' ? method : null;
+  }
+
+  private normalizePaymentMethods(response: any): PaymentMethodOption[] {
+    const data = this.unwrapData(response);
+    const methods: PaymentMethodOption[] = [];
+    const arraySource = data?.payment_methods || data?.methods || data?.available_methods || [];
+
+    if (Array.isArray(arraySource)) {
+      arraySource.forEach((item) => {
+        const type = this.normalizePaymentMethodType(item?.payment_method || item?.method || item?.code || item?.type || item?.name);
+        if (!type || !this.isPaymentEnabled(item)) return;
+        methods.push({
+          type,
+          label: type === 'manual' ? 'Transfer Manual' : 'Snap Midtrans',
+          details: item,
+        });
+      });
+    }
+
+    const manual = data?.manual_payment || data?.manual || data?.rekening || data?.bank_account;
+    if (manual && this.isPaymentEnabled(manual) && !methods.some((item) => item.type === 'manual')) {
+      methods.push({ type: 'manual', label: 'Transfer Manual', details: manual });
+    }
+
+    const midtrans = data?.midtrans || data?.midtrans_payment || data?.snap;
+    if (midtrans && this.isPaymentEnabled(midtrans) && !methods.some((item) => item.type === 'midtrans')) {
+      methods.push({ type: 'midtrans', label: 'Snap Midtrans', details: midtrans });
+    }
+
+    const configuredMethod = this.normalizePaymentMethodType(data?.payment_method);
+    if (configuredMethod && !methods.some((item) => item.type === configuredMethod)) {
+      methods.push({
+        type: configuredMethod,
+        label: configuredMethod === 'manual' ? 'Transfer Manual' : 'Snap Midtrans',
+        details: configuredMethod === 'manual' ? (manual || data) : (midtrans || data),
+      });
+    }
+
+    return methods;
+  }
+
+  private normalizeManualAccounts(source: any): any[] {
+    const candidates = [
+      source?.accounts,
+      source?.bank_accounts,
+      source?.rekenings,
+      source?.rekening,
+      source?.manual_payment_accounts,
+    ];
+    const list = candidates.find((candidate) => Array.isArray(candidate));
+    if (Array.isArray(list)) return list;
+
+    const hasDirectAccount = source?.bank_name || source?.nama_bank || source?.account_number || source?.nomor_rekening;
+    return hasDirectAccount ? [source] : [];
+  }
+
+  private normalizePaymentMethodType(value: any): SelectablePaymentMethod | null {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized.includes('manual') || normalized.includes('transfer')) return 'manual';
+    if (normalized.includes('midtrans') || normalized.includes('snap')) return 'midtrans';
+    return null;
+  }
+
+  private isPaymentEnabled(value: any): boolean {
+    const enabled = value?.enabled ?? value?.is_active ?? value?.active ?? value?.status;
+    if (enabled === undefined || enabled === null) return true;
+    if (enabled === true || enabled === 1 || enabled === '1') return true;
+    const normalized = String(enabled).trim().toLowerCase();
+    return ['true', 'active', 'aktif', 'enabled'].includes(normalized);
+  }
+
+  private normalizePackageAction(value: any): PackageAction | null {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (!normalized) return null;
+    if (['current', 'downgrade', 'upgrade', 'renew', 'subscribe', 'select', 'unavailable'].includes(normalized)) {
+      return normalized as PackageAction;
+    }
+    if (normalized.includes('perpanjang')) return 'renew';
+    if (normalized.includes('subscribe')) return 'subscribe';
+    if (normalized.includes('pilih')) return 'select';
+    if (normalized.includes('downgrade')) return 'downgrade';
+    if (normalized.includes('upgrade')) return 'upgrade';
+    return null;
+  }
+
+  private unwrapData(response: any): any {
+    return response?.data?.data || response?.data || response || {};
   }
 
   private toBoolean(value: any): boolean {

@@ -131,7 +131,7 @@
                 type="button"
                 class="theme-card__action theme-card__action--upgrade"
                 (click)="onUpgradeClick(theme, $event)">
-                Upgrade Paket
+                Upgrade ke {{ theme.targetPackageLabel }}
               </button>
             </div>
           </div>
@@ -222,8 +222,8 @@
 
     <h2 id="upgrade-theme-title">Upgrade paket diperlukan</h2>
     <p>
-      Tema ini tersedia untuk paket {{ upgradeTargetPackageLabel }}.
-      Silakan buat invoice upgrade untuk menggunakan tema ini.
+      Tema ini tersedia untuk Paket {{ upgradeTargetPackageLabel }}.
+      Silakan lanjutkan ke halaman Upgrade Akun untuk menggunakan tema ini.
     </p>
 
     <dl class="theme-upgrade-summary">
@@ -258,7 +258,7 @@
         class="theme-modal__primary btn-confirm-theme"
         [disabled]="processingUpgradeInvoice"
         (click)="goToUpgradePackage()">
-        {{ processingUpgradeInvoice ? 'Membuat Invoice...' : 'Buat Invoice Upgrade' }}
+        Upgrade ke {{ upgradeTargetPackageLabel }}
       </button>
     </div>
   </section>

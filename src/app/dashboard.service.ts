@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
@@ -808,6 +808,21 @@ export class DashboardService {
     return this.httpSvc.get<any>(
       `${this.BASE_URL_API}/v1/user/invitation-guests/attendance`
     );
+  }
+
+  exportAttendance(domain: string): Observable<HttpResponse<Blob>> {
+    const params = new HttpParams().set('domain', domain);
+    const headers = new HttpHeaders({
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    return this.httpSvc.get(`${this.BASE_URL_API}/v1/attendance/export`, {
+      headers,
+      params,
+      observe: 'response',
+      responseType: 'blob',
+      withCredentials: true,
+    });
   }
 
   scanAttendance(payload: { scanned_value?: string; guest_token?: string }): Observable<any> {

@@ -103,8 +103,18 @@
       </div>
 
       <div class="attendance-card__actions">
-        <button type="button" class="btn-outline" (click)="exportPresentGuestsToExcel()">
-          Export Excel Tamu Hadir
+        <button
+          type="button"
+          class="btn-outline"
+          [disabled]="isExporting || !resolvedDomain"
+          (click)="exportPresentGuestsToExcel()">
+          <i
+            class="fas"
+            [class.fa-file-excel]="!isExporting"
+            [class.fa-spinner]="isExporting"
+            [class.fa-spin]="isExporting"
+            aria-hidden="true"></i>
+          <span>{{ isExporting ? 'Mengekspor...' : 'Export Excel Tamu Hadir' }}</span>
         </button>
       </div>
     </div>

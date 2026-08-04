@@ -17,7 +17,9 @@
   width: 100%;
   padding: 24px 32px 42px;
 }
-
+.package-title {
+  color: #ffffff;
+}
 .upgrade-hero {
   display: flex;
   align-items: flex-start;
@@ -61,6 +63,7 @@
 
 .upgrade-refresh,
 .package-action,
+.payment-method-card,
 .modal-primary,
 .modal-secondary,
 .copy-value,
@@ -222,6 +225,15 @@
   border-color: #ec4899;
 }
 
+.package-card--expired-last {
+  border-color: #f59e0b;
+}
+
+.package-card--highlight {
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18), 0 18px 42px rgba(15, 23, 42, 0.11);
+}
+
 .package-card__media {
   position: relative;
   display: grid;
@@ -366,6 +378,16 @@
   color: #047857;
 }
 
+.upgrade-alert--info {
+  background: #ecfeff;
+  color: #0f766e;
+}
+
+.upgrade-alert--warning {
+  background: #fffbeb;
+  color: #92400e;
+}
+
 .empty-state {
   display: grid;
   place-items: center;
@@ -488,6 +510,75 @@
   }
 }
 
+.payment-methods {
+  display: grid;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+  }
+}
+
+.payment-method-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  text-align: left;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    border-color: #f9a8d4;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    font-weight: 800;
+  }
+
+  small {
+    margin-top: 3px;
+    color: #64748b;
+    line-height: 1.4;
+  }
+}
+
+.payment-method-card__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.payment-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .payment-loading {
   display: flex;
   align-items: center;
@@ -537,7 +628,19 @@
     color: #111827;
     font-weight: 800;
     text-align: right;
+
+    span {
+      display: block;
+      margin-top: 3px;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+    }
   }
+}
+
+.payment-box--config {
+  background: #ffffff;
 }
 
 .payment-box__title {
@@ -552,6 +655,16 @@
   background: transparent;
   color: #db2777;
   font-weight: 800;
+}
+
+.manual-instructions {
+  display: grid;
+  gap: 7px;
+  margin: 4px 0 0;
+  padding-left: 18px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .upgrade-modal__footer {

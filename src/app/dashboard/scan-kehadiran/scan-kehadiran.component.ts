@@ -1,5 +1,7 @@
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Html5Qrcode } from 'html5-qrcode';
+import { finalize } from 'rxjs/operators';
 import { DashboardService, DashboardServiceType, ProfileResponse } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { createGuestSlug } from 'src/app/shared/guest-checkin/guest-checkin.utils';
@@ -49,6 +51,7 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public attendanceTotal = 0;
   public isScanning = false;
   public isAttendanceLoading = false;
+  public isExporting = false;
 
   private readonly scannerElementId = 'scan-kehadiran-reader';
   private scanner?: Html5Qrcode;
@@ -177,30 +180,150 @@ export class ScanKehadiranComponent implements OnInit, OnDestroy {
   public exportPresentGuestsToExcel(): void {
     const domain = this.resolvedDomain;
 
+    if (this.isExporting) {
+      return;
+    }
+
     if (!domain) {
       this.showNotice('Domain undangan belum tersedia.');
       return;
     }
 
-    const exportUrl = `${this.dashboardService.getUrl(DashboardServiceType.ATTENDANCE)}/export`;
-    this.dashboardService.httpSvc.get(exportUrl, {
-      params: { domain },
-      responseType: 'blob',
-    }).subscribe({
-      next: (blob) => {
-        const objectUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = objectUrl;
-        link.download = `tamu-hadir-${domain}.xlsx`;
-        link.click();
-        window.URL.revokeObjectURL(objectUrl);
-        this.showNotice('Data tamu hadir berhasil diekspor.');
-      },
-      error: (error) => {
-        console.error('[ATTENDANCE_EXPORT_ERROR]', error);
-        this.showNotice(this.resolveBackendErrorMessage(error, 'Gagal mengekspor data tamu hadir.'));
+    this.isExporting = true;
+
+    this.dashboardService
+      .exportAttendance(domain)
+      .pipe(finalize(() => {
+        this.isExporting = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: (response) => {
+          const blob = response.body;
+
+          if (!blob || blob.size === 0) {
+            this.showNotice('File export tidak berisi data.');
+            return;
+          }
+
+          const contentType = response.headers.get('Content-Type') || blob.type;
+
+          if (contentType && !this.isXlsxContentType(contentType)) {
+            this.showNotice('Format file export tidak sesuai.');
+            return;
+          }
+
+          const filename = this.getExportFilename(
+            response.headers.get('Content-Disposition'),
+            domain
+          );
+          const objectUrl = URL.createObjectURL(blob);
+          const anchor = document.createElement('a');
+
+          anchor.href = objectUrl;
+          anchor.download = filename;
+          anchor.style.display = 'none';
+
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+
+          window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+          this.showNotice('Data tamu hadir berhasil diekspor.');
+        },
+        error: async (error: HttpErrorResponse) => {
+          console.error('[ATTENDANCE_EXPORT_ERROR]', error);
+          const message = await this.getBlobErrorMessage(error);
+          this.showNotice(message);
+        }
+      });
+  }
+
+  private getExportFilename(contentDisposition: string | null, domain: string): string {
+    const parsedFilename = this.parseContentDispositionFilename(contentDisposition);
+    const fallbackFilename = `tamu-hadir-${this.sanitizeFilenamePart(domain)}-${this.getLocalDateStamp()}.xlsx`;
+
+    return this.ensureSingleXlsxExtension(parsedFilename || fallbackFilename);
+  }
+
+  private parseContentDispositionFilename(contentDisposition: string | null): string {
+    const header = String(contentDisposition || '').trim();
+
+    if (!header) {
+      return '';
+    }
+
+    const encodedMatch = header.match(/filename\*\s*=\s*(?:UTF-8'')?([^;]+)/i);
+    if (encodedMatch?.[1]) {
+      const encodedFilename = encodedMatch[1].trim().replace(/^"|"$/g, '');
+      try {
+        return this.sanitizeFilename(decodeURIComponent(encodedFilename));
+      } catch {
+        return this.sanitizeFilename(encodedFilename);
       }
-    });
+    }
+
+    const filenameMatch = header.match(/filename\s*=\s*("([^"]+)"|[^;]+)/i);
+    const filename = filenameMatch?.[2] || filenameMatch?.[1] || '';
+
+    return this.sanitizeFilename(filename.replace(/^"|"$/g, ''));
+  }
+
+  private sanitizeFilename(filename: string): string {
+    return String(filename || '')
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, '-')
+      .replace(/\s+/g, ' ')
+      .replace(/^\.+/, '')
+      .slice(0, 180);
+  }
+
+  private sanitizeFilenamePart(value: string): string {
+    return this.sanitizeFilename(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'undangan';
+  }
+
+  private ensureSingleXlsxExtension(filename: string): string {
+    const baseName = this.sanitizeFilename(filename)
+      .replace(/(?:\.xlsx|\.json)+$/gi, '')
+      .trim() || 'tamu-hadir';
+
+    return `${baseName}.xlsx`;
+  }
+
+  private getLocalDateStamp(): string {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  }
+
+  private isXlsxContentType(contentType: string): boolean {
+    return String(contentType || '')
+      .toLowerCase()
+      .split(';')[0]
+      .trim() === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  }
+
+  private async getBlobErrorMessage(error: HttpErrorResponse): Promise<string> {
+    if (error.error instanceof Blob) {
+      try {
+        const text = await error.error.text();
+        const body = JSON.parse(text);
+
+        return body?.message || 'Gagal mengekspor data tamu hadir.';
+      } catch {
+        return 'Gagal mengekspor data tamu hadir.';
+      }
+    }
+
+    return error.error?.message || error.message ||
+      'Gagal mengekspor data tamu hadir.';
   }
 
   public resetAllAttendance(): void {

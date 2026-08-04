@@ -28,7 +28,7 @@ export class AuthInterceptor implements HttpInterceptor {
     const shouldAttachAuthHeader = this.isValidToken(token) && this.shouldAttachAuthHeader(req.url);
 
     const headers: Record<string, string> = {};
-    if (isApiRequest) {
+    if (isApiRequest && !req.headers.has('Accept')) {
       headers['Accept'] = 'application/json';
     }
     if (shouldAttachAuthHeader) {

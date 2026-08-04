@@ -353,16 +353,25 @@
 
 .btn-outline,
 .btn-danger {
+  align-items: center;
   border-radius: 10px;
   cursor: pointer;
+  display: inline-flex;
   font-size: 14px;
   font-weight: 800;
+  gap: 8px;
+  justify-content: center;
   min-height: 42px;
   padding: 0 14px;
   transition: background 0.15s ease, transform 0.15s ease;
   white-space: nowrap;
 
-  &:active {
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  &:not(:disabled):active {
     transform: translateY(1px);
   }
 }
