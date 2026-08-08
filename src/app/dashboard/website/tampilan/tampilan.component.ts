@@ -1336,7 +1336,9 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   get upgradeTargetPackagePriceLabel(): string {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
-    return theme?.targetPackageUpgradePriceLabel || this.formatCurrencyLabel(theme?.targetPackageUpgradePrice) || 'Belum tersedia';
+    const priceLabel = theme?.targetPackageUpgradePriceLabel || this.formatCurrencyLabel(theme?.targetPackageUpgradePrice);
+    if (priceLabel) return priceLabel;
+    return this.isLoading ? 'Memuat harga upgrade...' : 'Harga upgrade gagal dimuat';
   }
 
   get upgradeTargetPackageOriginalPriceLabel(): string {
@@ -1424,12 +1426,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
     upgradePriceLabel: string;
   } {
     const packageObject = rawTargetPackage && typeof rawTargetPackage === 'object' ? rawTargetPackage as any : null;
+    const pricing = packageObject?.pricing || packageObject?.upgrade_pricing || packageObject?.price_detail || packageObject?.pricing_detail || {};
     const normalPrice = this.resolveTargetPackagePrice(rawTargetPackage, tier);
     const firstPriceValue = (values: unknown[]): number | string | null => {
       const value = this.firstDefined(values);
       return value === undefined ? null : value as number | string | null;
     };
     const originalPrice = firstPriceValue([
+      pricing?.original_price,
+      pricing?.normal_price,
+      pricing?.regular_price,
       packageObject?.original_price,
       packageObject?.normal_price,
       packageObject?.regular_price,
@@ -1440,18 +1446,30 @@ export class TampilanComponent implements OnInit, OnDestroy {
       normalPrice,
     ]);
     const discountPercentage = firstPriceValue([
+      pricing?.discount_percentage,
+      pricing?.upgrade_discount_percentage,
+      pricing?.discount_percent,
       packageObject?.discount_percentage,
       packageObject?.upgrade_discount_percentage,
       packageObject?.discount_percent,
       packageObject?.diskon_persen,
     ]);
     const discountAmount = firstPriceValue([
+      pricing?.discount_amount,
+      pricing?.upgrade_discount_amount,
+      pricing?.discount_value,
       packageObject?.discount_amount,
       packageObject?.upgrade_discount_amount,
       packageObject?.diskon_nominal,
       packageObject?.discount_value,
     ]);
     const upgradePrice = firstPriceValue([
+      pricing?.upgrade_price,
+      pricing?.payable_amount,
+      pricing?.payment_amount,
+      pricing?.amount_due,
+      pricing?.total_payment,
+      pricing?.final_price,
       packageObject?.upgrade_price,
       packageObject?.upgrade_amount,
       packageObject?.payment_amount,
@@ -1465,12 +1483,12 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return {
       normalPrice,
       originalPrice,
-      originalPriceLabel: this.formatCurrencyLabel(originalPrice, packageObject?.original_price_label ?? packageObject?.normal_price_label ?? packageObject?.regular_price_label),
+      originalPriceLabel: this.formatCurrencyLabel(originalPrice, pricing?.original_price_label ?? pricing?.normal_price_label ?? pricing?.regular_price_label ?? packageObject?.original_price_label ?? packageObject?.normal_price_label ?? packageObject?.regular_price_label),
       discountPercentage,
       discountAmount,
-      discountAmountLabel: this.formatCurrencyLabel(discountAmount, packageObject?.discount_amount_label ?? packageObject?.upgrade_discount_amount_label ?? packageObject?.diskon_nominal_label),
+      discountAmountLabel: this.formatCurrencyLabel(discountAmount, pricing?.discount_amount_label ?? pricing?.upgrade_discount_amount_label ?? packageObject?.discount_amount_label ?? packageObject?.upgrade_discount_amount_label ?? packageObject?.diskon_nominal_label),
       upgradePrice,
-      upgradePriceLabel: this.formatCurrencyLabel(upgradePrice, packageObject?.upgrade_price_label ?? packageObject?.upgrade_amount_label ?? packageObject?.payment_amount_label ?? packageObject?.amount_due_label ?? packageObject?.total_payment_label ?? packageObject?.total_bayar_label ?? packageObject?.final_price_label ?? packageObject?.payable_amount_label),
+      upgradePriceLabel: this.formatCurrencyLabel(upgradePrice, pricing?.upgrade_price_label ?? pricing?.payable_amount_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? packageObject?.upgrade_price_label ?? packageObject?.upgrade_amount_label ?? packageObject?.payment_amount_label ?? packageObject?.amount_due_label ?? packageObject?.total_payment_label ?? packageObject?.total_bayar_label ?? packageObject?.final_price_label ?? packageObject?.payable_amount_label),
     };
   }
 

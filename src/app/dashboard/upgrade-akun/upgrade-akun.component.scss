@@ -398,6 +398,11 @@
   cursor: not-allowed;
 }
 
+.package-price--pending {
+  color: #991b1b;
+  font-size: 15px;
+}
+
 .upgrade-alert {
   display: flex;
   align-items: flex-start;

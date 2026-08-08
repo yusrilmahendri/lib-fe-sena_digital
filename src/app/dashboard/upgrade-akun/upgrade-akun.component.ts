@@ -13,6 +13,7 @@ import { environment } from 'src/environments/environment';
 type PaymentMethod = 'manual' | 'midtrans' | null;
 type SelectablePaymentMethod = 'manual' | 'midtrans';
 type PackageAction = 'current' | 'downgrade' | 'upgrade' | 'renew' | 'subscribe' | 'select' | 'unavailable';
+type UpgradePricingState = 'ready' | 'loading' | 'failed';
 type CheckoutState =
   | 'confirmation'
   | 'method'
@@ -76,7 +77,9 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   latestTransaction: any = null;
   isLoading = true;
   isRefreshingProfile = false;
+  isRefreshingPackagePricing = false;
   errorMessage = '';
+  packagePricingError = '';
 
   selectedPackage: UpgradePackage | null = null;
   targetPackage: UpgradePackage | null = null;
@@ -128,6 +131,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   loadData(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.packagePricingError = '';
 
     forkJoin({
       profile: this.dashboardService.getProfile(),
@@ -146,6 +150,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.errorMessage = getFriendlyErrorMessage(error);
+          this.packagePricingError = 'Harga upgrade gagal dimuat.';
         },
       });
   }
@@ -173,6 +178,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           this.paymentError = getFriendlyErrorMessage(error);
+          this.packagePricingError = 'Harga upgrade gagal dimuat.';
         },
       });
   }
@@ -211,7 +217,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   continueToPaymentMethod(): void {
     if (this.isCreatingInvoice || this.isLoadingPaymentMethods) return;
     if (this.selectedPackageRequiresUpgradePricing) {
-      this.paymentError = 'Harga upgrade belum tersedia. Silakan perbarui data paket terlebih dahulu.';
+      this.paymentError = this.selectedPackageUpgradePricingMessage;
       return;
     }
     this.paymentError = '';
@@ -222,7 +228,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   startPayment(method: SelectablePaymentMethod): void {
     if (!this.selectedPackage || this.isCreatingInvoice || !this.hasPaymentMethod(method)) return;
     if (this.selectedPackageRequiresUpgradePricing) {
-      this.paymentError = 'Harga upgrade belum tersedia. Silakan perbarui data paket terlebih dahulu.';
+      this.paymentError = this.selectedPackageUpgradePricingMessage;
       return;
     }
 
@@ -280,6 +286,61 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.checkoutState = 'method';
   }
 
+  handlePackageAction(pkg: UpgradePackage): void {
+    if (this.isUpgradePricingFailed(pkg)) {
+      this.retryUpgradePricing();
+      return;
+    }
+
+    this.openUpgradeModal(pkg);
+  }
+
+  handleConfirmationPrimaryAction(): void {
+    if (this.selectedPackageRequiresUpgradePricing) {
+      if (this.selectedPackageUpgradePricingState === 'failed') {
+        this.retryUpgradePricing();
+        return;
+      }
+
+      this.paymentError = this.selectedPackageUpgradePricingMessage;
+      return;
+    }
+
+    this.continueToPaymentMethod();
+  }
+
+  retryUpgradePricing(): void {
+    if (this.isRefreshingPackagePricing || this.isLoading) return;
+
+    this.isRefreshingPackagePricing = true;
+    this.packagePricingError = '';
+    this.paymentError = '';
+
+    forkJoin({
+      profile: this.dashboardService.getProfile(),
+      packages: this.dashboardService.list(DashboardServiceType.USER_PACKAGES),
+      paymentConfig: this.dashboardService.getUserPaymentConfig().pipe(catchError(() => of(null))),
+    })
+      .pipe(
+        take(1),
+        finalize(() => this.isRefreshingPackagePricing = false)
+      )
+      .subscribe({
+        next: ({ profile, packages, paymentConfig }: { profile: ProfileResponse; packages: any; paymentConfig: any }) => {
+          this.applyDashboardState(profile, packages, paymentConfig);
+          this.scrollToRequestedPackage();
+
+          if (this.selectedPackageRequiresUpgradePricing) {
+            this.paymentError = this.selectedPackageUpgradePricingMessage;
+          }
+        },
+        error: () => {
+          this.packagePricingError = 'Harga upgrade gagal dimuat.';
+          this.paymentError = this.selectedPackageUpgradePricingMessage;
+        },
+      });
+  }
+
   continueExistingPayment(): void {
     if (!this.invoiceData || this.isCreatingInvoice) return;
 
@@ -330,7 +391,9 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get primaryPaymentCtaLabel(): string {
-    if (this.selectedPackageRequiresUpgradePricing) return 'Memuat harga...';
+    if (this.selectedPackageRequiresUpgradePricing) {
+      return this.selectedPackageUpgradePricingState === 'failed' ? 'Coba Lagi' : 'Memuat harga...';
+    }
     const amount = this.modalPackagePrice;
     return amount && amount !== '-' ? `Bayar ${amount}` : 'Bayar Sekarang';
   }
@@ -345,6 +408,16 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return !!this.selectedPackage &&
       this.isUpgradeAction(this.selectedPackage) &&
       !this.hasValidUpgradePricing(this.selectedPackage);
+  }
+
+  get selectedPackageUpgradePricingState(): UpgradePricingState {
+    return this.selectedPackage ? this.getUpgradePricingState(this.selectedPackage) : 'ready';
+  }
+
+  get selectedPackageUpgradePricingMessage(): string {
+    return this.selectedPackageUpgradePricingState === 'failed'
+      ? 'Harga upgrade gagal dimuat.'
+      : 'Memuat harga upgrade...';
   }
 
   get selectedPackageHasUpgradePricing(): boolean {
@@ -422,7 +495,6 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       if (!pkg.canSelect) return 'unavailable';
       if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
       if (action === 'renew' || pkg.isLastPackage) return 'renew';
-      if ((action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'unavailable';
       if (action === 'upgrade' || action === 'subscribe' || action === 'select') return action;
       return 'subscribe';
     }
@@ -432,7 +504,6 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     if (!pkg.canSelect) return 'unavailable';
 
     if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
-    if ((action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'unavailable';
     if (action === 'upgrade' || action === 'renew' || action === 'subscribe' || action === 'select') return action;
     if (pkg.canUpgrade) return 'upgrade';
     return 'unavailable';
@@ -445,15 +516,16 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     if (action === 'subscribe' || action === 'select') return 'Pilih Paket';
     if (action === 'unavailable') {
       if (this.isLowerTierPackage(pkg)) return 'Downgrade tidak tersedia';
-      if ((pkg.action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'Harga upgrade belum tersedia';
       return pkg.disabledReason || pkg.pendingMessage || 'Tidak tersedia';
     }
+    if (action === 'upgrade' && this.isUpgradePricingLoading(pkg)) return 'Memuat harga...';
+    if (action === 'upgrade' && this.isUpgradePricingFailed(pkg)) return 'Coba Lagi';
     return `Upgrade ke ${pkg.name}`;
   }
 
   isPackageDisabled(pkg: UpgradePackage): boolean {
     const action = this.getPackageAction(pkg);
-    return action === 'current' || action === 'unavailable';
+    return action === 'current' || action === 'unavailable' || this.isUpgradePricingLoading(pkg);
   }
 
   isCurrentPackage(pkg: UpgradePackage): boolean {
@@ -574,6 +646,31 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   canShowPackageUpgradePricing(pkg: UpgradePackage): boolean {
     return this.getPackageAction(pkg) === 'upgrade' && this.hasValidUpgradePricing(pkg);
+  }
+
+  shouldShowPackageUpgradePricing(pkg: UpgradePackage): boolean {
+    return this.getPackageAction(pkg) === 'upgrade' || this.isUpgradePricingLoading(pkg) || this.isUpgradePricingFailed(pkg);
+  }
+
+  getUpgradePricingState(pkg: UpgradePackage): UpgradePricingState {
+    if (!this.isUpgradeAction(pkg)) return 'ready';
+    if (this.hasValidUpgradePricing(pkg)) return 'ready';
+    if (this.isLoading || this.isRefreshingPackagePricing) return 'loading';
+    return 'failed';
+  }
+
+  getUpgradePricingMessage(pkg: UpgradePackage): string {
+    return this.getUpgradePricingState(pkg) === 'failed'
+      ? 'Harga upgrade gagal dimuat'
+      : 'Memuat harga upgrade...';
+  }
+
+  isUpgradePricingLoading(pkg: UpgradePackage): boolean {
+    return this.getUpgradePricingState(pkg) === 'loading';
+  }
+
+  isUpgradePricingFailed(pkg: UpgradePackage): boolean {
+    return this.getUpgradePricingState(pkg) === 'failed';
   }
 
   private buildRequiredPackageMessage(): string {
@@ -749,11 +846,24 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.currentPackage = this.resolveCurrentPackage();
     this.lastPackage = this.resolveLastPackage();
     this.paymentMethods = this.normalizePaymentMethods(paymentConfig);
+    this.syncSelectedPackageWithLatestPackages();
 
     if (this.isModalOpen && this.selectedPackage && this.invoiceData) {
       const refreshedTransaction = this.resolveExistingTransactionForPackage(this.selectedPackage);
       this.invoiceData = refreshedTransaction || this.invoiceData;
       this.checkoutState = this.resolveCheckoutState(this.invoiceData);
+    }
+  }
+
+  private syncSelectedPackageWithLatestPackages(): void {
+    if (this.selectedPackage) {
+      const selected = this.packages.find((pkg) => this.isSamePackage(pkg, this.selectedPackage));
+      if (selected) this.selectedPackage = selected;
+    }
+
+    if (this.targetPackage) {
+      const target = this.packages.find((pkg) => this.isSamePackage(pkg, this.targetPackage));
+      if (target) this.targetPackage = target;
     }
   }
 

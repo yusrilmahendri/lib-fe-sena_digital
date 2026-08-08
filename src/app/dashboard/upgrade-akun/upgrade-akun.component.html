@@ -72,7 +72,7 @@
       </div>
 
       <div class="upgrade-alert upgrade-alert--info" *ngIf="requiredPackageMessage">
-        <i class="fas fa-lock-open" aria-hidden="true"></i>
+        <i class="fas fa-lock" aria-hidden="true"></i>
         <span>{{ requiredPackageMessage }}</span>
       </div>
       <div class="upgrade-alert upgrade-alert--info" *ngIf="highestPackageMessage">
@@ -110,9 +110,15 @@
               <span class="package-status" *ngIf="pkg.statusLabel">{{ pkg.statusLabel }}</span>
             </div>
             <p class="package-description" *ngIf="pkg.description">{{ pkg.description }}</p>
-            <div class="package-price-block" *ngIf="canShowPackageUpgradePricing(pkg); else normalPackagePrice">
-              <span class="package-price-original" *ngIf="pkg.originalPriceLabel">{{ pkg.originalPriceLabel }}</span>
-              <strong class="package-price">{{ pkg.upgradePriceLabel }}</strong>
+            <div class="package-price-block" *ngIf="shouldShowPackageUpgradePricing(pkg); else normalPackagePrice">
+              <span class="package-price-original" *ngIf="pkg.originalPriceLabel || pkg.priceLabel">
+                {{ pkg.originalPriceLabel || pkg.priceLabel }}
+              </span>
+              <strong
+                class="package-price"
+                [class.package-price--pending]="!canShowPackageUpgradePricing(pkg)">
+                {{ canShowPackageUpgradePricing(pkg) ? pkg.upgradePriceLabel : getUpgradePricingMessage(pkg) }}
+              </strong>
               <span class="upgrade-discount-badge" *ngIf="pkg.discountPercentage">Diskon Upgrade {{ formatPercent(pkg.discountPercentage) }}</span>
               <small *ngIf="pkg.discountAmountLabel">Hemat {{ pkg.discountAmountLabel }}</small>
             </div>
@@ -133,7 +139,7 @@
             class="package-action"
             [class.package-action--disabled]="isPackageDisabled(pkg)"
             [disabled]="isPackageDisabled(pkg)"
-            (click)="openUpgradeModal(pkg)">
+            (click)="handlePackageAction(pkg)">
             {{ getActionLabel(pkg) }}
           </button>
         </article>
@@ -178,7 +184,7 @@
       <ng-template #upgradePriceLoading>
         <div class="modal-summary__loading">
           <span>Harga Upgrade</span>
-          <strong>Memuat harga upgrade...</strong>
+          <strong>{{ selectedPackageUpgradePricingMessage }}</strong>
         </div>
       </ng-template>
     </div>
@@ -332,9 +338,9 @@
       type="button"
       class="modal-primary"
       *ngIf="checkoutState === 'confirmation'"
-      (click)="continueToPaymentMethod()"
-      [disabled]="isLoadingPaymentMethods || isCreatingInvoice || selectedPackageRequiresUpgradePricing">
-      {{ selectedPackageRequiresUpgradePricing ? 'Memuat harga...' : (isLoadingPaymentMethods ? 'Memuat...' : 'Lanjut ke Pembayaran') }}
+      (click)="handleConfirmationPrimaryAction()"
+      [disabled]="isLoadingPaymentMethods || isCreatingInvoice || selectedPackageUpgradePricingState === 'loading'">
+      {{ selectedPackageRequiresUpgradePricing ? (selectedPackageUpgradePricingState === 'failed' ? 'Coba Lagi' : 'Memuat harga...') : (isLoadingPaymentMethods ? 'Memuat...' : 'Lanjut ke Pembayaran') }}
     </button>
     <button
       type="button"

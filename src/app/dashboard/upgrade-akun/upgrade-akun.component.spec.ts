@@ -245,12 +245,12 @@ describe('UpgradeAkunComponent payment flow', () => {
       id: 3,
       package_code: 'diamond',
       name: 'Diamond',
-      price: 10000,
+      price: 15000,
       pricing: {
-        original_price: 10000,
+        original_price: 15000,
         discount_percentage: 40,
-        discount_amount: 4000,
-        upgrade_price: 6000,
+        discount_amount: 6000,
+        upgrade_price: 9000,
       },
       can_select: true,
       can_upgrade: true,
@@ -260,10 +260,10 @@ describe('UpgradeAkunComponent payment flow', () => {
     component.currentPackage = sapphirePackage;
     component.selectedPackage = pkg;
 
-    expect(pkg.originalPriceLabel.replace(/\s/g, '')).toBe('Rp10.000');
-    expect(pkg.discountAmountLabel.replace(/\s/g, '')).toBe('Rp4.000');
-    expect(pkg.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp6.000');
-    expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(pkg.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(pkg.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(pkg.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+    expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp9.000');
   });
 
   it('allows Ruby users to upgrade to Sapphire and Diamond', () => {
@@ -304,7 +304,7 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.paymentError).toBe('Downgrade paket tidak tersedia.');
   });
 
-  it('does not expose upgrade CTA when backend does not provide valid upgrade pricing', () => {
+  it('keeps upgrade CTA as retry when backend does not provide valid upgrade pricing', () => {
     const packageWithoutPricing = {
       ...diamondPackage,
       upgradePrice: null,
@@ -312,14 +312,16 @@ describe('UpgradeAkunComponent payment flow', () => {
       discountAmount: null,
       discountAmountLabel: '',
     };
+    component.isLoading = false;
     component.currentPackage = sapphirePackage;
 
-    expect(component.getPackageAction(packageWithoutPricing)).toBe('unavailable');
-    expect(component.getActionLabel(packageWithoutPricing)).toBe('Harga upgrade belum tersedia');
+    expect(component.getPackageAction(packageWithoutPricing)).toBe('upgrade');
+    expect(component.getActionLabel(packageWithoutPricing)).toBe('Coba Lagi');
+    expect(component.isPackageDisabled(packageWithoutPricing)).toBeFalse();
     expect(component.canShowPackageUpgradePricing(packageWithoutPricing)).toBeFalse();
   });
 
-  it('does not show normal price as upgrade price while upgrade pricing is missing', () => {
+  it('shows loading while upgrade pricing is being refreshed', () => {
     const packageWithoutPricing = {
       ...diamondPackage,
       price: 10000,
@@ -331,10 +333,87 @@ describe('UpgradeAkunComponent payment flow', () => {
     };
     component.currentPackage = sapphirePackage;
     component.selectedPackage = packageWithoutPricing;
+    component.isRefreshingPackagePricing = true;
 
     expect(component.modalPackagePrice).toBe('');
     expect(component.primaryPaymentCtaLabel).toBe('Memuat harga...');
+    expect(component.selectedPackageUpgradePricingMessage).toBe('Memuat harga upgrade...');
     expect(component.selectedPackageRequiresUpgradePricing).toBeTrue();
+  });
+
+  it('does not show normal price as upgrade price while upgrade pricing fails', () => {
+    const packageWithoutPricing = {
+      ...diamondPackage,
+      price: 10000,
+      priceLabel: 'Rp10.000',
+      upgradePrice: null,
+      upgradePriceLabel: '',
+      discountAmount: null,
+      discountAmountLabel: '',
+    };
+    component.isLoading = false;
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = packageWithoutPricing;
+
+    expect(component.modalPackagePrice).toBe('');
+    expect(component.primaryPaymentCtaLabel).toBe('Coba Lagi');
+    expect(component.selectedPackageUpgradePricingMessage).toBe('Harga upgrade gagal dimuat.');
+    expect(component.selectedPackageRequiresUpgradePricing).toBeTrue();
+  });
+
+  it('retries package pricing from backend and updates selected Diamond pricing', () => {
+    const packageWithoutPricing = {
+      ...diamondPackage,
+      upgradePrice: null,
+      upgradePriceLabel: '',
+      discountAmount: null,
+      discountAmountLabel: '',
+    };
+    component.isLoading = false;
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = packageWithoutPricing;
+    component.targetPackage = packageWithoutPricing;
+    dashboardService.getProfile.and.returnValue(of({ data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } }));
+    dashboardService.list.and.returnValue(of({ data: [
+      { ...sapphirePackage, is_current: true },
+      {
+        ...diamondPackage,
+        is_current: false,
+        pricing: {
+          original_price: 15000,
+          discount_percentage: 40,
+          discount_amount: 6000,
+          upgrade_price: 9000,
+        },
+      },
+    ] }));
+
+    component.retryUpgradePricing();
+
+    expect(component.selectedPackage?.code).toBe('diamond');
+    expect(component.selectedPackage?.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(component.selectedPackage?.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(component.selectedPackage?.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+    expect(component.selectedPackageRequiresUpgradePricing).toBeFalse();
+  });
+
+  it('shows retry error when package pricing request fails', () => {
+    const packageWithoutPricing = {
+      ...diamondPackage,
+      upgradePrice: null,
+      upgradePriceLabel: '',
+      discountAmount: null,
+      discountAmountLabel: '',
+    };
+    component.isLoading = false;
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = packageWithoutPricing;
+    dashboardService.list.and.returnValue(throwError(() => ({ error: { message: 'Server error' } })));
+
+    component.retryUpgradePricing();
+
+    expect(component.packagePricingError).toBe('Harga upgrade gagal dimuat.');
+    expect(component.paymentError).toBe('Harga upgrade gagal dimuat.');
   });
 
   it('keeps current package unchanged when modal is closed or invoice is created', () => {
@@ -364,6 +443,25 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.currentPackage?.code).toBe('sapphire');
     expect(component.checkoutState).toBe('pending');
   });
+
+  it('marks Diamond active only after refreshed backend current package is Diamond', () => {
+    component.isModalOpen = true;
+    component.invoiceData = { payment_method: 'midtrans', payment_status: 'settlement', package_code: 'diamond' };
+    component.selectedPackage = diamondPackage;
+
+    (component as any).applyDashboardState(
+      { data: { package_info: { is_active: true, package_code: 'diamond', name: 'Diamond' } } },
+      { data: [
+        { ...sapphirePackage, is_current: false },
+        { ...diamondPackage, is_current: true },
+      ] },
+      { data: { midtrans: { enabled: true } } }
+    );
+
+    expect(component.currentPackage?.code).toBe('diamond');
+    expect(component.checkoutState).toBe('success');
+  });
+
 
   it('keeps theme context in return URL after requested package becomes active', () => {
     component.requestedPackage = 'diamond';
