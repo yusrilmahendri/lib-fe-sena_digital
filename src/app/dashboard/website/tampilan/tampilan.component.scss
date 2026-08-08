@@ -674,13 +674,6 @@
   position: static !important;
 }
 
-.btn-confirm-theme {
-  background: #8b124c;
-  color: #ffffff;
-  border: none;
-  box-shadow: 0 14px 28px rgba(139, 18, 76, 0.24);
-}
-
 .theme-modal__primary,
 .theme-modal__secondary {
   border-radius: 999px;
@@ -696,8 +689,29 @@
   color: #ffffff;
 }
 
+.theme-modal--upgrade .theme-modal__primary.btn-confirm-theme {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
+  border: 0;
+  box-shadow: 0 14px 28px rgba(139, 18, 76, 0.24);
+  color: #ffffff !important;
+}
+
+.theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:hover:not(:disabled),
+.theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:focus-visible:not(:disabled) {
+  background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-primary) 100%) !important;
+  color: #ffffff !important;
+  outline: 3px solid rgba(139, 18, 76, 0.22);
+  outline-offset: 2px;
+}
+
 .theme-modal__primary:disabled {
   cursor: not-allowed;
+  opacity: 0.62 !important;
+}
+
+.theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:disabled {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
+  color: #ffffff !important;
   opacity: 0.62 !important;
 }
 

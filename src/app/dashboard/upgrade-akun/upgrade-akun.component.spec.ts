@@ -11,6 +11,13 @@ describe('UpgradeAkunComponent payment flow', () => {
     name: 'Sapphire',
     price: 150000,
     priceLabel: 'Rp150.000',
+    originalPrice: 150000,
+    originalPriceLabel: 'Rp150.000',
+    discountPercentage: 40,
+    discountAmount: 60000,
+    discountAmountLabel: 'Rp60.000',
+    upgradePrice: 90000,
+    upgradePriceLabel: 'Rp90.000',
     description: 'Paket Sapphire',
     thumbnail: '',
     badge: '',
@@ -202,7 +209,9 @@ describe('UpgradeAkunComponent payment flow', () => {
     component.currentPackage = rubyPackage;
 
     expect(component.getPackageAction(sapphirePackage)).toBe('upgrade');
+    expect(component.canShowPackageUpgradePricing(sapphirePackage)).toBeTrue();
     expect(component.getPackageAction(diamondPackage)).toBe('upgrade');
+    expect(component.canShowPackageUpgradePricing(diamondPackage)).toBeTrue();
   });
 
   it('disables Sapphire to Ruby downgrade and keeps Diamond upgrade available', () => {
@@ -212,6 +221,7 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.getActionLabel(rubyPackage)).toBe('Downgrade tidak tersedia');
     expect(component.isPackageDisabled(rubyPackage)).toBeTrue();
     expect(component.getPackageAction(diamondPackage)).toBe('upgrade');
+    expect(component.canShowPackageUpgradePricing(rubyPackage)).toBeFalse();
   });
 
   it('disables Diamond downgrades and shows highest package message', () => {
@@ -231,6 +241,21 @@ describe('UpgradeAkunComponent payment flow', () => {
 
     expect(component.checkoutState).toBe('creation_error');
     expect(component.paymentError).toBe('Downgrade paket tidak tersedia.');
+  });
+
+  it('does not expose upgrade CTA when backend does not provide valid upgrade pricing', () => {
+    const packageWithoutPricing = {
+      ...diamondPackage,
+      upgradePrice: null,
+      upgradePriceLabel: '',
+      discountAmount: null,
+      discountAmountLabel: '',
+    };
+    component.currentPackage = sapphirePackage;
+
+    expect(component.getPackageAction(packageWithoutPricing)).toBe('unavailable');
+    expect(component.getActionLabel(packageWithoutPricing)).toBe('Harga upgrade belum tersedia');
+    expect(component.canShowPackageUpgradePricing(packageWithoutPricing)).toBeFalse();
   });
 
   it('keeps theme context in return URL after requested package becomes active', () => {

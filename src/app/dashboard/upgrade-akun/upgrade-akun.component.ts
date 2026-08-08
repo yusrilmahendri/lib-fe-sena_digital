@@ -303,7 +303,9 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get modalPackagePrice(): string {
-    return this.selectedPackage?.upgradePriceLabel || this.invoiceAmount || this.selectedPackage?.priceLabel || '-';
+    return this.selectedPackage && this.canShowPackageUpgradePricing(this.selectedPackage)
+      ? this.selectedPackage.upgradePriceLabel
+      : this.invoiceAmount || this.selectedPackage?.priceLabel || '-';
   }
 
   get primaryPaymentMethod(): SelectablePaymentMethod | null {
@@ -394,17 +396,21 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     const action = pkg.action;
 
     if (this.isSubscriptionExpired()) {
+      if (this.isTrialPackage(pkg)) return 'unavailable';
       if (!pkg.canSelect) return 'unavailable';
       if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
       if (action === 'renew' || pkg.isLastPackage) return 'renew';
+      if ((action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'unavailable';
       if (action === 'upgrade' || action === 'subscribe' || action === 'select') return action;
       return 'subscribe';
     }
 
     if (pkg.isCurrent) return 'current';
+    if (this.isTrialPackage(pkg)) return 'unavailable';
     if (!pkg.canSelect) return 'unavailable';
 
     if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
+    if ((action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'unavailable';
     if (action === 'upgrade' || action === 'renew' || action === 'subscribe' || action === 'select') return action;
     if (pkg.canUpgrade) return 'upgrade';
     return 'unavailable';
@@ -417,9 +423,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     if (action === 'subscribe' || action === 'select') return 'Pilih Paket';
     if (action === 'unavailable') {
       if (this.isLowerTierPackage(pkg)) return 'Downgrade tidak tersedia';
+      if ((pkg.action === 'upgrade' || pkg.canUpgrade) && !this.hasValidUpgradePricing(pkg)) return 'Harga upgrade belum tersedia';
       return pkg.disabledReason || pkg.pendingMessage || 'Tidak tersedia';
     }
-    return 'Upgrade';
+    return `Upgrade ke ${pkg.name}`;
   }
 
   isPackageDisabled(pkg: UpgradePackage): boolean {
@@ -543,6 +550,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return this.paymentMethods.some((item) => item.type === method);
   }
 
+  canShowPackageUpgradePricing(pkg: UpgradePackage): boolean {
+    return this.getPackageAction(pkg) === 'upgrade' && this.hasValidUpgradePricing(pkg);
+  }
+
   private buildRequiredPackageMessage(): string {
     if (!this.requestedPackage || (!this.requestedTheme && !this.requestedThemeSlug)) return '';
     return `Paket ${this.humanizePackage(this.requestedPackage)} diperlukan untuk menggunakan tema ${this.humanizeThemeSlug(this.requestedThemeSlug || this.requestedTheme)}.`;
@@ -611,6 +622,25 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     const currentRank = this.resolvePackageRank(this.currentPackage || this.lastPackage);
     const packageRank = this.resolvePackageRank(pkg);
     return currentRank > 0 && packageRank > 0 && packageRank < currentRank;
+  }
+
+  private isTrialPackage(pkg: UpgradePackage): boolean {
+    const value = [
+      pkg.code,
+      pkg.name,
+      pkg.raw?.package_code,
+      pkg.raw?.package_tier,
+      pkg.raw?.kode_paket,
+      pkg.raw?.name_paket,
+      pkg.raw?.jenis_paket,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return value.includes('trial') || value.includes('gratis') || value.includes('free');
+  }
+
+  private hasValidUpgradePricing(pkg: UpgradePackage): boolean {
+    const upgradePrice = this.toNumber(pkg.upgradePrice);
+    if (Number.isFinite(upgradePrice) && upgradePrice > 0) return true;
+    return !!pkg.upgradePriceLabel && pkg.upgradePriceLabel !== '-';
   }
 
   private resolvePackageRank(pkg: UpgradePackage | null | undefined): number {

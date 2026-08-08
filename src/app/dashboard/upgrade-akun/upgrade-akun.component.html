@@ -3,7 +3,7 @@
     <div>
       <span class="upgrade-eyebrow">Upgrade Akun</span>
       <h1 class="package-title">Pilih paket yang sesuai dengan kebutuhan undangan Anda</h1>
-      <p>Pilih paket, bayar online, lalu fitur paket aktif otomatis setelah pembayaran berhasil.</p>
+      <p>Nikmati diskon 40% untuk setiap upgrade paket. Pilih paket yang lebih tinggi dan bayar hanya 60% dari harga normal paket tujuan.</p>
     </div>
     <button type="button" class="upgrade-refresh" (click)="refreshProfileAndPackage()" [disabled]="isRefreshingProfile || isLoading">
       <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshingProfile" aria-hidden="true"></i>
@@ -110,12 +110,11 @@
               <span class="package-status" *ngIf="pkg.statusLabel">{{ pkg.statusLabel }}</span>
             </div>
             <p class="package-description" *ngIf="pkg.description">{{ pkg.description }}</p>
-            <div class="package-price-block" *ngIf="pkg.upgradePriceLabel; else normalPackagePrice">
+            <div class="package-price-block" *ngIf="canShowPackageUpgradePricing(pkg); else normalPackagePrice">
               <span class="package-price-original" *ngIf="pkg.originalPriceLabel">{{ pkg.originalPriceLabel }}</span>
               <strong class="package-price">{{ pkg.upgradePriceLabel }}</strong>
-              <small *ngIf="pkg.discountAmountLabel">
-                Hemat {{ pkg.discountAmountLabel }}<ng-container *ngIf="pkg.discountPercentage"> • Diskon Upgrade {{ formatPercent(pkg.discountPercentage) }}</ng-container>
-              </small>
+              <span class="upgrade-discount-badge" *ngIf="pkg.discountPercentage">Diskon Upgrade {{ formatPercent(pkg.discountPercentage) }}</span>
+              <small *ngIf="pkg.discountAmountLabel">Hemat {{ pkg.discountAmountLabel }}</small>
             </div>
             <ng-template #normalPackagePrice>
               <strong class="package-price">{{ pkg.priceLabel }}</strong>

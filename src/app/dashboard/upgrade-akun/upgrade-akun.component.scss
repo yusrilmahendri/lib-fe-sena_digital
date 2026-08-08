@@ -311,7 +311,8 @@
 
 .package-price-block {
   display: grid;
-  gap: 4px;
+  align-items: start;
+  gap: 6px;
 }
 
 .package-price-original {
@@ -326,6 +327,27 @@
   font-size: 12px;
   font-weight: 800;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.package-price-block .package-price {
+  color: #be185d;
+  font-size: 26px;
+}
+
+.upgrade-discount-badge {
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  color: #047857;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.2;
+  max-width: 100%;
+  padding: 6px 10px;
+  width: fit-content;
 }
 
 .feature-list,
@@ -785,7 +807,17 @@
   background: linear-gradient(135deg, #ec4899, #db2777);
   color: #ffffff;
 
+  &:hover:not(:disabled),
+  &:focus-visible:not(:disabled) {
+    background: linear-gradient(135deg, #db2777, #be185d);
+    color: #ffffff;
+    outline: 3px solid rgba(219, 39, 119, 0.22);
+    outline-offset: 2px;
+  }
+
   &:disabled {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: #ffffff;
     cursor: not-allowed;
     opacity: 0.64;
   }

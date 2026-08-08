@@ -69,7 +69,7 @@ const routes: Routes = [
   { path: 'verify-account/success', component: VerifyAccountSuccessComponent, canActivate: [AuthGuard] },
   { path: 'payment-pending', component: BillUserComponent, canActivate: [AuthGuard], data: { accountStatusPage: 'pending_payment' } },
   { path: 'account-expired', component: BillUserComponent, canActivate: [AuthGuard], data: { accountStatusPage: 'expired' } },
-  { path: 'user/upgrade-account', component: UpgradeAkunComponent, canActivate: [AuthGuard] },
+  { path: 'user/upgrade-account', redirectTo: 'dashboard/upgrade-akun', pathMatch: 'full' },
   { path: 'user/tampilan', redirectTo: 'dashboard/website/tampilan', pathMatch: 'full' },
   { path: 'pilih-paket', component: GenerateUndanganComponent, canActivate: [AuthGuard, AccountVerificationGuard], data: { onboardingStep: 'payment' } },
   { path: 'buat-undangan/payment', component: GenerateUndanganComponent, canActivate: [AuthGuard, AccountVerificationGuard], data: { onboardingStep: 'payment' } },
