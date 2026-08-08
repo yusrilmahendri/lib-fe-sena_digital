@@ -8,6 +8,7 @@ import {
   ValidationError
 } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
+import { resolvePaymentState } from 'src/app/shared/payment-status.util';
 
 type ProfileAccountStatus =
   | 'active'
@@ -102,7 +103,8 @@ export class ProfileComponent implements OnInit {
    * Do not infer active status from package/domain existence.
    */
   private updateAccountStatus(profile: any): void {
-    this.accountStatus = this.normalizeAccountStatus(profile);
+    const paymentState = resolvePaymentState(profile);
+    this.accountStatus = this.mapPaymentStateToProfileStatus(paymentState.accountStatus);
     this.isAccountActive = this.accountStatus === 'active';
   }
 
@@ -163,152 +165,16 @@ export class ProfileComponent implements OnInit {
     return this.accountStatus === 'pending_payment' || this.accountStatus === 'pending_confirmation';
   }
 
-  private normalizeAccountStatus(profile: any): ProfileAccountStatus {
-    const data = profile?.data || profile || {};
-    const statusValues = [
-      data?.account_status,
-      data?.invitation_status,
-      data?.payment_status,
-      data?.order?.status,
-      data?.invitation?.status,
-      data?.status_bayar,
-      data?.status_pembayaran,
-      data?.status_tagihan,
-      data?.transaction_status,
-      data?.package_info?.account_status,
-      data?.package_info?.payment_status,
-      data?.package_info?.status_pembayaran,
-      data?.package_info?.status_tagihan,
-      data?.invitation_package?.account_status,
-      data?.invitation_package?.payment_status,
-      data?.invitation_package?.status_pembayaran,
-      data?.tagihan?.status_bayar,
-      data?.tagihan?.payment_status,
-      data?.tagihan?.invoice_status,
-      data?.tagihan?.status_pembayaran,
-      data?.tagihan?.transaction_status,
-      data?.invoice?.payment_status,
-      data?.invoice?.invoice_status,
-      data?.invoice?.status_pembayaran,
-      data?.invoice?.transaction_status,
-      data?.transaction?.status,
-      data?.transaction?.payment_status,
-      data?.transaction?.transaction_status,
-    ];
-
-    for (const value of statusValues) {
-      const mapped = this.mapRawAccountStatus(value);
-      if (mapped !== 'unknown') return mapped;
-    }
-
-    if (
-      data?.is_expired === true ||
-      this.isPastDate(data?.expired_at || data?.expires_at || data?.domain_info?.expires_at)
-    ) {
-      return 'expired';
-    }
-
-    if (
-      data?.payment_confirmed === true ||
-      data?.is_payment_confirmed === true ||
-      data?.is_paid === true ||
-      data?.paid_at ||
-      data?.confirmed_at ||
-      data?.payment_confirmed_at ||
-      data?.domain_info?.payment_confirmed_at
-    ) {
-      return 'active';
-    }
-
-    return 'unknown';
+  get packageFieldLabel(): string {
+    return this.accountStatus === 'pending_payment' ? 'Paket pilihan' : 'Paket';
   }
 
-  private mapRawAccountStatus(value: unknown): ProfileAccountStatus {
-    const raw = String(value ?? '').trim().toLowerCase().replace(/[-\s]+/g, '_');
-    if (!raw) return 'unknown';
-
-    if ([
-      'active',
-      'aktif',
-      'paid',
-      'success',
-      'sukses',
-      'settlement',
-      'capture',
-      'confirmed',
-      'terkonfirmasi',
-      'completed',
-      'lunas',
-      'sb',
-    ].includes(raw)) {
-      return 'active';
-    }
-
-    if ([
-      'pending_confirmation',
-      'waiting_confirmation',
-      'menunggu_konfirmasi',
-      'menunggu_verifikasi',
-      'waiting_verification',
-      'uploaded',
-      'proof_uploaded',
-      'bukti_terkirim',
-      'mk',
-    ].includes(raw)) {
-      return 'pending_confirmation';
-    }
-
-    if ([
-      'pending_payment',
-      'pending',
-      'unpaid',
-      'not_paid',
-      'belum_bayar',
-      'belum_lunas',
-      'waiting_payment',
-      'menunggu_pembayaran',
-      'menunggu',
-      'bl',
-    ].includes(raw)) {
-      return 'pending_payment';
-    }
-
-    if ([
-      'expired',
-      'expire',
-      'kedaluwarsa',
-      'kadaluarsa',
-      'account_expired',
-      'package_expired',
-      'ex',
-    ].includes(raw)) {
-      return 'expired';
-    }
-
-    if ([
-      'inactive',
-      'nonactive',
-      'non_active',
-      'nonaktif',
-      'disabled',
-      'cancel',
-      'cancelled',
-      'canceled',
-      'deny',
-      'denied',
-      'failed',
-      'gagal',
-    ].includes(raw)) {
-      return 'inactive';
-    }
-
+  private mapPaymentStateToProfileStatus(status: string): ProfileAccountStatus {
+    if (status === 'active') return 'active';
+    if (status === 'pending_payment') return 'pending_payment';
+    if (status === 'expired') return 'expired';
+    if (status === 'unverified' || status === 'onboarding') return 'inactive';
     return 'unknown';
-  }
-
-  private isPastDate(value: unknown): boolean {
-    if (!value) return false;
-    const date = new Date(String(value));
-    return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
   }
 
   /**

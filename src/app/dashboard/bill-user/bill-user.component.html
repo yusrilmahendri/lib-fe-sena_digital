@@ -73,6 +73,11 @@
         </div>
       </dl>
 
+      <div class="payment-method-options" *ngIf="statusPage === 'pending_payment' && !paymentState?.pendingInvoice && activePaymentMethodLabels.length">
+        <strong>Metode pembayaran tersedia</strong>
+        <span *ngFor="let method of activePaymentMethodLabels">{{ method }}</span>
+      </div>
+
       <div class="payment-actions" *ngIf="statusPage === 'pending_payment'">
         <button type="button" class="btn btn-primary payment-actions__primary" (click)="continuePayment()" [disabled]="isContinuingPayment">
           {{ pendingPaymentCtaLabel }}

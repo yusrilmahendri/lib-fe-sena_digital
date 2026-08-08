@@ -113,16 +113,6 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
     this.publicWeddingDomain = '';
 
     this.DashBoardSvc.getProfile().subscribe({
-      next: (response) => {
-        this.accountStatusState = resolvePaymentState(response);
-        this.updatePublicWeddingUrlFromProfile(response);
-      },
-      error: (error) => {
-        console.error('[OverviewProfileError]', error);
-      }
-    });
-
-    this.DashBoardSvc.list(DashboardServiceType.USER_PROFILE, '').subscribe({
       next: (res) => {
         this.userData = res.data;
         this.accountStatusState = resolvePaymentState(res);
@@ -138,7 +128,7 @@ export class OverviewComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('[OverviewUserProfileError]', error);
+        console.error('[OverviewProfileError]', error);
         this.apiError = 'Failed to load user profile';
         this.isLoading = false;
       }

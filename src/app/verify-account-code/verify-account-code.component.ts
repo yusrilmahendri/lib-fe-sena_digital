@@ -196,13 +196,7 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
     return code === 'VERIFICATION_CODE_EXPIRED' || code === 'OTP_EXPIRED';
   }
 
-  private navigateAfterVerification(verificationResponse?: any): void {
-    const redirectUrl = resolvePaymentRedirect(verificationResponse, '/pilih-paket');
-    if (verificationResponse && redirectUrl !== '/verify-account') {
-      this.router.navigateByUrl(redirectUrl);
-      return;
-    }
-
+  private navigateAfterVerification(_verificationResponse?: any): void {
     this.dashboard.getProfile().subscribe({
       next: (profile) => this.router.navigateByUrl(this.resolveNextRoute(profile)),
       error: () => this.router.navigateByUrl('/pilih-paket'),

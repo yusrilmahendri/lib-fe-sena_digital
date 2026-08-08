@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, take } from 'rxjs/operators';
+import { catchError, finalize, take } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { AccountAccessStatus, PaymentState, resolvePaymentState } from 'src/app/shared/payment-status.util';
@@ -42,9 +43,12 @@ export class BillUserComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.dashboardService.getProfile().subscribe({
-      next: (response) => {
-        this.paymentState = resolvePaymentState(response);
+    forkJoin({
+      profile: this.dashboardService.getProfile(),
+      paymentConfig: this.dashboardService.getUserPaymentConfig().pipe(catchError(() => of(null))),
+    }).subscribe({
+      next: ({ profile, paymentConfig }) => {
+        this.paymentState = resolvePaymentState(this.mergePaymentConfig(profile, paymentConfig));
         this.isLoading = false;
 
         if (this.paymentState.accountStatus === 'unverified') {
@@ -222,6 +226,10 @@ export class BillUserComponent implements OnInit {
     return 'Buat Pembayaran';
   }
 
+  get activePaymentMethodLabels(): string[] {
+    return (this.paymentState?.activePaymentMethods || []).map((method) => method.label);
+  }
+
   get manualPaymentData(): any {
     return this.manualPaymentInvoice?.manual_payment || {};
   }
@@ -282,6 +290,20 @@ export class BillUserComponent implements OnInit {
 
   private createPayment(): void {
     this.router.navigateByUrl(this.onboardingPaymentRoute);
+  }
+
+  private mergePaymentConfig(profile: any, paymentConfig: any): any {
+    const data = profile?.data || profile || {};
+    const config = paymentConfig?.data || paymentConfig || null;
+    if (!config) return profile;
+
+    return {
+      ...profile,
+      data: {
+        ...data,
+        payment_config: config,
+      },
+    };
   }
 
   private handleNonPayableInvoice(invoice: any): void {

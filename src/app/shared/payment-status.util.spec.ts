@@ -83,4 +83,82 @@ describe('payment-status util', () => {
 
     expect(state.accountStatus).toBe('active');
   });
+
+  it('keeps initial unpaid Diamond users pending even when package info looks active', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'active',
+        is_verified: true,
+        payment_required: true,
+        package_info: {
+          name: 'Diamond',
+          package_code: 'diamond',
+          is_active: true,
+          payment_status: 'pending',
+          price: 10000,
+        },
+      },
+    });
+
+    expect(state.accountStatus).toBe('pending_payment');
+    expect(state.isPaymentActive).toBeFalse();
+    expect(state.packageName).toBe('Diamond');
+    expect(state.accountStatusLabel).toBe('Menunggu Pembayaran');
+  });
+
+  it('does not activate from paid transaction status before backend entitlement is active', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        pending_invoice: {
+          payment_status: 'settlement',
+          package_code: 'diamond',
+        },
+        package_info: {
+          name: 'Diamond',
+          payment_status: 'pending',
+        },
+      },
+    });
+
+    expect(state.accountStatus).toBe('pending_payment');
+    expect(state.isPaymentActive).toBeFalse();
+  });
+
+  it('activates only when backend returns active entitlement without payment requirement', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'active',
+        is_verified: true,
+        subscription_status: 'active',
+        current_package: {
+          name: 'Diamond',
+          package_code: 'diamond',
+          is_active: true,
+        },
+      },
+    });
+
+    expect(state.accountStatus).toBe('active');
+    expect(state.isPaymentActive).toBeTrue();
+  });
+
+  it('exposes active payment methods when no pending invoice exists', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        payment_required: true,
+        payment_config: {
+          midtrans: { enabled: true },
+          manual_payment: { enabled: true, bank_name: 'BCA' },
+        },
+      },
+    });
+
+    expect(state.paymentAction).toBe('create_payment');
+    expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['midtrans', 'manual']);
+  });
 });

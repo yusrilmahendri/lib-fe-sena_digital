@@ -137,6 +137,34 @@
   overflow-wrap: anywhere;
 }
 
+.payment-method-options {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 18px;
+  padding: 12px;
+}
+
+.payment-method-options strong {
+  color: #111827;
+  font-size: 14px;
+  margin-right: 4px;
+}
+
+.payment-method-options span {
+  background: #fff1f5;
+  border: 1px solid #fecdd3;
+  border-radius: 999px;
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 9px;
+}
+
 .payment-actions {
   display: flex;
   flex-wrap: wrap;

@@ -22,10 +22,17 @@ export interface PaymentState {
   amountLabel: string;
   pendingInvoice: any | null;
   resume: any | null;
+  activePaymentMethods: PaymentMethodSummary[];
   isPayable: boolean;
 }
 
 export type AccountAccessStatus = 'unverified' | 'onboarding' | 'pending_payment' | 'expired' | 'active';
+
+export interface PaymentMethodSummary {
+  type: 'midtrans' | 'manual' | 'unknown';
+  label: string;
+  details: any;
+}
 
 const PAID_STATUSES = [
   'sb',
@@ -122,6 +129,15 @@ export function resolvePaymentState(profile: any): PaymentState {
   const pendingInvoice = data.pending_invoice || data.pendingInvoice || null;
   const isVerified = isAccountVerified(data);
   const accountStatusRaw = normalizeStatus(data.account_status);
+  const subscriptionStatusRaw = normalizeStatus(firstText([
+    data.subscription_status,
+    data.current_subscription?.status,
+    data.active_subscription?.status,
+    data.subscription?.status,
+    data.package_info?.subscription_status,
+    data.package_info?.status,
+    data.invitation_package?.subscription_status,
+  ]));
   const paymentStatus = firstText([
     pendingInvoice?.payment_status,
     data.payment_status,
@@ -191,6 +207,7 @@ export function resolvePaymentState(profile: any): PaymentState {
   ]);
   const hasInvoice = resolveHasInvoice(data, invoiceCode);
   const initialPaymentRequired = resolveInitialPaymentRequired(data, accountStatusRaw, paymentStatusRaw);
+  const activePaymentMethods = resolveActivePaymentMethods(data);
   const paymentUrl = firstText([
     pendingInvoice?.payment_url,
     pendingInvoice?.redirect_url,
@@ -268,19 +285,14 @@ export function resolvePaymentState(profile: any): PaymentState {
     EXPIRED_STATUSES.includes(paymentStatusRaw) ||
     (remainingDays !== null && remainingDays < 1 && !!activeUntil)
   );
-  const isPaymentConfirmed = !!(
-    data.is_payment_confirmed === true ||
-    data.is_paid === true ||
-    data.payment_confirmed_at ||
-    data.domain_info?.payment_confirmed_at ||
-    data.package_info?.is_active === true ||
-    PAID_STATUSES.includes(paymentStatusRaw)
-  );
+  const hasActiveEntitlement = resolveHasActiveEntitlement(data, accountStatusRaw, subscriptionStatusRaw, initialPaymentRequired);
+  const isPaymentConfirmed = hasActiveEntitlement;
   const accountStatus = resolveStatus({
     isVerified,
     isExpired,
     isPaymentConfirmed,
     accountStatusRaw,
+    subscriptionStatusRaw,
     paymentStatusRaw,
     hasInvoice,
     hasSelectedPaymentMethod,
@@ -336,6 +348,7 @@ export function resolvePaymentState(profile: any): PaymentState {
     amountLabel,
     pendingInvoice,
     resume: pendingInvoice?.resume || null,
+    activePaymentMethods,
     isPayable: pendingInvoice?.is_payable !== false,
   };
 }
@@ -369,6 +382,7 @@ function resolveStatus(state: {
   isExpired: boolean;
   isPaymentConfirmed: boolean;
   accountStatusRaw: string;
+  subscriptionStatusRaw: string;
   paymentStatusRaw: string;
   hasInvoice: boolean;
   hasSelectedPaymentMethod: boolean;
@@ -377,7 +391,8 @@ function resolveStatus(state: {
   if (!state.isVerified) return 'unverified';
   if (state.initialPaymentRequired && !state.isPaymentConfirmed) return 'pending_payment';
   if (state.isExpired) return 'expired';
-  if (state.accountStatusRaw === 'active') return 'active';
+  if (state.accountStatusRaw === 'active' && state.isPaymentConfirmed) return 'active';
+  if (state.subscriptionStatusRaw === 'active' && state.isPaymentConfirmed) return 'active';
   if (state.accountStatusRaw === 'onboarding') return 'onboarding';
   if (state.isPaymentConfirmed) return 'active';
   if (DRAFT_PAYMENT_STATUSES.includes(state.paymentStatusRaw)) return 'onboarding';
@@ -469,10 +484,13 @@ function resolveInitialPaymentRequired(data: any, accountStatusRaw: string, paym
   if (
     data.initial_payment_required === true ||
     data.payment_required === true ||
+    data.payment_requirement === 'required' ||
+    data.payment_requirement?.required === true ||
     data.requires_initial_payment === true ||
     data.needs_initial_payment === true ||
     data.package_info?.initial_payment_required === true ||
     data.package_info?.payment_required === true ||
+    data.package_info?.payment_requirement === 'required' ||
     data.invitation_package?.initial_payment_required === true ||
     data.invitation_package?.payment_required === true
   ) {
@@ -485,6 +503,83 @@ function resolveInitialPaymentRequired(data: any, accountStatusRaw: string, paym
     accountStatusRaw === 'unpaid' ||
     paymentStatusRaw === 'pending_payment'
   );
+}
+
+function resolveHasActiveEntitlement(data: any, accountStatusRaw: string, subscriptionStatusRaw: string, initialPaymentRequired: boolean): boolean {
+  if (initialPaymentRequired) return false;
+
+  const explicitActiveStatus = accountStatusRaw === 'active' || subscriptionStatusRaw === 'active';
+  const explicitlyPending =
+    PENDING_STATUSES.includes(accountStatusRaw) ||
+    PENDING_STATUSES.includes(subscriptionStatusRaw) ||
+    PENDING_STATUSES.includes(normalizeStatus(data.package_info?.payment_status)) ||
+    PENDING_STATUSES.includes(normalizeStatus(data.invitation_package?.payment_status));
+
+  if (explicitlyPending) return false;
+
+  return !!(
+    explicitActiveStatus ||
+    data.current_package?.is_active === true ||
+    data.active_subscription?.status === 'active' ||
+    data.current_subscription?.status === 'active' ||
+    data.subscription?.status === 'active' ||
+    data.entitlement?.is_active === true ||
+    data.feature_access?.is_active === true
+  );
+}
+
+function resolveActivePaymentMethods(data: any): PaymentMethodSummary[] {
+  const methods: PaymentMethodSummary[] = [];
+  const addMethod = (rawType: unknown, details: any) => {
+    const type = normalizePaymentMethodType(rawType);
+    if (!type || !isPaymentMethodEnabled(details)) return;
+    if (methods.some((method) => method.type === type)) return;
+    methods.push({
+      type,
+      label: type === 'manual' ? 'Transfer Manual' : type === 'midtrans' ? 'Bayar Online' : 'Metode Pembayaran',
+      details,
+    });
+  };
+
+  const sources = [
+    data.payment_methods,
+    data.available_payment_methods,
+    data.active_payment_methods,
+    data.payment_config?.payment_methods,
+    data.payment_config?.methods,
+  ];
+
+  sources.forEach((source) => {
+    if (!Array.isArray(source)) return;
+    source.forEach((item) => addMethod(item?.payment_method || item?.method || item?.code || item?.type || item?.name, item));
+  });
+
+  const config = data.payment_config || data.paymentConfig || data;
+  addMethod(config?.payment_method, config);
+  if (config?.midtrans || config?.midtrans_payment || config?.snap) {
+    addMethod('midtrans', config.midtrans || config.midtrans_payment || config.snap);
+  }
+  if (config?.manual_payment || config?.manual || config?.rekening || config?.bank_account) {
+    addMethod('manual', config.manual_payment || config.manual || config.rekening || config.bank_account);
+  }
+
+  return methods;
+}
+
+function normalizePaymentMethodType(value: unknown): PaymentMethodSummary['type'] | null {
+  const normalized = normalizeStatus(value).replace(/[-\s]+/g, '_');
+  if (!normalized) return null;
+  if (normalized.includes('midtrans') || normalized.includes('snap') || normalized.includes('online')) return 'midtrans';
+  if (normalized.includes('manual') || normalized.includes('bank') || normalized.includes('transfer')) return 'manual';
+  return 'unknown';
+}
+
+function isPaymentMethodEnabled(value: any): boolean {
+  if (value === false || value === null || value === undefined) return false;
+  if (value === true) return true;
+  const status = normalizeStatus(value?.status || value?.is_active || value?.enabled || value?.active);
+  if (!status) return true;
+  return !['0', 'false', 'inactive', 'disabled', 'off', 'nonaktif'].includes(status);
 }
 
 function resolvePaymentAction(state: {

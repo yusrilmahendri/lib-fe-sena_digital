@@ -33,8 +33,10 @@
           <strong>{{ accountState.accountStatusLabel }}</strong>
         </article>
         <article class="overview-status-item">
-          <span>Paket</span>
-          <strong>{{ accountState.packageName || accountState.packageCode || 'Belum tersedia' }}</strong>
+          <span>{{ accountState.accountStatus === 'pending_payment' ? 'Paket yang dipilih' : 'Paket' }}</span>
+          <strong>
+            {{ accountState.accountStatus === 'pending_payment' ? 'Paket yang dipilih: ' : '' }}{{ accountState.packageName || accountState.packageCode || 'Belum tersedia' }}
+          </strong>
         </article>
         <article class="overview-status-item">
           <span>Sisa masa aktif</span>

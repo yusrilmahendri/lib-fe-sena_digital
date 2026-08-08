@@ -692,17 +692,18 @@
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme {
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
-  border: 0;
-  box-shadow: 0 14px 28px rgba(139, 18, 76, 0.24);
-  color: #ffffff !important;
-  text-shadow: 0 1px 1px rgba(75, 12, 45, 0.18);
+  background: #ffffff !important;
+  border: 1.5px solid var(--theme-primary);
+  box-shadow: 0 8px 18px rgba(139, 18, 76, 0.08);
+  color: #1f2937 !important;
+  text-shadow: none;
 }
 
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:hover:not(:disabled),
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:focus-visible:not(:disabled) {
-  background: linear-gradient(135deg, var(--theme-primary-dark) 0%, var(--theme-primary) 100%) !important;
-  color: #ffffff !important;
+  background: #fff1f7 !important;
+  border-color: var(--theme-primary-dark);
+  color: #111827 !important;
   outline: 3px solid rgba(139, 18, 76, 0.22);
   outline-offset: 2px;
 }
@@ -713,15 +714,31 @@
 }
 
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:disabled {
-  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
-  color: #ffffff !important;
-  opacity: 0.78 !important;
+  background: #ffffff !important;
+  border-color: rgba(139, 18, 76, 0.45);
+  color: #1f2937 !important;
+  opacity: 0.86 !important;
 }
 
 .theme-modal__secondary {
   background: #ffffff;
   border: 1px solid #e6d9e1;
   color: var(--theme-primary);
+}
+
+.theme-modal--upgrade .theme-modal__secondary.btn-back {
+  background: #ffffff;
+  border: 1.5px solid #e6d9e1;
+  color: #1f2937;
+}
+
+.theme-modal--upgrade .theme-modal__secondary.btn-back:hover:not(:disabled),
+.theme-modal--upgrade .theme-modal__secondary.btn-back:focus-visible:not(:disabled) {
+  background: #fdf2f8;
+  border-color: rgba(139, 18, 76, 0.35);
+  color: #111827;
+  outline: 3px solid rgba(139, 18, 76, 0.16);
+  outline-offset: 2px;
 }
 
 @keyframes spin {

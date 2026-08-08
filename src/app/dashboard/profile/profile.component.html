@@ -114,7 +114,7 @@
         </div>
 
         <div class="col-12 col-sm-6">
-          <label for="package" class="form-label">Paket</label>
+          <label for="package" class="form-label">{{ packageFieldLabel }}</label>
           <input type="text" class="form-control fw-semibold" id="package"
                  [value]="profileData?.package_info?.name || 'Belum ada paket'"
                  readonly />

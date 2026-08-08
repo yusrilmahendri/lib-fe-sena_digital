@@ -31,6 +31,7 @@ import { normalizeThemeSlug } from '../../../theme-render.registry';
 import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
 import { environment } from '../../../../environments/environment';
 import { WeddingDataService } from '../../../services/wedding-data.service';
+import { resolvePaymentState } from '../../../shared/payment-status.util';
 
 type PaidPackageTier = PaidThemePackageTier;
 
@@ -1527,6 +1528,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   private resolveUserPackageTier(profileData: any): ThemePackageTier {
+    if (resolvePaymentState(profileData).accountStatus !== 'active') {
+      return 'trial';
+    }
+
     const candidates = [
       profileData?.package_info,
       profileData?.invitation_package,
@@ -1544,72 +1549,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   private resolveAccountActive(profileData: any): boolean {
-    const explicitPayment = this.firstDefined([
-      profileData?.is_payment_confirmed,
-      profileData?.payment_confirmed,
-      profileData?.is_paid,
-      profileData?.package_info?.is_payment_confirmed,
-      profileData?.package_info?.payment_confirmed,
-      profileData?.package_info?.is_paid,
-      profileData?.invitation_package?.is_payment_confirmed,
-      profileData?.invitation_package?.payment_confirmed,
-      profileData?.invitation_package?.is_paid,
-    ]);
-
-    if (explicitPayment !== undefined) {
-      return this.toBoolean(explicitPayment);
-    }
-
-    const statusValues = [
-      profileData?.account_status,
-      profileData?.payment_status,
-      profileData?.status_bayar,
-      profileData?.status_pembayaran,
-      profileData?.paket_status,
-      profileData?.status_tagihan,
-      profileData?.package_info?.account_status,
-      profileData?.package_info?.payment_status,
-      profileData?.package_info?.status_bayar,
-      profileData?.package_info?.status_pembayaran,
-      profileData?.invitation_package?.account_status,
-      profileData?.invitation_package?.payment_status,
-      profileData?.invitation_package?.status,
-      profileData?.invitation_package?.status_bayar,
-    ]
-      .map((value) => String(value ?? '').toLowerCase().trim())
-      .filter(Boolean);
-
-    const inactiveStatuses = [
-      'pending_payment',
-      'pending',
-      'belum selesai',
-      'menunggu pembayaran',
-      'unpaid',
-      'expired',
-      'kedaluwarsa',
-    ];
-
-    const activeStatuses = [
-      'active',
-      'aktif',
-      'paid',
-      'settlement',
-      'settled',
-      'confirmed',
-      'success',
-      'sukses',
-      'selesai',
-    ];
-
-    if (statusValues.some((status) => inactiveStatuses.includes(status))) {
-      return false;
-    }
-
-    if (statusValues.some((status) => activeStatuses.includes(status))) {
-      return true;
-    }
-
-    return true;
+    return resolvePaymentState(profileData).accountStatus === 'active';
   }
 
   private resolveAdminThemeActive(theme: PublicTheme, category: any): boolean {
