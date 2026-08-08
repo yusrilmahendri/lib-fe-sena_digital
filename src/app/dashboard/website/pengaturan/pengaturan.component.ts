@@ -184,9 +184,9 @@ export class PengaturanComponent implements OnInit, OnDestroy {
     });
 
     this.salamForm = this.fb.group({
-      salam_pembuka: [DEFAULT_SALAM_PEMBUKA, [Validators.required]],
-      salam_atas: [DEFAULT_SALAM_ATAS, [Validators.required]],
-      salam_bawah: [DEFAULT_SALAM_BAWAH, [Validators.required]]
+      salam_pembuka: [DEFAULT_SALAM_PEMBUKA],
+      salam_atas: [DEFAULT_SALAM_ATAS],
+      salam_bawah: [DEFAULT_SALAM_BAWAH]
     });
 
 
@@ -262,17 +262,25 @@ export class PengaturanComponent implements OnInit, OnDestroy {
     }
 
     this.salamForm.patchValue({
-      salam_pembuka: this.normalizeSalamValue(
-        this.getReligionText('invitation_intro', 'salam_pembuka') || this.settingData?.salam_pembuka,
-        this.DEFAULT_SALAM_PEMBUKA
+      salam_pembuka: this.resolveEditableSalamValue(
+        'salam_pembuka',
+        this.DEFAULT_SALAM_PEMBUKA,
+        'invitation_intro',
+        'salam_pembuka'
       ),
-      salam_atas: this.normalizeSalamValue(
-        this.getReligionText('whatsapp_opening', 'opening_greeting', 'salam_atas') || this.settingData?.salam_atas,
-        this.DEFAULT_SALAM_ATAS
+      salam_atas: this.resolveEditableSalamValue(
+        'salam_atas',
+        this.DEFAULT_SALAM_ATAS,
+        'whatsapp_opening',
+        'opening_greeting',
+        'salam_atas'
       ),
-      salam_bawah: this.normalizeSalamValue(
-        this.getReligionText('whatsapp_closing', 'closing_greeting', 'salam_bawah') || this.settingData?.salam_bawah,
-        this.DEFAULT_SALAM_BAWAH
+      salam_bawah: this.resolveEditableSalamValue(
+        'salam_bawah',
+        this.DEFAULT_SALAM_BAWAH,
+        'whatsapp_closing',
+        'closing_greeting',
+        'salam_bawah'
       ),
     });
 
@@ -581,6 +589,23 @@ export class PengaturanComponent implements OnInit, OnDestroy {
     return normalizeSalamValue(value, fallback);
   }
 
+  private resolveEditableSalamValue(
+    settingKey: 'salam_pembuka' | 'salam_atas' | 'salam_bawah',
+    fallback: string,
+    ...religionKeys: string[]
+  ): string {
+    const religionText = this.getReligionText(...religionKeys);
+    if (religionText) {
+      return religionText.replace(/\r\n/g, '\n');
+    }
+
+    if (this.settingData && Object.prototype.hasOwnProperty.call(this.settingData, settingKey)) {
+      return String(this.settingData?.[settingKey] || '').trim().replace(/\r\n/g, '\n');
+    }
+
+    return this.normalizeSalamValue(undefined, fallback);
+  }
+
   hasReligionContent(): boolean {
     return !!(
       this.getReligionText('invitation_intro', 'salam_pembuka') ||
@@ -631,17 +656,12 @@ export class PengaturanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (!this.salamForm.valid) {
-      this.notyf.error('Mohon lengkapi semua field salam');
-      return;
-    }
-
     const formData = new FormData();
     const formValue = this.salamForm.value;
     const payload = {
-      salam_pembuka: this.normalizeSalamValue(formValue.salam_pembuka, this.DEFAULT_SALAM_PEMBUKA),
-      salam_atas: this.normalizeSalamValue(formValue.salam_atas, this.DEFAULT_SALAM_ATAS),
-      salam_bawah: this.normalizeSalamValue(formValue.salam_bawah, this.DEFAULT_SALAM_BAWAH),
+      salam_pembuka: String(formValue.salam_pembuka || '').trim().replace(/\r\n/g, '\n'),
+      salam_atas: String(formValue.salam_atas || '').trim().replace(/\r\n/g, '\n'),
+      salam_bawah: String(formValue.salam_bawah || '').trim().replace(/\r\n/g, '\n'),
     };
 
     formData.append('salam_pembuka', payload.salam_pembuka);

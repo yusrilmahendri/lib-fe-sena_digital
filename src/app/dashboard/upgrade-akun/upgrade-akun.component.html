@@ -3,11 +3,11 @@
     <div>
       <span class="upgrade-eyebrow">Upgrade Akun</span>
       <h1 class="package-title">Pilih paket yang sesuai dengan kebutuhan undangan Anda</h1>
-      <p>Semua informasi paket, harga, fitur, dan status mengikuti data terbaru dari backend.</p>
+      <p>Pilih paket, bayar online, lalu fitur paket aktif otomatis setelah pembayaran berhasil.</p>
     </div>
     <button type="button" class="upgrade-refresh" (click)="refreshProfileAndPackage()" [disabled]="isRefreshingProfile || isLoading">
       <i class="fas fa-sync-alt" [class.fa-spin]="isRefreshingProfile" aria-hidden="true"></i>
-      <span>{{ isRefreshingProfile ? 'Memperbarui...' : 'Refresh Status' }}</span>
+      <span>{{ isRefreshingProfile ? 'Memperbarui...' : 'Perbarui Data' }}</span>
     </button>
   </header>
 
@@ -40,7 +40,7 @@
         </div>
         <div class="current-package__meta">
           <span class="status-pill" [class.status-pill--active]="userProfile?.package_info?.is_active">
-            {{ userProfile?.package_info?.is_active ? 'Aktif' : (currentPackage.statusLabel || userProfile?.package_info?.payment_status || 'Status mengikuti backend') }}
+            {{ userProfile?.package_info?.is_active ? 'Aktif' : (currentPackage.statusLabel || latestTransactionStatusLabel || 'Belum aktif') }}
           </span>
           <strong>{{ currentPackage.priceLabel }}</strong>
         </div>
@@ -141,21 +141,24 @@
   </header>
 
   <div class="upgrade-modal__body" *ngIf="selectedPackage">
-    <div class="modal-summary">
+    <section class="checkout-confirmation" *ngIf="checkoutState === 'confirmation'">
+      <h3>{{ modalTitle }}</h3>
+      <p>Setelah pembayaran berhasil, {{ modalPackageDisplayName }} akan aktif secara otomatis dan fiturnya dapat langsung digunakan.</p>
+    </section>
+
+    <div class="modal-summary" *ngIf="checkoutState === 'confirmation' || checkoutState === 'method'">
+      <div>
+        <span>Paket tujuan</span>
+        <strong>{{ modalPackageDisplayName }}</strong>
+      </div>
       <div>
         <span>Harga</span>
         <strong>{{ selectedPackage.priceLabel }}</strong>
       </div>
-      <div>
-        <span>Metode pembayaran</span>
-        <strong *ngIf="activePaymentMethod === 'manual'">Transfer Manual</strong>
-        <strong *ngIf="activePaymentMethod === 'midtrans'">Snap Midtrans</strong>
-        <strong *ngIf="!activePaymentMethod">{{ paymentMethods.length ? 'Pilih metode tersedia' : 'Tidak tersedia' }}</strong>
-      </div>
     </div>
 
-    <div class="modal-features" *ngIf="selectedPackage.features.length">
-      <h3>Fitur</h3>
+    <div class="modal-features" *ngIf="(checkoutState === 'confirmation' || checkoutState === 'method') && selectedPackage.features.length">
+      <h3>Fitur yang diperoleh</h3>
       <ul>
         <li *ngFor="let feature of selectedPackage.features">
           <i class="fas fa-check-circle" aria-hidden="true"></i>
@@ -169,13 +172,14 @@
       <span>{{ downgradeConfirmationMessage }}</span>
     </div>
 
-    <div class="payment-loading" *ngIf="isCreatingInvoice">
+    <div class="payment-loading" *ngIf="checkoutState === 'creating'">
       <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-      <span>Membuat transaksi upgrade...</span>
+      <span>Menyiapkan pembayaran...</span>
     </div>
 
-    <section class="payment-methods" *ngIf="!isCreatingInvoice && !invoiceData">
-      <h3>Metode pembayaran</h3>
+    <section class="payment-methods" *ngIf="checkoutState === 'method'">
+      <h3>Bayar Online</h3>
+      <p class="payment-methods__description">Transfer bank, QRIS, e-wallet, dan metode pembayaran lainnya.</p>
       <div class="payment-loading" *ngIf="isLoadingPaymentMethods">
         <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
         <span>Memuat metode pembayaran...</span>
@@ -186,19 +190,39 @@
       </div>
       <div class="payment-empty" *ngIf="!isLoadingPaymentMethods && !paymentMethodsError && !paymentMethods.length">
         <i class="fas fa-info-circle" aria-hidden="true"></i>
-        <span>Belum ada metode pembayaran aktif dari backend.</span>
+        <span>Metode pembayaran belum tersedia. Silakan coba beberapa saat lagi.</span>
       </div>
 
-      <button type="button" class="payment-method-card" *ngIf="!isLoadingPaymentMethods && hasPaymentMethod('manual')" (click)="startPayment('manual')">
-        <span class="payment-method-card__icon"><i class="fas fa-university" aria-hidden="true"></i></span>
+      <button
+        type="button"
+        class="payment-method-card"
+        *ngIf="!isLoadingPaymentMethods && hasPaymentMethod('midtrans')"
+        (click)="startPayment('midtrans')"
+        [disabled]="isCreatingInvoice">
+        <span class="payment-method-card__icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
         <span>
-          <strong>Transfer Manual</strong>
-          <small>Transaksi pending sampai admin mengonfirmasi pembayaran.</small>
+          <strong>Bayar Online</strong>
+          <small>Transfer bank, QRIS, e-wallet, dan metode pembayaran lainnya.</small>
+          <em>Pembayaran aman melalui Midtrans.</em>
         </span>
         <i class="fas fa-arrow-right" aria-hidden="true"></i>
       </button>
 
-      <div class="payment-box payment-box--manual payment-box--config" *ngIf="!isLoadingPaymentMethods && hasPaymentMethod('manual') && manualAccounts.length">
+      <button
+        type="button"
+        class="payment-method-card"
+        *ngIf="!isLoadingPaymentMethods && !hasPaymentMethod('midtrans') && hasPaymentMethod('manual')"
+        (click)="startPayment('manual')"
+        [disabled]="isCreatingInvoice">
+        <span class="payment-method-card__icon"><i class="fas fa-university" aria-hidden="true"></i></span>
+        <span>
+          <strong>Transfer Manual</strong>
+          <small>Transfer ke rekening yang tersedia lalu tunggu konfirmasi.</small>
+        </span>
+        <i class="fas fa-arrow-right" aria-hidden="true"></i>
+      </button>
+
+      <div class="payment-box payment-box--manual payment-box--config" *ngIf="!isLoadingPaymentMethods && !hasPaymentMethod('midtrans') && hasPaymentMethod('manual') && manualAccounts.length">
         <div class="payment-box__title">
           <i class="fas fa-receipt" aria-hidden="true"></i>
           <strong>Rekening aktif</strong>
@@ -215,18 +239,18 @@
           </div>
         </dl>
       </div>
-
-      <button type="button" class="payment-method-card" *ngIf="!isLoadingPaymentMethods && hasPaymentMethod('midtrans')" (click)="startPayment('midtrans')">
-        <span class="payment-method-card__icon"><i class="fas fa-credit-card" aria-hidden="true"></i></span>
-        <span>
-          <strong>Snap Midtrans</strong>
-          <small>Status paket mengikuti hasil verifikasi backend.</small>
-        </span>
-        <i class="fas fa-arrow-right" aria-hidden="true"></i>
-      </button>
     </section>
 
-    <div class="payment-box payment-box--manual" *ngIf="!isCreatingInvoice && invoiceData && activePaymentMethod === 'manual'">
+    <section class="checkout-status" *ngIf="isStatusState">
+      <i [class]="checkoutStatusIcon" aria-hidden="true"></i>
+      <div>
+        <h3>{{ checkoutStatusTitle }}</h3>
+        <p>{{ checkoutStatusMessage }}</p>
+        <small *ngIf="checkoutState === 'creation_error' && paymentError">{{ paymentError }}</small>
+      </div>
+    </section>
+
+    <div class="payment-box payment-box--manual" *ngIf="!isCreatingInvoice && invoiceData && activePaymentMethod === 'manual' && checkoutState !== 'success'">
       <div class="payment-box__title">
         <i class="fas fa-university" aria-hidden="true"></i>
         <strong>Transfer Manual</strong>
@@ -258,7 +282,7 @@
         </div>
         <div *ngIf="latestTransactionStatus">
           <dt>Status</dt>
-          <dd>{{ latestTransactionStatus }}</dd>
+          <dd>{{ latestTransactionStatusLabel }}</dd>
         </div>
       </dl>
       <ul class="manual-instructions" *ngIf="manualInstructions.length">
@@ -266,15 +290,7 @@
       </ul>
     </div>
 
-    <div class="payment-box payment-box--midtrans" *ngIf="!isCreatingInvoice && invoiceData && activePaymentMethod === 'midtrans'">
-      <div class="payment-box__title">
-        <i class="fas fa-credit-card" aria-hidden="true"></i>
-        <strong>Snap Midtrans</strong>
-      </div>
-      <p>Snap Midtrans akan langsung dibuka setelah invoice upgrade dibuat.</p>
-    </div>
-
-    <div class="upgrade-alert upgrade-alert--error" *ngIf="paymentError">
+    <div class="upgrade-alert upgrade-alert--error" *ngIf="paymentError && checkoutState !== 'creation_error'">
       <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
       <span>{{ paymentError }}</span>
     </div>
@@ -286,8 +302,69 @@
 
   <footer class="upgrade-modal__footer">
     <button type="button" class="modal-secondary" (click)="closeUpgradeModal()" [disabled]="isCreatingInvoice">Batal</button>
-    <button type="button" class="modal-primary" (click)="refreshProfileAndPackage()" [disabled]="isCreatingInvoice">
-      Refresh Status
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'confirmation'"
+      (click)="continueToPaymentMethod()"
+      [disabled]="isLoadingPaymentMethods || isCreatingInvoice">
+      {{ isLoadingPaymentMethods ? 'Memuat...' : 'Lanjut ke Pembayaran' }}
+    </button>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'method' && primaryPaymentMethod"
+      (click)="startPayment(primaryPaymentMethod)"
+      [disabled]="isLoadingPaymentMethods || isCreatingInvoice">
+      {{ isCreatingInvoice ? 'Menyiapkan...' : primaryPaymentCtaLabel }}
+    </button>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'creation_error'"
+      (click)="retryPaymentCreation()"
+      [disabled]="isCreatingInvoice">
+      Coba Lagi
+    </button>
+    <div class="modal-action-group" *ngIf="checkoutState === 'pending'">
+      <button type="button" class="modal-secondary" (click)="refreshProfileAndPackage()" [disabled]="isRefreshingProfile || isCreatingInvoice">
+        {{ isRefreshingProfile ? 'Mengecek...' : 'Cek Status Pembayaran' }}
+      </button>
+      <button type="button" class="modal-primary" (click)="continueExistingPayment()" [disabled]="isCreatingInvoice">
+        Lanjutkan Pembayaran
+      </button>
+    </div>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'processing'"
+      (click)="refreshProfileAndPackage()"
+      [disabled]="isRefreshingProfile || isCreatingInvoice">
+      {{ isRefreshingProfile ? 'Mengecek...' : 'Cek Status Pembayaran' }}
+    </button>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'success'"
+      (click)="useActivePackage()"
+      [disabled]="isRefreshingProfile">
+      Mulai Gunakan {{ modalPackageDisplayName }}
+    </button>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'failed'"
+      (click)="restartPayment()"
+      [disabled]="isCreatingInvoice">
+      Coba Bayar Lagi
+    </button>
+    <button
+      type="button"
+      class="modal-primary"
+      *ngIf="checkoutState === 'expired'"
+      (click)="restartPayment()"
+      [disabled]="isCreatingInvoice">
+      Buat Pembayaran Baru
     </button>
   </footer>
 </section>

@@ -8,6 +8,7 @@ import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
 import { DEFAULT_SALAM_ATAS, DEFAULT_SALAM_BAWAH, normalizeSalamValue } from 'src/app/shared/salam-defaults';
 import {
   getReligionContentFromData,
+  getReligionKeys,
   getResolvedReligionValue,
   ReligionContentLike,
 } from 'src/app/shared/religion-content.util';
@@ -550,6 +551,28 @@ export class BagiUndanganComponent implements OnInit {
     );
   }
 
+  private getExplicitCustomReligionValue(...keys: string[]): string | null {
+    const religion = this.religionContent || this.weddingData?.religion_content || {};
+    const aliases = getReligionKeys(keys);
+    const custom = religion?.custom || {};
+    const flags = religion?.['flags'] || {};
+
+    for (const key of aliases) {
+      if (Object.prototype.hasOwnProperty.call(custom, key) && custom[key] !== null && custom[key] !== undefined) {
+        return String(custom[key] || '').trim();
+      }
+    }
+
+    for (const key of aliases) {
+      const flag = flags?.[key];
+      if (flag === true || flag === 1 || flag === '1' || flag === 'custom') {
+        return '';
+      }
+    }
+
+    return null;
+  }
+
   private hasResolvedReligionContent(): boolean {
     return !!(
       this.getResolvedReligionValue('whatsapp_opening', 'opening_greeting', 'salam_atas') ||
@@ -562,20 +585,39 @@ export class BagiUndanganComponent implements OnInit {
     return normalizeSalamValue(value, fallback);
   }
 
+  private getExplicitSettingText(key: 'salam_atas' | 'salam_bawah'): string | null {
+    const sources = [
+      this.salamSetting,
+      this.weddingData?.setting,
+      this.weddingData?.settings,
+    ];
+
+    for (const source of sources) {
+      if (source && Object.prototype.hasOwnProperty.call(source, key)) {
+        return this.normalizeInvitationLineBreaks(String(source[key] || '').trim());
+      }
+    }
+
+    return null;
+  }
+
   private getWhatsappOpeningText(): string {
+    const explicitReligionText = this.getExplicitCustomReligionValue('whatsapp_opening', 'opening_greeting', 'salam_atas');
+    if (explicitReligionText !== null) {
+      return this.normalizeInvitationLineBreaks(explicitReligionText);
+    }
+
     const religionText = this.getResolvedReligionValue('whatsapp_opening', 'opening_greeting', 'salam_atas');
     if (religionText) {
       return this.normalizeInvitationLineBreaks(religionText);
     }
 
-    return this.normalizeInvitationLineBreaks(
-      this.normalizeText(
-        this.salamSetting?.['salam_atas'] ??
-        this.weddingData?.setting?.salam_atas ??
-        this.weddingData?.settings?.salam_atas,
-        this.DEFAULT_SALAM_ATAS
-      )
-    );
+    const explicitSettingText = this.getExplicitSettingText('salam_atas');
+    if (explicitSettingText !== null) {
+      return explicitSettingText;
+    }
+
+    return this.normalizeInvitationLineBreaks(this.normalizeText(undefined, this.DEFAULT_SALAM_ATAS));
   }
 
   private getWhatsappMessageText(): string {
@@ -585,19 +627,22 @@ export class BagiUndanganComponent implements OnInit {
   }
 
   private getWhatsappClosingText(): string {
+    const explicitReligionText = this.getExplicitCustomReligionValue('whatsapp_closing', 'closing_greeting', 'salam_bawah');
+    if (explicitReligionText !== null) {
+      return this.normalizeInvitationLineBreaks(explicitReligionText);
+    }
+
     const religionText = this.getResolvedReligionValue('whatsapp_closing', 'closing_greeting', 'salam_bawah');
     if (religionText) {
       return this.normalizeInvitationLineBreaks(religionText);
     }
 
-    return this.normalizeInvitationLineBreaks(
-      this.normalizeText(
-        this.salamSetting?.['salam_bawah'] ??
-        this.weddingData?.setting?.salam_bawah ??
-        this.weddingData?.settings?.salam_bawah,
-        this.DEFAULT_SALAM_BAWAH
-      )
-    );
+    const explicitSettingText = this.getExplicitSettingText('salam_bawah');
+    if (explicitSettingText !== null) {
+      return explicitSettingText;
+    }
+
+    return this.normalizeInvitationLineBreaks(this.normalizeText(undefined, this.DEFAULT_SALAM_BAWAH));
   }
 
   private ensureInvitationGreetingSettings(onReady: () => void): void {

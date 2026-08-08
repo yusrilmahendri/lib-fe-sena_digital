@@ -13,6 +13,16 @@ import { environment } from 'src/environments/environment';
 type PaymentMethod = 'manual' | 'midtrans' | null;
 type SelectablePaymentMethod = 'manual' | 'midtrans';
 type PackageAction = 'current' | 'downgrade' | 'upgrade' | 'renew' | 'subscribe' | 'select' | 'unavailable';
+type CheckoutState =
+  | 'confirmation'
+  | 'method'
+  | 'creating'
+  | 'creation_error'
+  | 'pending'
+  | 'processing'
+  | 'success'
+  | 'failed'
+  | 'expired';
 
 interface UpgradePackage {
   id: number | string | null;
@@ -71,6 +81,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   paymentError = '';
   paymentInfoMessage = '';
   invoiceData: any = null;
+  checkoutState: CheckoutState = 'confirmation';
   requestedPackage = '';
   requestedTheme = '';
   returnUrl = '';
@@ -162,7 +173,13 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.activePaymentMethod = null;
     this.paymentError = '';
     this.paymentInfoMessage = '';
-    this.invoiceData = null;
+    this.invoiceData = this.resolveExistingTransactionForPackage(pkg);
+    this.checkoutState = this.invoiceData
+      ? this.resolveCheckoutState(this.invoiceData)
+      : 'confirmation';
+    this.activePaymentMethod = this.invoiceData
+      ? this.resolveResponsePaymentMethod(this.invoiceData)
+      : null;
     this.refreshPaymentMethodsForCheckout();
   }
 
@@ -174,6 +191,14 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.paymentError = '';
     this.paymentInfoMessage = '';
     this.invoiceData = null;
+    this.checkoutState = 'confirmation';
+  }
+
+  continueToPaymentMethod(): void {
+    if (this.isCreatingInvoice || this.isLoadingPaymentMethods) return;
+    this.paymentError = '';
+    this.paymentInfoMessage = '';
+    this.checkoutState = 'method';
   }
 
   startPayment(method: SelectablePaymentMethod): void {
@@ -183,6 +208,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.activePaymentMethod = method;
     this.paymentError = '';
     this.paymentInfoMessage = '';
+    this.checkoutState = 'creating';
 
     const payload = this.buildUpgradePayload(this.selectedPackage, method);
     this.dashboardService.create(DashboardServiceType.USER_PACKAGE_UPGRADE, payload)
@@ -194,9 +220,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.invoiceData = response?.data || response || {};
           this.activePaymentMethod = this.resolveResponsePaymentMethod(this.invoiceData) || method;
+          this.checkoutState = this.resolveCheckoutState(this.invoiceData);
 
           if (this.activePaymentMethod === 'manual') {
-            this.paymentInfoMessage = response?.message || 'Transaksi upgrade dibuat dan menunggu konfirmasi admin.';
+            this.paymentInfoMessage = response?.message || `${this.modalPackageName} menunggu pembayaran.`;
             this.refreshProfileAndPackage();
             return;
           }
@@ -207,11 +234,126 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
           }
 
           this.paymentError = 'Metode pembayaran dari transaksi upgrade tidak ditemukan.';
+          this.checkoutState = 'creation_error';
         },
         error: (error) => {
+          this.invoiceData = null;
+          this.checkoutState = 'creation_error';
           this.paymentError = getFriendlyErrorMessage(error);
         },
       });
+  }
+
+  retryPaymentCreation(): void {
+    this.paymentError = '';
+    this.paymentInfoMessage = '';
+    this.invoiceData = null;
+    this.checkoutState = 'method';
+  }
+
+  restartPayment(): void {
+    this.paymentError = '';
+    this.paymentInfoMessage = '';
+    this.invoiceData = null;
+    this.checkoutState = 'method';
+  }
+
+  continueExistingPayment(): void {
+    if (!this.invoiceData || this.isCreatingInvoice) return;
+
+    const method = this.resolveResponsePaymentMethod(this.invoiceData) || this.activePaymentMethod || 'midtrans';
+    this.activePaymentMethod = method;
+
+    if (method === 'midtrans') {
+      this.openMidtransPayment(this.invoiceData);
+      return;
+    }
+
+    this.checkoutState = 'pending';
+  }
+
+  useActivePackage(): void {
+    this.refreshProfileAndPackage();
+    this.closeUpgradeModal();
+  }
+
+  get hasCreatedTransaction(): boolean {
+    return !!this.invoiceData;
+  }
+
+  get modalPackageName(): string {
+    return this.selectedPackage?.name || 'paket pilihan';
+  }
+
+  get modalPackageDisplayName(): string {
+    const name = this.modalPackageName.trim();
+    if (!name) return 'paket pilihan';
+    return /^paket\s+/i.test(name) ? name : `Paket ${name}`;
+  }
+
+  get modalPackagePrice(): string {
+    return this.selectedPackage?.priceLabel || this.invoiceAmount || '-';
+  }
+
+  get primaryPaymentMethod(): SelectablePaymentMethod | null {
+    if (this.hasPaymentMethod('midtrans')) return 'midtrans';
+    if (this.hasPaymentMethod('manual')) return 'manual';
+    return null;
+  }
+
+  get primaryPaymentCtaLabel(): string {
+    const amount = this.modalPackagePrice;
+    return amount && amount !== '-' ? `Bayar ${amount}` : 'Bayar Sekarang';
+  }
+
+  get checkoutStatusTitle(): string {
+    switch (this.checkoutState) {
+      case 'creation_error':
+        return 'Pembayaran Belum Dapat Diproses';
+      case 'pending':
+        return 'Menunggu Pembayaran';
+      case 'processing':
+        return 'Pembayaran Sedang Diproses';
+      case 'success':
+        return 'Pembayaran Berhasil';
+      case 'failed':
+        return 'Pembayaran Gagal';
+      case 'expired':
+        return 'Waktu Pembayaran Habis';
+      default:
+        return '';
+    }
+  }
+
+  get checkoutStatusMessage(): string {
+    switch (this.checkoutState) {
+      case 'creation_error':
+        return 'Kami belum berhasil membuat transaksi pembayaran. Tidak ada pembayaran yang terpotong. Silakan coba kembali.';
+      case 'pending':
+        return `Pembayaran ${this.modalPackageDisplayName} belum selesai. Selesaikan pembayaran agar paket dapat diaktifkan.`;
+      case 'processing':
+        return 'Pembayaran Anda sedang diverifikasi. Paket akan aktif otomatis setelah pembayaran berhasil.';
+      case 'success':
+        return `${this.modalPackageDisplayName} Anda sudah aktif. Semua fitur ${this.modalPackageDisplayName} sekarang dapat digunakan.`;
+      case 'failed':
+        return 'Pembayaran belum berhasil dan paket Anda belum berubah.';
+      case 'expired':
+        return 'Batas waktu pembayaran telah berakhir. Buat pembayaran baru untuk melanjutkan upgrade.';
+      default:
+        return '';
+    }
+  }
+
+  get checkoutStatusIcon(): string {
+    if (this.checkoutState === 'success') return 'fas fa-check-circle';
+    if (this.checkoutState === 'pending') return 'fas fa-clock';
+    if (this.checkoutState === 'processing') return 'fas fa-spinner fa-spin';
+    if (this.checkoutState === 'expired') return 'fas fa-hourglass-end';
+    return 'fas fa-exclamation-circle';
+  }
+
+  get isStatusState(): boolean {
+    return ['creation_error', 'pending', 'processing', 'success', 'failed', 'expired'].includes(this.checkoutState);
   }
 
   getPackageAction(pkg: UpgradePackage): PackageAction {
@@ -336,13 +478,17 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return String(status || '').trim();
   }
 
+  get latestTransactionStatusLabel(): string {
+    return this.humanizePaymentStatus(this.latestTransactionStatus);
+  }
+
   get modalTitle(): string {
     if (!this.selectedPackage) return 'Upgrade Akun';
     const action = this.getPackageAction(this.selectedPackage);
-    if (action === 'renew') return `Perpanjang ${this.selectedPackage.name}`;
-    if (action === 'downgrade') return `Downgrade ke ${this.selectedPackage.name}`;
-    if (action === 'subscribe' || action === 'select') return `Pilih ${this.selectedPackage.name}`;
-    return `Upgrade ke ${this.selectedPackage.name}`;
+    if (action === 'renew') return `Perpanjang ${this.modalPackageDisplayName}`;
+    if (action === 'downgrade') return `Downgrade ke ${this.modalPackageDisplayName}`;
+    if (action === 'subscribe' || action === 'select') return `Pilih ${this.modalPackageDisplayName}`;
+    return `Upgrade ke ${this.modalPackageDisplayName}`;
   }
 
   get isDowngradeSelection(): boolean {
@@ -441,6 +587,12 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     this.currentPackage = this.resolveCurrentPackage();
     this.lastPackage = this.resolveLastPackage();
     this.paymentMethods = this.normalizePaymentMethods(paymentConfig);
+
+    if (this.isModalOpen && this.selectedPackage && this.invoiceData) {
+      const refreshedTransaction = this.resolveExistingTransactionForPackage(this.selectedPackage);
+      this.invoiceData = refreshedTransaction || this.invoiceData;
+      this.checkoutState = this.resolveCheckoutState(this.invoiceData);
+    }
   }
 
   private extractArray(response: any): any[] {
@@ -663,7 +815,8 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
             return;
           }
 
-          this.paymentError = 'Snap Midtrans belum dapat dimuat.';
+            this.paymentError = 'Halaman pembayaran belum dapat dibuka. Silakan coba lagi.';
+          this.checkoutState = this.hasCreatedTransaction ? 'pending' : 'creation_error';
         });
       return;
     }
@@ -673,19 +826,22 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.paymentError = 'Token atau URL pembayaran Midtrans tidak ditemukan.';
+    this.paymentError = 'Halaman pembayaran belum dapat dibuka. Silakan coba lagi.';
+    this.checkoutState = this.hasCreatedTransaction ? 'pending' : 'creation_error';
   }
 
   private payWithSnap(snapToken: string, fallbackMessage?: string): void {
     (window as any).snap.pay(snapToken, {
       onSuccess: () => this.handlePaymentSuccess(fallbackMessage),
-      onPending: () => this.handlePaymentPending(fallbackMessage || 'Pembayaran sedang diproses dan menunggu verifikasi backend.'),
+      onPending: () => this.handlePaymentPending(fallbackMessage || 'Pembayaran Anda sedang diproses.'),
       onError: () => {
-        this.paymentError = 'Pembayaran Midtrans belum berhasil. Silakan coba lagi.';
+        this.paymentError = 'Pembayaran belum berhasil. Silakan coba lagi.';
+        this.checkoutState = 'failed';
         this.refreshProfileAndPackage();
       },
       onClose: () => {
         this.paymentInfoMessage = 'Jendela pembayaran ditutup. Anda dapat melanjutkan pembayaran kapan saja.';
+        this.checkoutState = 'pending';
         this.refreshProfileAndPackage();
       },
     });
@@ -693,7 +849,8 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   private openMidtransRedirect(redirectUrl: string, fallbackMessage?: string): void {
     window.open(redirectUrl, '_blank', 'noopener,noreferrer');
-    this.paymentInfoMessage = fallbackMessage || 'Snap Midtrans dibuka di tab baru. Setelah pembayaran selesai, gunakan refresh status untuk memperbarui badge tanpa reload halaman.';
+    this.paymentInfoMessage = fallbackMessage || 'Halaman pembayaran dibuka di tab baru. Selesaikan pembayaran agar paket dapat diaktifkan.';
+    this.checkoutState = 'pending';
     this.refreshProfileAndPackage();
   }
 
@@ -760,12 +917,14 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private handlePaymentSuccess(message?: string): void {
-    this.paymentInfoMessage = message || 'Pembayaran berhasil diterima dan sedang diverifikasi.';
+    this.paymentInfoMessage = message || 'Pembayaran berhasil diterima.';
+    this.checkoutState = 'processing';
     this.refreshPaymentStatus();
   }
 
   private handlePaymentPending(message: string): void {
     this.paymentInfoMessage = message;
+    this.checkoutState = 'processing';
     this.refreshPaymentStatus();
   }
 
@@ -801,6 +960,123 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return method === 'manual' || method === 'midtrans' ? method : null;
   }
 
+  private resolveExistingTransactionForPackage(pkg: UpgradePackage): any | null {
+    const transaction = this.latestTransaction;
+    if (!transaction || !pkg) return null;
+    if (this.resolveCheckoutState(transaction) === 'failed') return null;
+
+    const packageCandidates = [
+      transaction.package_id,
+      transaction.paket_undangan_id,
+      transaction.target_package_id,
+      transaction.package?.id,
+      transaction.paket?.id,
+      transaction.package_code,
+      transaction.target_package,
+      transaction.package?.code,
+      transaction.package?.package_code,
+      transaction.package?.name,
+      transaction.package?.name_paket,
+    ].filter((value) => value !== undefined && value !== null && String(value).trim());
+
+    const selectedCandidates = [
+      pkg.id,
+      pkg.code,
+      pkg.name,
+      pkg.raw?.package_code,
+      pkg.raw?.code,
+      pkg.raw?.kode_paket,
+      pkg.raw?.package_tier,
+      pkg.raw?.name_paket,
+      pkg.raw?.jenis_paket,
+    ].filter((value) => value !== undefined && value !== null && String(value).trim());
+
+    if (!packageCandidates.length || !selectedCandidates.length) {
+      return transaction;
+    }
+
+    const matches = packageCandidates.some((candidate) => {
+      const normalizedCandidate = String(candidate).toLowerCase().trim();
+      return selectedCandidates.some((selected) => String(selected).toLowerCase().trim() === normalizedCandidate);
+    });
+
+    return matches ? transaction : null;
+  }
+
+  private resolveCheckoutState(data: any): CheckoutState {
+    const status = String(
+      data?.payment_status ||
+      data?.status_pembayaran ||
+      data?.status ||
+      data?.invoice?.payment_status ||
+      data?.invoice?.status ||
+      data?.transaction?.payment_status ||
+      ''
+    ).trim().toLowerCase();
+
+    const packageActive = this.userProfile?.package_info?.is_active === true && this.isSelectedPackageActive();
+    if (packageActive || ['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'].includes(status)) {
+      return 'success';
+    }
+
+    if (['expire', 'expired', 'kedaluwarsa', 'kadaluarsa'].includes(status)) {
+      return 'expired';
+    }
+
+    if (['deny', 'denied', 'cancel', 'cancelled', 'failed', 'failure', 'gagal'].includes(status)) {
+      return 'failed';
+    }
+
+    if (['process', 'processing', 'challenge', 'review', 'verifying', 'verifikasi', 'diproses'].includes(status)) {
+      return 'processing';
+    }
+
+    return data ? 'pending' : 'confirmation';
+  }
+
+  private isSelectedPackageActive(): boolean {
+    if (!this.selectedPackage || !this.currentPackage) return false;
+
+    const selectedCandidates = [
+      this.selectedPackage.id,
+      this.selectedPackage.code,
+      this.selectedPackage.name,
+      this.selectedPackage.raw?.package_code,
+      this.selectedPackage.raw?.code,
+      this.selectedPackage.raw?.kode_paket,
+      this.selectedPackage.raw?.package_tier,
+      this.selectedPackage.raw?.name_paket,
+      this.selectedPackage.raw?.jenis_paket,
+    ].filter((value) => value !== undefined && value !== null && String(value).trim());
+
+    const currentCandidates = [
+      this.currentPackage.id,
+      this.currentPackage.code,
+      this.currentPackage.name,
+      this.currentPackage.raw?.package_code,
+      this.currentPackage.raw?.code,
+      this.currentPackage.raw?.kode_paket,
+      this.currentPackage.raw?.package_tier,
+      this.currentPackage.raw?.name_paket,
+      this.currentPackage.raw?.jenis_paket,
+    ].filter((value) => value !== undefined && value !== null && String(value).trim());
+
+    return selectedCandidates.some((selected) => {
+      const normalizedSelected = String(selected).toLowerCase().trim();
+      return currentCandidates.some((current) => String(current).toLowerCase().trim() === normalizedSelected);
+    });
+  }
+
+  private humanizePaymentStatus(status: string): string {
+    const normalized = String(status || '').trim().toLowerCase();
+    if (['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'].includes(normalized)) return 'Berhasil';
+    if (['expire', 'expired', 'kedaluwarsa', 'kadaluarsa'].includes(normalized)) return 'Waktu habis';
+    if (['deny', 'denied', 'cancel', 'cancelled', 'failed', 'failure', 'gagal'].includes(normalized)) return 'Gagal';
+    if (['process', 'processing', 'challenge', 'review', 'verifying', 'verifikasi', 'diproses'].includes(normalized)) return 'Sedang diproses';
+    if (normalized) return 'Menunggu pembayaran';
+    return '';
+  }
+
   private normalizePaymentMethods(response: any): PaymentMethodOption[] {
     const data = this.unwrapData(response);
     const methods: PaymentMethodOption[] = [];
@@ -812,7 +1088,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         if (!type || !this.isPaymentEnabled(item)) return;
         methods.push({
           type,
-          label: type === 'manual' ? 'Transfer Manual' : 'Snap Midtrans',
+          label: type === 'manual' ? 'Transfer Manual' : 'Bayar Online',
           details: item,
         });
       });
@@ -825,14 +1101,14 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
     const midtrans = data?.midtrans || data?.midtrans_payment || data?.snap;
     if (midtrans && this.isPaymentEnabled(midtrans) && !methods.some((item) => item.type === 'midtrans')) {
-      methods.push({ type: 'midtrans', label: 'Snap Midtrans', details: midtrans });
+      methods.push({ type: 'midtrans', label: 'Bayar Online', details: midtrans });
     }
 
     const configuredMethod = this.normalizePaymentMethodType(data?.payment_method);
     if (configuredMethod && !methods.some((item) => item.type === configuredMethod)) {
       methods.push({
         type: configuredMethod,
-        label: configuredMethod === 'manual' ? 'Transfer Manual' : 'Snap Midtrans',
+        label: configuredMethod === 'manual' ? 'Transfer Manual' : 'Bayar Online',
         details: configuredMethod === 'manual' ? (manual || data) : (midtrans || data),
       });
     }
