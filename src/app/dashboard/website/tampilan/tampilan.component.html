@@ -216,15 +216,15 @@
     aria-modal="true"
     aria-labelledby="upgrade-theme-title"
     (click)="$event.stopPropagation()">
-    <div class="theme-modal__icon theme-modal__icon--upgrade">
-      <i class="fas fa-crown" aria-hidden="true"></i>
+    <div
+      class="theme-modal__icon"
+      [class.theme-modal__icon--upgrade]="canShowUpgradeCta"
+      [class.theme-modal__icon--unavailable]="!canShowUpgradeCta">
+      <i [class]="upgradeModalIconClass" aria-hidden="true"></i>
     </div>
 
-    <h2 id="upgrade-theme-title">Upgrade paket diperlukan</h2>
-    <p>
-      Tema ini tersedia untuk Paket {{ upgradeTargetPackageLabel }}.
-      Silakan lanjutkan ke halaman Upgrade Akun untuk menggunakan tema ini.
-    </p>
+    <h2 id="upgrade-theme-title">{{ upgradeModalTitle }}</h2>
+    <p>{{ upgradeModalDescription }}</p>
 
     <dl class="theme-upgrade-summary">
       <div>
@@ -235,16 +235,20 @@
         <dt>Paket saat ini</dt>
         <dd>{{ upgradeCurrentPackageLabel }}</dd>
       </div>
-      <div>
+      <div *ngIf="canShowUpgradeCta">
         <dt>Paket tujuan</dt>
         <dd>{{ upgradeTargetPackageLabel }}</dd>
       </div>
-      <div>
-        <dt>Kode paket tujuan</dt>
-        <dd>{{ upgradeTargetPackageCode || '-' }}</dd>
+      <div *ngIf="canShowUpgradeCta">
+        <dt>Harga normal</dt>
+        <dd>{{ upgradeTargetPackageOriginalPriceLabel || 'Belum tersedia' }}</dd>
       </div>
-      <div>
-        <dt>Harga</dt>
+      <div *ngIf="canShowUpgradeCta && upgradeTargetPackageDiscountAmountLabel">
+        <dt>{{ upgradeTargetPackageDiscountLabel }}</dt>
+        <dd>{{ upgradeTargetPackageDiscountAmountLabel }}</dd>
+      </div>
+      <div *ngIf="canShowUpgradeCta">
+        <dt>Harga Upgrade</dt>
         <dd>{{ upgradeTargetPackagePriceLabel }}</dd>
       </div>
     </dl>
@@ -254,11 +258,12 @@
         Kembali
       </button>
       <button
+        *ngIf="canShowUpgradeCta"
         type="button"
         class="theme-modal__primary btn-confirm-theme"
-        [disabled]="processingUpgradeInvoice"
+        [disabled]="isNavigatingToUpgrade"
         (click)="goToUpgradePackage()">
-        Upgrade ke {{ upgradeTargetPackageLabel }}
+        {{ isNavigatingToUpgrade ? 'Mengarahkan...' : 'Upgrade ke ' + upgradeTargetPackageLabel }}
       </button>
     </div>
   </section>

@@ -27,6 +27,30 @@ describe('UpgradeAkunComponent payment flow', () => {
     pendingMessage: '',
     raw: { package_code: 'sapphire' },
   };
+  const rubyPackage: any = {
+    ...sapphirePackage,
+    id: 1,
+    code: 'ruby',
+    name: 'Ruby',
+    priceLabel: 'Rp100.000',
+    raw: { package_code: 'ruby' },
+  };
+  const diamondPackage: any = {
+    ...sapphirePackage,
+    id: 3,
+    code: 'diamond',
+    name: 'Diamond',
+    price: 300000,
+    priceLabel: 'Rp300.000',
+    originalPrice: 300000,
+    originalPriceLabel: 'Rp300.000',
+    discountPercentage: 40,
+    discountAmount: 120000,
+    discountAmountLabel: 'Rp120.000',
+    upgradePrice: 180000,
+    upgradePriceLabel: 'Rp180.000',
+    raw: { package_code: 'diamond' },
+  };
 
   beforeEach(() => {
     dashboardService = {
@@ -147,5 +171,75 @@ describe('UpgradeAkunComponent payment flow', () => {
 
     expect(component.checkoutState).toBe('success');
     expect(component.checkoutStatusTitle).toBe('Pembayaran Berhasil');
+  });
+
+  it('maps backend upgrade pricing to normal price, discount, and payable amount', () => {
+    const pkg = (component as any).mapPackage({
+      id: 3,
+      package_code: 'diamond',
+      name: 'Diamond',
+      price: 300000,
+      original_price: 300000,
+      discount_percentage: 40,
+      discount_amount: 120000,
+      upgrade_price: 180000,
+      can_select: true,
+      can_upgrade: true,
+      action: 'upgrade',
+    }, 0);
+
+    component.selectedPackage = pkg;
+
+    expect(pkg.originalPriceLabel.replace(/\s/g, '')).toBe('Rp300.000');
+    expect(pkg.discountAmountLabel.replace(/\s/g, '')).toBe('Rp120.000');
+    expect(pkg.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp180.000');
+    expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp180.000');
+    expect(component.primaryPaymentCtaLabel.replace(/\s/g, '')).toBe('BayarRp180.000');
+    expect(component.selectedPackageDiscountLabel).toBe('Diskon Upgrade 40%');
+  });
+
+  it('allows Ruby users to upgrade to Sapphire and Diamond', () => {
+    component.currentPackage = rubyPackage;
+
+    expect(component.getPackageAction(sapphirePackage)).toBe('upgrade');
+    expect(component.getPackageAction(diamondPackage)).toBe('upgrade');
+  });
+
+  it('disables Sapphire to Ruby downgrade and keeps Diamond upgrade available', () => {
+    component.currentPackage = sapphirePackage;
+
+    expect(component.getPackageAction(rubyPackage)).toBe('unavailable');
+    expect(component.getActionLabel(rubyPackage)).toBe('Downgrade tidak tersedia');
+    expect(component.isPackageDisabled(rubyPackage)).toBeTrue();
+    expect(component.getPackageAction(diamondPackage)).toBe('upgrade');
+  });
+
+  it('disables Diamond downgrades and shows highest package message', () => {
+    component.currentPackage = diamondPackage;
+    component.packages = [rubyPackage, sapphirePackage, { ...diamondPackage, isCurrent: true }];
+
+    expect(component.getPackageAction(rubyPackage)).toBe('unavailable');
+    expect(component.getPackageAction(sapphirePackage)).toBe('unavailable');
+    expect(component.highestPackageMessage).toBe('Anda sudah menggunakan paket tertinggi.');
+  });
+
+  it('shows business error when backend rejects downgrade', () => {
+    dashboardService.create.and.returnValue(throwError(() => ({ error: { code: 'PACKAGE_DOWNGRADE_NOT_ALLOWED' } })));
+    component.selectedPackage = rubyPackage;
+
+    component.startPayment('midtrans');
+
+    expect(component.checkoutState).toBe('creation_error');
+    expect(component.paymentError).toBe('Downgrade paket tidak tersedia.');
+  });
+
+  it('keeps theme context in return URL after requested package becomes active', () => {
+    component.requestedPackage = 'diamond';
+    component.requestedTheme = '15';
+    component.requestedThemeSlug = 'champagne-rose';
+    component.returnUrl = '/user/tampilan';
+    component.currentPackage = { ...diamondPackage, isCurrent: true };
+
+    expect((component as any).buildReturnUrlWithSuccess()).toBe('/user/tampilan?upgradeSuccess=1&package=diamond&theme=15&themeSlug=champagne-rose');
   });
 });

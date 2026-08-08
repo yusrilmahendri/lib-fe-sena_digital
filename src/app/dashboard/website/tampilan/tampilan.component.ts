@@ -71,6 +71,13 @@ interface ThemeCard {
   targetPackage: string | null;
   targetPackageLabel: string;
   targetPackagePrice: number | null;
+  targetPackageOriginalPrice?: number | string | null;
+  targetPackageOriginalPriceLabel?: string;
+  targetPackageDiscountPercentage?: number | string | null;
+  targetPackageDiscountAmount?: number | string | null;
+  targetPackageDiscountAmountLabel?: string;
+  targetPackageUpgradePrice?: number | string | null;
+  targetPackageUpgradePriceLabel?: string;
 }
 
 interface PackageTab {
@@ -113,6 +120,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   showUpgradeModal = false;
   processingPrimaryAction = false;
   processingUpgradeInvoice = false;
+  isNavigatingToUpgrade = false;
   showThemeSuccessToast = false;
   themeSuccessMessage = 'Theme berhasil digunakan';
   showThemeFeedbackModal = false;
@@ -425,6 +433,11 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return String(targetPackage || '').trim().toLowerCase();
   }
 
+  private resolveThemeReturnUrl(): string {
+    const path = String(this.router?.url || '').split('?')[0].split('#')[0];
+    return path || '/user/tampilan';
+  }
+
   /**
    * Load themes from API
    */
@@ -638,6 +651,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
                 ? ((theme as any)?.lock_reason || `Tersedia mulai Paket ${this.getPackageLabel(targetPackage)}`)
                 : undefined;
 
+      const targetPackagePriceInfo = this.resolveTargetPackagePriceInfo(targetPackageRaw, targetPackage);
+
       nextCards.push({
         id: resolvedThemeId || -100 - nextCards.length,
         backendThemeId: resolvedThemeId,
@@ -669,7 +684,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
         upgradeRequired,
         targetPackage,
         targetPackageLabel: this.getPackageLabel(targetPackage),
-        targetPackagePrice: this.resolveTargetPackagePrice(targetPackageRaw, targetPackage),
+        targetPackagePrice: targetPackagePriceInfo.normalPrice,
+        targetPackageOriginalPrice: targetPackagePriceInfo.originalPrice,
+        targetPackageOriginalPriceLabel: targetPackagePriceInfo.originalPriceLabel,
+        targetPackageDiscountPercentage: targetPackagePriceInfo.discountPercentage,
+        targetPackageDiscountAmount: targetPackagePriceInfo.discountAmount,
+        targetPackageDiscountAmountLabel: targetPackagePriceInfo.discountAmountLabel,
+        targetPackageUpgradePrice: targetPackagePriceInfo.upgradePrice,
+        targetPackageUpgradePriceLabel: targetPackagePriceInfo.upgradePriceLabel,
       });
     });
 
@@ -956,6 +978,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
   closeUpgradeModal(): void {
     this.showUpgradeModal = false;
     this.pendingThemeForUpgrade = null;
+    this.isNavigatingToUpgrade = false;
   }
 
   closeThemeFeedbackModal(): void {
@@ -963,6 +986,10 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   goToUpgradePackage(): void {
+    if (this.isNavigatingToUpgrade || !this.canShowUpgradeCta) {
+      return;
+    }
+
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
     if (!theme) {
       this.toastService.showToast('Silakan pilih tema terlebih dahulu.', 'info');
@@ -975,13 +1002,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.closeUpgradeModal();
+    this.isNavigatingToUpgrade = true;
     this.router.navigate(['/user/upgrade-account'], {
       queryParams: {
         package: targetPackage,
         theme: theme.backendThemeId || theme.id || theme.slug,
         themeSlug: theme.slug,
-        returnUrl: '/user/tampilan',
+        returnUrl: this.resolveThemeReturnUrl(),
       },
     });
   }
@@ -1263,6 +1290,35 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.showSelectConfirmationModal = false;
   }
 
+  get selectedUpgradeTheme(): ThemeCard | null {
+    return this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme || null;
+  }
+
+  get canShowUpgradeCta(): boolean {
+    const theme = this.selectedUpgradeTheme;
+    return !!(
+      theme &&
+      theme.upgradeRequired === true &&
+      this.resolveUpgradeTargetPackage(theme)
+    );
+  }
+
+  get upgradeModalTitle(): string {
+    return this.canShowUpgradeCta ? 'Upgrade paket diperlukan' : 'Tema Tidak Tersedia';
+  }
+
+  get upgradeModalDescription(): string {
+    if (this.canShowUpgradeCta) {
+      return `Tema ini tersedia untuk Paket ${this.upgradeTargetPackageLabel}. Silakan lanjutkan ke halaman Upgrade Akun untuk menggunakan tema ini.`;
+    }
+
+    return 'Tema ini sedang tidak tersedia. Silakan pilih tema lain atau kembali ke daftar tema.';
+  }
+
+  get upgradeModalIconClass(): string {
+    return this.canShowUpgradeCta ? 'fas fa-crown' : 'fas fa-ban';
+  }
+
   get upgradeCurrentPackageLabel(): string {
     return this.getPackageLabel(this.userPackageTier);
   }
@@ -1272,11 +1328,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
     return theme?.targetPackageLabel || this.upgradePackageLabel;
   }
 
-  get upgradeTargetPackageCode(): string {
-    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
-    return this.resolveUpgradeTargetPackage(theme);
-  }
-
   get upgradeThemeName(): string {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
     return theme ? this.getThemeDisplayName(theme) : '-';
@@ -1284,16 +1335,24 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   get upgradeTargetPackagePriceLabel(): string {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
-    const price = theme?.targetPackagePrice;
-    if (price === null || price === undefined) {
-      return 'Belum tersedia';
-    }
+    return theme?.targetPackageUpgradePriceLabel || this.formatCurrencyLabel(theme?.targetPackageUpgradePrice) || this.formatCurrencyLabel(theme?.targetPackagePrice) || 'Belum tersedia';
+  }
 
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(price);
+  get upgradeTargetPackageOriginalPriceLabel(): string {
+    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
+    return theme?.targetPackageOriginalPriceLabel || this.formatCurrencyLabel(theme?.targetPackageOriginalPrice) || this.formatCurrencyLabel(theme?.targetPackagePrice);
+  }
+
+  get upgradeTargetPackageDiscountLabel(): string {
+    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
+    const percent = theme?.targetPackageDiscountPercentage;
+    if (percent === null || percent === undefined || percent === '') return 'Diskon Upgrade';
+    return `Diskon Upgrade ${this.formatPercentLabel(percent)}`;
+  }
+
+  get upgradeTargetPackageDiscountAmountLabel(): string {
+    const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
+    return theme?.targetPackageDiscountAmountLabel || this.formatCurrencyLabel(theme?.targetPackageDiscountAmount);
   }
 
   private normalizeTargetPackage(value: unknown): PaidPackageTier | null {
@@ -1351,6 +1410,90 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     return this.resolvePackagePrice(tier);
+  }
+
+  private resolveTargetPackagePriceInfo(rawTargetPackage: unknown, tier: PaidPackageTier): {
+    normalPrice: number | null;
+    originalPrice: number | string | null;
+    originalPriceLabel: string;
+    discountPercentage: number | string | null;
+    discountAmount: number | string | null;
+    discountAmountLabel: string;
+    upgradePrice: number | string | null;
+    upgradePriceLabel: string;
+  } {
+    const packageObject = rawTargetPackage && typeof rawTargetPackage === 'object' ? rawTargetPackage as any : null;
+    const normalPrice = this.resolveTargetPackagePrice(rawTargetPackage, tier);
+    const firstPriceValue = (values: unknown[]): number | string | null => {
+      const value = this.firstDefined(values);
+      return value === undefined ? null : value as number | string | null;
+    };
+    const originalPrice = firstPriceValue([
+      packageObject?.original_price,
+      packageObject?.normal_price,
+      packageObject?.regular_price,
+      packageObject?.package_price,
+      packageObject?.price,
+      packageObject?.harga,
+      packageObject?.amount,
+      normalPrice,
+    ]);
+    const discountPercentage = firstPriceValue([
+      packageObject?.discount_percentage,
+      packageObject?.upgrade_discount_percentage,
+      packageObject?.discount_percent,
+      packageObject?.diskon_persen,
+    ]);
+    const discountAmount = firstPriceValue([
+      packageObject?.discount_amount,
+      packageObject?.upgrade_discount_amount,
+      packageObject?.diskon_nominal,
+      packageObject?.discount_value,
+    ]);
+    const upgradePrice = firstPriceValue([
+      packageObject?.upgrade_price,
+      packageObject?.upgrade_amount,
+      packageObject?.payment_amount,
+      packageObject?.amount_due,
+      packageObject?.total_payment,
+      packageObject?.total_bayar,
+      packageObject?.final_price,
+      packageObject?.payable_amount,
+    ]);
+
+    return {
+      normalPrice,
+      originalPrice,
+      originalPriceLabel: this.formatCurrencyLabel(originalPrice, packageObject?.original_price_label ?? packageObject?.normal_price_label ?? packageObject?.regular_price_label),
+      discountPercentage,
+      discountAmount,
+      discountAmountLabel: this.formatCurrencyLabel(discountAmount, packageObject?.discount_amount_label ?? packageObject?.upgrade_discount_amount_label ?? packageObject?.diskon_nominal_label),
+      upgradePrice,
+      upgradePriceLabel: this.formatCurrencyLabel(upgradePrice, packageObject?.upgrade_price_label ?? packageObject?.upgrade_amount_label ?? packageObject?.payment_amount_label ?? packageObject?.amount_due_label ?? packageObject?.total_payment_label ?? packageObject?.total_bayar_label ?? packageObject?.final_price_label ?? packageObject?.payable_amount_label),
+    };
+  }
+
+  private formatCurrencyLabel(value: unknown, fallback?: unknown): string {
+    const fallbackText = String(fallback ?? '').trim();
+    if (fallbackText) return fallbackText;
+    if (value === null || value === undefined || value === '') return '';
+
+    const numeric = Number(String(value).replace(/[^\d.-]/g, ''));
+    if (!Number.isFinite(numeric)) return String(value || '').trim();
+
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(numeric);
+  }
+
+  private formatPercentLabel(value: unknown): string {
+    const text = String(value ?? '').trim();
+    if (!text) return '';
+    if (text.includes('%')) return text;
+    const numeric = Number(text);
+    return Number.isFinite(numeric) ? `${numeric}%` : text;
   }
 
   private hasValidBackendThemeConnection(theme: ThemeCard | null | undefined): boolean {

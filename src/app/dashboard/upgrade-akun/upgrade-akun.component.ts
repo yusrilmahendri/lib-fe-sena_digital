@@ -30,6 +30,13 @@ interface UpgradePackage {
   name: string;
   price: number | string | null;
   priceLabel: string;
+  originalPrice: number | string | null;
+  originalPriceLabel: string;
+  discountPercentage: number | string | null;
+  discountAmount: number | string | null;
+  discountAmountLabel: string;
+  upgradePrice: number | string | null;
+  upgradePriceLabel: string;
   description: string;
   thumbnail: string;
   badge: string;
@@ -84,10 +91,12 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   checkoutState: CheckoutState = 'confirmation';
   requestedPackage = '';
   requestedTheme = '';
+  requestedThemeSlug = '';
   returnUrl = '';
   requiredPackageMessage = '';
 
   private readonly destroy$ = new Subject<void>();
+  private hasOpenedRequestedPackageModal = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -101,6 +110,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       .subscribe((params) => {
         this.requestedPackage = String(params?.['package'] || '').trim().toLowerCase();
         this.requestedTheme = String(params?.['theme'] || '').trim();
+        this.requestedThemeSlug = String(params?.['themeSlug'] || '').trim();
         this.returnUrl = String(params?.['returnUrl'] || '').trim();
         this.requiredPackageMessage = this.buildRequiredPackageMessage();
         this.scrollToRequestedPackage();
@@ -131,6 +141,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         next: ({ profile, packages, paymentConfig }) => {
           this.applyDashboardState(profile, packages, paymentConfig);
           this.scrollToRequestedPackage();
+          this.openRequestedPackageModal();
         },
         error: (error) => {
           this.errorMessage = getFriendlyErrorMessage(error);
@@ -239,7 +250,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
         error: (error) => {
           this.invoiceData = null;
           this.checkoutState = 'creation_error';
-          this.paymentError = getFriendlyErrorMessage(error);
+          this.paymentError = this.resolvePaymentCreationError(error);
         },
       });
   }
@@ -292,7 +303,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get modalPackagePrice(): string {
-    return this.selectedPackage?.priceLabel || this.invoiceAmount || '-';
+    return this.selectedPackage?.upgradePriceLabel || this.invoiceAmount || this.selectedPackage?.priceLabel || '-';
   }
 
   get primaryPaymentMethod(): SelectablePaymentMethod | null {
@@ -304,6 +315,29 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   get primaryPaymentCtaLabel(): string {
     const amount = this.modalPackagePrice;
     return amount && amount !== '-' ? `Bayar ${amount}` : 'Bayar Sekarang';
+  }
+
+  get highestPackageMessage(): string {
+    return this.currentPackage && !this.packages.some((pkg) => this.getPackageAction(pkg) === 'upgrade')
+      ? 'Anda sudah menggunakan paket tertinggi.'
+      : '';
+  }
+
+  get selectedPackageHasUpgradePricing(): boolean {
+    return !!(
+      this.selectedPackage &&
+      (
+        this.selectedPackage.originalPriceLabel ||
+        this.selectedPackage.discountAmountLabel ||
+        this.selectedPackage.upgradePriceLabel
+      )
+    );
+  }
+
+  get selectedPackageDiscountLabel(): string {
+    const percent = this.selectedPackage?.discountPercentage;
+    if (percent === null || percent === undefined || percent === '') return 'Diskon Upgrade';
+    return `Diskon Upgrade ${this.formatPercent(percent)}`;
   }
 
   get checkoutStatusTitle(): string {
@@ -361,27 +395,30 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
     if (this.isSubscriptionExpired()) {
       if (!pkg.canSelect) return 'unavailable';
+      if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
       if (action === 'renew' || pkg.isLastPackage) return 'renew';
-      if (action === 'upgrade' || action === 'downgrade' || action === 'subscribe' || action === 'select') return action;
+      if (action === 'upgrade' || action === 'subscribe' || action === 'select') return action;
       return 'subscribe';
     }
 
     if (pkg.isCurrent) return 'current';
     if (!pkg.canSelect) return 'unavailable';
 
-    if (action === 'upgrade' || action === 'downgrade' || action === 'renew' || action === 'subscribe' || action === 'select') return action;
+    if (action === 'downgrade' || pkg.canDowngrade || this.isLowerTierPackage(pkg)) return 'unavailable';
+    if (action === 'upgrade' || action === 'renew' || action === 'subscribe' || action === 'select') return action;
     if (pkg.canUpgrade) return 'upgrade';
-    if (pkg.canDowngrade) return 'downgrade';
     return 'unavailable';
   }
 
   getActionLabel(pkg: UpgradePackage): string {
     const action = this.getPackageAction(pkg);
     if (action === 'current') return 'Paket Saat Ini';
-    if (action === 'downgrade') return 'Downgrade';
     if (action === 'renew') return 'Perpanjang';
     if (action === 'subscribe' || action === 'select') return 'Pilih Paket';
-    if (action === 'unavailable') return pkg.disabledReason || pkg.pendingMessage || 'Tidak tersedia';
+    if (action === 'unavailable') {
+      if (this.isLowerTierPackage(pkg)) return 'Downgrade tidak tersedia';
+      return pkg.disabledReason || pkg.pendingMessage || 'Tidak tersedia';
+    }
     return 'Upgrade';
   }
 
@@ -492,7 +529,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get isDowngradeSelection(): boolean {
-    return !!this.selectedPackage && this.getPackageAction(this.selectedPackage) === 'downgrade';
+    return false;
   }
 
   get downgradeConfirmationMessage(): string {
@@ -507,8 +544,8 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private buildRequiredPackageMessage(): string {
-    if (!this.requestedPackage || !this.requestedTheme) return '';
-    return `Paket ${this.humanizePackage(this.requestedPackage)} diperlukan untuk menggunakan tema ${this.humanizeThemeSlug(this.requestedTheme)}.`;
+    if (!this.requestedPackage || (!this.requestedTheme && !this.requestedThemeSlug)) return '';
+    return `Paket ${this.humanizePackage(this.requestedPackage)} diperlukan untuk menggunakan tema ${this.humanizeThemeSlug(this.requestedThemeSlug || this.requestedTheme)}.`;
   }
 
   private scrollToRequestedPackage(): void {
@@ -519,6 +556,16 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       const element = this.packageCardElements?.toArray()?.[index]?.nativeElement;
       element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 120);
+  }
+
+  private openRequestedPackageModal(): void {
+    if (this.hasOpenedRequestedPackageModal || this.isModalOpen || !this.requestedPackage || !this.packages.length) return;
+
+    const requested = this.packages.find((pkg) => this.isRequestedPackage(pkg));
+    if (!requested || this.isPackageDisabled(requested)) return;
+
+    this.hasOpenedRequestedPackageModal = true;
+    this.openUpgradeModal(requested);
   }
 
   private redirectBackWhenUpgradeIsActive(): void {
@@ -541,6 +588,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       'upgradeSuccess=1',
       `package=${encodeURIComponent(this.requestedPackage)}`,
       this.requestedTheme ? `theme=${encodeURIComponent(this.requestedTheme)}` : '',
+      this.requestedThemeSlug ? `themeSlug=${encodeURIComponent(this.requestedThemeSlug)}` : '',
     ].filter(Boolean).join('&');
 
     return `${this.returnUrl}${separator}${query}`;
@@ -557,6 +605,31 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       .replace(/\s+/g, ' ')
       .trim()
       .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  private isLowerTierPackage(pkg: UpgradePackage): boolean {
+    const currentRank = this.resolvePackageRank(this.currentPackage || this.lastPackage);
+    const packageRank = this.resolvePackageRank(pkg);
+    return currentRank > 0 && packageRank > 0 && packageRank < currentRank;
+  }
+
+  private resolvePackageRank(pkg: UpgradePackage | null | undefined): number {
+    if (!pkg) return 0;
+    const value = [
+      pkg.code,
+      pkg.name,
+      pkg.raw?.package_code,
+      pkg.raw?.package_tier,
+      pkg.raw?.kode_paket,
+      pkg.raw?.name_paket,
+      pkg.raw?.jenis_paket,
+    ].filter(Boolean).join(' ').toLowerCase();
+
+    if (value.includes('diamond')) return 3;
+    if (value.includes('sapphire')) return 2;
+    if (value.includes('ruby')) return 1;
+    const explicitRank = this.toNumber(pkg.raw?.rank ?? pkg.raw?.level ?? pkg.raw?.tier_level ?? pkg.raw?.sort_order);
+    return Number.isFinite(explicitRank) ? explicitRank : 0;
   }
 
   private refreshPaymentMethodsForCheckout(): void {
@@ -648,6 +721,37 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       'Paket'
     ).trim();
     const price = raw?.price ?? raw?.harga ?? raw?.amount ?? raw?.nominal ?? null;
+    const originalPrice = this.firstDefined([
+      raw?.original_price,
+      raw?.normal_price,
+      raw?.regular_price,
+      raw?.package_price,
+      raw?.price,
+      raw?.harga,
+      raw?.amount,
+    ]);
+    const discountPercentage = this.firstDefined([
+      raw?.discount_percentage,
+      raw?.upgrade_discount_percentage,
+      raw?.discount_percent,
+      raw?.diskon_persen,
+    ]);
+    const discountAmount = this.firstDefined([
+      raw?.discount_amount,
+      raw?.upgrade_discount_amount,
+      raw?.diskon_nominal,
+      raw?.discount_value,
+    ]);
+    const upgradePrice = this.firstDefined([
+      raw?.upgrade_price,
+      raw?.upgrade_amount,
+      raw?.payment_amount,
+      raw?.amount_due,
+      raw?.total_payment,
+      raw?.total_bayar,
+      raw?.final_price,
+      raw?.payable_amount,
+    ]);
 
     return {
       id,
@@ -655,6 +759,13 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       name,
       price,
       priceLabel: this.formatPrice(price, raw?.price_label ?? raw?.harga_label),
+      originalPrice,
+      originalPriceLabel: this.formatPrice(originalPrice, raw?.original_price_label ?? raw?.normal_price_label ?? raw?.regular_price_label),
+      discountPercentage,
+      discountAmount,
+      discountAmountLabel: this.formatPrice(discountAmount, raw?.discount_amount_label ?? raw?.upgrade_discount_amount_label ?? raw?.diskon_nominal_label),
+      upgradePrice,
+      upgradePriceLabel: this.formatPrice(upgradePrice, raw?.upgrade_price_label ?? raw?.upgrade_amount_label ?? raw?.payment_amount_label ?? raw?.amount_due_label ?? raw?.total_payment_label ?? raw?.total_bayar_label ?? raw?.final_price_label ?? raw?.payable_amount_label),
       description: String(raw?.description ?? raw?.deskripsi ?? raw?.short_description ?? '').trim(),
       thumbnail: this.resolveThumbnail(raw),
       badge: String(raw?.badge ?? raw?.label ?? raw?.status_label ?? raw?.package_tier ?? '').trim(),
@@ -727,7 +838,13 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       'created_at', 'updated_at', 'deleted_at', 'sort_order', 'order', 'urutan', 'level',
       'rank', 'priority', 'accessible_categories', 'is_current', 'is_last_package',
       'subscription_status', 'can_select', 'can_upgrade', 'can_downgrade', 'action',
-      'disabled_reason', 'pending_message', 'upgrade_message'
+      'disabled_reason', 'pending_message', 'upgrade_message', 'original_price',
+      'normal_price', 'regular_price', 'package_price', 'discount_percentage',
+      'upgrade_discount_percentage', 'discount_percent', 'diskon_persen',
+      'discount_amount', 'upgrade_discount_amount', 'diskon_nominal',
+      'discount_value', 'upgrade_price', 'upgrade_amount', 'payment_amount',
+      'amount_due', 'total_payment', 'total_bayar', 'final_price',
+      'payable_amount'
     ]);
 
     return Object.keys(raw || {})
@@ -769,6 +886,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   private formatPrice(value: any, fallback?: any): string {
     if (fallback) return String(fallback);
+    if (value === null || value === undefined || value === '') return '';
     const numeric = this.toNumber(value);
     if (!Number.isFinite(numeric)) return String(value || '-');
 
@@ -788,12 +906,38 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return NaN;
   }
 
+  private firstDefined(values: any[]): any {
+    return values.find((value) => value !== undefined && value !== null && value !== '');
+  }
+
+  formatPercent(value: any): string {
+    const text = String(value ?? '').trim();
+    if (!text) return '';
+    if (text.includes('%')) return text;
+    const numeric = Number(text);
+    return Number.isFinite(numeric) ? `${numeric}%` : text;
+  }
+
   private buildUpgradePayload(pkg: UpgradePackage, method: SelectablePaymentMethod): any {
     const payload: any = {
       package_id: pkg.id,
     };
     payload.payment_method = method;
     return payload;
+  }
+
+  private resolvePaymentCreationError(error: any): string {
+    const code = String(error?.error?.code || error?.code || '').trim();
+    if (code === 'PACKAGE_DOWNGRADE_NOT_ALLOWED') {
+      return 'Downgrade paket tidak tersedia.';
+    }
+
+    const message = String(error?.error?.message || error?.message || '').trim();
+    if (message.includes('PACKAGE_DOWNGRADE_NOT_ALLOWED')) {
+      return 'Downgrade paket tidak tersedia.';
+    }
+
+    return getFriendlyErrorMessage(error);
   }
 
   private openMidtransPayment(data: any, fallbackMessage?: string): void {

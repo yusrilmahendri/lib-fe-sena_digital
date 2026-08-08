@@ -75,6 +75,10 @@
         <i class="fas fa-lock-open" aria-hidden="true"></i>
         <span>{{ requiredPackageMessage }}</span>
       </div>
+      <div class="upgrade-alert upgrade-alert--info" *ngIf="highestPackageMessage">
+        <i class="fas fa-crown" aria-hidden="true"></i>
+        <span>{{ highestPackageMessage }}</span>
+      </div>
 
       <div class="empty-state" *ngIf="!packages.length">
         <i class="fas fa-box-open" aria-hidden="true"></i>
@@ -106,7 +110,16 @@
               <span class="package-status" *ngIf="pkg.statusLabel">{{ pkg.statusLabel }}</span>
             </div>
             <p class="package-description" *ngIf="pkg.description">{{ pkg.description }}</p>
-            <strong class="package-price">{{ pkg.priceLabel }}</strong>
+            <div class="package-price-block" *ngIf="pkg.upgradePriceLabel; else normalPackagePrice">
+              <span class="package-price-original" *ngIf="pkg.originalPriceLabel">{{ pkg.originalPriceLabel }}</span>
+              <strong class="package-price">{{ pkg.upgradePriceLabel }}</strong>
+              <small *ngIf="pkg.discountAmountLabel">
+                Hemat {{ pkg.discountAmountLabel }}<ng-container *ngIf="pkg.discountPercentage"> • Diskon Upgrade {{ formatPercent(pkg.discountPercentage) }}</ng-container>
+              </small>
+            </div>
+            <ng-template #normalPackagePrice>
+              <strong class="package-price">{{ pkg.priceLabel }}</strong>
+            </ng-template>
 
             <ul class="feature-list" *ngIf="pkg.features.length">
               <li *ngFor="let feature of pkg.features">
@@ -151,9 +164,17 @@
         <span>Paket tujuan</span>
         <strong>{{ modalPackageDisplayName }}</strong>
       </div>
+      <div *ngIf="selectedPackage.originalPriceLabel">
+        <span>Harga normal</span>
+        <strong>{{ selectedPackage.originalPriceLabel }}</strong>
+      </div>
+      <div *ngIf="selectedPackage.discountAmountLabel">
+        <span>{{ selectedPackageDiscountLabel }}</span>
+        <strong>- {{ selectedPackage.discountAmountLabel }}</strong>
+      </div>
       <div>
-        <span>Harga</span>
-        <strong>{{ selectedPackage.priceLabel }}</strong>
+        <span>Total Pembayaran</span>
+        <strong>{{ modalPackagePrice }}</strong>
       </div>
     </div>
 

@@ -309,6 +309,25 @@
   line-height: 1.2;
 }
 
+.package-price-block {
+  display: grid;
+  gap: 4px;
+}
+
+.package-price-original {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: line-through;
+}
+
+.package-price-block small {
+  color: #047857;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .feature-list,
 .modal-features ul {
   display: grid;

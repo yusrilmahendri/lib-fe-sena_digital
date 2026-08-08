@@ -21,6 +21,18 @@
       <p class="payment-card__error" *ngIf="errorMessage" role="alert">
         {{ errorMessage }}
       </p>
+      <div class="payment-unavailable" *ngIf="paymentUnavailableTitle" role="alert">
+        <strong>{{ paymentUnavailableTitle }}</strong>
+        <span>{{ paymentUnavailableMessage }}</span>
+        <div class="payment-unavailable__actions">
+          <button type="button" class="btn btn-primary" (click)="retryUnavailablePayment()" [disabled]="isLoading">
+            {{ isLoading ? 'Mengecek...' : paymentUnavailablePrimaryLabel }}
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="contactAdmin()">
+            Hubungi Admin
+          </button>
+        </div>
+      </div>
 
       <dl class="invoice-details" *ngIf="paymentState as state">
         <div *ngIf="state.packageName || state.packageCode">
@@ -62,18 +74,18 @@
       </dl>
 
       <div class="payment-actions" *ngIf="statusPage === 'pending_payment'">
-        <button type="button" class="btn btn-primary" (click)="openPaymentInstruction()">
+        <button type="button" class="btn btn-primary payment-actions__primary" (click)="continuePayment()" [disabled]="isContinuingPayment">
           {{ pendingPaymentCtaLabel }}
+        </button>
+        <button type="button" class="btn btn-light" [disabled]="isLoading || isContinuingPayment" (click)="refreshStatus()">
+          <span *ngIf="!isLoading">Cek Status Pembayaran</span>
+          <span *ngIf="isLoading">Mengecek...</span>
         </button>
         <button type="button" class="btn btn-outline-primary" *ngIf="paymentState?.invoiceCode" (click)="copyInvoiceCode()">
           Salin Kode Pemesanan
         </button>
         <button type="button" class="btn btn-outline-primary" (click)="contactAdmin()">
           Hubungi Admin
-        </button>
-        <button type="button" class="btn btn-light" [disabled]="isLoading" (click)="refreshStatus()">
-          <span *ngIf="!isLoading">Refresh Status</span>
-          <span *ngIf="isLoading">Memuat...</span>
         </button>
       </div>
 
@@ -91,3 +103,68 @@
     </div>
   </div>
 </section>
+
+<div
+  class="manual-payment-backdrop"
+  *ngIf="manualPaymentModalOpen"
+  (click)="closeManualPaymentModal()">
+  <section
+    class="manual-payment-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="manual-payment-title"
+    (click)="$event.stopPropagation()">
+    <header>
+      <div class="manual-payment-modal__icon" aria-hidden="true">
+        <i class="fas fa-university"></i>
+      </div>
+      <div>
+        <p>Pembayaran Manual</p>
+        <h3 id="manual-payment-title">Detail Pembayaran</h3>
+      </div>
+    </header>
+
+    <dl class="manual-payment-details">
+      <div>
+        <dt>Bank</dt>
+        <dd>{{ manualPaymentBankName }}</dd>
+      </div>
+      <div>
+        <dt>Nomor Rekening</dt>
+        <dd>
+          <button type="button" class="copy-value" (click)="copyManualAccountNumber()">
+            {{ manualPaymentAccountNumber || '-' }}
+          </button>
+        </dd>
+      </div>
+      <div>
+        <dt>Atas Nama</dt>
+        <dd>{{ manualPaymentAccountHolder }}</dd>
+      </div>
+      <div>
+        <dt>Jumlah Pembayaran</dt>
+        <dd>
+          <button type="button" class="copy-value" (click)="copyManualAmount()">
+            {{ manualPaymentAmountLabel }}
+          </button>
+        </dd>
+      </div>
+    </dl>
+
+    <ul class="manual-payment-instructions" *ngIf="manualPaymentInstructions.length">
+      <li *ngFor="let instruction of manualPaymentInstructions">{{ instruction }}</li>
+    </ul>
+
+    <footer class="manual-payment-actions">
+      <button type="button" class="btn btn-outline-primary" (click)="copyManualAccountNumber()">
+        Salin Nomor Rekening
+      </button>
+      <button type="button" class="btn btn-outline-primary" (click)="copyManualAmount()">
+        Salin Nominal
+      </button>
+      <button type="button" class="btn btn-primary" (click)="closeManualPaymentModal()">
+        Mengerti
+      </button>
+    </footer>
+  </section>
+</div>

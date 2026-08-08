@@ -20,6 +20,9 @@ export interface PaymentState {
   paymentAction: 'create_payment' | 'continue_payment' | 'retry_payment' | 'create_new_payment' | 'check_status';
   paymentUrl: string;
   amountLabel: string;
+  pendingInvoice: any | null;
+  resume: any | null;
+  isPayable: boolean;
 }
 
 export type AccountAccessStatus = 'unverified' | 'onboarding' | 'pending_payment' | 'expired' | 'active';
@@ -116,9 +119,11 @@ export function resolveAccountAccessStatus(profile: any): AccountAccessStatus {
 
 export function resolvePaymentState(profile: any): PaymentState {
   const data = profile?.data || profile || {};
+  const pendingInvoice = data.pending_invoice || data.pendingInvoice || null;
   const isVerified = isAccountVerified(data);
   const accountStatusRaw = normalizeStatus(data.account_status);
   const paymentStatus = firstText([
+    pendingInvoice?.payment_status,
     data.payment_status,
     data.invoice_status,
     data.status_bayar,
@@ -149,6 +154,8 @@ export function resolvePaymentState(profile: any): PaymentState {
   const paymentStatusRaw = normalizeStatus(paymentStatus);
   const hasSelectedPaymentMethod = resolveHasSelectedPaymentMethod(data);
   const invoiceCode = firstText([
+    pendingInvoice?.invoice_code,
+    pendingInvoice?.order_id,
     data.no_invoice,
     data.invoice_number,
     data.invoice_code,
@@ -166,6 +173,7 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.kode_pemesanan,
   ]);
   const transactionDate = firstText([
+    pendingInvoice?.created_at_formatted,
     data.tanggal_transaksi_formatted,
     data.transaction_date_formatted,
     data.created_at_formatted,
@@ -184,6 +192,9 @@ export function resolvePaymentState(profile: any): PaymentState {
   const hasInvoice = resolveHasInvoice(data, invoiceCode);
   const initialPaymentRequired = resolveInitialPaymentRequired(data, accountStatusRaw, paymentStatusRaw);
   const paymentUrl = firstText([
+    pendingInvoice?.payment_url,
+    pendingInvoice?.redirect_url,
+    pendingInvoice?.midtrans?.redirect_url,
     data.payment_url,
     data.invoice_url,
     data.redirect_url,
@@ -199,6 +210,8 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.transaction?.redirect_url,
   ]);
   const amountLabel = firstText([
+    pendingInvoice?.amount_label,
+    pendingInvoice?.total_label,
     data.amount_label,
     data.total_label,
     data.price_label,
@@ -209,6 +222,8 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.amount_label,
     data.invoice?.total_label,
   ]) || formatCurrency(firstNumber([
+    pendingInvoice?.amount,
+    pendingInvoice?.total,
     data.amount,
     data.total,
     data.price,
@@ -319,6 +334,9 @@ export function resolvePaymentState(profile: any): PaymentState {
     paymentAction: resolvePaymentAction({ paymentStatusRaw, hasInvoice, hasSelectedPaymentMethod, initialPaymentRequired, paymentUrl }),
     paymentUrl,
     amountLabel,
+    pendingInvoice,
+    resume: pendingInvoice?.resume || null,
+    isPayable: pendingInvoice?.is_payable !== false,
   };
 }
 
@@ -395,6 +413,7 @@ function accountStatusLabel(status: AccountAccessStatus): string {
 function resolveHasInvoice(data: any, invoiceCode: string): boolean {
   if (data.has_invoice === false || data.invoice_exists === false || data.has_tagihan === false) return false;
   if (data.has_invoice === true || data.invoice_exists === true || data.has_tagihan === true) return true;
+  if (hasObjectValue(data.pending_invoice) || hasObjectValue(data.pendingInvoice)) return true;
   if (invoiceCode) return true;
   if (hasObjectValue(data.invoice) || hasObjectValue(data.tagihan)) return true;
 
@@ -402,7 +421,13 @@ function resolveHasInvoice(data: any, invoiceCode: string): boolean {
 }
 
 function resolveHasSelectedPaymentMethod(data: any): boolean {
+  const pendingInvoice = data.pending_invoice || data.pendingInvoice || null;
   return !!firstText([
+    pendingInvoice?.payment_method,
+    pendingInvoice?.provider,
+    pendingInvoice?.payment_provider,
+    pendingInvoice?.resume?.type,
+    pendingInvoice?.midtrans?.snap_token,
     data.payment_method,
     data.payment_method_id,
     data.payment_gateway,
