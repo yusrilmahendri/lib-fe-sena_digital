@@ -79,6 +79,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   errorMessage = '';
 
   selectedPackage: UpgradePackage | null = null;
+  targetPackage: UpgradePackage | null = null;
   activePaymentMethod: PaymentMethod = null;
   paymentMethods: PaymentMethodOption[] = [];
   isLoadingPaymentMethods = false;
@@ -179,6 +180,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   openUpgradeModal(pkg: UpgradePackage): void {
     if (this.isPackageDisabled(pkg)) return;
 
+    this.targetPackage = pkg;
     this.selectedPackage = pkg;
     this.isModalOpen = true;
     this.activePaymentMethod = null;
@@ -197,6 +199,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   closeUpgradeModal(): void {
     if (this.isCreatingInvoice) return;
     this.isModalOpen = false;
+    this.targetPackage = null;
     this.selectedPackage = null;
     this.activePaymentMethod = null;
     this.paymentError = '';
@@ -207,6 +210,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   continueToPaymentMethod(): void {
     if (this.isCreatingInvoice || this.isLoadingPaymentMethods) return;
+    if (this.selectedPackageRequiresUpgradePricing) {
+      this.paymentError = 'Harga upgrade belum tersedia. Silakan perbarui data paket terlebih dahulu.';
+      return;
+    }
     this.paymentError = '';
     this.paymentInfoMessage = '';
     this.checkoutState = 'method';
@@ -214,6 +221,10 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   startPayment(method: SelectablePaymentMethod): void {
     if (!this.selectedPackage || this.isCreatingInvoice || !this.hasPaymentMethod(method)) return;
+    if (this.selectedPackageRequiresUpgradePricing) {
+      this.paymentError = 'Harga upgrade belum tersedia. Silakan perbarui data paket terlebih dahulu.';
+      return;
+    }
 
     this.isCreatingInvoice = true;
     this.activePaymentMethod = method;
@@ -303,9 +314,13 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get modalPackagePrice(): string {
-    return this.selectedPackage && this.canShowPackageUpgradePricing(this.selectedPackage)
-      ? this.selectedPackage.upgradePriceLabel
-      : this.invoiceAmount || this.selectedPackage?.priceLabel || '-';
+    if (this.selectedPackage && this.isUpgradeAction(this.selectedPackage)) {
+      return this.hasValidUpgradePricing(this.selectedPackage)
+        ? this.selectedPackage.upgradePriceLabel
+        : '';
+    }
+
+    return this.invoiceAmount || this.selectedPackage?.priceLabel || '-';
   }
 
   get primaryPaymentMethod(): SelectablePaymentMethod | null {
@@ -315,14 +330,21 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get primaryPaymentCtaLabel(): string {
+    if (this.selectedPackageRequiresUpgradePricing) return 'Memuat harga...';
     const amount = this.modalPackagePrice;
     return amount && amount !== '-' ? `Bayar ${amount}` : 'Bayar Sekarang';
   }
 
   get highestPackageMessage(): string {
-    return this.currentPackage && !this.packages.some((pkg) => this.getPackageAction(pkg) === 'upgrade')
+    return this.currentPackage && this.resolvePackageRank(this.currentPackage) >= this.highestAvailablePackageRank
       ? 'Anda sudah menggunakan paket tertinggi.'
       : '';
+  }
+
+  get selectedPackageRequiresUpgradePricing(): boolean {
+    return !!this.selectedPackage &&
+      this.isUpgradeAction(this.selectedPackage) &&
+      !this.hasValidUpgradePricing(this.selectedPackage);
   }
 
   get selectedPackageHasUpgradePricing(): boolean {
@@ -405,7 +427,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       return 'subscribe';
     }
 
-    if (pkg.isCurrent) return 'current';
+    if (this.isCurrentPackage(pkg)) return 'current';
     if (this.isTrialPackage(pkg)) return 'unavailable';
     if (!pkg.canSelect) return 'unavailable';
 
@@ -435,7 +457,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   isCurrentPackage(pkg: UpgradePackage): boolean {
-    return pkg.isCurrent && !this.isSubscriptionExpired();
+    return !!this.currentPackage && this.isSamePackage(pkg, this.currentPackage) && !this.isSubscriptionExpired();
   }
 
   isLastExpiredPackage(pkg: UpgradePackage): boolean {
@@ -513,7 +535,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get invoiceAmount(): string {
-    const value = this.invoiceData?.amount || this.invoiceData?.total || this.invoiceData?.gross_amount || this.selectedPackage?.price;
+    const value = this.invoiceData?.amount || this.invoiceData?.total || this.invoiceData?.gross_amount;
     return this.formatPrice(value, this.invoiceData?.amount_label || this.invoiceData?.total_label);
   }
 
@@ -586,11 +608,8 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private isRequestedPackageActive(): boolean {
-    const paidStatuses = ['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'];
-    const latestStatus = String(this.latestTransaction?.status || this.latestTransaction?.payment_status || '').toLowerCase().trim();
-    const backendSaysPaid = paidStatuses.includes(latestStatus);
     const currentMatches = !!this.currentPackage && this.isRequestedPackage(this.currentPackage);
-    return currentMatches || backendSaysPaid;
+    return currentMatches;
   }
 
   private buildReturnUrlWithSuccess(): string {
@@ -643,6 +662,15 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     return !!pkg.upgradePriceLabel && pkg.upgradePriceLabel !== '-';
   }
 
+  private isUpgradeAction(pkg: UpgradePackage): boolean {
+    const action = pkg.action;
+    return action === 'upgrade' || pkg.canUpgrade || this.resolvePackageRank(pkg) > this.resolvePackageRank(this.currentPackage || this.lastPackage);
+  }
+
+  private get highestAvailablePackageRank(): number {
+    return this.packages.reduce((highest, pkg) => Math.max(highest, this.resolvePackageRank(pkg)), 0);
+  }
+
   private resolvePackageRank(pkg: UpgradePackage | null | undefined): number {
     if (!pkg) return 0;
     const value = [
@@ -660,6 +688,37 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     if (value.includes('ruby')) return 1;
     const explicitRank = this.toNumber(pkg.raw?.rank ?? pkg.raw?.level ?? pkg.raw?.tier_level ?? pkg.raw?.sort_order);
     return Number.isFinite(explicitRank) ? explicitRank : 0;
+  }
+
+  private isSamePackage(first: UpgradePackage | null | undefined, second: UpgradePackage | null | undefined): boolean {
+    if (!first || !second) return false;
+    const firstCandidates = this.getPackageIdentityCandidates(first);
+    const secondCandidates = this.getPackageIdentityCandidates(second);
+
+    return firstCandidates.some((firstValue) =>
+      secondCandidates.some((secondValue) => firstValue === secondValue)
+    );
+  }
+
+  private getPackageIdentityCandidates(pkg: UpgradePackage): string[] {
+    return [
+      pkg.id,
+      pkg.code,
+      pkg.name,
+      pkg.raw?.id,
+      pkg.raw?.package_id,
+      pkg.raw?.paket_undangan_id,
+      pkg.raw?.package_code,
+      pkg.raw?.code,
+      pkg.raw?.kode_paket,
+      pkg.raw?.package_tier,
+      pkg.raw?.name,
+      pkg.raw?.nama_paket,
+      pkg.raw?.name_paket,
+      pkg.raw?.jenis_paket,
+    ]
+      .filter((value) => value !== undefined && value !== null && String(value).trim())
+      .map((value) => String(value).toLowerCase().trim());
   }
 
   private refreshPaymentMethodsForCheckout(): void {
@@ -740,6 +799,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private mapPackage(raw: any, index: number): UpgradePackage {
+    const pricing = raw?.pricing || raw?.upgrade_pricing || raw?.price_detail || raw?.pricing_detail || {};
     const id = raw?.id ?? raw?.paket_undangan_id ?? raw?.package_id ?? null;
     const code = String(raw?.package_code ?? raw?.kode_paket ?? raw?.code ?? raw?.package_tier ?? id ?? '').trim();
     const name = String(
@@ -752,6 +812,9 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     ).trim();
     const price = raw?.price ?? raw?.harga ?? raw?.amount ?? raw?.nominal ?? null;
     const originalPrice = this.firstDefined([
+      pricing?.original_price,
+      pricing?.normal_price,
+      pricing?.regular_price,
       raw?.original_price,
       raw?.normal_price,
       raw?.regular_price,
@@ -761,18 +824,30 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       raw?.amount,
     ]);
     const discountPercentage = this.firstDefined([
+      pricing?.discount_percentage,
+      pricing?.upgrade_discount_percentage,
+      pricing?.discount_percent,
       raw?.discount_percentage,
       raw?.upgrade_discount_percentage,
       raw?.discount_percent,
       raw?.diskon_persen,
     ]);
     const discountAmount = this.firstDefined([
+      pricing?.discount_amount,
+      pricing?.upgrade_discount_amount,
+      pricing?.discount_value,
       raw?.discount_amount,
       raw?.upgrade_discount_amount,
       raw?.diskon_nominal,
       raw?.discount_value,
     ]);
     const upgradePrice = this.firstDefined([
+      pricing?.upgrade_price,
+      pricing?.payable_amount,
+      pricing?.payment_amount,
+      pricing?.amount_due,
+      pricing?.total_payment,
+      pricing?.final_price,
       raw?.upgrade_price,
       raw?.upgrade_amount,
       raw?.payment_amount,
@@ -790,12 +865,12 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       price,
       priceLabel: this.formatPrice(price, raw?.price_label ?? raw?.harga_label),
       originalPrice,
-      originalPriceLabel: this.formatPrice(originalPrice, raw?.original_price_label ?? raw?.normal_price_label ?? raw?.regular_price_label),
+      originalPriceLabel: this.formatPrice(originalPrice, pricing?.original_price_label ?? pricing?.normal_price_label ?? pricing?.regular_price_label ?? raw?.original_price_label ?? raw?.normal_price_label ?? raw?.regular_price_label),
       discountPercentage,
       discountAmount,
-      discountAmountLabel: this.formatPrice(discountAmount, raw?.discount_amount_label ?? raw?.upgrade_discount_amount_label ?? raw?.diskon_nominal_label),
+      discountAmountLabel: this.formatPrice(discountAmount, pricing?.discount_amount_label ?? pricing?.upgrade_discount_amount_label ?? raw?.discount_amount_label ?? raw?.upgrade_discount_amount_label ?? raw?.diskon_nominal_label),
       upgradePrice,
-      upgradePriceLabel: this.formatPrice(upgradePrice, raw?.upgrade_price_label ?? raw?.upgrade_amount_label ?? raw?.payment_amount_label ?? raw?.amount_due_label ?? raw?.total_payment_label ?? raw?.total_bayar_label ?? raw?.final_price_label ?? raw?.payable_amount_label),
+      upgradePriceLabel: this.formatPrice(upgradePrice, pricing?.upgrade_price_label ?? pricing?.payable_amount_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? raw?.upgrade_price_label ?? raw?.upgrade_amount_label ?? raw?.payment_amount_label ?? raw?.amount_due_label ?? raw?.total_payment_label ?? raw?.total_bayar_label ?? raw?.final_price_label ?? raw?.payable_amount_label),
       description: String(raw?.description ?? raw?.deskripsi ?? raw?.short_description ?? '').trim(),
       thumbnail: this.resolveThumbnail(raw),
       badge: String(raw?.badge ?? raw?.label ?? raw?.status_label ?? raw?.package_tier ?? '').trim(),
@@ -817,12 +892,25 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   private resolveCurrentPackage(): UpgradePackage | null {
     if (this.isSubscriptionExpired()) return null;
 
-    const matched = this.packages.find((pkg) => pkg.isCurrent);
-    if (matched) return matched;
-
     const profile: any = this.userProfile || {};
-    const currentRaw = profile.package_info || profile.invitation_package || profile.paket_undangan || null;
-    return currentRaw ? this.mapPackage({ ...currentRaw, is_current: true }, 0) : null;
+    const subscriptionPackage = this.activeSubscription?.current_package ||
+      this.activeSubscription?.package ||
+      this.activeSubscription?.paket ||
+      this.activeSubscription?.package_info ||
+      null;
+    const currentRaw = profile.current_package ||
+      subscriptionPackage ||
+      profile.package_info ||
+      profile.invitation_package ||
+      profile.paket_undangan ||
+      null;
+
+    if (currentRaw) {
+      const current = this.mapPackage({ ...currentRaw, is_current: true }, 0);
+      return this.packages.find((pkg) => this.isSamePackage(pkg, current)) || current;
+    }
+
+    return this.packages.find((pkg) => pkg.isCurrent) || null;
   }
 
   private resolveLastPackage(): UpgradePackage | null {
@@ -1189,8 +1277,12 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
     ).trim().toLowerCase();
 
     const packageActive = this.userProfile?.package_info?.is_active === true && this.isSelectedPackageActive();
-    if (packageActive || ['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'].includes(status)) {
+    if (packageActive) {
       return 'success';
+    }
+
+    if (['paid', 'settlement', 'settled', 'success', 'sukses', 'confirmed', 'active', 'aktif'].includes(status)) {
+      return 'processing';
     }
 
     if (['expire', 'expired', 'kedaluwarsa', 'kadaluarsa'].includes(status)) {

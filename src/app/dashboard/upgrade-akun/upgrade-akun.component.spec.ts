@@ -117,13 +117,12 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.hasCreatedTransaction).toBeTrue();
   });
 
-  it('maps successful backend status to active package success copy', () => {
+  it('keeps paid transaction in processing until backend marks selected package current', () => {
     component.invoiceData = { payment_method: 'midtrans', payment_status: 'settlement' };
     component.checkoutState = (component as any).resolveCheckoutState(component.invoiceData);
 
-    expect(component.checkoutState).toBe('success');
-    expect(component.checkoutStatusTitle).toBe('Pembayaran Berhasil');
-    expect(component.checkoutStatusMessage).toContain('Paket Sapphire Anda sudah aktif');
+    expect(component.checkoutState).toBe('processing');
+    expect(component.checkoutStatusTitle).toBe('Pembayaran Sedang Diproses');
   });
 
   it('maps failed payment status to retry payment state', () => {
@@ -169,6 +168,7 @@ describe('UpgradeAkunComponent payment flow', () => {
   it('uses refreshed backend package data as source of truth for success state', () => {
     component.isModalOpen = true;
     component.invoiceData = { payment_method: 'midtrans', payment_status: 'pending', package_code: 'sapphire' };
+    component.selectedPackage = sapphirePackage;
 
     (component as any).applyDashboardState(
       { data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } },
@@ -178,6 +178,41 @@ describe('UpgradeAkunComponent payment flow', () => {
 
     expect(component.checkoutState).toBe('success');
     expect(component.checkoutStatusTitle).toBe('Pembayaran Berhasil');
+  });
+
+  it('keeps Sapphire as current when query target is Diamond', () => {
+    component.requestedPackage = 'diamond';
+
+    (component as any).applyDashboardState(
+      { data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } },
+      { data: [
+        { ...rubyPackage, is_current: false },
+        { ...sapphirePackage, is_current: true },
+        { ...diamondPackage, is_current: false },
+      ] },
+      { data: { midtrans: { enabled: true } } }
+    );
+
+    expect(component.currentPackage?.code).toBe('sapphire');
+    expect(component.isCurrentPackage(sapphirePackage)).toBeTrue();
+    expect(component.isCurrentPackage(diamondPackage)).toBeFalse();
+    expect(component.highestPackageMessage).toBe('');
+  });
+
+  it('does not trust package-list is_current when profile current is Sapphire', () => {
+    (component as any).applyDashboardState(
+      { data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } },
+      { data: [
+        { ...sapphirePackage, is_current: false },
+        { ...diamondPackage, is_current: true },
+      ] },
+      { data: { midtrans: { enabled: true } } }
+    );
+
+    expect(component.currentPackage?.code).toBe('sapphire');
+    expect(component.isCurrentPackage(sapphirePackage)).toBeTrue();
+    expect(component.isCurrentPackage(diamondPackage)).toBeFalse();
+    expect(component.highestPackageMessage).toBe('');
   });
 
   it('maps backend upgrade pricing to normal price, discount, and payable amount', () => {
@@ -203,6 +238,32 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp180.000');
     expect(component.primaryPaymentCtaLabel.replace(/\s/g, '')).toBe('BayarRp180.000');
     expect(component.selectedPackageDiscountLabel).toBe('Diskon Upgrade 40%');
+  });
+
+  it('maps nested backend upgrade pricing without falling back to normal price', () => {
+    const pkg = (component as any).mapPackage({
+      id: 3,
+      package_code: 'diamond',
+      name: 'Diamond',
+      price: 10000,
+      pricing: {
+        original_price: 10000,
+        discount_percentage: 40,
+        discount_amount: 4000,
+        upgrade_price: 6000,
+      },
+      can_select: true,
+      can_upgrade: true,
+      action: 'upgrade',
+    }, 0);
+
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = pkg;
+
+    expect(pkg.originalPriceLabel.replace(/\s/g, '')).toBe('Rp10.000');
+    expect(pkg.discountAmountLabel.replace(/\s/g, '')).toBe('Rp4.000');
+    expect(pkg.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp6.000');
   });
 
   it('allows Ruby users to upgrade to Sapphire and Diamond', () => {
@@ -256,6 +317,52 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.getPackageAction(packageWithoutPricing)).toBe('unavailable');
     expect(component.getActionLabel(packageWithoutPricing)).toBe('Harga upgrade belum tersedia');
     expect(component.canShowPackageUpgradePricing(packageWithoutPricing)).toBeFalse();
+  });
+
+  it('does not show normal price as upgrade price while upgrade pricing is missing', () => {
+    const packageWithoutPricing = {
+      ...diamondPackage,
+      price: 10000,
+      priceLabel: 'Rp10.000',
+      upgradePrice: null,
+      upgradePriceLabel: '',
+      discountAmount: null,
+      discountAmountLabel: '',
+    };
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = packageWithoutPricing;
+
+    expect(component.modalPackagePrice).toBe('');
+    expect(component.primaryPaymentCtaLabel).toBe('Memuat harga...');
+    expect(component.selectedPackageRequiresUpgradePricing).toBeTrue();
+  });
+
+  it('keeps current package unchanged when modal is closed or invoice is created', () => {
+    dashboardService.create.and.returnValue(of({
+      data: {
+        payment_method: 'midtrans',
+        payment_url: 'https://pay.example.test/checkout',
+        package_code: 'diamond',
+        payment_status: 'pending',
+      },
+    }));
+    spyOn(window, 'open');
+    dashboardService.getProfile.and.returnValue(of({ data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } }));
+    dashboardService.list.and.returnValue(of({ data: [
+      { ...sapphirePackage, is_current: true },
+      { ...diamondPackage, is_current: false },
+    ] }));
+    component.currentPackage = sapphirePackage;
+    component.openUpgradeModal(diamondPackage);
+    component.closeUpgradeModal();
+
+    expect(component.currentPackage?.code).toBe('sapphire');
+
+    component.selectedPackage = diamondPackage;
+    component.startPayment('midtrans');
+
+    expect(component.currentPackage?.code).toBe('sapphire');
+    expect(component.checkoutState).toBe('pending');
   });
 
   it('keeps theme context in return URL after requested package becomes active', () => {

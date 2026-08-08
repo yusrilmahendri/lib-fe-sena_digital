@@ -690,10 +690,13 @@
 }
 
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme {
+  -webkit-appearance: none;
+  appearance: none;
   background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
   border: 0;
   box-shadow: 0 14px 28px rgba(139, 18, 76, 0.24);
   color: #ffffff !important;
+  text-shadow: 0 1px 1px rgba(75, 12, 45, 0.18);
 }
 
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:hover:not(:disabled),
@@ -712,7 +715,7 @@
 .theme-modal--upgrade .theme-modal__primary.btn-confirm-theme:disabled {
   background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%) !important;
   color: #ffffff !important;
-  opacity: 0.62 !important;
+  opacity: 0.78 !important;
 }
 
 .theme-modal__secondary {

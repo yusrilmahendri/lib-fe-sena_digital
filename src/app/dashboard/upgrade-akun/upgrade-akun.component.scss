@@ -543,6 +543,11 @@
   }
 }
 
+.modal-summary__loading strong {
+  color: #64748b;
+  font-size: 15px;
+}
+
 .checkout-confirmation,
 .checkout-status {
   display: grid;
@@ -804,7 +809,10 @@
 }
 
 .modal-primary {
+  appearance: none;
+  border: 0;
   background: linear-gradient(135deg, #ec4899, #db2777);
+  box-shadow: 0 10px 22px rgba(219, 39, 119, 0.24);
   color: #ffffff;
 
   &:hover:not(:disabled),
@@ -819,7 +827,8 @@
     background: linear-gradient(135deg, #ec4899, #db2777);
     color: #ffffff;
     cursor: not-allowed;
-    opacity: 0.64;
+    opacity: 0.72;
+    box-shadow: none;
   }
 }
 

@@ -1335,7 +1335,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
 
   get upgradeTargetPackagePriceLabel(): string {
     const theme = this.pendingThemeForUpgrade || this.selectedThemeForSubmit || this.selectedTheme;
-    return theme?.targetPackageUpgradePriceLabel || this.formatCurrencyLabel(theme?.targetPackageUpgradePrice) || this.formatCurrencyLabel(theme?.targetPackagePrice) || 'Belum tersedia';
+    return theme?.targetPackageUpgradePriceLabel || this.formatCurrencyLabel(theme?.targetPackageUpgradePrice) || 'Belum tersedia';
   }
 
   get upgradeTargetPackageOriginalPriceLabel(): string {

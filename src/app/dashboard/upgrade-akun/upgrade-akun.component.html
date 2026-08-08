@@ -171,10 +171,16 @@
         <span>{{ selectedPackageDiscountLabel }}</span>
         <strong>- {{ selectedPackage.discountAmountLabel }}</strong>
       </div>
-      <div>
-        <span>Total Pembayaran</span>
+      <div *ngIf="!selectedPackageRequiresUpgradePricing; else upgradePriceLoading">
+        <span>{{ getPackageAction(selectedPackage) === 'upgrade' ? 'Harga Upgrade' : 'Total Pembayaran' }}</span>
         <strong>{{ modalPackagePrice }}</strong>
       </div>
+      <ng-template #upgradePriceLoading>
+        <div class="modal-summary__loading">
+          <span>Harga Upgrade</span>
+          <strong>Memuat harga upgrade...</strong>
+        </div>
+      </ng-template>
     </div>
 
     <div class="modal-features" *ngIf="(checkoutState === 'confirmation' || checkoutState === 'method') && selectedPackage.features.length">
@@ -321,14 +327,14 @@
   </div>
 
   <footer class="upgrade-modal__footer">
-    <button type="button" class="modal-secondary" (click)="closeUpgradeModal()" [disabled]="isCreatingInvoice">Batal</button>
+    <button type="button" class="modal-secondary" (click)="closeUpgradeModal()" [disabled]="isCreatingInvoice">Kembali</button>
     <button
       type="button"
       class="modal-primary"
       *ngIf="checkoutState === 'confirmation'"
       (click)="continueToPaymentMethod()"
-      [disabled]="isLoadingPaymentMethods || isCreatingInvoice">
-      {{ isLoadingPaymentMethods ? 'Memuat...' : 'Lanjut ke Pembayaran' }}
+      [disabled]="isLoadingPaymentMethods || isCreatingInvoice || selectedPackageRequiresUpgradePricing">
+      {{ selectedPackageRequiresUpgradePricing ? 'Memuat harga...' : (isLoadingPaymentMethods ? 'Memuat...' : 'Lanjut ke Pembayaran') }}
     </button>
     <button
       type="button"
