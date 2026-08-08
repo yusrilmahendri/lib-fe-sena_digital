@@ -3,7 +3,9 @@ import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators }
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../auth.service';
+import { DashboardService } from '../../dashboard.service';
 import { LandingModalService } from '../../landing-modal.service';
+import { resolvePaymentRedirect } from '../../shared/payment-status.util';
 
 export type AuthModalMode =
   | 'login'
@@ -47,6 +49,7 @@ export class AuthModalComponent implements OnChanges {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
+    private dashboardService: DashboardService,
     private router: Router,
     private modal: LandingModalService
   ) {
@@ -210,8 +213,12 @@ export class AuthModalComponent implements OnChanges {
           ? [responseRole]
           : [];
 
-        const targetUrl = roles.includes('admin') ? '/admin' : '/dashboard';
-        this.router.navigateByUrl(targetUrl, { replaceUrl: true });
+        if (roles.includes('admin')) {
+          this.router.navigateByUrl('/admin', { replaceUrl: true });
+          return;
+        }
+
+        this.redirectUserAfterLogin();
       },
       error: () => {
         this.isSubmitting = false;
@@ -223,6 +230,18 @@ export class AuthModalComponent implements OnChanges {
   private hasStoredAccessToken(): boolean {
     const token = localStorage.getItem('access_token');
     return !!token && token !== 'undefined' && token !== 'null';
+  }
+
+  private redirectUserAfterLogin(): void {
+    this.dashboardService.getProfile().subscribe({
+      next: (profile) => {
+        const targetUrl = resolvePaymentRedirect(profile, '/pilih-paket');
+        this.router.navigateByUrl(targetUrl, { replaceUrl: true });
+      },
+      error: () => {
+        this.router.navigateByUrl('/pilih-paket', { replaceUrl: true });
+      },
+    });
   }
 
   submitForgotPassword(): void {

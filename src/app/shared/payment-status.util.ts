@@ -16,6 +16,10 @@ export interface PaymentState {
   transactionDate: string;
   hasInvoice: boolean;
   hasSelectedPaymentMethod: boolean;
+  initialPaymentRequired: boolean;
+  paymentAction: 'create_payment' | 'continue_payment' | 'retry_payment' | 'create_new_payment' | 'check_status';
+  paymentUrl: string;
+  amountLabel: string;
 }
 
 export type AccountAccessStatus = 'unverified' | 'onboarding' | 'pending_payment' | 'expired' | 'active';
@@ -178,6 +182,45 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.created_at,
   ]);
   const hasInvoice = resolveHasInvoice(data, invoiceCode);
+  const initialPaymentRequired = resolveInitialPaymentRequired(data, accountStatusRaw, paymentStatusRaw);
+  const paymentUrl = firstText([
+    data.payment_url,
+    data.invoice_url,
+    data.redirect_url,
+    data.checkout_url,
+    data.snap_redirect_url,
+    data.tagihan?.payment_url,
+    data.tagihan?.invoice_url,
+    data.tagihan?.redirect_url,
+    data.invoice?.payment_url,
+    data.invoice?.invoice_url,
+    data.invoice?.redirect_url,
+    data.transaction?.payment_url,
+    data.transaction?.redirect_url,
+  ]);
+  const amountLabel = firstText([
+    data.amount_label,
+    data.total_label,
+    data.price_label,
+    data.package_info?.price_label,
+    data.invitation_package?.price_label,
+    data.tagihan?.amount_label,
+    data.tagihan?.total_label,
+    data.invoice?.amount_label,
+    data.invoice?.total_label,
+  ]) || formatCurrency(firstNumber([
+    data.amount,
+    data.total,
+    data.price,
+    data.package_info?.price,
+    data.package_info?.harga,
+    data.invitation_package?.price,
+    data.invitation_package?.harga,
+    data.tagihan?.amount,
+    data.tagihan?.total,
+    data.invoice?.amount,
+    data.invoice?.total,
+  ]));
   const activeUntil = firstText([
     data.active_until_formatted,
     data.domain_info?.expires_at_formatted,
@@ -226,6 +269,7 @@ export function resolvePaymentState(profile: any): PaymentState {
     paymentStatusRaw,
     hasInvoice,
     hasSelectedPaymentMethod,
+    initialPaymentRequired,
   });
 
   return {
@@ -271,6 +315,10 @@ export function resolvePaymentState(profile: any): PaymentState {
     transactionDate: formatDateDisplay(transactionDate),
     hasInvoice,
     hasSelectedPaymentMethod,
+    initialPaymentRequired,
+    paymentAction: resolvePaymentAction({ paymentStatusRaw, hasInvoice, hasSelectedPaymentMethod, initialPaymentRequired, paymentUrl }),
+    paymentUrl,
+    amountLabel,
   };
 }
 
@@ -283,17 +331,18 @@ export function resolvePaymentRedirect(profile: any, paymentRoute = '/pilih-pake
   ]);
   const state = resolvePaymentState(data);
 
+  if (state.accountStatus === 'pending_payment') return '/dashboard/payment-pending';
+  if (state.accountStatus === 'expired') return '/dashboard/account-expired';
+
   if (backendRedirectUrl) {
-    if (normalizePath(backendRedirectUrl) === '/dashboard/payment-pending' && state.accountStatus !== 'pending_payment') {
+    if (normalizePath(backendRedirectUrl) === '/dashboard/payment-pending') {
       return paymentRoute;
     }
     return backendRedirectUrl;
   }
 
   if (state.accountStatus === 'unverified') return '/verify-account';
-  if (state.accountStatus === 'expired') return '/dashboard/account-expired';
   if (state.accountStatus === 'active') return '/dashboard/overview';
-  if (state.accountStatus === 'pending_payment') return '/dashboard/payment-pending';
   return paymentRoute;
 }
 
@@ -305,15 +354,17 @@ function resolveStatus(state: {
   paymentStatusRaw: string;
   hasInvoice: boolean;
   hasSelectedPaymentMethod: boolean;
+  initialPaymentRequired: boolean;
 }): AccountAccessStatus {
   if (!state.isVerified) return 'unverified';
+  if (state.initialPaymentRequired && !state.isPaymentConfirmed) return 'pending_payment';
   if (state.isExpired) return 'expired';
   if (state.accountStatusRaw === 'active') return 'active';
   if (state.accountStatusRaw === 'onboarding') return 'onboarding';
   if (state.isPaymentConfirmed) return 'active';
   if (DRAFT_PAYMENT_STATUSES.includes(state.paymentStatusRaw)) return 'onboarding';
   if (
-    state.hasSelectedPaymentMethod &&
+    (state.hasInvoice || state.hasSelectedPaymentMethod) &&
     (
       state.accountStatusRaw === 'pending_payment' ||
       PENDING_STATUSES.includes(state.accountStatusRaw) ||
@@ -387,6 +438,52 @@ function resolveHasSelectedPaymentMethod(data: any): boolean {
     data.invoice?.midtrans_order_id,
     data.invoice?.snap_token,
   ]);
+}
+
+function resolveInitialPaymentRequired(data: any, accountStatusRaw: string, paymentStatusRaw: string): boolean {
+  if (
+    data.initial_payment_required === true ||
+    data.payment_required === true ||
+    data.requires_initial_payment === true ||
+    data.needs_initial_payment === true ||
+    data.package_info?.initial_payment_required === true ||
+    data.package_info?.payment_required === true ||
+    data.invitation_package?.initial_payment_required === true ||
+    data.invitation_package?.payment_required === true
+  ) {
+    return true;
+  }
+
+  return (
+    accountStatusRaw === 'pending_payment' ||
+    accountStatusRaw === 'waiting_payment' ||
+    accountStatusRaw === 'unpaid' ||
+    paymentStatusRaw === 'pending_payment'
+  );
+}
+
+function resolvePaymentAction(state: {
+  paymentStatusRaw: string;
+  hasInvoice: boolean;
+  hasSelectedPaymentMethod: boolean;
+  initialPaymentRequired: boolean;
+  paymentUrl: string;
+}): PaymentState['paymentAction'] {
+  if (EXPIRED_STATUSES.includes(state.paymentStatusRaw)) return 'create_new_payment';
+  if (['failed', 'failure', 'gagal', 'deny', 'denied', 'cancel', 'cancelled'].includes(state.paymentStatusRaw)) return 'retry_payment';
+  if (state.hasInvoice || state.hasSelectedPaymentMethod || state.paymentUrl) return 'continue_payment';
+  if (state.initialPaymentRequired) return 'create_payment';
+  return 'check_status';
+}
+
+function formatCurrency(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '';
+
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 function normalizePath(url: string): string {

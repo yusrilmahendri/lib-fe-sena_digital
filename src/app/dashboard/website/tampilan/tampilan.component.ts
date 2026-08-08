@@ -97,7 +97,7 @@ const FIXED_THEME_PRESETS = PUBLIC_THEME_PRESETS.map((preset) => ({
 })
 export class TampilanComponent implements OnInit, OnDestroy {
   readonly packageTabs = PACKAGE_TABS;
-  readonly upgradeRoute = '/dashboard/bill';
+  readonly upgradeRoute = '/user/upgrade-account';
 
   themeCards: ThemeCard[] = [];
   isLoading = false;
@@ -595,14 +595,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
       const isThemeActive = adminIsActive;
       const isCategoryActive = rawCategory?.is_active == null ? true : this.toBoolean(rawCategory.is_active);
       const isConnectedToBackend = !!resolvedThemeId && !!preset.slug;
-      const requiredPackageTier =
+      const explicitRequiredPackageTier =
         this.normalizeTargetPackage(
           (theme as any)?.required_package ||
           (theme as any)?.package_required ||
           (theme as any)?.packageRequired ||
           (theme as any)?.target_package
-        ) ||
-        getLowestPackageTierForTheme(preset.slug, this.themeAccessMap);
+        );
+      const requiredPackageTier = this.resolveMinimumRequiredTier(
+        preset.packageTier,
+        explicitRequiredPackageTier || getLowestPackageTierForTheme(preset.slug, this.themeAccessMap)
+      );
       const tierCanUse = this.canUseThemeByTier(preset.slug, requiredPackageTier);
       const canPreview = true;
       const canUseFromApi = (theme as any)?.can_use == null ? null : this.toBoolean((theme as any).can_use);
@@ -611,20 +614,18 @@ export class TampilanComponent implements OnInit, OnDestroy {
         (theme as any)?.locked,
       ]);
       const lockedFromApi = lockedValue == null ? null : this.toBoolean(lockedValue);
-      const fallbackCanUse = isConnectedToBackend && tierCanUse && adminIsActive && this.isAccountActive;
-      const canUse = canUseFromApi === true
-        ? adminIsActive && this.isAccountActive
-        : fallbackCanUse;
-      const upgradeRequired = (theme as any)?.upgrade_required == null
-        ? !canUse && this.isAccountActive && adminIsActive && (!tierCanUse || lockedFromApi === true)
-        : this.toBoolean((theme as any).upgrade_required) && !canUse;
+      const canUse = isConnectedToBackend && tierCanUse && adminIsActive && this.isAccountActive;
+      const upgradeRequired = !canUse && this.isAccountActive && adminIsActive && !tierCanUse;
       const targetPackageRaw =
         (theme as any)?.required_package ||
         (theme as any)?.package_required ||
         (theme as any)?.packageRequired ||
         (theme as any)?.target_package ||
         requiredPackageTier;
-      const targetPackage = this.normalizeTargetPackage(targetPackageRaw) || requiredPackageTier;
+      const targetPackage = this.resolveMinimumRequiredTier(
+        requiredPackageTier,
+        this.normalizeTargetPackage(targetPackageRaw) || requiredPackageTier
+      );
       const availabilityMessage = canUse
         ? undefined
         : !this.isAccountActive
@@ -661,13 +662,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
         canPreview,
         canUse,
         canUseFromApi,
-        lockedFromApi: canUse ? false : (lockedFromApi ?? true),
+        lockedFromApi: canUse ? false : (lockedFromApi ?? !tierCanUse),
         lockReason: String((theme as any)?.lock_reason || '').trim(),
         inactiveByAdmin,
         adminIsActive,
         upgradeRequired,
         targetPackage,
-        targetPackageLabel: this.resolveTargetPackageLabel(targetPackageRaw, targetPackage),
+        targetPackageLabel: this.getPackageLabel(targetPackage),
         targetPackagePrice: this.resolveTargetPackagePrice(targetPackageRaw, targetPackage),
       });
     });
@@ -978,7 +979,8 @@ export class TampilanComponent implements OnInit, OnDestroy {
     this.router.navigate(['/user/upgrade-account'], {
       queryParams: {
         package: targetPackage,
-        theme: theme.slug,
+        theme: theme.backendThemeId || theme.id || theme.slug,
+        themeSlug: theme.slug,
         returnUrl: '/user/tampilan',
       },
     });
@@ -1369,6 +1371,16 @@ export class TampilanComponent implements OnInit, OnDestroy {
     }
 
     return getLowestPackageTierForTheme(theme.slug, this.themeAccessMap);
+  }
+
+  private resolveMinimumRequiredTier(
+    themeTier: PaidPackageTier,
+    candidateTier: PaidPackageTier
+  ): PaidPackageTier {
+    const order: PaidPackageTier[] = ['ruby', 'sapphire', 'diamond'];
+    const themeIndex = order.indexOf(themeTier);
+    const candidateIndex = order.indexOf(candidateTier);
+    return order[Math.max(themeIndex, candidateIndex, 0)];
   }
 
   private resolveUserPackageTier(profileData: any): ThemePackageTier {

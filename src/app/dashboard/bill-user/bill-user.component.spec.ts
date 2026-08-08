@@ -1,28 +1,57 @@
-/* tslint:disable:no-unused-variable */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
-
 import { BillUserComponent } from './bill-user.component';
 
 describe('BillUserComponent', () => {
   let component: BillUserComponent;
-  let fixture: ComponentFixture<BillUserComponent>;
-
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [ BillUserComponent ]
-    })
-    .compileComponents();
-  }));
+  let router: any;
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(BillUserComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    router = {
+      navigate: jasmine.createSpy('navigate'),
+      navigateByUrl: jasmine.createSpy('navigateByUrl'),
+    };
+    component = new BillUserComponent(
+      { getProfile: jasmine.createSpy('getProfile') } as any,
+      { snapshot: { data: {} } } as any,
+      router
+    );
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('routes renew to the current package renewal flow', () => {
+    component.paymentState = {
+      packageCode: 'sapphire',
+      packageName: 'Sapphire',
+    } as any;
+
+    component.renewPackage();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/user/upgrade-account'], {
+      queryParams: {
+        mode: 'renew',
+        package: 'sapphire',
+        returnUrl: '/dashboard/account-expired',
+      },
+    });
+  });
+
+  it('routes upgrade to package selection, separate from renew', () => {
+    component.upgradePackage();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/user/upgrade-account'], {
+      queryParams: {
+        mode: 'upgrade',
+        returnUrl: '/dashboard/account-expired',
+      },
+    });
+  });
+
+  it('uses create payment CTA when initial payment has no transaction yet', () => {
+    component.paymentState = {
+      paymentAction: 'create_payment',
+      packageName: 'Sapphire',
+    } as any;
+
+    expect(component.pendingPaymentTitle).toBe('Selesaikan Pembayaran');
+    expect(component.pendingPaymentLead).toContain('Paket Sapphire');
+    expect(component.pendingPaymentCtaLabel).toBe('Buat Pembayaran');
   });
 });

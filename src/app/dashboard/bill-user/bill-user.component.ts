@@ -17,6 +17,7 @@ export class BillUserComponent implements OnInit {
   errorMessage = '';
   statusPage: Extract<AccountAccessStatus, 'pending_payment' | 'expired'> = 'pending_payment';
   private readonly onboardingRoute = '/buat-undangan';
+  private readonly onboardingPaymentRoute = '/pilih-paket';
 
   constructor(
     private dashboardService: DashboardService,
@@ -81,7 +82,13 @@ export class BillUserComponent implements OnInit {
   }
 
   openPaymentInstruction(): void {
-    this.refreshStatus();
+    const paymentUrl = this.paymentState?.paymentUrl || '';
+    if (paymentUrl) {
+      window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    this.router.navigateByUrl(this.onboardingPaymentRoute);
   }
 
   contactAdmin(): void {
@@ -119,11 +126,46 @@ export class BillUserComponent implements OnInit {
   }
 
   renewPackage(): void {
-    this.contactAdmin();
+    const packageTarget = this.paymentState?.packageCode || this.paymentState?.packageName || '';
+    this.router.navigate(['/user/upgrade-account'], {
+      queryParams: {
+        mode: 'renew',
+        package: packageTarget,
+        returnUrl: '/dashboard/account-expired',
+      },
+    });
   }
 
   upgradePackage(): void {
-    this.contactAdmin();
+    this.router.navigate(['/user/upgrade-account'], {
+      queryParams: {
+        mode: 'upgrade',
+        returnUrl: '/dashboard/account-expired',
+      },
+    });
+  }
+
+  get pendingPaymentTitle(): string {
+    return 'Selesaikan Pembayaran';
+  }
+
+  get pendingPaymentLead(): string {
+    const packageName = this.paymentState?.packageName || this.paymentState?.packageCode || 'paket pilihan';
+    return `Anda telah memilih Paket ${this.normalizePackageLabel(packageName)}. Selesaikan pembayaran untuk mengaktifkan akun dan mulai membuat undangan.`;
+  }
+
+  get pendingPaymentCtaLabel(): string {
+    const action = this.paymentState?.paymentAction;
+    if (action === 'continue_payment') return 'Lanjutkan Pembayaran';
+    if (action === 'create_new_payment') return 'Buat Pembayaran Baru';
+    if (action === 'retry_payment') return 'Coba Lagi';
+    return 'Buat Pembayaran';
+  }
+
+  private normalizePackageLabel(value: string): string {
+    const label = String(value || '').trim();
+    if (!label) return 'pilihan';
+    return label.replace(/^paket\s+/i, '');
   }
 
 }

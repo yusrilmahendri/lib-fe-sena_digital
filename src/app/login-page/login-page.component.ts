@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardService } from '../dashboard.service';
+import { resolvePaymentRedirect } from '../shared/payment-status.util';
 
 @Component({
   selector: 'wc-login-page',
@@ -32,9 +33,19 @@ export class LoginPageComponent implements OnInit {
     this.dashboardService.login(this.email, this.password).subscribe(
       (response: any) => {
         this.errorMessage = '';
-        if (response.role.includes('user')) {
-          this.router.navigate(['/dashboard']);
-        } else if (response.role.includes('admin')) {
+        const responseRole = response?.role || response?.data?.role;
+        const roles: string[] = Array.isArray(responseRole)
+          ? responseRole
+          : responseRole
+          ? [responseRole]
+          : [];
+
+        if (roles.includes('user')) {
+          this.dashboardService.getProfile().subscribe({
+            next: (profile) => this.router.navigateByUrl(resolvePaymentRedirect(profile, '/pilih-paket'), { replaceUrl: true }),
+            error: () => this.router.navigateByUrl('/pilih-paket', { replaceUrl: true }),
+          });
+        } else if (roles.includes('admin')) {
           this.router.navigate(['/admin']);
         } else {
           this.errorMessage = 'Unauthorized role. Please contact support.';
