@@ -42,19 +42,21 @@
         </div>
 
         <label class="default-option" [class.selected]="isDefaultMusicSelected()">
-          <input type="radio" name="music-selection" [checked]="isDefaultMusicSelected()" (change)="selectMusic(null, 'default')" />
-          <span class="default-icon"><i class="fa fa-music" aria-hidden="true"></i></span>
-          <span class="default-copy">
+          <input class="music-selector-input" type="radio" name="music-selection" [checked]="isDefaultMusicSelected()" (change)="selectMusic(null, 'default')" />
+          <span class="default-icon music-icon"><i class="fa fa-music" aria-hidden="true"></i></span>
+          <span class="default-copy music-info">
             <span class="music-title-row">
               <strong>Gunakan musik default</strong>
+            </span>
+            <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
+            <span class="music-meta-row">
               <span class="badge-soft">Bawaan</span>
               <span *ngIf="isDefaultMusicSelected()" class="selected-badge">
                 {{ getDefaultMusicBadgeLabel() }}
               </span>
             </span>
-            <small>{{ musicSelection?.default_music?.title || 'Biarkan Sena Digital memilih musik bawaan undangan.' }}</small>
           </span>
-          <button type="button" class="icon-button" (click)="$event.preventDefault(); $event.stopPropagation(); playDefaultPreview()" [disabled]="!canPreviewDefaultMusic()" title="Preview musik default">
+          <button type="button" class="icon-button music-action" (click)="$event.preventDefault(); $event.stopPropagation(); playDefaultPreview()" [disabled]="!canPreviewDefaultMusic()" title="Preview musik default">
             <i class="fa" [class.fa-spinner]="isPreviewLoading && currentPreviewId === 'default'" [class.fa-play]="previewingMusicId !== 'default' && !(isPreviewLoading && currentPreviewId === 'default')" [class.fa-pause]="previewingMusicId === 'default' && !(isPreviewLoading && currentPreviewId === 'default')" aria-hidden="true"></i>
           </button>
         </label>
@@ -63,27 +65,27 @@
           <!-- <h4>Daftar Lagu Sena Digital</h4> -->
           <div *ngIf="adminCatalogTracks.length; else emptyAdminCatalog" class="music-list">
             <label class="music-item" *ngFor="let music of adminCatalogTracks; trackBy: trackMusicById" [class.selected]="isMusicSelected(music, 'catalog')">
-              <input type="radio" name="music-selection" [checked]="isMusicSelected(music, 'catalog')" (change)="selectMusic(music.id, 'catalog')" />
-              <img *ngIf="music.thumbnail_url; else thumbnailFallback" class="music-thumb" [src]="music.thumbnail_url" [alt]="music.title" />
+              <input class="music-selector-input" type="radio" name="music-selection" [checked]="isMusicSelected(music, 'catalog')" (change)="selectMusic(music.id, 'catalog')" />
+              <img *ngIf="music.thumbnail_url; else thumbnailFallback" class="music-thumb music-icon" [src]="music.thumbnail_url" [alt]="music.title" />
               <ng-template #thumbnailFallback>
-                <span class="music-thumb fallback"><i class="fa fa-headphones" aria-hidden="true"></i></span>
+                <span class="music-thumb music-icon fallback"><i class="fa fa-headphones" aria-hidden="true"></i></span>
               </ng-template>
               <span class="music-info">
                 <span class="music-title-row">
                   <strong>{{ music.title || 'Judul tidak tersedia' }}</strong>
+                </span>
+                <small *ngIf="getMusicMeta(music)">{{ getMusicMeta(music) }}</small>
+                <span class="music-meta-row">
                   <span *ngIf="isSystemDefaultMusic(music)" class="badge-soft">Bawaan</span>
                   <span *ngIf="isMusicSelected(music, 'catalog')" class="selected-badge">
                     {{ isMusicSaved(music, 'catalog') ? 'Aktif' : 'Dipilih' }}
                   </span>
-                </span>
-                <span class="music-meta-row">
-                  <small *ngIf="getMusicMeta(music)">{{ getMusicMeta(music) }}</small>
-                  <small class="source-label">Katalog Sena</small>
+                  <span class="source-label">Katalog Sena</span>
                 </span>
               </span>
              <button
                 type="button"
-                class="icon-button"
+                class="icon-button music-action"
                 (click)="$event.preventDefault(); $event.stopPropagation(); playPreview(music)"
                 [disabled]="!canPreviewMusic(music)"
                 title="Preview lagu"
@@ -127,9 +129,9 @@
           <small class="d-block mb-2">Riwayat Upload Pribadi</small>
           <div class="music-list">
             <div class="music-item" *ngFor="let music of userUploadTracks; trackBy: trackMusicById">
-              <span class="music-thumb fallback"><i class="fa fa-user" aria-hidden="true"></i></span>
+              <span class="music-thumb music-icon fallback"><i class="fa fa-user" aria-hidden="true"></i></span>
               <span class="music-info">
-                <strong>{{ music.title || 'Musik Pribadi' }}</strong>
+                <strong [title]="music.title || 'Musik Pribadi'">{{ music.title || 'Musik Pribadi' }}</strong>
                 <small>{{ music.artist || 'Upload pengguna' }}</small>
                 <small *ngIf="getTrackDurationLabel(music)">Durasi: {{ getTrackDurationLabel(music) }}</small>
               </span>
@@ -138,17 +140,19 @@
         </div>
 
         <div *ngIf="getCustomMusicUrl()" class="custom-current" [class.custom-current--active]="isCustomMusicActive()">
-          <span class="default-icon"><i class="fa fa-file-audio-o" aria-hidden="true"></i></span>
-          <div>
-            <strong>{{ getCustomMusicName() }}</strong>
+          <span class="default-icon music-icon"><i class="fa fa-file-audio-o" aria-hidden="true"></i></span>
+          <div class="music-info custom-current-info">
+            <strong [title]="getCustomMusicName()">{{ getCustomMusicName() }}</strong>
             <small>{{ isCustomMusicActive() ? 'Musik pribadi menjadi sumber aktif.' : 'Musik pribadi sedang tersedia.' }}</small>
             <small *ngIf="getCustomMusicSizeLabel()">Ukuran: {{ getCustomMusicSizeLabel() }}</small>
             <small *ngIf="getCustomMusicUploadedAt()">Upload: {{ getCustomMusicUploadedAt() }}</small>
+            <span class="music-meta-row" *ngIf="isCustomMusicActive()">
+              <span class="selected-badge">Aktif</span>
+            </span>
           </div>
-          <span *ngIf="isCustomMusicActive()" class="selected-badge">Aktif</span>
           <button
             type="button"
-            class="icon-button"
+            class="icon-button music-action"
             (click)="$event.preventDefault(); $event.stopPropagation(); playCustomPreview()"
             [disabled]="!getCustomMusicUrl()"
             title="Preview musik pribadi"
