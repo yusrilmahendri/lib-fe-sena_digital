@@ -101,6 +101,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
   private hasOpenedRequestedPackageModal = false;
+  private hasStartedPostPaymentNavigation = false;
 
   constructor(
     private dashboardService: DashboardService,
@@ -700,26 +701,73 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   private redirectBackWhenUpgradeIsActive(): void {
-    if (!this.returnUrl || !this.requestedPackage || !this.isRequestedPackageActive()) return;
+    if (this.hasStartedPostPaymentNavigation || !this.isRequestedPackageActive()) return;
 
-    this.router.navigateByUrl(this.buildReturnUrlWithSuccess());
+    this.checkoutState = 'success';
+    this.paymentInfoMessage = 'Upgrade berhasil. Paket Anda sudah aktif.';
+    this.hasStartedPostPaymentNavigation = true;
+
+    const navigation = this.router.navigateByUrl(this.buildReturnUrlWithSuccess());
+    if (navigation && typeof (navigation as Promise<boolean>).catch === 'function') {
+      (navigation as Promise<boolean>).catch(() => {
+        this.hasStartedPostPaymentNavigation = false;
+        this.paymentInfoMessage = 'Upgrade berhasil. Paket Anda sudah aktif.';
+      });
+    }
   }
 
   private isRequestedPackageActive(): boolean {
-    const currentMatches = !!this.currentPackage && this.isRequestedPackage(this.currentPackage);
-    return currentMatches;
+    if (!this.currentPackage) return false;
+    if (!this.requestedPackage) return this.checkoutState === 'success';
+    return this.isRequestedPackage(this.currentPackage);
   }
 
   private buildReturnUrlWithSuccess(): string {
-    const separator = this.returnUrl.includes('?') ? '&' : '?';
+    const baseUrl = this.resolveSafeReturnUrl(this.returnUrl);
+    const separator = baseUrl.includes('?') ? '&' : '?';
     const query = [
       'upgradeSuccess=1',
-      `package=${encodeURIComponent(this.requestedPackage)}`,
+      this.requestedPackage ? `package=${encodeURIComponent(this.requestedPackage)}` : '',
       this.requestedTheme ? `theme=${encodeURIComponent(this.requestedTheme)}` : '',
       this.requestedThemeSlug ? `themeSlug=${encodeURIComponent(this.requestedThemeSlug)}` : '',
     ].filter(Boolean).join('&');
 
-    return `${this.returnUrl}${separator}${query}`;
+    return query ? `${baseUrl}${separator}${query}` : baseUrl;
+  }
+
+  private resolveSafeReturnUrl(value: string): string {
+    const fallback = '/dashboard/overview';
+    const raw = String(value || '').trim();
+    if (!raw) return fallback;
+
+    let decoded = raw;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      decoded = raw;
+    }
+
+    const withoutOrigin = this.stripCurrentOrigin(decoded.trim());
+    if (!this.isInternalReturnUrl(withoutOrigin)) return fallback;
+    return withoutOrigin;
+  }
+
+  private stripCurrentOrigin(value: string): string {
+    if (!/^https?:\/\//i.test(value)) return value;
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.origin !== window.location.origin) return value;
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch {
+      return value;
+    }
+  }
+
+  private isInternalReturnUrl(value: string): boolean {
+    if (!value || !value.startsWith('/') || value.startsWith('//')) return false;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return false;
+    return true;
   }
 
   private humanizePackage(value: string): string {

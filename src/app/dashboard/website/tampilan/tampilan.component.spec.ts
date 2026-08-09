@@ -111,12 +111,11 @@ describe('TampilanComponent', () => {
   it('maps backend payable amount as the upgrade price for theme upgrade summary', () => {
     const pricing = (component as any).resolveTargetPackagePriceInfo({
       name: 'Diamond',
-      price: 15000,
+      price: '15000.00',
       upgrade_pricing: {
         original_price: 15000,
         discount_percentage: 40,
         discount_amount: 6000,
-        upgrade_price: 15000,
         payable_amount: 9000,
       },
     }, 'diamond');
@@ -124,6 +123,76 @@ describe('TampilanComponent', () => {
     expect(pricing.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
     expect(pricing.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
     expect(pricing.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+  });
+
+  it('uses paket-undangan catalog upgrade pricing for Sapphire to Diamond theme modal', () => {
+    (component as any).packageCatalog = [
+      {
+        package_code: 'sapphire',
+        name: 'Sapphire',
+        price: '10000.00',
+        is_active: true,
+      },
+      {
+        package_code: 'diamond',
+        name: 'Diamond',
+        price: '15000.00',
+        is_active: true,
+        upgrade_pricing: {
+          original_price: 15000,
+          discount_percentage: 40,
+          discount_amount: 6000,
+          payable_amount: 9000,
+        },
+      },
+    ];
+    component.userPackageTier = 'sapphire';
+    const pricing = (component as any).resolveTargetPackagePriceInfo('diamond', 'diamond');
+    const theme: any = {
+      id: 15,
+      backendThemeId: 15,
+      name: 'Champagne Rose',
+      slug: 'champagne-rose',
+      targetPackage: 'diamond',
+      targetPackageLabel: 'Diamond',
+      requiredPackageTier: 'diamond',
+      targetPackagePrice: pricing.normalPrice,
+      targetPackageOriginalPrice: pricing.originalPrice,
+      targetPackageOriginalPriceLabel: pricing.originalPriceLabel,
+      targetPackageDiscountPercentage: pricing.discountPercentage,
+      targetPackageDiscountAmount: pricing.discountAmount,
+      targetPackageDiscountAmountLabel: pricing.discountAmountLabel,
+      targetPackageUpgradePrice: pricing.upgradePrice,
+      targetPackageUpgradePriceLabel: pricing.upgradePriceLabel,
+      upgradeRequired: true,
+      inactiveByAdmin: false,
+      adminIsActive: true,
+    };
+
+    component.onUpgradeClick(theme);
+
+    expect(component.upgradeCurrentPackageLabel).toBe('Sapphire');
+    expect(component.upgradeTargetPackageOriginalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(component.upgradeTargetPackageDiscountLabel).toBe('Diskon Upgrade 40%');
+    expect(component.upgradeTargetPackageDiscountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(component.upgradeTargetPackagePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+    expect(component.canShowUpgradeCta).toBeTrue();
+  });
+
+  it('does not fall back to package price when upgrade pricing is missing', () => {
+    (component as any).packageCatalog = [
+      {
+        package_code: 'diamond',
+        name: 'Diamond',
+        price: '15000.00',
+        is_active: true,
+      },
+    ];
+
+    const pricing = (component as any).resolveTargetPackagePriceInfo('diamond', 'diamond');
+
+    expect(pricing.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(pricing.upgradePriceLabel).toBe('');
   });
 
   it('shows upgrade CTA for Ruby users choosing a Sapphire theme', () => {

@@ -40,9 +40,9 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   selectedMusicFile: File | null = null;
   selectedMusicFileName = '';
   userData: ProfileData | null = null;
-  pageSizeOptions = [10, 20, 30, 50];
+  pageSizeOptions = [5, 10, 20, 30, 50];
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 5;
   totalItems = 0;
   lastPage = 1;
   pageFrom = 0;

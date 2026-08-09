@@ -1,10 +1,12 @@
 import { of, Subject, throwError } from 'rxjs';
 import { UpgradeAkunComponent } from './upgrade-akun.component';
+import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
 
 describe('UpgradeAkunComponent payment flow', () => {
   let component: UpgradeAkunComponent;
   let dashboardService: any;
   let router: any;
+  let windowOpenSpy: jasmine.Spy;
   const sapphirePackage: any = {
     id: 2,
     code: 'sapphire',
@@ -67,8 +69,9 @@ describe('UpgradeAkunComponent payment flow', () => {
       getUserPaymentConfig: jasmine.createSpy('getUserPaymentConfig').and.returnValue(of({ data: { midtrans: { enabled: true } } })),
     };
     router = {
-      navigateByUrl: jasmine.createSpy('navigateByUrl'),
+      navigateByUrl: jasmine.createSpy('navigateByUrl').and.returnValue(Promise.resolve(true)),
     };
+    windowOpenSpy = spyOn(window, 'open');
 
     component = new UpgradeAkunComponent(
       dashboardService,
@@ -80,7 +83,6 @@ describe('UpgradeAkunComponent payment flow', () => {
   });
 
   it('opens online payment after payment creation succeeds', () => {
-    spyOn(window, 'open');
     dashboardService.create.and.returnValue(of({
       data: {
         payment_method: 'midtrans',
@@ -93,7 +95,7 @@ describe('UpgradeAkunComponent payment flow', () => {
     component.startPayment('midtrans');
 
     expect(dashboardService.create).toHaveBeenCalledTimes(1);
-    expect(window.open).toHaveBeenCalledWith('https://pay.example.test/checkout', '_blank', 'noopener,noreferrer');
+    expect(windowOpenSpy).toHaveBeenCalledWith('https://pay.example.test/checkout', '_blank', 'noopener,noreferrer');
     expect(component.checkoutState).toBe('pending');
   });
 
@@ -452,7 +454,6 @@ describe('UpgradeAkunComponent payment flow', () => {
         payment_status: 'pending',
       },
     }));
-    spyOn(window, 'open');
     dashboardService.getProfile.and.returnValue(of({ data: { package_info: { is_active: true, package_code: 'sapphire', name: 'Sapphire' } } }));
     dashboardService.list.and.returnValue(of({ data: [
       { ...sapphirePackage, is_current: true },
@@ -499,4 +500,56 @@ describe('UpgradeAkunComponent payment flow', () => {
 
     expect((component as any).buildReturnUrlWithSuccess()).toBe('/user/tampilan?upgradeSuccess=1&package=diamond&theme=15&themeSlug=champagne-rose');
   });
+
+  it('navigates internally to the return URL only after refreshed backend package is active', () => {
+    component.requestedPackage = 'diamond';
+    component.requestedTheme = '15';
+    component.requestedThemeSlug = 'champagne-rose';
+    component.returnUrl = '/user/tampilan';
+    component.currentPackage = { ...diamondPackage, isCurrent: true };
+    component.checkoutState = 'success';
+
+    (component as any).redirectBackWhenUpgradeIsActive();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/user/tampilan?upgradeSuccess=1&package=diamond&theme=15&themeSlug=champagne-rose');
+    expect(component.checkoutState).toBe('success');
+    expect(component.paymentInfoMessage).toBe('Upgrade berhasil. Paket Anda sudah aktif.');
+  });
+
+  it('does not navigate after Snap success while backend still reports the old package', () => {
+    component.requestedPackage = 'diamond';
+    component.returnUrl = '/user/tampilan';
+    component.currentPackage = sapphirePackage;
+    component.checkoutState = 'processing';
+
+    (component as any).redirectBackWhenUpgradeIsActive();
+
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(component.checkoutState).toBe('processing');
+  });
+
+  it('falls back to dashboard when return URL is missing or external', () => {
+    component.requestedPackage = 'diamond';
+    component.returnUrl = 'https://evil.example.test/user/tampilan';
+    component.currentPackage = { ...diamondPackage, isCurrent: true };
+    component.checkoutState = 'success';
+
+    (component as any).redirectBackWhenUpgradeIsActive();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard/overview?upgradeSuccess=1&package=diamond');
+  });
+
+  it('keeps success UI visible when post-payment navigation fails', fakeAsync(() => {
+    router.navigateByUrl.and.returnValue(Promise.reject(new Error('Cannot match any routes')));
+    component.requestedPackage = 'diamond';
+    component.returnUrl = '/route-yang-rusak';
+    component.currentPackage = { ...diamondPackage, isCurrent: true };
+    component.checkoutState = 'success';
+
+    (component as any).redirectBackWhenUpgradeIsActive();
+    flushMicrotasks();
+
+    expect(component.checkoutState).toBe('success');
+    expect(component.paymentInfoMessage).toBe('Upgrade berhasil. Paket Anda sudah aktif.');
+  }));
 });

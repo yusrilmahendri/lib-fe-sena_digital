@@ -40,7 +40,7 @@ describe('MusikUndanganComponent pagination', () => {
   beforeEach(() => {
     dashboardService = {
       getMusicOptions: jasmine.createSpy('getMusicOptions').and.callFake((params: any) => {
-        return of(makeOptionsResponse(params?.page || 1, params?.per_page || 10));
+        return of(makeOptionsResponse(params?.page || 1, params?.per_page || 5));
       }),
       getMusicSelection: jasmine.createSpy('getMusicSelection').and.returnValue(of({
         data: {
@@ -54,28 +54,33 @@ describe('MusikUndanganComponent pagination', () => {
     component = new MusikUndanganComponent(dashboardService);
   });
 
-  it('loads 37 catalog songs as 4 pages with 10 songs by default', () => {
+  it('loads 37 catalog songs as 8 pages with 5 songs by default', () => {
     component.loadMusicData();
 
-    expect(component.pageSize).toBe(10);
+    expect(dashboardService.getMusicOptions).toHaveBeenCalledWith({ page: 1, per_page: 5 });
+    expect(component.pageSize).toBe(5);
     expect(component.totalItems).toBe(37);
-    expect(component.lastPage).toBe(4);
-    expect(component.adminCatalogTracks.length).toBe(10);
+    expect(component.lastPage).toBe(8);
+    expect(component.adminCatalogTracks.length).toBe(5);
   });
 
-  it('shows 1-10 from 37 on page 1', () => {
+  it('shows 1-5 from 37 on page 1', () => {
     component.loadMusicData();
 
-    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 1–10 dari 37 lagu');
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 1–5 dari 37 lagu');
   });
 
-  it('shows 31-37 from 37 on page 4', () => {
+  it('shows 36-37 from 37 on page 8', () => {
     component.loadMusicData();
-    component.loadCatalogPage(4);
+    component.loadCatalogPage(8);
 
-    expect(component.currentPage).toBe(4);
-    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 31–37 dari 37 lagu');
-    expect(component.adminCatalogTracks.length).toBe(7);
+    expect(component.currentPage).toBe(8);
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 36–37 dari 37 lagu');
+    expect(component.adminCatalogTracks.length).toBe(2);
+  });
+
+  it('offers 5, 10, 20, 30, and 50 as page size options', () => {
+    expect(component.pageSizeOptions).toEqual([5, 10, 20, 30, 50]);
   });
 
   it('resets to page 1 and fetches when page size changes', () => {
@@ -96,7 +101,7 @@ describe('MusikUndanganComponent pagination', () => {
     expect(component.isPreviousCatalogPageDisabled()).toBeTrue();
     expect(component.isNextCatalogPageDisabled()).toBeFalse();
 
-    component.loadCatalogPage(4);
+    component.loadCatalogPage(8);
 
     expect(component.isPreviousCatalogPageDisabled()).toBeFalse();
     expect(component.isNextCatalogPageDisabled()).toBeTrue();
