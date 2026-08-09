@@ -250,7 +250,7 @@ describe('UpgradeAkunComponent payment flow', () => {
         original_price: 15000,
         discount_percentage: 40,
         discount_amount: 6000,
-        upgrade_price: 9000,
+        payable_amount: 9000,
       },
       can_select: true,
       can_upgrade: true,
@@ -383,7 +383,7 @@ describe('UpgradeAkunComponent payment flow', () => {
           original_price: 15000,
           discount_percentage: 40,
           discount_amount: 6000,
-          upgrade_price: 9000,
+          payable_amount: 9000,
         },
       },
     ] }));
@@ -395,6 +395,33 @@ describe('UpgradeAkunComponent payment flow', () => {
     expect(component.selectedPackage?.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
     expect(component.selectedPackage?.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
     expect(component.selectedPackageRequiresUpgradePricing).toBeFalse();
+  });
+
+  it('prioritizes payable amount over normal or legacy upgrade price fields', () => {
+    const pkg = (component as any).mapPackage({
+      id: 3,
+      package_code: 'diamond',
+      name: 'Diamond',
+      price: 15000,
+      pricing: {
+        original_price: 15000,
+        discount_percentage: 40,
+        discount_amount: 6000,
+        upgrade_price: 15000,
+        payable_amount: 9000,
+      },
+      can_select: true,
+      can_upgrade: true,
+      action: 'upgrade',
+    }, 0);
+
+    component.currentPackage = sapphirePackage;
+    component.selectedPackage = pkg;
+
+    expect(pkg.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(pkg.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(pkg.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+    expect(component.modalPackagePrice.replace(/\s/g, '')).toBe('Rp9.000');
   });
 
   it('shows retry error when package pricing request fails', () => {

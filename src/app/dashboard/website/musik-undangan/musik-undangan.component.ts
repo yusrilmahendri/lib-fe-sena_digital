@@ -21,6 +21,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   private readonly maxMusicUploadSizeInBytes = 20 * 1024 * 1024;
 
   isLoadingMusic = false;
+  isCatalogLoading = false;
   isSavingMusic = false;
   isUploadingMusic = false;
   previewingMusicId: number | 'custom' | 'default' | null = null;
@@ -39,6 +40,13 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   selectedMusicFile: File | null = null;
   selectedMusicFileName = '';
   userData: ProfileData | null = null;
+  pageSizeOptions = [10, 20, 30, 50];
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  lastPage = 1;
+  pageFrom = 0;
+  pageTo = 0;
 
   private previewAudio: HTMLAudioElement | null = null;
   private lastPreviewErrorAt = 0;
@@ -62,28 +70,24 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     this.loadError = '';
 
     forkJoin({
-      options: this.dashboardSvc.getMusicOptions(),
+      options: this.dashboardSvc.getMusicOptions(this.getCatalogQueryParams()),
       selection: this.dashboardSvc.getMusicSelection(),
       profile: this.dashboardSvc.getProfile().pipe(catchError(() => of(null))),
     }).subscribe({
       next: ({ options, selection, profile }: { options: any; selection: any; profile: ProfileResponse | null }) => {
         const normalizedSelection = this.normalizeMusicSelection(selection);
-        const catalogSections = this.extractCatalogSections(options, selection);
-        const optionsFromMusicOptions = this.normalizeMusicOptions(options);
-        const optionsFromMusicSelection = this.normalizeMusicOptions(selection);
-        const fallbackCatalogTracks = this.mergeMusicOptions(optionsFromMusicOptions, optionsFromMusicSelection);
+        const catalogData = this.resolveCatalogData(options, selection);
 
         this.userData = profile?.data ?? null;
-        this.userUploadTracks = catalogSections.userUploads;
-        this.adminCatalogTracks = catalogSections.hasCatalogSections
-          ? catalogSections.adminCatalog
-          : fallbackCatalogTracks;
+        this.userUploadTracks = catalogData.userUploads;
+        this.adminCatalogTracks = catalogData.adminCatalog;
         // Musik Global sementara dinonaktifkan
         this.globalCatalogTracks = [];
         this.musicOptions = this.adminCatalogTracks;
         this.musicSelection = normalizedSelection;
         this.selectedMusicId = normalizedSelection?.selected_music_id ?? null;
         this.selectedMusicSourceHint = this.resolveSourceTypeByTrackId(this.selectedMusicId);
+        this.applyCatalogPagination(options, this.adminCatalogTracks.length);
         this.isLoadingMusic = false;
       },
       error: (err: any) => {
@@ -92,6 +96,113 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.isLoadingMusic = false;
       },
     });
+  }
+
+  loadCatalogPage(page: number, force = false): void {
+    if (this.isCatalogLoading || this.isLoadingMusic) return;
+    const nextPage = this.clampPage(page);
+    if (!force && nextPage === this.currentPage && this.adminCatalogTracks.length) return;
+
+    this.currentPage = nextPage;
+    this.isCatalogLoading = true;
+    this.loadError = '';
+
+    this.dashboardSvc.getMusicOptions(this.getCatalogQueryParams()).subscribe({
+      next: (options: any) => {
+        const catalogData = this.resolveCatalogData(options, null);
+        this.adminCatalogTracks = catalogData.adminCatalog;
+        this.musicOptions = this.adminCatalogTracks;
+        if (catalogData.userUploads.length) {
+          this.userUploadTracks = catalogData.userUploads;
+        }
+        this.applyCatalogPagination(options, this.adminCatalogTracks.length);
+        this.isCatalogLoading = false;
+      },
+      error: (err: any) => {
+        this.logHttpError('Gagal memuat halaman musik undangan', err);
+        this.loadError = getFriendlyErrorMessage(err);
+        this.isCatalogLoading = false;
+      },
+    });
+  }
+
+  changeCatalogPageSize(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const nextPageSize = Number(select.value);
+    if (!this.pageSizeOptions.includes(nextPageSize) || nextPageSize === this.pageSize) return;
+
+    this.pageSize = nextPageSize;
+    this.loadCatalogPage(1, true);
+  }
+
+  goToPreviousCatalogPage(): void {
+    if (this.isPreviousCatalogPageDisabled()) return;
+    this.loadCatalogPage(this.currentPage - 1);
+  }
+
+  goToNextCatalogPage(): void {
+    if (this.isNextCatalogPageDisabled()) return;
+    this.loadCatalogPage(this.currentPage + 1);
+  }
+
+  isPreviousCatalogPageDisabled(): boolean {
+    return this.isCatalogLoading || this.currentPage <= 1;
+  }
+
+  isNextCatalogPageDisabled(): boolean {
+    return this.isCatalogLoading || this.currentPage >= this.lastPage;
+  }
+
+  shouldShowCatalogPagination(): boolean {
+    return this.totalItems > this.pageSize || this.lastPage > 1;
+  }
+
+  getCatalogRangeLabel(): string {
+    if (!this.totalItems) return 'Tidak ada musik tersedia.';
+    return `Menampilkan ${this.pageFrom}\u2013${this.pageTo} dari ${this.totalItems} lagu`;
+  }
+
+  getCatalogMobilePageLabel(): string {
+    return `Halaman ${this.currentPage} / ${this.lastPage}`;
+  }
+
+  getCatalogPaginationPages(): Array<number | 'ellipsis'> {
+    const pages: Array<number | 'ellipsis'> = [];
+    const last = Math.max(1, this.lastPage);
+
+    if (last <= 7) {
+      for (let page = 1; page <= last; page += 1) pages.push(page);
+      return pages;
+    }
+
+    const addPage = (page: number) => {
+      if (!pages.includes(page)) pages.push(page);
+    };
+    const addEllipsis = () => {
+      if (pages[pages.length - 1] !== 'ellipsis') pages.push('ellipsis');
+    };
+
+    addPage(1);
+    addPage(2);
+
+    const windowStart = Math.max(3, this.currentPage - 1);
+    const windowEnd = Math.min(last - 2, this.currentPage + 1);
+    if (windowStart > 3) addEllipsis();
+    for (let page = windowStart; page <= windowEnd; page += 1) addPage(page);
+    if (windowEnd < last - 2) addEllipsis();
+
+    addPage(last - 1);
+    addPage(last);
+
+    return pages;
+  }
+
+  isPaginationEllipsis(page: number | 'ellipsis'): boolean {
+    return page === 'ellipsis';
+  }
+
+  toCatalogPageNumber(page: number | 'ellipsis'): number {
+    return typeof page === 'number' ? page : this.currentPage;
   }
 
   selectMusic(musicId: number | null, sourceType?: MusicSourceType): void {
@@ -673,6 +784,27 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       });
   }
 
+  private resolveCatalogData(optionsResponse: any, selectionResponse: any): {
+    userUploads: MusicTrack[];
+    adminCatalog: MusicTrack[];
+  } {
+    const optionSections = this.extractCatalogSections(optionsResponse, null);
+    const selectionSections = this.extractCatalogSections(null, selectionResponse);
+    const optionsFromMusicOptions = this.normalizeMusicOptions(optionsResponse);
+    const optionsFromMusicSelection = this.normalizeMusicOptions(selectionResponse);
+
+    const userUploads = this.mergeMusicOptions(optionSections.userUploads, selectionSections.userUploads);
+    const adminCatalog =
+      optionSections.hasCatalogSections || optionsFromMusicOptions.length
+        ? this.mergeMusicOptions(optionSections.adminCatalog, optionsFromMusicOptions)
+        : this.mergeMusicOptions(selectionSections.adminCatalog, optionsFromMusicSelection);
+
+    return {
+      userUploads,
+      adminCatalog,
+    };
+  }
+
   private extractCatalogSections(optionsResponse: any, selectionResponse: any): {
     userUploads: MusicTrack[];
     adminCatalog: MusicTrack[];
@@ -717,6 +849,85 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     ];
 
     return candidates.filter((candidate) => candidate && typeof candidate === 'object');
+  }
+
+  private applyCatalogPagination(response: any, visibleItems: number): void {
+    const meta = this.findPaginationMeta(response);
+    const responseCurrentPage = this.firstNumber([
+      meta?.current_page,
+      meta?.currentPage,
+      meta?.page,
+      response?.current_page,
+      response?.page,
+    ]);
+    const responsePageSize = this.firstNumber([
+      meta?.per_page,
+      meta?.perPage,
+      meta?.page_size,
+      meta?.pageSize,
+      response?.per_page,
+      response?.page_size,
+    ]);
+    const total = this.firstNumber([
+      meta?.total,
+      meta?.total_items,
+      meta?.totalItems,
+      response?.total,
+      response?.total_items,
+    ]);
+    const lastPage = this.firstNumber([
+      meta?.last_page,
+      meta?.lastPage,
+      meta?.total_pages,
+      meta?.totalPages,
+      response?.last_page,
+      response?.total_pages,
+    ]);
+
+    if (responseCurrentPage) this.currentPage = responseCurrentPage;
+    if (responsePageSize && this.pageSizeOptions.includes(responsePageSize)) this.pageSize = responsePageSize;
+
+    this.totalItems = total ?? visibleItems;
+    const fallbackLastPage = Math.ceil((this.totalItems || visibleItems) / this.pageSize) || 1;
+    this.lastPage = Math.max(1, lastPage ?? fallbackLastPage);
+
+    const from = this.firstNumber([meta?.from, meta?.start, response?.from]);
+    const to = this.firstNumber([meta?.to, meta?.end, response?.to]);
+    if (!this.totalItems || visibleItems === 0) {
+      this.pageFrom = 0;
+      this.pageTo = 0;
+      return;
+    }
+
+    this.pageFrom = from ?? ((this.currentPage - 1) * this.pageSize) + 1;
+    this.pageTo = to ?? Math.min(this.pageFrom + visibleItems - 1, this.totalItems);
+  }
+
+  private findPaginationMeta(source: any): any {
+    if (!source || typeof source !== 'object') return null;
+    return (
+      source.meta ||
+      source.pagination ||
+      source.paginator ||
+      source.data?.meta ||
+      source.data?.pagination ||
+      source.data?.paginator ||
+      source.links?.meta ||
+      null
+    );
+  }
+
+  private getCatalogQueryParams(): { page: number; per_page: number } {
+    return {
+      page: this.currentPage,
+      per_page: this.pageSize,
+    };
+  }
+
+  private clampPage(page: number): number {
+    const numeric = Number(page);
+    if (!Number.isFinite(numeric)) return 1;
+    return Math.min(Math.max(1, Math.floor(numeric)), Math.max(1, this.lastPage));
   }
 
   private findMusicArray(source: any): any[] {
@@ -977,6 +1188,16 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     if (value === null || value === undefined || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private firstNumber(values: unknown[]): number | null {
+    for (const value of values) {
+      if (value === null || value === undefined || value === '') continue;
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+
+    return null;
   }
 
   private toBoolean(value: unknown): boolean | undefined {

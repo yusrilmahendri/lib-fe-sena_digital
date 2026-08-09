@@ -108,6 +108,24 @@ describe('TampilanComponent', () => {
     expect(component.upgradeTargetPackagePriceLabel.replace(/\s/g, '')).toBe('Rp180.000');
   });
 
+  it('maps backend payable amount as the upgrade price for theme upgrade summary', () => {
+    const pricing = (component as any).resolveTargetPackagePriceInfo({
+      name: 'Diamond',
+      price: 15000,
+      upgrade_pricing: {
+        original_price: 15000,
+        discount_percentage: 40,
+        discount_amount: 6000,
+        upgrade_price: 15000,
+        payable_amount: 9000,
+      },
+    }, 'diamond');
+
+    expect(pricing.originalPriceLabel.replace(/\s/g, '')).toBe('Rp15.000');
+    expect(pricing.discountAmountLabel.replace(/\s/g, '')).toBe('Rp6.000');
+    expect(pricing.upgradePriceLabel.replace(/\s/g, '')).toBe('Rp9.000');
+  });
+
   it('shows upgrade CTA for Ruby users choosing a Sapphire theme', () => {
     const theme: any = {
       id: 8,

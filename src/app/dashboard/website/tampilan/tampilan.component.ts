@@ -1464,12 +1464,13 @@ export class TampilanComponent implements OnInit, OnDestroy {
       packageObject?.discount_value,
     ]);
     const upgradePrice = firstPriceValue([
-      pricing?.upgrade_price,
       pricing?.payable_amount,
+      pricing?.upgrade_price,
       pricing?.payment_amount,
       pricing?.amount_due,
       pricing?.total_payment,
       pricing?.final_price,
+      packageObject?.payable_amount,
       packageObject?.upgrade_price,
       packageObject?.upgrade_amount,
       packageObject?.payment_amount,
@@ -1477,7 +1478,6 @@ export class TampilanComponent implements OnInit, OnDestroy {
       packageObject?.total_payment,
       packageObject?.total_bayar,
       packageObject?.final_price,
-      packageObject?.payable_amount,
     ]);
 
     return {
@@ -1488,7 +1488,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
       discountAmount,
       discountAmountLabel: this.formatCurrencyLabel(discountAmount, pricing?.discount_amount_label ?? pricing?.upgrade_discount_amount_label ?? packageObject?.discount_amount_label ?? packageObject?.upgrade_discount_amount_label ?? packageObject?.diskon_nominal_label),
       upgradePrice,
-      upgradePriceLabel: this.formatCurrencyLabel(upgradePrice, pricing?.upgrade_price_label ?? pricing?.payable_amount_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? packageObject?.upgrade_price_label ?? packageObject?.upgrade_amount_label ?? packageObject?.payment_amount_label ?? packageObject?.amount_due_label ?? packageObject?.total_payment_label ?? packageObject?.total_bayar_label ?? packageObject?.final_price_label ?? packageObject?.payable_amount_label),
+      upgradePriceLabel: this.formatCurrencyLabel(upgradePrice, pricing?.payable_amount_label ?? pricing?.upgrade_price_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? packageObject?.payable_amount_label ?? packageObject?.upgrade_price_label ?? packageObject?.upgrade_amount_label ?? packageObject?.payment_amount_label ?? packageObject?.amount_due_label ?? packageObject?.total_payment_label ?? packageObject?.total_bayar_label ?? packageObject?.final_price_label),
     };
   }
 

@@ -741,6 +741,25 @@
   outline-offset: 2px;
 }
 
+.theme-modal--upgrade .confirm-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.theme-modal--upgrade .btn-back,
+.theme-modal--upgrade .btn-confirm-theme {
+  aspect-ratio: auto;
+  border-radius: 12px;
+  flex: 0 1 190px;
+  height: auto;
+  line-height: 1.2;
+  min-height: 48px;
+  padding: 12px 18px;
+  white-space: nowrap;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -859,7 +878,15 @@
 
   .theme-modal--upgrade .btn-back,
   .theme-modal--upgrade .btn-confirm-theme {
+    aspect-ratio: auto !important;
+    flex: none !important;
+    height: auto !important;
+    line-height: 1.2;
+    min-height: 48px;
     min-width: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    white-space: nowrap;
     width: 100% !important;
   }
 }

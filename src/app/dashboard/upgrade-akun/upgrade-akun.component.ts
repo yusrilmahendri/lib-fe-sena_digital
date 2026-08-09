@@ -415,6 +415,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
   }
 
   get selectedPackageUpgradePricingMessage(): string {
+    if (this.packagePricingError) return 'Harga upgrade gagal dimuat.';
     return this.selectedPackageUpgradePricingState === 'failed'
       ? 'Harga upgrade gagal dimuat.'
       : 'Memuat harga upgrade...';
@@ -952,12 +953,13 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       raw?.discount_value,
     ]);
     const upgradePrice = this.firstDefined([
-      pricing?.upgrade_price,
       pricing?.payable_amount,
+      pricing?.upgrade_price,
       pricing?.payment_amount,
       pricing?.amount_due,
       pricing?.total_payment,
       pricing?.final_price,
+      raw?.payable_amount,
       raw?.upgrade_price,
       raw?.upgrade_amount,
       raw?.payment_amount,
@@ -965,7 +967,6 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       raw?.total_payment,
       raw?.total_bayar,
       raw?.final_price,
-      raw?.payable_amount,
     ]);
 
     return {
@@ -980,7 +981,7 @@ export class UpgradeAkunComponent implements OnInit, OnDestroy {
       discountAmount,
       discountAmountLabel: this.formatPrice(discountAmount, pricing?.discount_amount_label ?? pricing?.upgrade_discount_amount_label ?? raw?.discount_amount_label ?? raw?.upgrade_discount_amount_label ?? raw?.diskon_nominal_label),
       upgradePrice,
-      upgradePriceLabel: this.formatPrice(upgradePrice, pricing?.upgrade_price_label ?? pricing?.payable_amount_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? raw?.upgrade_price_label ?? raw?.upgrade_amount_label ?? raw?.payment_amount_label ?? raw?.amount_due_label ?? raw?.total_payment_label ?? raw?.total_bayar_label ?? raw?.final_price_label ?? raw?.payable_amount_label),
+      upgradePriceLabel: this.formatPrice(upgradePrice, pricing?.payable_amount_label ?? pricing?.upgrade_price_label ?? pricing?.payment_amount_label ?? pricing?.amount_due_label ?? pricing?.total_payment_label ?? pricing?.final_price_label ?? raw?.payable_amount_label ?? raw?.upgrade_price_label ?? raw?.upgrade_amount_label ?? raw?.payment_amount_label ?? raw?.amount_due_label ?? raw?.total_payment_label ?? raw?.total_bayar_label ?? raw?.final_price_label),
       description: String(raw?.description ?? raw?.deskripsi ?? raw?.short_description ?? '').trim(),
       thumbnail: this.resolveThumbnail(raw),
       badge: String(raw?.badge ?? raw?.label ?? raw?.status_label ?? raw?.package_tier ?? '').trim(),

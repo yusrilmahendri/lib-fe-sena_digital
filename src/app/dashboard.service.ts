@@ -911,8 +911,12 @@ export class DashboardService {
     return this.httpSvc.post(this.getUrl(serviceType), formData);
   }
 
-  getMusicOptions(): Observable<any> {
-    return this.httpSvc.get(this.getUrl(DashboardServiceType.USER_MUSIC_OPTIONS));
+  getMusicOptions(params?: { page?: number; per_page?: number }): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params?.page) httpParams = httpParams.set('page', String(params.page));
+    if (params?.per_page) httpParams = httpParams.set('per_page', String(params.per_page));
+
+    return this.httpSvc.get(this.getUrl(DashboardServiceType.USER_MUSIC_OPTIONS), { params: httpParams });
   }
 
   getMusicSelection(): Observable<any> {

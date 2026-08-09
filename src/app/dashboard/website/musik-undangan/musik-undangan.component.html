@@ -30,10 +30,18 @@
             <h3>Daftar Lagu Sena Digital</h3>
             <p>Pilih satu lagu yang akan dipakai sebagai musik undangan.</p>
           </div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" (click)="stopPreview()" [disabled]="!previewingMusicId || isPreviewLoading">
-            <i class="fa fa-stop" aria-hidden="true"></i>
-            Stop
-          </button>
+          <div class="catalog-toolbar">
+            <label class="page-size-control">
+              <span>Tampilkan:</span>
+              <select [value]="pageSize" (change)="changeCatalogPageSize($event)" [disabled]="isCatalogLoading">
+                <option *ngFor="let option of pageSizeOptions" [value]="option">{{ option }} lagu</option>
+              </select>
+            </label>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="stopPreview()" [disabled]="!previewingMusicId || isPreviewLoading">
+              <i class="fa fa-stop" aria-hidden="true"></i>
+              Stop
+            </button>
+          </div>
         </div>
 
         <div *ngIf="previewError" class="preview-inline-message" role="status">
@@ -63,7 +71,12 @@
 
         <div class="mt-3">
           <!-- <h4>Daftar Lagu Sena Digital</h4> -->
-          <div *ngIf="adminCatalogTracks.length; else emptyAdminCatalog" class="music-list">
+          <div *ngIf="isCatalogLoading" class="catalog-loading" role="status">
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            <span>Memuat lagu...</span>
+          </div>
+
+          <div *ngIf="adminCatalogTracks.length; else emptyAdminCatalog" class="music-list" [class.music-list--loading]="isCatalogLoading">
             <label class="music-item" *ngFor="let music of adminCatalogTracks; trackBy: trackMusicById" [class.selected]="isMusicSelected(music, 'catalog')">
               <input class="music-selector-input" type="radio" name="music-selection" [checked]="isMusicSelected(music, 'catalog')" (change)="selectMusic(music.id, 'catalog')" />
               <img *ngIf="music.thumbnail_url; else thumbnailFallback" class="music-thumb music-icon" [src]="music.thumbnail_url" [alt]="music.title" />
@@ -100,14 +113,52 @@
               </button>
             </label>
           </div>
+
+          <div class="catalog-footer" *ngIf="adminCatalogTracks.length">
+            <p class="catalog-range">{{ getCatalogRangeLabel() }}</p>
+
+            <nav class="catalog-pagination catalog-pagination--desktop" *ngIf="shouldShowCatalogPagination()" aria-label="Navigasi halaman musik">
+              <button type="button" class="page-nav" (click)="goToPreviousCatalogPage()" [disabled]="isPreviousCatalogPageDisabled()">
+                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                Sebelumnya
+              </button>
+              <ng-container *ngFor="let page of getCatalogPaginationPages()">
+                <span *ngIf="isPaginationEllipsis(page)" class="page-ellipsis">...</span>
+                <button
+                  *ngIf="!isPaginationEllipsis(page)"
+                  type="button"
+                  class="page-number"
+                  [class.active]="page === currentPage"
+                  [disabled]="isCatalogLoading || page === currentPage"
+                  (click)="loadCatalogPage(toCatalogPageNumber(page))"
+                >
+                  {{ page }}
+                </button>
+              </ng-container>
+              <button type="button" class="page-nav" (click)="goToNextCatalogPage()" [disabled]="isNextCatalogPageDisabled()">
+                Berikutnya
+                <i class="fa fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </nav>
+
+            <nav class="catalog-pagination catalog-pagination--mobile" *ngIf="shouldShowCatalogPagination()" aria-label="Navigasi halaman musik mobile">
+              <button type="button" class="page-icon" (click)="goToPreviousCatalogPage()" [disabled]="isPreviousCatalogPageDisabled()" aria-label="Halaman sebelumnya">
+                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+              </button>
+              <span class="page-mobile-label">{{ getCatalogMobilePageLabel() }}</span>
+              <button type="button" class="page-icon" (click)="goToNextCatalogPage()" [disabled]="isNextCatalogPageDisabled()" aria-label="Halaman berikutnya">
+                <i class="fa fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </nav>
+          </div>
         </div>
 
         <!-- Musik Global sementara dinonaktifkan -->
 
         <ng-template #emptyAdminCatalog>
-          <div class="empty-state">
+          <div class="empty-state" *ngIf="!isCatalogLoading">
             <i class="fa fa-info-circle" aria-hidden="true"></i>
-            <p>Daftar lagu Sena Digital belum tersedia saat ini. Kamu tetap bisa memakai musik default atau musik pribadi.</p>
+            <p>Tidak ada musik tersedia.</p>
           </div>
         </ng-template>
 
