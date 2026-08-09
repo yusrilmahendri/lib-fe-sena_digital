@@ -399,6 +399,11 @@ export class BillUserComponent implements OnInit {
   private refreshMidtransToken(invoice: any): void {
     this.isContinuingPayment = true;
     const payload = this.buildResumePayload(invoice);
+    if (!this.hasResumeIdentifier(payload)) {
+      this.isContinuingPayment = false;
+      this.errorMessage = 'Invoice pembayaran belum tersedia. Silakan cek status pembayaran atau hubungi admin.';
+      return;
+    }
 
     this.dashboardService.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, payload)
       .pipe(
@@ -424,7 +429,7 @@ export class BillUserComponent implements OnInit {
 
           if (!token) {
             this.isContinuingPayment = false;
-            this.showUnavailablePayment('Halaman pembayaran belum dapat dibuka. Silakan coba lagi.');
+            this.showPaymentOpenError();
             return;
           }
 
@@ -459,7 +464,7 @@ export class BillUserComponent implements OnInit {
       const snap = (window as any).snap;
       if (!snap?.pay) {
         this.isContinuingPayment = false;
-        this.showUnavailablePayment('Halaman pembayaran belum dapat dibuka. Silakan coba lagi.');
+        this.showPaymentOpenError();
         return;
       }
 
@@ -498,7 +503,7 @@ export class BillUserComponent implements OnInit {
     const clientKey = this.resolveMidtransClientKey(invoice);
     if (!clientKey) {
       this.isContinuingPayment = false;
-      this.showUnavailablePayment('Halaman pembayaran belum dapat dibuka. Silakan coba lagi.');
+      this.showPaymentOpenError();
       return;
     }
 
@@ -506,7 +511,7 @@ export class BillUserComponent implements OnInit {
       .then(pay)
       .catch(() => {
         this.isContinuingPayment = false;
-        this.showUnavailablePayment('Halaman pembayaran belum dapat dibuka. Silakan coba lagi.');
+        this.showPaymentOpenError();
       });
   }
 
@@ -531,13 +536,43 @@ export class BillUserComponent implements OnInit {
   }
 
   private buildResumePayload(invoice: any): any {
-    const payload = { ...(invoice?.resume?.payload || {}) };
-    if (Object.keys(payload).length) return payload;
+    const payload = this.compactPayload(invoice?.resume?.payload || {});
+    const invoiceId = this.resolveInvoiceId(invoice);
+
+    if (Object.keys(payload).length) {
+      if (!payload.invoice_id && invoiceId) payload.invoice_id = invoiceId;
+      return payload;
+    }
 
     if (invoice?.order_id) payload.order_id = invoice.order_id;
-    if (invoice?.id) payload.invoice_id = invoice.id;
-    if (invoice?.invoice_code) payload.invoice_code = invoice.invoice_code;
+    if (invoiceId) payload.invoice_id = invoiceId;
+    if (!payload.order_id && !payload.invoice_id && invoice?.invoice_code) payload.invoice_code = invoice.invoice_code;
     return payload;
+  }
+
+  private compactPayload(payload: any): any {
+    return Object.keys(payload || {}).reduce((result: any, key) => {
+      const value = payload[key];
+      if (value !== null && value !== undefined && value !== '') {
+        result[key] = value;
+      }
+      return result;
+    }, {});
+  }
+
+  private resolveInvoiceId(invoice: any): number | string | null {
+    const value = invoice?.id ?? invoice?.invoice_id ?? this.paymentState?.invoiceId ?? null;
+    return value === null || value === undefined || value === '' ? null : value;
+  }
+
+  private hasResumeIdentifier(payload: any): boolean {
+    return !!(payload?.invoice_id || payload?.order_id || payload?.invoice_code);
+  }
+
+  private showPaymentOpenError(): void {
+    this.paymentUnavailableTitle = '';
+    this.paymentUnavailableMessage = '';
+    this.errorMessage = 'Pembayaran belum dapat dibuka. Silakan coba lagi.';
   }
 
   private updatePendingInvoice(invoice: any): void {

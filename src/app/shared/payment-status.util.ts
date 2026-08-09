@@ -12,6 +12,7 @@ export interface PaymentState {
   isExpired: boolean;
   featureAccess: any;
   domain: string;
+  invoiceId: number | string | null;
   invoiceCode: string;
   transactionDate: string;
   hasInvoice: boolean;
@@ -206,6 +207,15 @@ export function resolvePaymentState(profile: any): PaymentState {
     data.invoice?.created_at,
   ]);
   const hasInvoice = resolveHasInvoice(data, invoiceCode);
+  const invoiceId = firstText([
+    pendingInvoice?.id,
+    pendingInvoice?.invoice_id,
+    data.invoice_id,
+    data.tagihan?.id,
+    data.tagihan?.invoice_id,
+    data.invoice?.id,
+    data.invoice?.invoice_id,
+  ]);
   const initialPaymentRequired = resolveInitialPaymentRequired(data, accountStatusRaw, paymentStatusRaw);
   const activePaymentMethods = resolveActivePaymentMethods(data);
   const paymentUrl = firstText([
@@ -338,6 +348,7 @@ export function resolvePaymentState(profile: any): PaymentState {
       data.website_domain,
       data.wedding_profile?.domain,
     ]),
+    invoiceId: invoiceId ?? null,
     invoiceCode,
     transactionDate: formatDateDisplay(transactionDate),
     hasInvoice,

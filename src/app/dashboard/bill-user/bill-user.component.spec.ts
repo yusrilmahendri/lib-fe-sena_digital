@@ -124,10 +124,95 @@ describe('BillUserComponent', () => {
 
     expect(dashboardService.create).toHaveBeenCalledWith(
       DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
-      { order_id: 'UPG-123' }
+      { order_id: 'UPG-123', invoice_id: 123 }
     );
     expect(snapPay).toHaveBeenCalledWith('snap-refreshed', jasmine.any(Object));
     expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('creates Snap token using invoice id when initial pending invoice has null order id', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = { pay: snapPay };
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      data: {
+        order_id: 'MID-22',
+        snap_token: 'snap-initial',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        invoice_code: '#5692979581',
+        kode_pemesanan: '#5692979581',
+        order_id: null,
+        payment_status: 'pending',
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: {
+          type: 'midtrans_snap',
+          available: true,
+          payload: { order_id: null },
+        },
+        midtrans: {},
+      },
+      activePaymentMethods: [
+        {
+          type: 'midtrans',
+          label: 'Bayar Online',
+          details: { enabled: true, configured: true },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { invoice_id: 22 }
+    );
+    expect(snapPay).toHaveBeenCalledWith('snap-initial', jasmine.any(Object));
+    expect(component.paymentUnavailableTitle).toBe('');
+  });
+
+  it('keeps Midtrans available when manual payment is null', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = { pay: snapPay };
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      data: {
+        order_id: 'MID-22',
+        snap_token: 'snap-initial',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        order_id: null,
+        payment_status: 'pending',
+        is_payable: true,
+        resume: {},
+      },
+      activePaymentMethods: [
+        {
+          type: 'midtrans',
+          label: 'Bayar Online',
+          details: { enabled: true, configured: true },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { invoice_id: 22 }
+    );
+    expect(component.paymentUnavailableTitle).toBe('');
   });
 
   it('opens manual payment modal from pending invoice without requesting config', () => {
@@ -210,7 +295,7 @@ describe('BillUserComponent', () => {
 
     expect(dashboardService.create).toHaveBeenCalledWith(
       DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
-      { order_id: 'INV-125', invoice_id: 125, invoice_code: 'INV-125' }
+      { order_id: 'INV-125', invoice_id: 125 }
     );
     expect(snapPay).toHaveBeenCalledWith('snap-configured', jasmine.any(Object));
     expect(component.paymentUnavailableTitle).toBe('');
@@ -234,6 +319,27 @@ describe('BillUserComponent', () => {
 
     expect(component.paymentUnavailableTitle).toBe('Metode Pembayaran Belum Tersedia');
     expect((component as any).dashboardService.create).not.toHaveBeenCalled();
+  });
+
+  it('does not mask Snap token failures as unavailable payment method', () => {
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({ data: { order_id: 'MID-22' } }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        order_id: null,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(component.paymentUnavailableTitle).toBe('');
+    expect(component.errorMessage).toBe('Pembayaran belum dapat dibuka. Silakan coba lagi.');
   });
 
   it('uses configured manual payment when Midtrans is unavailable', () => {
