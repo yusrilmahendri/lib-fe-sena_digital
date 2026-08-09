@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { DashboardService } from '../dashboard.service';
-import { resolvePaymentRedirect } from '../shared/payment-status.util';
+import { resolvePostVerificationPaymentRedirect } from '../shared/payment-status.util';
 @Component({ selector: 'wc-verify-account-success', templateUrl: './verify-account-success.component.html', styleUrls: ['./verify-account-success.component.scss'] })
 export class VerifyAccountSuccessComponent implements OnInit {
   checking = true;
@@ -31,6 +31,6 @@ export class VerifyAccountSuccessComponent implements OnInit {
   }
 
   private resolveNextRoute(profile: any): string {
-    return resolvePaymentRedirect(profile, '/pilih-paket');
+    return resolvePostVerificationPaymentRedirect(profile, '/pilih-paket');
   }
 }

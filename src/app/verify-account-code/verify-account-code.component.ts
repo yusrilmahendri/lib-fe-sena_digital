@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService, VerificationChannel } from '../auth.service';
 import { finalize } from 'rxjs/operators';
 import { DashboardService } from '../dashboard.service';
-import { resolvePaymentRedirect } from '../shared/payment-status.util';
+import { resolvePostVerificationPaymentRedirect } from '../shared/payment-status.util';
 
 @Component({ selector: 'wc-verify-account-code', templateUrl: './verify-account-code.component.html', styleUrls: ['./verify-account-code.component.scss'] })
 export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
@@ -204,6 +204,6 @@ export class VerifyAccountCodeComponent implements OnInit, OnDestroy {
   }
 
   private resolveNextRoute(profile: any): string {
-    return resolvePaymentRedirect(profile, '/pilih-paket');
+    return resolvePostVerificationPaymentRedirect(profile, '/pilih-paket');
   }
 }

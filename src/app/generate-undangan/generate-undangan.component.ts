@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardService, DashboardServiceType } from '../dashboard.service';
+import { resolvePaymentState } from '../shared/payment-status.util';
 
 @Component({
   selector: 'wc-generate-undangan',
@@ -212,12 +213,7 @@ export class GenerateUndanganComponent implements OnInit {
 
         if (this.isPaidStatus(status)) {
           this.clearSavedMidtransRedirect();
-          this.router.navigate(['/dashboard/overview'], {
-            replaceUrl: true,
-            state: {
-              paymentStatusMessage: 'Pembayaran berhasil. Selamat datang di dashboard.',
-            },
-          });
+          this.redirectAfterPaidPayment();
           return;
         }
 
@@ -285,6 +281,29 @@ export class GenerateUndanganComponent implements OnInit {
       replaceUrl: true,
       state: {
         paymentStatusMessage: message,
+      },
+    });
+  }
+
+  private redirectAfterPaidPayment(): void {
+    this.paymentStatusMessage = 'Pembayaran berhasil. Memeriksa aktivasi paket...';
+    this.dashboardSvc.getProfile().subscribe({
+      next: (profile) => {
+        const paymentState = resolvePaymentState(profile);
+        if (paymentState.accountStatus === 'active') {
+          this.router.navigate(['/dashboard/overview'], {
+            replaceUrl: true,
+            state: {
+              paymentStatusMessage: 'Pembayaran berhasil. Selamat datang di dashboard.',
+            },
+          });
+          return;
+        }
+
+        this.redirectToBill('Pembayaran berhasil dan sedang menunggu aktivasi paket dari server.');
+      },
+      error: () => {
+        this.redirectToBill('Pembayaran berhasil, tetapi status paket belum dapat diverifikasi. Silakan cek kembali status pembayaran Anda.');
       },
     });
   }

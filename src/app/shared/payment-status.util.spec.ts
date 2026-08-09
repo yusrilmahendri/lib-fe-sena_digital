@@ -1,4 +1,4 @@
-import { resolvePaymentState } from './payment-status.util';
+import { resolvePaymentRedirect, resolvePaymentState, resolvePostVerificationPaymentRedirect } from './payment-status.util';
 
 describe('payment-status util', () => {
   it('maps verified users without invoice to onboarding', () => {
@@ -160,5 +160,31 @@ describe('payment-status util', () => {
 
     expect(state.paymentAction).toBe('create_payment');
     expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['midtrans', 'manual']);
+  });
+
+  it('keeps login resume pending-payment users on the dashboard payment page', () => {
+    const route = resolvePaymentRedirect({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        pending_invoice: { id: 12, payment_status: 'pending' },
+      },
+    });
+
+    expect(route).toBe('/dashboard/payment-pending');
+  });
+
+  it('sends post-verification pending-payment users to the payment wizard', () => {
+    const route = resolvePostVerificationPaymentRedirect({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        pending_invoice: { id: 12, payment_status: 'pending' },
+      },
+    });
+
+    expect(route).toBe('/pilih-paket');
   });
 });

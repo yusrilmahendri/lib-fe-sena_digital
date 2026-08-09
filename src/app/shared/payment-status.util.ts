@@ -377,6 +377,26 @@ export function resolvePaymentRedirect(profile: any, paymentRoute = '/pilih-pake
   return paymentRoute;
 }
 
+export function resolvePostVerificationPaymentRedirect(profile: any, paymentRoute = '/pilih-paket'): string {
+  const data = profile?.data || profile || {};
+  const backendRedirectUrl = firstText([
+    data.redirect_url,
+    data.next_url,
+    data.redirect,
+  ]);
+  const state = resolvePaymentState(data);
+
+  if (state.accountStatus === 'unverified') return '/verify-account';
+  if (state.accountStatus === 'active') return '/dashboard/overview';
+  if (state.accountStatus === 'expired') return '/dashboard/account-expired';
+
+  if (backendRedirectUrl && normalizePath(backendRedirectUrl) !== '/dashboard/payment-pending') {
+    return backendRedirectUrl;
+  }
+
+  return paymentRoute;
+}
+
 function resolveStatus(state: {
   isVerified: boolean;
   isExpired: boolean;
