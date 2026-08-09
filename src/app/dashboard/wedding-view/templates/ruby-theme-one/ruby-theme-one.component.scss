@@ -177,6 +177,380 @@
   box-shadow: none !important;
 }
 
+.ruby-caption {
+  --ruby-caption-x: 32px;
+  --ruby-caption-y: 28px;
+  --ruby-caption-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+  transform: translateZ(0);
+}
+
+.ruby-caption__eyebrow,
+.ruby-caption__title,
+.ruby-caption__divider,
+.ruby-caption__subtitle {
+  will-change: transform, opacity, filter, clip-path, letter-spacing;
+}
+
+.ruby-caption--ready:not(.ruby-caption--visible) .ruby-caption__eyebrow,
+.ruby-caption--ready:not(.ruby-caption--visible) .ruby-caption__title,
+.ruby-caption--ready:not(.ruby-caption--visible) .ruby-caption__divider,
+.ruby-caption--ready:not(.ruby-caption--visible) .ruby-caption__subtitle {
+  opacity: 0;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="quote"] .ruby-caption__title {
+  animation: rubyCaptionQuoteDown 760ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="quote"] .ruby-caption__title {
+  animation: rubyCaptionQuoteUp 720ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="quote"] .ruby-caption__divider {
+  animation: rubyCaptionDividerCenter 620ms var(--ruby-caption-ease) 120ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="couple"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="couple"] .ruby-caption__title {
+  animation: rubyCaptionFromLeft 720ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="couple"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="couple"] .ruby-caption__title {
+  animation: rubyCaptionFromRight 720ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="couple"] .ruby-caption__title {
+  animation-delay: 90ms;
+}
+
+.ruby-caption--visible[data-caption-motion="couple"] .ruby-caption__divider {
+  animation: rubyCaptionDividerCenter 580ms var(--ruby-caption-ease) 170ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="event"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="event"] .ruby-caption__title {
+  animation: rubyCaptionEventDown 760ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="event"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="event"] .ruby-caption__title {
+  animation: rubyCaptionEventUp 760ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="event"] .ruby-caption__title {
+  animation-delay: 95ms;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="location"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="location"] .ruby-caption__title {
+  animation: rubyCaptionLocationDown 700ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="location"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="location"] .ruby-caption__title {
+  animation: rubyCaptionLocationUp 700ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="location"] .ruby-caption__title {
+  animation-delay: 90ms;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="countdown"] .ruby-caption__eyebrow {
+  animation: rubyCaptionScaleSoftDown 570ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="countdown"] .ruby-caption__title {
+  animation: rubyCaptionScaleSoftDown 710ms var(--ruby-caption-ease) 95ms both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="countdown"] .ruby-caption__eyebrow {
+  animation: rubyCaptionScaleSoftUp 570ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="countdown"] .ruby-caption__title {
+  animation: rubyCaptionScaleSoftUp 710ms var(--ruby-caption-ease) 95ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__eyebrow {
+  animation: rubyCaptionGalleryEyebrowDown 680ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__title {
+  animation: rubyCaptionGalleryTitleDown 760ms var(--ruby-caption-ease) 100ms both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__eyebrow {
+  animation: rubyCaptionGalleryEyebrowUp 620ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__title {
+  animation: rubyCaptionGalleryTitleUp 740ms var(--ruby-caption-ease) 90ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__divider {
+  animation: rubyCaptionDividerLeft 620ms var(--ruby-caption-ease) 190ms both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__divider {
+  animation: rubyCaptionDividerRight 620ms var(--ruby-caption-ease) 190ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="wish"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="wish"] .ruby-caption__title {
+  animation: rubyCaptionWishDown 720ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="wish"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="wish"] .ruby-caption__title {
+  animation: rubyCaptionWishUp 680ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="wish"] .ruby-caption__title {
+  animation-delay: 95ms;
+}
+
+.ruby-caption--visible[data-caption-motion="wish"] .ruby-caption__divider {
+  animation: rubyCaptionDividerCenter 560ms var(--ruby-caption-ease) 175ms both;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__title,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__subtitle {
+  animation: rubyCaptionGiftDown 780ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__title,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__subtitle {
+  animation: rubyCaptionGiftUp 760ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__title {
+  animation-delay: 95ms;
+  text-shadow: 0 8px 24px rgba(159, 53, 45, 0.14);
+}
+
+.ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__divider {
+  animation: rubyCaptionDividerCenter 580ms var(--ruby-caption-ease) 170ms both;
+}
+
+.ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__subtitle {
+  animation-delay: 230ms;
+}
+
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="footer"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--down[data-caption-motion="footer"] .ruby-caption__title {
+  animation: rubyCaptionFooterDown 850ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="footer"] .ruby-caption__eyebrow,
+.ruby-caption--visible.ruby-caption--up[data-caption-motion="footer"] .ruby-caption__title {
+  animation: rubyCaptionFooterUp 800ms var(--ruby-caption-ease) both;
+}
+
+.ruby-caption--visible[data-caption-motion="footer"] .ruby-caption__title {
+  animation-delay: 120ms;
+}
+
+@keyframes rubyCaptionQuoteDown {
+  from { opacity: 0; transform: translate3d(0, var(--ruby-caption-y), 0); filter: blur(10px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes rubyCaptionQuoteUp {
+  from { opacity: 0; transform: translate3d(0, calc(var(--ruby-caption-y) * -0.75), 0); filter: blur(8px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes rubyCaptionFromLeft {
+  from { opacity: 0; transform: translate3d(calc(var(--ruby-caption-x) * -1), 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes rubyCaptionFromRight {
+  from { opacity: 0; transform: translate3d(var(--ruby-caption-x), 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes rubyCaptionEventDown {
+  from { opacity: 0; transform: translate3d(0, var(--ruby-caption-y), 0) skewY(-1deg) rotate(-0.6deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) skewY(0) rotate(0); }
+}
+
+@keyframes rubyCaptionEventUp {
+  from { opacity: 0; transform: translate3d(0, calc(var(--ruby-caption-y) * -0.85), 0) skewY(1deg) rotate(0.6deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) skewY(0) rotate(0); }
+}
+
+@keyframes rubyCaptionLocationDown {
+  from { opacity: 0; transform: translate3d(calc(var(--ruby-caption-x) * -0.8), 0, 0) rotate(-0.7deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+}
+
+@keyframes rubyCaptionLocationUp {
+  from { opacity: 0; transform: translate3d(calc(var(--ruby-caption-x) * 0.8), 0, 0) rotate(0.7deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) rotate(0); }
+}
+
+@keyframes rubyCaptionScaleSoftDown {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.94); filter: blur(4px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes rubyCaptionScaleSoftUp {
+  from { opacity: 0; transform: translate3d(0, -10px, 0) scale(1.04); filter: blur(3px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+
+@keyframes rubyCaptionGalleryEyebrowDown {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); letter-spacing: 0.18em; filter: blur(4px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); letter-spacing: 0.5em; filter: blur(0); }
+}
+
+@keyframes rubyCaptionGalleryEyebrowUp {
+  from { opacity: 0; transform: translate3d(0, -18px, 0); letter-spacing: 0.62em; filter: blur(3px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); letter-spacing: 0.5em; filter: blur(0); }
+}
+
+@keyframes rubyCaptionGalleryTitleDown {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyCaptionGalleryTitleUp {
+  from { opacity: 0; transform: translate3d(0, -10px, 0) scale(1.04); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyCaptionWishDown {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); letter-spacing: 0.08em; filter: blur(3px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); letter-spacing: inherit; filter: blur(0); }
+}
+
+@keyframes rubyCaptionWishUp {
+  from { opacity: 0; transform: translate3d(0, -20px, 0); filter: blur(3px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+@keyframes rubyCaptionGiftDown {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.96); filter: drop-shadow(0 0 0 rgba(159, 53, 45, 0)); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: drop-shadow(0 10px 20px rgba(159, 53, 45, 0.1)); }
+}
+
+@keyframes rubyCaptionGiftUp {
+  from { opacity: 0; transform: translate3d(0, -16px, 0) scale(0.97); filter: drop-shadow(0 0 0 rgba(159, 53, 45, 0)); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: drop-shadow(0 10px 20px rgba(159, 53, 45, 0.08)); }
+}
+
+@keyframes rubyCaptionFooterDown {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rubyCaptionFooterUp {
+  from { opacity: 0; transform: translate3d(0, -16px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes rubyCaptionDividerCenter {
+  from { opacity: 0; transform: scaleX(0); transform-origin: center; }
+  to { opacity: 1; transform: scaleX(1); transform-origin: center; }
+}
+
+@keyframes rubyCaptionDividerLeft {
+  from { opacity: 0; transform: scaleX(0); transform-origin: left; }
+  to { opacity: 1; transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes rubyCaptionDividerRight {
+  from { opacity: 0; transform: scaleX(0); transform-origin: right; }
+  to { opacity: 1; transform: scaleX(1); transform-origin: right; }
+}
+
+@media (min-width: 768px) {
+  .ruby-caption {
+    --ruby-caption-x: 38px;
+    --ruby-caption-y: 34px;
+  }
+}
+
+@media (max-width: 430px) {
+  .ruby-caption {
+    --ruby-caption-x: 22px;
+    --ruby-caption-y: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .ruby-caption {
+    --ruby-caption-x: 18px;
+    --ruby-caption-y: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruby-caption,
+  .ruby-caption__eyebrow,
+  .ruby-caption__title,
+  .ruby-caption__divider,
+  .ruby-caption__subtitle,
+  .ruby-cover__bg,
+  .ruby-cover-frame,
+  .ruby-quote-frame,
+  .ruby-location-frame,
+  .ruby-wish-frame,
+  .ruby-gift-frame,
+  .ruby-footer-frame,
+  .ruby-cover__names,
+  .ruby-cover__date,
+  .ruby-cover__guest,
+  .ruby-cover__button,
+  .ruby-quote-opening,
+  .ruby-quote-text,
+  .ruby-quote-source,
+  .ruby-couple-photo,
+  .ruby-event-card,
+  .ruby-map-card,
+  .ruby-map-button,
+  .ruby-countdown-box,
+  .ruby-gallery-feature,
+  .ruby-gallery-thumb,
+  .ruby-wish-form,
+  .ruby-wish-card,
+  .ruby-bank-card,
+  .ruby-footer-content,
+  .ruby-gallery-feature--video img,
+  .ruby-gallery-thumb--video img {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+    will-change: auto;
+  }
+
+  .ruby-gallery-play,
+  .ruby-gallery-watch-label {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    clip-path: none !important;
+    will-change: auto;
+  }
+
+  .ruby-gallery-play {
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .ruby-gallery-watch-label {
+    transform: translateX(-50%) !important;
+  }
+}
+
 
 .ruby-cover__content {
   position: absolute;
@@ -395,6 +769,7 @@
   text-align: center;
   width: 100%;
   max-width: 380px;
+  min-width: 0;
   margin: 0 auto;
   padding: 176px 18px 0;
   box-sizing: border-box;
@@ -407,7 +782,8 @@
   line-height: 1.2;
   font-family: cursive;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .ruby-quote-line {
@@ -420,39 +796,50 @@
 .ruby-quote-opening,
 .invitation-opening-text {
   margin: 0 auto;
+  width: 100%;
   max-width: 372px;
+  min-width: 0;
   color: #111827;
   font-size: 14px;
   line-height: 1.75;
   font-weight: 400;
   text-align: center;
   white-space: pre-line;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .ruby-quote-text {
   margin: 28px auto 0;
+  width: 100%;
   max-width: 340px;
+  min-width: 0;
   color: #a83a2f;
   font-size: 13px;
   line-height: 1.65;
   font-style: italic;
   font-weight: 400;
   text-align: center;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .ruby-quote-source {
   margin: 12px auto 0;
+  width: 100%;
   max-width: 320px;
+  min-width: 0;
   color: #a83a2f;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
   line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .ruby-quote-menu,
@@ -958,9 +1345,10 @@
 .ruby-location-section {
   position: relative;
   width: 100%;
-  max-width: 410px;
+  max-width: 430px;
+  min-width: 0;
   min-height: 880px;
-  margin: 0 auto;
+  margin: 0 auto !important;
   background: #ffe3e3;
   overflow: hidden;
   box-sizing: border-box;
@@ -1015,23 +1403,28 @@
 
 .ruby-map-card {
   width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0;
   border-radius: 18px;
   background: transparent;
   box-shadow: 0 10px 24px rgba(120, 57, 52, .18);
+  box-sizing: border-box;
 }
 
 .ruby-map-preview {
   width: 100%;
+  max-width: 100%;
   height: 150px;
   border-radius: 18px;
   overflow: hidden;
   background: #f8dfe2;
+  box-sizing: border-box;
 }
 
 .ruby-map-preview iframe {
   width: 100%;
+  max-width: 100%;
   height: 100%;
   border: 0;
   display: block;
@@ -1191,6 +1584,7 @@
   display: block;
   appearance: none;
   -webkit-appearance: none;
+  cursor: default;
 }
 
 .ruby-gallery-feature img {
@@ -1198,17 +1592,61 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  filter: brightness(0.72);
 }
 
-.ruby-gallery-feature--video {
+.ruby-gallery-feature--video,
+.ruby-gallery-thumb--video {
   cursor: pointer;
+}
+
+.ruby-gallery-feature--video img,
+.ruby-gallery-thumb--video img {
+  filter: brightness(0.82);
+  animation: rubyGalleryVideoFeatureIn 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: filter 180ms ease, transform 180ms ease;
+}
+
+.ruby-gallery-feature--video:hover img,
+.ruby-gallery-thumb--video:hover img {
+  filter: brightness(0.74);
+  transform: scale(1.025);
+}
+
+.ruby-gallery-video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    radial-gradient(circle at center, rgba(31, 25, 24, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(30, 20, 18, 0.02), rgba(30, 20, 18, 0.18));
+  pointer-events: none;
+}
+
+.ruby-gallery-video-badge {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 250, 248, 0.88);
+  color: #9f352d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(38, 20, 18, 0.14);
+  pointer-events: none;
 }
 
 .ruby-gallery-play {
   position: absolute;
   left: 50%;
   top: 50%;
+  z-index: 3;
   transform: translate(-50%, -50%);
   width: 54px;
   height: 54px;
@@ -1217,10 +1655,100 @@
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(2px);
-  font-size: 30px;
+  background: rgba(159, 53, 45, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow: 0 16px 34px rgba(66, 32, 30, 0.28);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-size: 20px;
   line-height: 1;
+  pointer-events: none;
+  animation: rubyGalleryPlayIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both,
+    rubyGalleryPlayBreath 2.8s ease-in-out 900ms infinite;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.ruby-gallery-play i {
+  margin-left: 3px;
+}
+
+.ruby-gallery-feature--video:hover .ruby-gallery-play,
+.ruby-gallery-thumb--video:hover .ruby-gallery-play {
+  transform: translate(-50%, -50%) scale(1.06);
+  background: rgba(179, 64, 50, 0.9);
+}
+
+.ruby-gallery-play--small {
+  width: 42px;
+  height: 42px;
+  font-size: 15px;
+  animation: rubyGalleryPlayIn 540ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.ruby-gallery-watch-label {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 4;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 250, 248, 0.88);
+  color: #7f261e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 10px 20px rgba(38, 20, 18, 0.16);
+  pointer-events: none;
+  white-space: nowrap;
+  animation: rubyGalleryWatchLabelIn 600ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+}
+
+@keyframes rubyGalleryVideoFeatureIn {
+  from {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rubyGalleryPlayIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes rubyGalleryPlayBreath {
+  0%,
+  100% {
+    box-shadow: 0 16px 34px rgba(66, 32, 30, 0.28);
+  }
+  50% {
+    box-shadow: 0 18px 42px rgba(159, 53, 45, 0.34);
+  }
+}
+
+@keyframes rubyGalleryWatchLabelIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .ruby-gallery-slider {
@@ -1234,6 +1762,358 @@
   gap: 12px;
   padding: 0 28px;
   width: max-content;
+}
+
+.ruby-cover__bg {
+  animation: rubyCoverLivingPhoto 12s ease-in-out both;
+  transform-origin: center top;
+}
+
+.ruby-cover-frame,
+.ruby-quote-frame,
+.ruby-location-frame,
+.ruby-wish-frame,
+.ruby-gift-frame,
+.ruby-footer-frame {
+  pointer-events: none;
+  transform-origin: center bottom;
+}
+
+.ruby-cover-frame {
+  animation: rubyFloralCoverSway 8.5s ease-in-out infinite;
+}
+
+.ruby-quote-frame,
+.ruby-wish-frame,
+.ruby-footer-frame {
+  animation: rubyFloralLeftDrift 7.8s ease-in-out infinite;
+}
+
+.ruby-location-frame,
+.ruby-gift-frame {
+  animation: rubyFloralRightDrift 8.6s ease-in-out 180ms infinite;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-quote-frame,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-location-frame,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-wish-frame,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gift-frame,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-footer-frame {
+  opacity: 0;
+  transform: translate3d(0, 15px, 0) scale(0.9) rotate(-2deg);
+}
+
+.ia-reveal--visible .ruby-quote-frame,
+.ia-reveal--visible .ruby-location-frame,
+.ia-reveal--visible .ruby-wish-frame,
+.ia-reveal--visible .ruby-gift-frame,
+.ia-reveal--visible .ruby-footer-frame {
+  animation-name: rubyFloralBloom, rubyFloralLeftDrift;
+  animation-duration: 980ms, 7.8s;
+  animation-delay: 0ms, 980ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: both, both;
+}
+
+.ia-reveal--visible .ruby-location-frame,
+.ia-reveal--visible .ruby-gift-frame {
+  animation-name: rubyFloralBloomRight, rubyFloralRightDrift;
+  animation-delay: 160ms, 1120ms;
+  animation-duration: 1040ms, 8.6s;
+}
+
+.ruby-cover__names,
+.ruby-cover__date,
+.ruby-cover__guest,
+.ruby-cover__button {
+  animation: rubyCoverTextArrive 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ruby-cover__date {
+  animation-delay: 90ms;
+}
+
+.ruby-cover__guest {
+  animation-delay: 180ms;
+}
+
+.ruby-cover__button {
+  animation-name: rubyCoverButtonArrive;
+  animation-delay: 270ms;
+}
+
+.ruby-cover--opening .ruby-cover__names,
+.ruby-cover--opening .ruby-cover__date,
+.ruby-cover--opening .ruby-cover__guest,
+.ruby-cover--opening .ruby-cover__button {
+  animation: rubyCoverTextExit 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-quote-opening,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-quote-text,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-quote-source {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translate3d(0, 20px, 0);
+}
+
+.ia-reveal--visible .ruby-quote-opening {
+  animation: rubyBodyTextReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.ia-reveal--visible .ruby-quote-text {
+  animation: rubyQuoteTextDown 820ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+}
+
+.ia-reveal--visible .ruby-quote-source {
+  animation: rubyBodyTextReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-couple-photo {
+  opacity: 0;
+  clip-path: inset(8% 8% 8% 8% round 14px);
+  transform: translate3d(0, 20px, 0) scale(0.92);
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-couple-card--bride .ruby-couple-photo {
+  transform: translate3d(-22px, 8px, 0) scale(0.92);
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-couple-card--groom .ruby-couple-photo {
+  transform: translate3d(22px, 8px, 0) scale(0.92);
+}
+
+.ia-reveal--visible .ruby-couple-photo {
+  animation: rubyPhotoMaskReveal 920ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+}
+
+.ruby-couple-photo img,
+.ruby-gallery-feature img,
+.ruby-gallery-thumb img {
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), filter 320ms ease;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-event-card {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0) scale(0.98);
+}
+
+.ia-reveal--visible .ruby-event-card {
+  animation: rubyCardRiseIn 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-event-card:nth-of-type(2) {
+  animation-delay: 90ms;
+}
+
+.ia-reveal--visible .ruby-event-card h3,
+.ia-reveal--visible .ruby-event-card p,
+.ia-reveal--visible .ruby-event-divider {
+  animation: rubyBodyTextReveal 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-event-card p:nth-child(1) { animation-delay: 110ms; }
+.ia-reveal--visible .ruby-event-card p:nth-child(2) { animation-delay: 170ms; }
+.ia-reveal--visible .ruby-event-card .ruby-event-divider { animation-delay: 230ms; }
+.ia-reveal--visible .ruby-event-card h3 { animation-delay: 290ms; }
+.ia-reveal--visible .ruby-event-card .ruby-event-address { animation-delay: 350ms; }
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-map-card {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.98);
+}
+
+.ia-reveal--visible .ruby-map-card {
+  animation: rubyCardRiseIn 840ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.ia-reveal--visible .ruby-map-button {
+  animation: rubyBodyTextReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) 230ms both;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-countdown-box {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0) scale(0.9);
+}
+
+.ia-reveal--visible .ruby-countdown-box {
+  animation: rubyCountdownBoxIn 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-countdown-box:nth-child(1) { animation-delay: 0ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(2) { animation-delay: 70ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(3) { animation-delay: 140ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(4) { animation-delay: 210ms; }
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gallery-feature {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.94);
+}
+
+.ia-reveal--visible .ruby-gallery-feature {
+  animation: rubyGalleryFeatureIn 880ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.ia-reveal--visible .ruby-gallery-feature .ruby-gallery-play {
+  animation: rubyGalleryPlayIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 330ms both,
+    rubyGalleryPlayBreath 2.8s ease-in-out 1100ms infinite;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gallery-thumb {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0) scale(0.94);
+}
+
+.ia-reveal--visible .ruby-gallery-thumb {
+  animation: rubyThumbStaggerIn 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(1) { animation-delay: 0ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(2) { animation-delay: 90ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(3) { animation-delay: 180ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(4) { animation-delay: 270ms; }
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-wish-form,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-wish-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-bank-card {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.98);
+}
+
+.ia-reveal--visible .ruby-wish-form {
+  animation: rubyCardRiseIn 780ms cubic-bezier(0.22, 1, 0.36, 1) 130ms both;
+}
+
+.ia-reveal--visible .ruby-wish-card,
+.ia-reveal--visible .ruby-bank-card {
+  animation: rubyCardRiseIn 740ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-wish-card:nth-child(1),
+.ia-reveal--visible .ruby-bank-card:nth-child(1) { animation-delay: 120ms; }
+.ia-reveal--visible .ruby-wish-card:nth-child(2),
+.ia-reveal--visible .ruby-bank-card:nth-child(2) { animation-delay: 210ms; }
+.ia-reveal--visible .ruby-wish-card:nth-child(3) { animation-delay: 300ms; }
+.ia-reveal--visible .ruby-wish-card:nth-child(4) { animation-delay: 390ms; }
+
+.ruby-copy-button {
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease;
+}
+
+.ruby-copy-button:active {
+  transform: scale(0.98);
+}
+
+.ia-reveal--visible .ruby-footer-content {
+  animation: rubyFooterSlowIn 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ruby-couple-photo:hover img,
+  .ruby-gallery-feature:hover img,
+  .ruby-gallery-thumb:hover img {
+    transform: scale(1.035);
+  }
+
+  .ruby-gallery-feature:hover .ruby-gallery-video-overlay,
+  .ruby-gallery-thumb:hover .ruby-gallery-video-overlay {
+    background:
+      radial-gradient(circle at center, rgba(31, 25, 24, 0.1), transparent 36%),
+      linear-gradient(180deg, rgba(30, 20, 18, 0), rgba(30, 20, 18, 0.24));
+  }
+}
+
+@keyframes rubyCoverLivingPhoto {
+  from { transform: scale(1); }
+  to { transform: scale(1.03); }
+}
+
+@keyframes rubyCoverTextArrive {
+  from { opacity: 0; filter: blur(8px); transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0); }
+}
+
+@keyframes rubyCoverButtonArrive {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyCoverTextExit {
+  to { opacity: 0; filter: blur(8px); transform: translate3d(0, -14px, 0) scale(0.98); }
+}
+
+@keyframes rubyFloralCoverSway {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(3px, -7px, 0) rotate(1deg); }
+}
+
+@keyframes rubyFloralLeftDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(3px, -7px, 0) rotate(1deg); }
+}
+
+@keyframes rubyFloralRightDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-3px, -5px, 0) rotate(-1deg); }
+}
+
+@keyframes rubyFloralBloom {
+  from { opacity: 0; transform: translate3d(0, 15px, 0) scale(0.9) rotate(-2deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes rubyFloralBloomRight {
+  from { opacity: 0; transform: translate3d(0, 15px, 0) scale(0.9) rotate(2deg); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes rubyBodyTextReveal {
+  from { opacity: 0; filter: blur(6px); transform: translate3d(0, 20px, 0); }
+  to { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0); }
+}
+
+@keyframes rubyQuoteTextDown {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyPhotoMaskReveal {
+  from {
+    opacity: 0;
+    clip-path: inset(8% 8% 8% 8% round 14px);
+    transform: translate3d(0, 18px, 0) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 14px);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes rubyCardRiseIn {
+  from { opacity: 0; transform: translate3d(0, 26px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyCountdownBoxIn {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(0.9); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyGalleryFeatureIn {
+  from { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyThumbStaggerIn {
+  from { opacity: 0; transform: translate3d(0, 22px, 0) scale(0.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes rubyFooterSlowIn {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(0.98); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
 }
 
 .ruby-gallery-slider--animate .ruby-gallery-track {
@@ -1256,6 +2136,7 @@
   background: #f8eeee;
   appearance: none;
   -webkit-appearance: none;
+  cursor: default;
 }
 
 .ruby-gallery-thumb img {
@@ -1263,6 +2144,81 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.ruby-video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(28, 18, 20, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ruby-video-modal__panel {
+  position: relative;
+  width: min(100%, 760px);
+  max-height: calc(100vh - 40px);
+  padding: 48px 16px 16px;
+  border-radius: 18px;
+  background: #fffaf8;
+  box-shadow: 0 24px 80px rgba(22, 11, 12, 0.36);
+  box-sizing: border-box;
+}
+
+.ruby-video-modal__panel h3 {
+  position: absolute;
+  left: 18px;
+  right: 58px;
+  top: 14px;
+  margin: 0;
+  color: #7f261e;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ruby-video-modal__close {
+  position: absolute;
+  right: 12px;
+  top: 9px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: #f8eeee;
+  color: #7f261e;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ruby-video-modal__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #1b1112;
+}
+
+.ruby-video-modal__frame iframe,
+.ruby-video-modal__frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #1b1112;
 }
 
 .ruby-couple-photo .image-placeholder,

@@ -1,4 +1,4 @@
-import { AfterViewInit, Directive, ElementRef, Input, Renderer2 } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, Input, Renderer2, RendererStyleFlags2 } from '@angular/core';
 
 @Directive({
   selector: '[appRevealStagger]',
@@ -21,7 +21,12 @@ export class RevealStaggerDirective implements AfterViewInit {
 
     children.forEach((child, index) => {
       this.renderer.addClass(child, 'ia-stagger-item');
-      this.renderer.setStyle(child, '--ia-stagger-delay', `${80 + index * this.appRevealStaggerStep}ms`);
+      this.renderer.setStyle(
+        child,
+        '--ia-stagger-delay',
+        `${80 + index * this.appRevealStaggerStep}ms`,
+        RendererStyleFlags2.DashCase
+      );
     });
   }
 }

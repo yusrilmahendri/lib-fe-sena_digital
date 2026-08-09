@@ -8,7 +8,7 @@
 
 .ia-package-ruby {
   --ia-duration: 760ms;
-  --ia-distance: 22px;
+  --ia-distance: 30px;
 }
 
 .ia-package-sapphire {
@@ -24,8 +24,8 @@
 }
 
 .ia-reveal {
-  opacity: 0;
-  transform: translate3d(0, var(--ia-distance), 0);
+  opacity: 1;
+  transform: none;
   transition:
     opacity var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms),
     transform var(--ia-duration) var(--ia-ease) var(--ia-delay, 0ms),
@@ -34,35 +34,48 @@
   will-change: opacity, transform, filter, clip-path;
 }
 
-.ia-reveal--fade-left {
+.ia-motion-ready.ia-reveal:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) {
+  opacity: 0;
+  transform: translate3d(0, var(--ia-distance), 0);
+}
+
+.ia-motion-ready.ia-reveal--fade-left:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--fade-left:not(.ia-reveal--visible) {
   transform: translate3d(var(--ia-distance), 0, 0);
 }
 
-.ia-reveal--fade-right {
+.ia-motion-ready.ia-reveal--fade-right:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--fade-right:not(.ia-reveal--visible) {
   transform: translate3d(calc(var(--ia-distance) * -1), 0, 0);
 }
 
-.ia-reveal--zoom-soft {
+.ia-motion-ready.ia-reveal--zoom-soft:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--zoom-soft:not(.ia-reveal--visible) {
   transform: translate3d(0, 16px, 0) scale(0.965);
 }
 
-.ia-reveal--clip-reveal {
+.ia-motion-ready.ia-reveal--clip-reveal:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--clip-reveal:not(.ia-reveal--visible) {
   clip-path: inset(14% 0 14% 0 round 18px);
   transform: translate3d(0, 18px, 0);
 }
 
-.ia-reveal--blur-reveal {
+.ia-motion-ready.ia-reveal--blur-reveal:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--blur-reveal:not(.ia-reveal--visible) {
   filter: blur(var(--ia-blur));
   transform: translate3d(0, 22px, 0);
 }
 
-.ia-reveal--cinematic {
+.ia-motion-ready.ia-reveal--cinematic:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--cinematic:not(.ia-reveal--visible) {
   filter: blur(10px);
   clip-path: inset(18% 0 18% 0);
   transform: translate3d(0, 36px, 0) scale(1.025);
 }
 
-.ia-reveal--depth {
+.ia-motion-ready.ia-reveal--depth:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--depth:not(.ia-reveal--visible) {
   transform: perspective(900px) translate3d(0, 34px, 0) rotateX(5deg) scale(0.985);
 }
 
@@ -84,7 +97,8 @@
   animation: iaOpeningStagger 760ms var(--ia-ease) var(--ia-stagger-delay, 80ms) both;
 }
 
-.ia-reveal:not(.ia-reveal--visible) .ia-stagger-item {
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ia-stagger-item,
+.ia-motion-ready.ia-reveal:not(.ia-reveal--visible) .ia-stagger-item {
   opacity: 0;
   filter: blur(6px);
   transform: translate3d(0, 14px, 0);
@@ -94,6 +108,88 @@
   opacity: 1;
   filter: blur(0);
   transform: translate3d(0, 0, 0);
+}
+
+.ia-package-ruby {
+  .ia-stagger-item {
+    transition-duration: 720ms;
+  }
+
+  .ruby-quote-line,
+  .ruby-couple-line,
+  .ruby-gallery-line,
+  .ruby-wish-line,
+  .ruby-gift-line {
+    transition-duration: 680ms;
+  }
+
+  .ia-reveal:not(.ia-reveal--visible) {
+    .ruby-quote-line,
+    .ruby-couple-line,
+    .ruby-gallery-line,
+    .ruby-wish-line,
+    .ruby-gift-line {
+      filter: none;
+      transform: scaleX(0.72);
+      transform-origin: center;
+    }
+
+    .ruby-couple-card--bride {
+      transform: translate3d(-34px, 0, 0) scale(0.985);
+    }
+
+    .ruby-couple-card--groom {
+      transform: translate3d(34px, 0, 0) scale(0.985);
+    }
+
+    .ruby-event-card,
+    .ruby-map-card,
+    .ruby-countdown,
+    .ruby-wish-form,
+    .ruby-wish-card {
+      transform: translate3d(0, 28px, 0);
+    }
+
+    .ruby-countdown-box {
+      filter: none;
+      transform: translate3d(0, 18px, 0) scale(0.96);
+    }
+
+    .ruby-gallery-feature,
+    .ruby-gallery-thumb,
+    .ruby-bank-card {
+      filter: none;
+      transform: translate3d(0, 20px, 0) scale(0.94);
+    }
+
+    .ruby-footer-content {
+      filter: none;
+      transform: translate3d(0, 18px, 0);
+    }
+  }
+
+  .ia-reveal--visible {
+    .ruby-quote-line,
+    .ruby-couple-line,
+    .ruby-gallery-line,
+    .ruby-wish-line,
+    .ruby-gift-line,
+    .ruby-couple-card,
+    .ruby-event-card,
+    .ruby-map-card,
+    .ruby-countdown,
+    .ruby-countdown-box,
+    .ruby-gallery-feature,
+    .ruby-gallery-thumb,
+    .ruby-wish-form,
+    .ruby-wish-card,
+    .ruby-bank-card,
+    .ruby-footer-content {
+      opacity: 1;
+      filter: none;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
 }
 
 .ia-floating-decoration {
@@ -462,12 +558,30 @@
 @media (max-width: 767px) {
   .ia-scope {
     --ia-duration: 620ms;
-    --ia-distance: 16px;
+    --ia-distance: 24px;
     --ia-blur: 8px;
   }
 
   .ia-parallax {
     transform: none;
+  }
+
+  .ia-package-ruby {
+    --ia-duration: 680ms;
+    --ia-distance: 24px;
+
+    .ia-reveal:not(.ia-reveal--visible) {
+      .ruby-couple-card--bride,
+      .ruby-couple-card--groom {
+        transform: translate3d(0, 24px, 0) scale(0.97);
+      }
+
+      .ruby-gallery-feature,
+      .ruby-gallery-thumb,
+      .ruby-bank-card {
+        transform: translate3d(0, 18px, 0) scale(0.95);
+      }
+    }
   }
 }
 

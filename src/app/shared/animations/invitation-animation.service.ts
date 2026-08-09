@@ -18,6 +18,8 @@ export interface InvitationAnimationProfile {
   opening: string;
   sectionPattern: InvitationRevealVariant[];
   staggerSelector: string;
+  revealRootMargin?: string;
+  revealThreshold?: number;
 }
 
 @Injectable({
@@ -30,8 +32,10 @@ export class InvitationAnimationService {
       theme: 'soft-ivory',
       themeClass: 'ia-theme-soft-ivory',
       opening: 'ruby-card',
-      sectionPattern: ['fade-up', 'zoom-soft', 'fade-left', 'clip-reveal'],
-      staggerSelector: 'h1, h2, h3, p, blockquote, .gallery-card, img, article, button, a',
+      sectionPattern: ['fade-up', 'zoom-soft', 'fade-right', 'fade-up', 'zoom-soft', 'fade-up'],
+      staggerSelector: 'h1, h2, h3, p, blockquote, button, a, .ruby-quote-line, .ruby-couple-line, .ruby-gallery-line, .ruby-wish-line, .ruby-gift-line, .ruby-couple-card, .ruby-event-card, .ruby-map-card, .ruby-countdown, .ruby-countdown-box, .gallery-card, .ruby-gallery-feature, .ruby-gallery-thumb, .ruby-wish-form, .ruby-wish-card, .ruby-bank-card, .ruby-footer-content',
+      revealRootMargin: '0px 0px -8% 0px',
+      revealThreshold: 0.16,
     },
     'lavender-bloom': {
       package: 'ruby',
@@ -39,7 +43,9 @@ export class InvitationAnimationService {
       themeClass: 'ia-theme-lavender-bloom',
       opening: 'ruby-floral',
       sectionPattern: ['fade-up', 'fade-right', 'zoom-soft', 'clip-reveal'],
-      staggerSelector: 'h1, h2, h3, p, blockquote, .gallery-card, img, article, button, a',
+      staggerSelector: 'h1, h2, h3, p, blockquote, button, a, .gallery-card, img, article, .ruby-two-gallery-item, .ruby-two-countdown__card',
+      revealRootMargin: '0px 0px -8% 0px',
+      revealThreshold: 0.16,
     },
     'garden-whisper': {
       package: 'sapphire',
@@ -87,5 +93,36 @@ export class InvitationAnimationService {
 
   getRootMargin(): string {
     return '0px 0px -12% 0px';
+  }
+
+  getRevealRootMargin(theme?: string | null): string {
+    return this.getProfile(theme).revealRootMargin || this.getRootMargin();
+  }
+
+  getRevealThreshold(theme?: string | null): number {
+    return this.getProfile(theme).revealThreshold ?? 0.16;
+  }
+
+  getScrollRoot(element: HTMLElement): HTMLElement | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    let parent = element.parentElement;
+
+    while (parent && parent !== document.body && parent !== document.documentElement) {
+      const style = window.getComputedStyle(parent);
+      const overflowY = style.overflowY;
+      const overflow = style.overflow;
+      const canScroll = /(auto|scroll|overlay)/.test(`${overflowY} ${overflow}`);
+
+      if (canScroll && parent.scrollHeight > parent.clientHeight + 1) {
+        return parent;
+      }
+
+      parent = parent.parentElement;
+    }
+
+    return null;
   }
 }

@@ -5,6 +5,7 @@ import {
   Input,
   OnDestroy,
   Renderer2,
+  RendererStyleFlags2,
 } from '@angular/core';
 import {
   InvitationAnimationService,
@@ -31,8 +32,9 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
     const revealVariant = this.variant || 'fade-up';
 
     this.renderer.addClass(element, 'ia-reveal');
+    this.renderer.addClass(element, 'ia-motion-ready');
     this.renderer.addClass(element, `ia-reveal--${revealVariant}`);
-    this.renderer.setStyle(element, '--ia-delay', `${this.appRevealDelay}ms`);
+    this.renderer.setStyle(element, '--ia-delay', `${this.appRevealDelay}ms`, RendererStyleFlags2.DashCase);
 
     if (this.animationService.isReducedMotion() || !('IntersectionObserver' in window)) {
       this.reveal(element);
@@ -47,7 +49,7 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
         }
       });
     }, {
-      root: null,
+      root: this.animationService.getScrollRoot(element),
       rootMargin: this.animationService.getRootMargin(),
       threshold: 0.16,
     });

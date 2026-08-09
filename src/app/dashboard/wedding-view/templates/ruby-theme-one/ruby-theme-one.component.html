@@ -62,8 +62,10 @@
         >
 
         <div class="ruby-quote-content">
-          <h2>{{ getOpeningHeading() }}</h2>
-          <div class="ruby-quote-line"></div>
+          <div class="ruby-caption ruby-caption--quote" data-caption-motion="quote">
+            <h2 class="ruby-caption__title">{{ getOpeningHeading() }}</h2>
+            <div class="ruby-quote-line ruby-caption__divider"></div>
+          </div>
 
           <p class="ruby-quote-opening invitation-opening-text" [innerText]="getInvitationOpeningText()"></p>
 
@@ -78,10 +80,10 @@
 
       <section class="ruby-couple-section" *ngIf="isCoupleVisible()">
         <div class="ruby-couple-content">
-          <div class="ruby-couple-header">
-            <p class="ruby-couple-label">MEMPELAI</p>
-            <h2>Kedua Mempelai</h2>
-            <div class="ruby-couple-line"></div>
+          <div class="ruby-couple-header ruby-caption ruby-caption--couple" data-caption-motion="couple">
+            <p class="ruby-couple-label ruby-caption__eyebrow">MEMPELAI</p>
+            <h2 class="ruby-caption__title">Kedua Mempelai</h2>
+            <div class="ruby-couple-line ruby-caption__divider"></div>
           </div>
 
           <div class="ruby-couple-card ruby-couple-card--bride">
@@ -124,8 +126,10 @@
 
       <section class="ruby-event-section" *ngIf="isEventVisible()">
         <div class="ruby-event-content">
-          <p class="ruby-event-label">SAVE THE DATE</p>
-          <h2>Akad Nikah</h2>
+          <div class="ruby-caption ruby-caption--event" data-caption-motion="event">
+            <p class="ruby-event-label ruby-caption__eyebrow">SAVE THE DATE</p>
+            <h2 class="ruby-caption__title">Akad Nikah</h2>
+          </div>
 
           <div class="ruby-event-card">
             <p class="ruby-event-date">{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</p>
@@ -156,8 +160,10 @@
         >
 
         <div class="ruby-location-content">
-          <p class="ruby-section-label">TEMPAT</p>
-          <h2>Lokasi Resepsi</h2>
+          <div class="ruby-caption ruby-caption--location" data-caption-motion="location">
+            <p class="ruby-section-label ruby-caption__eyebrow">TEMPAT</p>
+            <h2 class="ruby-caption__title">Lokasi Resepsi</h2>
+          </div>
           <h3 *ngIf="receptionVenueName">{{ receptionVenueName }}</h3>
 
           <div class="ruby-map-card">
@@ -190,8 +196,10 @@
           </a>
 
           <div class="ruby-countdown">
-            <p class="ruby-section-label ruby-section-label--countdown">{{ getCountdownHeading() }}</p>
-            <h2>Hitung Mundur</h2>
+            <div class="ruby-caption ruby-caption--countdown" data-caption-motion="countdown">
+              <p class="ruby-section-label ruby-section-label--countdown ruby-caption__eyebrow">{{ getCountdownHeading() }}</p>
+              <h2 class="ruby-caption__title">Hitung Mundur</h2>
+            </div>
 
             <div class="ruby-countdown-grid">
               <div class="ruby-countdown-box">
@@ -217,20 +225,23 @@
 
       <section class="ruby-gallery-section" *ngIf="mainGalleryPhoto">
         <div class="ruby-gallery-content">
-          <p class="ruby-gallery-label">MOMENTS</p>
-          <h2>Galeri Foto</h2>
-          <div class="ruby-gallery-line"></div>
+          <div class="ruby-caption ruby-caption--gallery" data-caption-motion="gallery">
+            <p class="ruby-gallery-label ruby-caption__eyebrow">MOMENTS</p>
+            <h2 class="ruby-caption__title">Galeri Foto</h2>
+            <div class="ruby-gallery-line ruby-caption__divider"></div>
+          </div>
 
           <button
             class="ruby-gallery-feature gallery-card"
             type="button"
             [class.ruby-gallery-feature--video]="hasVideo(mainGalleryPhoto)"
-            [class.is-image-missing]="!getGalleryPhotoUrl(mainGalleryPhoto)"
+            [class.is-image-missing]="!getGalleryDisplayImageUrl(mainGalleryPhoto)"
+            [attr.aria-label]="hasVideo(mainGalleryPhoto) ? 'Putar video galeri utama' : 'Foto galeri utama'"
             (click)="openGalleryVideo(mainGalleryPhoto)"
           >
             <img
-              *ngIf="getGalleryPhotoUrl(mainGalleryPhoto)"
-              [src]="getGalleryPhotoUrl(mainGalleryPhoto)"
+              *ngIf="getGalleryDisplayImageUrl(mainGalleryPhoto)"
+              [src]="getGalleryDisplayImageUrl(mainGalleryPhoto)"
               [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
               [style.object-fit]="getPhotoObjectFit(mainGalleryPhoto)"
               [style.object-position]="getPhotoObjectPosition(mainGalleryPhoto)"
@@ -238,9 +249,12 @@
             />
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
 
+            <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true"></span>
+            <span class="ruby-gallery-video-badge" *ngIf="hasVideo(mainGalleryPhoto)">Video</span>
             <span class="ruby-gallery-play" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true">
-              ▶
+              <i class="fas fa-play"></i>
             </span>
+            <span class="ruby-gallery-watch-label" *ngIf="hasVideo(mainGalleryPhoto)">Tonton Video</span>
           </button>
 
           <div
@@ -253,17 +267,24 @@
                 class="ruby-gallery-thumb gallery-card"
                 type="button"
                 *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
-                [class.is-image-missing]="!getGalleryPhotoUrl(item)"
+                [class.ruby-gallery-thumb--video]="hasVideo(item)"
+                [class.is-image-missing]="!getGalleryDisplayImageUrl(item)"
+                [attr.aria-label]="hasVideo(item) ? 'Putar video galeri' : 'Foto galeri'"
+                (click)="openGalleryVideo(item)"
               >
                 <img
-                  *ngIf="getGalleryPhotoUrl(item)"
-                  [src]="getGalleryPhotoUrl(item)"
+                  *ngIf="getGalleryDisplayImageUrl(item)"
+                  [src]="getGalleryDisplayImageUrl(item)"
                   [alt]="item.nama_foto || 'Galeri foto'"
                   [style.object-fit]="getPhotoObjectFit(item)"
                   [style.object-position]="getPhotoObjectPosition(item)"
                   (error)="onGalleryImageError($event)"
                 />
                 <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+                <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(item)" aria-hidden="true"></span>
+                <span class="ruby-gallery-play ruby-gallery-play--small" *ngIf="hasVideo(item)" aria-hidden="true">
+                  <i class="fas fa-play"></i>
+                </span>
               </button>
 
               <ng-container *ngIf="galleryThumbs.length > 2">
@@ -271,18 +292,25 @@
                   class="ruby-gallery-thumb gallery-card"
                   type="button"
                   *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
-                  [class.is-image-missing]="!getGalleryPhotoUrl(item)"
+                  [class.ruby-gallery-thumb--video]="hasVideo(item)"
+                  [class.is-image-missing]="!getGalleryDisplayImageUrl(item)"
                   aria-hidden="true"
+                  tabindex="-1"
+                  (click)="openGalleryVideo(item)"
                 >
                   <img
-                    *ngIf="getGalleryPhotoUrl(item)"
-                    [src]="getGalleryPhotoUrl(item)"
+                    *ngIf="getGalleryDisplayImageUrl(item)"
+                    [src]="getGalleryDisplayImageUrl(item)"
                     alt=""
                     [style.object-fit]="getPhotoObjectFit(item)"
                     [style.object-position]="getPhotoObjectPosition(item)"
                     (error)="onGalleryImageError($event)"
                   />
                   <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+                  <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(item)" aria-hidden="true"></span>
+                  <span class="ruby-gallery-play ruby-gallery-play--small" *ngIf="hasVideo(item)" aria-hidden="true">
+                    <i class="fas fa-play"></i>
+                  </span>
                 </button>
               </ng-container>
             </div>
@@ -290,14 +318,44 @@
         </div>
       </section>
 
+      <div
+        class="ruby-video-modal"
+        *ngIf="selectedGalleryVideoType"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ruby-video-modal-title"
+        (click)="closeGalleryVideo()"
+      >
+        <div class="ruby-video-modal__panel" (click)="$event.stopPropagation()">
+          <button class="ruby-video-modal__close" type="button" aria-label="Tutup video" (click)="closeGalleryVideo()">×</button>
+          <h3 id="ruby-video-modal-title">{{ selectedGalleryVideoTitle }}</h3>
+          <div class="ruby-video-modal__frame">
+            <iframe
+              *ngIf="selectedGalleryVideoType === 'youtube' && selectedGalleryVideoUrl"
+              [src]="selectedGalleryVideoUrl"
+              title="Video galeri"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen>
+            </iframe>
+            <video
+              *ngIf="selectedGalleryVideoType === 'video' && selectedGalleryVideoDirectUrl"
+              [src]="selectedGalleryVideoDirectUrl"
+              controls
+              playsinline>
+            </video>
+          </div>
+        </div>
+      </div>
+
       <section class="ruby-wish-section" *ngIf="isWishVisible()">
         <img class="ruby-wish-frame" src="assets/thema-1/frame-6.png" alt="" aria-hidden="true">
 
         <div class="ruby-wish-content">
-          <div class="ruby-wish-header">
-            <p class="ruby-wish-label">DOA &amp; HARAPAN</p>
-            <h2>Ucapan &amp; Doa</h2>
-            <div class="ruby-wish-line"></div>
+          <div class="ruby-wish-header ruby-caption ruby-caption--wish" data-caption-motion="wish">
+            <p class="ruby-wish-label ruby-caption__eyebrow">DOA &amp; HARAPAN</p>
+            <h2 class="ruby-caption__title">Ucapan &amp; Doa</h2>
+            <div class="ruby-wish-line ruby-caption__divider"></div>
           </div>
 
           <div class="ruby-wish-form">
@@ -378,11 +436,11 @@
         <img class="ruby-gift-frame" src="assets/thema-1/frame-7.png" alt="" aria-hidden="true">
 
         <div class="ruby-gift-content">
-          <div class="ruby-gift-header">
-            <p class="ruby-gift-label">WEDDING GIFT</p>
-            <h2>Tanda Kasih</h2>
-            <div class="ruby-gift-line"></div>
-            <p class="ruby-gift-description">
+          <div class="ruby-gift-header ruby-caption ruby-caption--gift" data-caption-motion="gift">
+            <p class="ruby-gift-label ruby-caption__eyebrow">WEDDING GIFT</p>
+            <h2 class="ruby-caption__title">Tanda Kasih</h2>
+            <div class="ruby-gift-line ruby-caption__divider"></div>
+            <p class="ruby-gift-description ruby-caption__subtitle">
               Doa restu Anda adalah hadiah terindah. Namun jika<br>
               ingin memberi tanda kasih, dapat melalui:
             </p>
@@ -420,13 +478,15 @@
         <div class="ruby-footer-content">
           <p class="ruby-footer-message" [innerText]="getClosingText()"></p>
 
-          <p class="ruby-footer-label">KAMI YANG BERBAHAGIA</p>
+          <div class="ruby-caption ruby-caption--footer" data-caption-motion="footer">
+            <p class="ruby-footer-label ruby-caption__eyebrow">KAMI YANG BERBAHAGIA</p>
 
-          <h2 class="ruby-footer-names">
-            <span>{{ getPrimaryDisplayName() }}</span>
-            <em>&amp;</em>
-            <span>{{ getSecondaryDisplayName() }}</span>
-          </h2>
+            <h2 class="ruby-footer-names ruby-caption__title">
+              <span>{{ getPrimaryDisplayName() }}</span>
+              <em>&amp;</em>
+              <span>{{ getSecondaryDisplayName() }}</span>
+            </h2>
+          </div>
 
           <p class="ruby-footer-date">{{ getClosingDateLabel() }}</p>
 

@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, NgZone, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   BankAccount,
@@ -14,6 +14,7 @@ import { ToastService } from '../../../../toast.service';
 import { Subscription } from 'rxjs';
 import {
   logInvitationImageError,
+  getYoutubeThumbnailUrl as resolveYoutubeThumbnailUrl,
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
   resolveInvitationVideoUrl,
@@ -22,6 +23,7 @@ import {
   appendPreviewGuestWish,
   isThemePreviewWeddingData,
 } from '../../../../shared/data/theme-preview-dummy.data';
+import { normalizeYoutubeEmbedUrl } from '../../../../shared/wedding-theme-data.util';
 
 interface AttendanceRequest {
   user_id: number;
@@ -36,12 +38,14 @@ interface RubyWishForm {
   pesan: string;
 }
 
+type RubyCaptionDirection = 'down' | 'up';
+
 @Component({
   selector: 'wc-ruby-theme-one',
   templateUrl: './ruby-theme-one.component.html',
   styleUrls: ['./ruby-theme-one.component.scss'],
 })
-export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
+export class RubyThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy, AfterViewInit {
   readonly floralAssetLeft = 'assets/thema-1/flower-1.png';
   readonly floralAssetRight = 'assets/thema-1/flower-2.png';
   readonly craftedByLabel = 'crafted by Sena Digital';
@@ -50,6 +54,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   googleMapsUrl = '';
   receptionVenueName = '';
   receptionAddress = '';
+  selectedGalleryVideoUrl: SafeResourceUrl | null = null;
+  selectedGalleryVideoDirectUrl = '';
+  selectedGalleryVideoTitle = '';
+  selectedGalleryVideoType: 'youtube' | 'video' | '' = '';
   countdownDays = '00';
   countdownHours = '00';
   countdownMinutes = '00';
@@ -69,11 +77,23 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   private openingTimer: any;
   private openingTimer2: any;
   private countdownTimer?: any;
+  private captionObserver?: IntersectionObserver;
+  private captionMutationObserver?: MutationObserver;
+  private captionObservedElements = new Set<HTMLElement>();
+  private captionVisibility = new WeakMap<HTMLElement, boolean>();
+  private captionScrollRoot: HTMLElement | null = null;
+  private captionScrollCleanup?: () => void;
+  private captionRefreshTimer?: any;
+  private captionScrollRaf = 0;
+  private captionDirection: RubyCaptionDirection = 'down';
+  private captionLastScrollTop = 0;
 
   constructor(
     private sanitizer: DomSanitizer,
     private dashboardService: DashboardService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    @Optional() private elementRef?: ElementRef<HTMLElement>,
+    @Optional() private ngZone?: NgZone
   ) {
     super();
   }
@@ -92,7 +112,24 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     if (changes['weddingData']) {
       this.setupRubyReceptionFromEvents();
       this.initCountdown();
+      this.scheduleRubyCaptionMotionRefresh();
     }
+  }
+
+  ngAfterViewInit(): void {
+    if (!this.elementRef || !this.ngZone) {
+      return;
+    }
+
+    const hostElement = this.elementRef.nativeElement;
+    this.ngZone.runOutsideAngular(() => {
+      this.scheduleRubyCaptionMotionRefresh();
+      this.captionMutationObserver = new MutationObserver(() => this.scheduleRubyCaptionMotionRefresh());
+      this.captionMutationObserver.observe(hostElement, {
+        childList: true,
+        subtree: true,
+      });
+    });
   }
 
   override openInvitation(event?: Event): void {
@@ -123,6 +160,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
     this.openingTimer = setTimeout(() => {
       this.isOpening = false;
+      this.scheduleRubyCaptionMotionRefresh();
 
       this.openingTimer2 = setTimeout(() => {
         const openingSection = document.querySelector('.ruby-opening-section');
@@ -144,8 +182,22 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       clearInterval(this.countdownTimer);
       this.countdownTimer = undefined;
     }
+    if (this.captionRefreshTimer) {
+      clearTimeout(this.captionRefreshTimer);
+    }
+    if (this.captionScrollRaf) {
+      cancelAnimationFrame(this.captionScrollRaf);
+    }
+    this.captionObserver?.disconnect();
+    this.captionMutationObserver?.disconnect();
+    this.captionScrollCleanup?.();
     this.subscriptions.unsubscribe();
     super.ngOnDestroy();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeGalleryVideo(): void {
+    this.closeGalleryVideo();
   }
 
   override getGuestName(): string {
@@ -233,10 +285,14 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override hasGallery(): boolean {
-    return this.getSafeGalleryPhotos().length > 0;
+    return this.galleryPhotoItems.length > 0 || !!this.getFeaturedGalleryVideoItem();
   }
 
   get galleryPhotos(): GalleryItem[] {
+    return this.galleryPhotoItems;
+  }
+
+  get galleryPhotoItems(): GalleryItem[] {
     const photos = this.getGalleryItems();
     return photos.filter((item) => {
       const photoUrl = this.getGalleryPhotoUrl(item);
@@ -245,17 +301,12 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   get mainGalleryPhoto(): GalleryItem | null {
-    const photos = this.galleryPhotos;
-    if (!photos.length) {
-      return null;
-    }
-
-    return photos[0];
+    return this.getFeaturedGalleryVideoItem() || this.galleryPhotoItems[0] || null;
   }
 
   get galleryThumbs(): GalleryItem[] {
     const main = this.mainGalleryPhoto;
-    return this.galleryPhotos.filter((item) => !main || item.id !== main.id);
+    return this.galleryPhotoItems.filter((item) => !main || item.id !== main.id);
   }
 
   override getFeaturedGalleryItem(): GalleryItem | null {
@@ -271,23 +322,158 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   hasVideo(item: any): boolean {
-    return !!resolveInvitationVideoUrl(item);
+    return !!this.getGalleryVideoUrl(item);
+  }
+
+  getGalleryDisplayImageUrl(item: any): string {
+    const photoUrl = this.getGalleryPhotoUrl(item);
+    if (photoUrl && !this.isUnsafeThemeImage(photoUrl)) {
+      return photoUrl;
+    }
+
+    return this.getGalleryYoutubeThumbnailUrl(item);
   }
 
   override getGalleryPhotoUrl(item: any): string {
     const resolved = resolveInvitationPhotoUrl(item);
-
-
-
     return resolved;
   }
 
   openGalleryVideo(item: any): void {
-    if (!this.hasVideo(item)) {
+    const videoUrl = this.getGalleryVideoUrl(item);
+
+    if (!videoUrl) {
       return;
     }
 
-    window.open(resolveInvitationVideoUrl(item), '_blank', 'noopener,noreferrer');
+    this.selectedGalleryVideoTitle = item?.description || item?.nama_foto || 'Video undangan';
+
+    if (this.isDirectVideoUrl(videoUrl)) {
+      this.selectedGalleryVideoDirectUrl = videoUrl;
+      this.selectedGalleryVideoUrl = null;
+      this.selectedGalleryVideoType = 'video';
+      return;
+    }
+
+    this.selectedGalleryVideoDirectUrl = '';
+    this.selectedGalleryVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(videoUrl);
+    this.selectedGalleryVideoType = 'youtube';
+  }
+
+  closeGalleryVideo(): void {
+    this.selectedGalleryVideoUrl = null;
+    this.selectedGalleryVideoDirectUrl = '';
+    this.selectedGalleryVideoTitle = '';
+    this.selectedGalleryVideoType = '';
+  }
+
+  getGalleryVideoUrl(item: any): string {
+    if (!item) {
+      return '';
+    }
+
+    const rawVideoUrl = String(
+      item?.youtube_url ||
+      item?.youtube_link ||
+      item?.link_youtube ||
+      item?.video_url ||
+      item?.url_video ||
+      item?.link_video ||
+      item?.youtube ||
+      ''
+    ).trim();
+
+    const youtubeEmbedUrl = this.getYoutubeEmbedUrl(rawVideoUrl);
+    if (youtubeEmbedUrl) {
+      return youtubeEmbedUrl;
+    }
+
+    const resolvedVideoUrl = resolveInvitationVideoUrl(item);
+    const resolvedYoutubeEmbedUrl = this.getYoutubeEmbedUrl(resolvedVideoUrl);
+    if (!resolvedVideoUrl || resolvedYoutubeEmbedUrl) {
+      return resolvedYoutubeEmbedUrl;
+    }
+
+    return this.isDirectVideoUrl(resolvedVideoUrl) ? resolvedVideoUrl : '';
+  }
+
+  private getFeaturedGalleryVideoItem(): GalleryItem | null {
+    return this.getGalleryItems().find((item) => !!this.getGalleryVideoUrl(item)) || null;
+  }
+
+  private getGalleryYoutubeThumbnailUrl(item: any): string {
+    const rawVideoUrl = this.getRawGalleryVideoUrl(item);
+    const sharedThumbnail = resolveYoutubeThumbnailUrl(rawVideoUrl);
+    if (sharedThumbnail) {
+      return sharedThumbnail;
+    }
+
+    const videoId = this.getYoutubeVideoId(rawVideoUrl);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+  }
+
+  private getRawGalleryVideoUrl(item: any): string {
+    return String(
+      item?.youtube_url ||
+      item?.youtube_link ||
+      item?.link_youtube ||
+      item?.video_url ||
+      item?.url_video ||
+      item?.link_video ||
+      item?.youtube ||
+      ''
+    ).trim();
+  }
+
+  private getYoutubeVideoId(value: string): string {
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.replace(/^www\./, '').toLowerCase();
+
+      if (host === 'youtu.be') {
+        return this.normalizeYoutubeVideoId(url.pathname.split('/').filter(Boolean)[0]);
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+        if (url.pathname.startsWith('/watch')) {
+          return this.normalizeYoutubeVideoId(url.searchParams.get('v') || '');
+        }
+
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['embed', 'shorts', 'live'].includes(parts[0])) {
+          return this.normalizeYoutubeVideoId(parts[1]);
+        }
+      }
+    } catch {
+      const looseMatch = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([A-Za-z0-9_-]{6,})/);
+      return this.normalizeYoutubeVideoId(looseMatch?.[1] || '');
+    }
+
+    return '';
+  }
+
+  private normalizeYoutubeVideoId(value: string | undefined | null): string {
+    const id = String(value || '').trim().split(/[?&#/]/)[0];
+    return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : '';
+  }
+
+  private getYoutubeEmbedUrl(value: string): string {
+    const raw = String(value || '').trim();
+
+    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(raw)) {
+      return '';
+    }
+
+    return normalizeYoutubeEmbedUrl(raw);
+  }
+
+  private isDirectVideoUrl(value: string): boolean {
+    return /^https?:\/\//i.test(value) && /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(value);
   }
 
   onGalleryImageError(event: Event): void {
@@ -526,6 +712,152 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   getOpeningDateLabel(): string {
     const event = this.getPrimaryEvent() || this.createFallbackEvent('Resepsi', 'The LaFaYe Hotel');
     return this.formatOpeningDate(event.tanggal_acara);
+  }
+
+  private scheduleRubyCaptionMotionRefresh(): void {
+    if (this.captionRefreshTimer) {
+      clearTimeout(this.captionRefreshTimer);
+    }
+
+    this.captionRefreshTimer = setTimeout(() => this.setupRubyCaptionMotion(), 40);
+  }
+
+  private setupRubyCaptionMotion(): void {
+    if (!this.elementRef) {
+      return;
+    }
+
+    const captions = Array.from(
+      this.elementRef.nativeElement.querySelectorAll<HTMLElement>('.ruby-caption[data-caption-motion]')
+    );
+
+    if (!captions.length) {
+      return;
+    }
+
+    if (this.prefersReducedMotion()) {
+      this.captionObserver?.disconnect();
+      this.captionObservedElements.clear();
+      captions.forEach((caption) => {
+        caption.classList.remove('ruby-caption--ready', 'ruby-caption--down', 'ruby-caption--up');
+        caption.classList.add('ruby-caption--visible');
+      });
+      return;
+    }
+
+    const nextRoot = this.resolveRubyCaptionScrollRoot(captions[0]);
+    if (!this.captionObserver || nextRoot !== this.captionScrollRoot) {
+      this.captionObserver?.disconnect();
+      this.captionObservedElements.clear();
+      this.captionScrollRoot = nextRoot;
+      this.captionObserver = new IntersectionObserver(
+        (entries) => this.onRubyCaptionIntersections(entries),
+        {
+          root: this.captionScrollRoot,
+          rootMargin: '-10% 0px -18% 0px',
+          threshold: [0, 0.22, 0.3],
+        }
+      );
+      this.setupRubyCaptionScrollDirection();
+    }
+
+    captions.forEach((caption) => {
+      caption.classList.add('ruby-caption--ready');
+      if (!this.captionObservedElements.has(caption)) {
+        this.captionVisibility.set(caption, false);
+        this.captionObserver?.observe(caption);
+        this.captionObservedElements.add(caption);
+      }
+    });
+  }
+
+  private onRubyCaptionIntersections(entries: IntersectionObserverEntry[]): void {
+    entries.forEach((entry) => {
+      const caption = entry.target as HTMLElement;
+      const wasVisible = this.captionVisibility.get(caption) || false;
+      const isVisible = entry.isIntersecting && entry.intersectionRatio >= 0.22;
+
+      if (isVisible && !wasVisible) {
+        this.captionVisibility.set(caption, true);
+        this.playRubyCaptionAnimation(caption);
+        return;
+      }
+
+      if (!isVisible && wasVisible && this.isRubyCaptionOutsideResetBand(entry)) {
+        this.captionVisibility.set(caption, false);
+        caption.classList.remove('ruby-caption--visible', 'ruby-caption--down', 'ruby-caption--up');
+      }
+    });
+  }
+
+  private playRubyCaptionAnimation(caption: HTMLElement): void {
+    caption.classList.remove('ruby-caption--visible', 'ruby-caption--down', 'ruby-caption--up');
+    void caption.offsetWidth;
+    caption.classList.add('ruby-caption--visible', `ruby-caption--${this.captionDirection}`);
+  }
+
+  private isRubyCaptionOutsideResetBand(entry: IntersectionObserverEntry): boolean {
+    const resetGap = 28;
+    const rootBounds = entry.rootBounds;
+    const rootTop = rootBounds?.top ?? 0;
+    const rootBottom = rootBounds?.bottom ?? window.innerHeight;
+
+    return entry.boundingClientRect.bottom < rootTop - resetGap ||
+      entry.boundingClientRect.top > rootBottom + resetGap;
+  }
+
+  private setupRubyCaptionScrollDirection(): void {
+    this.captionScrollCleanup?.();
+    const target: HTMLElement | Window = this.captionScrollRoot || window;
+    this.captionLastScrollTop = this.getRubyCaptionScrollTop();
+
+    const onScroll = () => {
+      if (this.captionScrollRaf) {
+        return;
+      }
+
+      this.captionScrollRaf = requestAnimationFrame(() => {
+        const currentScrollTop = this.getRubyCaptionScrollTop();
+        if (Math.abs(currentScrollTop - this.captionLastScrollTop) > 2) {
+          this.captionDirection = currentScrollTop > this.captionLastScrollTop ? 'down' : 'up';
+          this.captionLastScrollTop = currentScrollTop;
+        }
+        this.captionScrollRaf = 0;
+      });
+    };
+
+    target.addEventListener('scroll', onScroll, { passive: true });
+    this.captionScrollCleanup = () => target.removeEventListener('scroll', onScroll);
+  }
+
+  private getRubyCaptionScrollTop(): number {
+    if (this.captionScrollRoot) {
+      return this.captionScrollRoot.scrollTop;
+    }
+
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+
+  private resolveRubyCaptionScrollRoot(element: HTMLElement): HTMLElement | null {
+    let parent = element.parentElement;
+
+    while (parent && parent !== document.body) {
+      const style = window.getComputedStyle(parent);
+      const overflowY = style.overflowY;
+      const canScroll = /(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight + 1;
+      if (canScroll) {
+        return parent;
+      }
+      parent = parent.parentElement;
+    }
+
+    return null;
+  }
+
+  private prefersReducedMotion(): boolean {
+    return typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
   getClosingDateLabel(): string {
