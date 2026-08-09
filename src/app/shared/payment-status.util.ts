@@ -576,6 +576,8 @@ function resolveActivePaymentMethods(data: any): PaymentMethodSummary[] {
     data.payment_methods,
     data.available_payment_methods,
     data.active_payment_methods,
+    data.payment_options?.payment_methods,
+    data.payment_options?.methods,
     data.payment_config?.payment_methods,
     data.payment_config?.methods,
   ];
@@ -585,7 +587,7 @@ function resolveActivePaymentMethods(data: any): PaymentMethodSummary[] {
     source.forEach((item) => addMethod(item?.payment_method || item?.method || item?.code || item?.type || item?.name, item));
   });
 
-  const config = data.payment_config || data.paymentConfig || data;
+  const config = data.payment_config || data.paymentConfig || data.payment_options || data.paymentOptions || data;
   const configuredPaymentMethod = normalizePaymentMethodType(config?.payment_method);
   const midtransConfig = config?.midtrans || config?.midtrans_payment || config?.snap;
   const manualConfig = config?.manual_payment || config?.manual || config?.rekening || config?.bank_account;

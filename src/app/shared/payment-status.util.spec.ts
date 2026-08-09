@@ -205,6 +205,26 @@ describe('payment-status util', () => {
     expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['midtrans']);
   });
 
+  it('treats profile payment_options Midtrans with manual payment null as available', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        invoice_id: 22,
+        pending_invoice: { id: 22, order_id: null, payment_status: 'pending' },
+        payment_options: {
+          payment_method: 'midtrans',
+          midtrans: { enabled: true, configured: true },
+          manual_payment: null,
+        },
+      },
+    });
+
+    expect(state.invoiceId).toBe('22');
+    expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['midtrans']);
+  });
+
   it('does not expose Midtrans when it is disabled and manual payment is null', () => {
     const state = resolvePaymentState({
       data: {

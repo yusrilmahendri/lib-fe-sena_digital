@@ -111,6 +111,8 @@ export class BillUserComponent implements OnInit {
       return;
     }
 
+    this.debugContinuePaymentState(invoice);
+
     const resume = invoice.resume || {};
     if (resume.available === false) {
       if (!this.continueWithConfiguredPaymentMethod(invoice)) {
@@ -389,6 +391,11 @@ export class BillUserComponent implements OnInit {
   private resumeMidtrans(invoice: any): void {
     const existingToken = this.resolveSnapToken(invoice);
     if (existingToken && this.isSnapTokenUsable(invoice)) {
+      if (!((window as any).snap?.pay) && !this.resolveMidtransClientKey(invoice) && this.resolveInvoiceId(invoice)) {
+        this.refreshMidtransToken(invoice);
+        return;
+      }
+
       this.openSnap(existingToken, invoice);
       return;
     }
@@ -401,7 +408,7 @@ export class BillUserComponent implements OnInit {
     const payload = this.buildResumePayload(invoice);
     if (!this.hasResumeIdentifier(payload)) {
       this.isContinuingPayment = false;
-      this.errorMessage = 'Invoice pembayaran belum tersedia. Silakan cek status pembayaran atau hubungi admin.';
+      this.errorMessage = 'Data tagihan tidak ditemukan. Silakan coba muat ulang.';
       return;
     }
 
@@ -541,6 +548,7 @@ export class BillUserComponent implements OnInit {
 
     if (Object.keys(payload).length) {
       if (!payload.invoice_id && invoiceId) payload.invoice_id = invoiceId;
+      if (!payload.invoice_id && payload.order_id === null) delete payload.order_id;
       return payload;
     }
 
@@ -573,6 +581,22 @@ export class BillUserComponent implements OnInit {
     this.paymentUnavailableTitle = '';
     this.paymentUnavailableMessage = '';
     this.errorMessage = 'Pembayaran belum dapat dibuka. Silakan coba lagi.';
+  }
+
+  private debugContinuePaymentState(invoice: any): void {
+    if (environment.production) return;
+    const midtrans = this.findActivePaymentMethod('midtrans')?.details || {};
+    console.debug('[PaymentPending] continue payment', {
+      paymentMethod: invoice?.payment_method || invoice?.provider || null,
+      hasMidtrans: !!this.findActivePaymentMethod('midtrans'),
+      midtransEnabled: midtrans?.enabled,
+      midtransConfigured: midtrans?.configured,
+      pendingInvoiceId: invoice?.id ?? invoice?.invoice_id ?? null,
+      paymentStateInvoiceId: this.paymentState?.invoiceId ?? null,
+      orderId: invoice?.order_id ?? null,
+      resumeType: invoice?.resume?.type ?? null,
+      resumeAvailable: invoice?.resume?.available ?? null,
+    });
   }
 
   private updatePendingInvoice(invoice: any): void {

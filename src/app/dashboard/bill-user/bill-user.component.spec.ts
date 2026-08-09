@@ -177,6 +177,82 @@ describe('BillUserComponent', () => {
     expect(component.paymentUnavailableTitle).toBe('');
   });
 
+  it('does not require resume data when Midtrans config is valid', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = { pay: snapPay };
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        reused: true,
+        snap_token: 'snap-from-config',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        order_id: null,
+        payment_status: 'pending',
+        is_payable: true,
+        resume: null,
+      },
+      activePaymentMethods: [
+        {
+          type: 'midtrans',
+          label: 'Bayar Online',
+          details: { enabled: true, configured: true },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { invoice_id: 22 }
+    );
+    expect(snapPay).toHaveBeenCalledWith('snap-from-config', jasmine.any(Object));
+    expect(component.errorMessage).toBe('');
+  });
+
+  it('refreshes Snap token instead of failing locally when existing token has no client key', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = undefined;
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        snap_token: 'snap-refreshed',
+        midtrans: { client_key: 'client-key' },
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        order_id: null,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+        midtrans: { snap_token: 'snap-stale' },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+    spyOn<any>(component, 'loadSnapScript').and.callFake(() => {
+      (window as any).snap = { pay: snapPay };
+      return Promise.resolve();
+    });
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { invoice_id: 22 }
+    );
+  });
+
   it('keeps Midtrans available when manual payment is null', () => {
     const snapPay = jasmine.createSpy('pay');
     (window as any).snap = { pay: snapPay };
@@ -340,6 +416,24 @@ describe('BillUserComponent', () => {
 
     expect(component.paymentUnavailableTitle).toBe('');
     expect(component.errorMessage).toBe('Pembayaran belum dapat dibuka. Silakan coba lagi.');
+  });
+
+  it('does not show Snap failure before create-snap-token is called when invoice id is missing', () => {
+    component.paymentState = {
+      pendingInvoice: {
+        order_id: null,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect((component as any).dashboardService.create).not.toHaveBeenCalled();
+    expect(component.errorMessage).toBe('Data tagihan tidak ditemukan. Silakan coba muat ulang.');
+    expect(component.paymentUnavailableTitle).toBe('');
   });
 
   it('uses configured manual payment when Midtrans is unavailable', () => {
