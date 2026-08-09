@@ -37,6 +37,17 @@ describe('MusikUndanganComponent pagination', () => {
     };
   };
 
+  const makeOptionsResponseWithMeta = (tracks: any[], meta: any) => ({
+    data: {
+      catalog_sections: {
+        admin_catalog: tracks,
+        user_uploads: [],
+        global_catalog: [],
+      },
+    },
+    meta,
+  });
+
   beforeEach(() => {
     dashboardService = {
       getMusicOptions: jasmine.createSpy('getMusicOptions').and.callFake((params: any) => {
@@ -79,8 +90,58 @@ describe('MusikUndanganComponent pagination', () => {
     expect(component.adminCatalogTracks.length).toBe(2);
   });
 
+  it('shows 14 catalog songs as 3 pages with 5 songs by default', () => {
+    dashboardService.getMusicOptions.and.callFake((params: any) => {
+      return of(makeOptionsResponse(params?.page || 1, params?.per_page || 5, 14));
+    });
+
+    component.loadMusicData();
+
+    expect(component.currentPage).toBe(1);
+    expect(component.pageSize).toBe(5);
+    expect(component.lastPage).toBe(3);
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 1–5 dari 14 lagu');
+
+    component.loadCatalogPage(2);
+    expect(component.currentPage).toBe(2);
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 6–10 dari 14 lagu');
+
+    component.loadCatalogPage(3);
+    expect(component.currentPage).toBe(3);
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 11–14 dari 14 lagu');
+  });
+
+  it('keeps requested page size when backend meta still reports 10', () => {
+    dashboardService.getMusicOptions.and.returnValue(of(makeOptionsResponseWithMeta(
+      [1, 2, 3, 4, 5].map(makeTrack),
+      {
+        current_page: 1,
+        per_page: 10,
+        total: 14,
+        last_page: 2,
+        from: 1,
+        to: 10,
+      }
+    )));
+
+    component.loadMusicData();
+
+    expect(component.pageSize).toBe(5);
+    expect(component.lastPage).toBe(3);
+    expect(component.getCatalogRangeLabel()).toBe('Menampilkan 1–5 dari 14 lagu');
+    expect(dashboardService.getMusicOptions).toHaveBeenCalledWith({ page: 1, per_page: 5 });
+  });
+
   it('offers 5, 10, 20, 30, and 50 as page size options', () => {
     expect(component.pageSizeOptions).toEqual([5, 10, 20, 30, 50]);
+  });
+
+  it('defaults back to 5 on a fresh component instance', () => {
+    component.pageSize = 20;
+
+    const freshComponent = new MusikUndanganComponent(dashboardService);
+
+    expect(freshComponent.pageSize).toBe(5);
   });
 
   it('resets to page 1 and fetches when page size changes', () => {

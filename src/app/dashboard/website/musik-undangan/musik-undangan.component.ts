@@ -19,6 +19,7 @@ import {
 export class MusikUndanganComponent implements OnInit, OnDestroy {
   private readonly allowedMusicExtensions = ['mp3', 'wav', 'm4a', 'aac', 'ogg'];
   private readonly maxMusicUploadSizeInBytes = 20 * 1024 * 1024;
+  private readonly defaultCatalogPageSize = 5;
 
   isLoadingMusic = false;
   isCatalogLoading = false;
@@ -42,7 +43,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
   userData: ProfileData | null = null;
   pageSizeOptions = [5, 10, 20, 30, 50];
   currentPage = 1;
-  pageSize = 5;
+  pageSize = this.defaultCatalogPageSize;
   totalItems = 0;
   lastPage = 1;
   pageFrom = 0;
@@ -87,7 +88,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         this.musicSelection = normalizedSelection;
         this.selectedMusicId = normalizedSelection?.selected_music_id ?? null;
         this.selectedMusicSourceHint = this.resolveSourceTypeByTrackId(this.selectedMusicId);
-        this.applyCatalogPagination(options, this.adminCatalogTracks.length);
+        this.applyCatalogPagination(options, this.adminCatalogTracks.length, this.pageSize);
         this.isLoadingMusic = false;
       },
       error: (err: any) => {
@@ -115,7 +116,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
         if (catalogData.userUploads.length) {
           this.userUploadTracks = catalogData.userUploads;
         }
-        this.applyCatalogPagination(options, this.adminCatalogTracks.length);
+        this.applyCatalogPagination(options, this.adminCatalogTracks.length, this.pageSize);
         this.isCatalogLoading = false;
       },
       error: (err: any) => {
@@ -851,7 +852,7 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
     return candidates.filter((candidate) => candidate && typeof candidate === 'object');
   }
 
-  private applyCatalogPagination(response: any, visibleItems: number): void {
+  private applyCatalogPagination(response: any, visibleItems: number, requestedPageSize = this.pageSize): void {
     const meta = this.findPaginationMeta(response);
     const responseCurrentPage = this.firstNumber([
       meta?.current_page,
@@ -884,12 +885,14 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       response?.total_pages,
     ]);
 
+    const hasMatchingResponsePageSize = responsePageSize === requestedPageSize;
     if (responseCurrentPage) this.currentPage = responseCurrentPage;
-    if (responsePageSize && this.pageSizeOptions.includes(responsePageSize)) this.pageSize = responsePageSize;
+    if (hasMatchingResponsePageSize && this.pageSizeOptions.includes(responsePageSize)) this.pageSize = responsePageSize;
 
     this.totalItems = total ?? visibleItems;
-    const fallbackLastPage = Math.ceil((this.totalItems || visibleItems) / this.pageSize) || 1;
-    this.lastPage = Math.max(1, lastPage ?? fallbackLastPage);
+    const effectivePageSize = this.pageSize || this.defaultCatalogPageSize;
+    const fallbackLastPage = Math.ceil((this.totalItems || visibleItems) / effectivePageSize) || 1;
+    this.lastPage = Math.max(1, hasMatchingResponsePageSize ? (lastPage ?? fallbackLastPage) : fallbackLastPage);
 
     const from = this.firstNumber([meta?.from, meta?.start, response?.from]);
     const to = this.firstNumber([meta?.to, meta?.end, response?.to]);
@@ -899,8 +902,10 @@ export class MusikUndanganComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pageFrom = from ?? ((this.currentPage - 1) * this.pageSize) + 1;
-    this.pageTo = to ?? Math.min(this.pageFrom + visibleItems - 1, this.totalItems);
+    const fallbackFrom = ((this.currentPage - 1) * effectivePageSize) + 1;
+    const fallbackTo = Math.min(this.currentPage * effectivePageSize, this.totalItems);
+    this.pageFrom = hasMatchingResponsePageSize ? (from ?? fallbackFrom) : fallbackFrom;
+    this.pageTo = hasMatchingResponsePageSize ? (to ?? fallbackTo) : fallbackTo;
   }
 
   private findPaginationMeta(source: any): any {
