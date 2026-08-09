@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize, take } from 'rxjs/operators';
+import { catchError, take } from 'rxjs/operators';
 import { forkJoin, of } from 'rxjs';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
 import { getFriendlyErrorMessage } from 'src/app/shared/api-error-message.util';
@@ -413,14 +413,7 @@ export class BillUserComponent implements OnInit {
     }
 
     this.dashboardService.create(DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN, payload)
-      .pipe(
-        take(1),
-        finalize(() => {
-          if (!(window as any).snap) {
-            this.isContinuingPayment = false;
-          }
-        })
-      )
+      .pipe(take(1))
       .subscribe({
         next: (response) => {
           const data = response?.data || response || {};
@@ -441,6 +434,7 @@ export class BillUserComponent implements OnInit {
           }
 
           this.updatePendingInvoice(mergedInvoice);
+          this.debugSnapState('SNAP_TOKEN_RECEIVED', mergedInvoice);
           this.openSnap(token, mergedInvoice);
         },
         error: (error) => {
@@ -468,10 +462,11 @@ export class BillUserComponent implements OnInit {
   private openSnap(token: string, invoice: any): void {
     this.isContinuingPayment = true;
     const pay = () => {
+      this.debugSnapState('BEFORE_SNAP_PAY', invoice);
       const snap = (window as any).snap;
       if (!snap?.pay) {
         this.isContinuingPayment = false;
-        this.showPaymentOpenError();
+        this.showPaymentOpenError('SNAP_PAY_UNAVAILABLE');
         return;
       }
 
@@ -496,9 +491,10 @@ export class BillUserComponent implements OnInit {
             this.paymentStatusMessage = 'Jendela pembayaran ditutup. Anda dapat melanjutkan pembayaran kapan saja.';
           },
         });
+        this.debugSnapState('SNAP_PAY_INVOKED', invoice);
       } catch (_error) {
         this.isContinuingPayment = false;
-        this.errorMessage = 'Pembayaran belum dapat dibuka. Silakan coba lagi.';
+        this.showPaymentOpenError('SNAP_PAY_EXCEPTION');
       }
     };
 
@@ -508,17 +504,12 @@ export class BillUserComponent implements OnInit {
     }
 
     const clientKey = this.resolveMidtransClientKey(invoice);
-    if (!clientKey) {
-      this.isContinuingPayment = false;
-      this.showPaymentOpenError();
-      return;
-    }
-
-    this.loadSnapScript(clientKey)
+    this.debugSnapState(clientKey ? 'SNAP_SCRIPT_LOADING' : 'SNAP_CLIENT_KEY_MISSING', invoice);
+    this.ensureSnapReady(clientKey)
       .then(pay)
-      .catch(() => {
+      .catch((diagnostic) => {
         this.isContinuingPayment = false;
-        this.showPaymentOpenError();
+        this.showPaymentOpenError(String(diagnostic || 'SNAP_SCRIPT_NOT_LOADED'));
       });
   }
 
@@ -577,10 +568,17 @@ export class BillUserComponent implements OnInit {
     return !!(payload?.invoice_id || payload?.order_id || payload?.invoice_code);
   }
 
-  private showPaymentOpenError(): void {
+  private showPaymentOpenError(diagnostic = 'SNAP_OPEN_FAILED'): void {
     this.paymentUnavailableTitle = '';
     this.paymentUnavailableMessage = '';
     this.errorMessage = 'Pembayaran belum dapat dibuka. Silakan coba lagi.';
+    if (!environment.production) {
+      console.debug('[PaymentPending] Snap open failed', {
+        diagnostic,
+        snapType: typeof (window as any).snap,
+        snapPayType: typeof (window as any).snap?.pay,
+      });
+    }
   }
 
   private debugContinuePaymentState(invoice: any): void {
@@ -610,13 +608,36 @@ export class BillUserComponent implements OnInit {
   }
 
   private resolveMidtransClientKey(invoice: any): string {
+    const activeMidtrans = this.findActivePaymentMethod('midtrans')?.details || {};
     return String(
       invoice?.midtrans?.client_key ||
       invoice?.midtrans?.clientKey ||
       invoice?.client_key ||
       invoice?.clientKey ||
+      activeMidtrans?.client_key ||
+      activeMidtrans?.clientKey ||
+      activeMidtrans?.midtrans?.client_key ||
+      activeMidtrans?.midtrans?.clientKey ||
       ''
     ).trim();
+  }
+
+  private ensureSnapReady(clientKey: string): Promise<void> {
+    if ((window as any).snap?.pay) return Promise.resolve();
+
+    return this.loadSnapScript(clientKey)
+      .then(() => this.waitForSnapPay());
+  }
+
+  private waitForSnapPay(attempts = 20, delayMs = 100): Promise<void> {
+    if ((window as any).snap?.pay) return Promise.resolve();
+    if (attempts <= 0) return Promise.reject('SNAP_PAY_UNAVAILABLE');
+
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this.waitForSnapPay(attempts - 1, delayMs).then(resolve).catch(reject);
+      }, delayMs);
+    });
   }
 
   private loadSnapScript(clientKey: string): Promise<void> {
@@ -625,8 +646,23 @@ export class BillUserComponent implements OnInit {
     const existing = document.querySelector<HTMLScriptElement>('script[data-midtrans-snap="true"]');
     if (existing) {
       return new Promise((resolve, reject) => {
+        if ((window as any).snap?.pay) {
+          resolve();
+          return;
+        }
+
+        if (existing.getAttribute('data-loaded') === 'true') {
+          resolve();
+          return;
+        }
+
+        if (existing.getAttribute('data-error') === 'true') {
+          reject('SNAP_SCRIPT_NOT_LOADED');
+          return;
+        }
+
         existing.addEventListener('load', () => resolve(), { once: true });
-        existing.addEventListener('error', () => reject(), { once: true });
+        existing.addEventListener('error', () => reject('SNAP_SCRIPT_NOT_LOADED'), { once: true });
       });
     }
 
@@ -635,11 +671,31 @@ export class BillUserComponent implements OnInit {
       script.src = environment.production
         ? 'https://app.midtrans.com/snap/snap.js'
         : 'https://app.sandbox.midtrans.com/snap/snap.js';
-      script.setAttribute('data-client-key', clientKey);
+      if (clientKey) script.setAttribute('data-client-key', clientKey);
       script.setAttribute('data-midtrans-snap', 'true');
-      script.onload = () => resolve();
-      script.onerror = () => reject();
+      script.onload = () => {
+        script.setAttribute('data-loaded', 'true');
+        resolve();
+      };
+      script.onerror = () => {
+        script.setAttribute('data-error', 'true');
+        reject('SNAP_SCRIPT_NOT_LOADED');
+      };
       document.body.appendChild(script);
+    });
+  }
+
+  private debugSnapState(step: string, invoice: any): void {
+    if (environment.production) return;
+    console.debug('[PaymentPending] Snap trace', {
+      step,
+      hasSnapToken: !!this.resolveSnapToken(invoice),
+      snapType: typeof (window as any).snap,
+      snapPayType: typeof (window as any).snap?.pay,
+      hasClientKey: !!this.resolveMidtransClientKey(invoice),
+      scriptLoaded: !!document.querySelector('script[data-midtrans-snap="true"]'),
+      redirectUrl: invoice?.redirect_url ?? invoice?.midtrans?.redirect_url ?? null,
+      reused: invoice?.reused ?? null,
     });
   }
 

@@ -1,4 +1,5 @@
 import { of } from 'rxjs';
+import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { DashboardServiceType } from 'src/app/dashboard.service';
 import { BillUserComponent } from './bill-user.component';
 
@@ -217,7 +218,7 @@ describe('BillUserComponent', () => {
     expect(component.errorMessage).toBe('');
   });
 
-  it('refreshes Snap token instead of failing locally when existing token has no client key', () => {
+  it('refreshes Snap token instead of failing locally when existing token has no client key', fakeAsync(() => {
     const snapPay = jasmine.createSpy('pay');
     (window as any).snap = undefined;
     const dashboardService = (component as any).dashboardService;
@@ -246,12 +247,158 @@ describe('BillUserComponent', () => {
     });
 
     component.continuePayment();
+    flushMicrotasks();
 
     expect(dashboardService.create).toHaveBeenCalledWith(
       DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
       { invoice_id: 22 }
     );
+    expect(snapPay).toHaveBeenCalledWith('snap-refreshed', jasmine.any(Object));
+    expect(component.errorMessage).toBe('');
+  }));
+
+  it('opens Snap after create-snap-token returns reused token with null redirect url', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = { pay: snapPay };
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        reused: true,
+        invoice_id: 22,
+        invitation_id: 22,
+        order_id: '5692979581',
+        payment_status: 'pending',
+        redirect_url: null,
+        snap_token: 'snap-reused',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        order_id: null,
+        payment_status: 'pending',
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true, payload: { invoice_id: 22 } },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { invoice_id: 22 }
+    );
+    expect(snapPay).toHaveBeenCalledWith('snap-reused', jasmine.any(Object));
+    expect(component.paymentUnavailableTitle).toBe('');
+    expect(component.errorMessage).toBe('');
   });
+
+  it('waits for Snap script before calling snap.pay when window.snap is not ready', fakeAsync(() => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = undefined;
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        reused: true,
+        invoice_id: 22,
+        redirect_url: null,
+        snap_token: 'snap-after-load',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+      },
+      activePaymentMethods: [
+        {
+          type: 'midtrans',
+          label: 'Bayar Online',
+          details: { enabled: true, configured: true, client_key: 'client-key' },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+    spyOn<any>(component, 'loadSnapScript').and.callFake((clientKey: string) => {
+      expect(clientKey).toBe('client-key');
+      (window as any).snap = { pay: snapPay };
+      return Promise.resolve();
+    });
+
+    component.continuePayment();
+    flushMicrotasks();
+
+    expect(snapPay).toHaveBeenCalledWith('snap-after-load', jasmine.any(Object));
+    expect(component.paymentUnavailableTitle).toBe('');
+    expect(component.errorMessage).toBe('');
+  }));
+
+  it('keeps one payment action while Snap script is still loading', fakeAsync(() => {
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        invoice_id: 22,
+        snap_token: 'snap-loading',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+    spyOn<any>(component, 'loadSnapScript').and.returnValue(new Promise<void>(() => undefined));
+
+    component.continuePayment();
+    component.continuePayment();
+    flushMicrotasks();
+
+    expect(dashboardService.create).toHaveBeenCalledTimes(1);
+    expect(component.isContinuingPayment).toBeTrue();
+  }));
+
+  it('shows Snap open error when Snap script cannot be loaded', fakeAsync(() => {
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      success: true,
+      data: {
+        invoice_id: 22,
+        snap_token: 'snap-script-fail',
+      },
+    }));
+    component.paymentState = {
+      invoiceId: 22,
+      pendingInvoice: {
+        id: 22,
+        is_payable: true,
+        payment_method: 'midtrans',
+        resume: { type: 'midtrans_snap', available: true },
+      },
+      paymentAction: 'continue_payment',
+    } as any;
+    spyOn<any>(component, 'loadSnapScript').and.returnValue(Promise.reject('SNAP_SCRIPT_NOT_LOADED'));
+
+    component.continuePayment();
+    flushMicrotasks();
+
+    expect(dashboardService.create).toHaveBeenCalledTimes(1);
+    expect(component.paymentUnavailableTitle).toBe('');
+    expect(component.errorMessage).toBe('Pembayaran belum dapat dibuka. Silakan coba lagi.');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  }));
 
   it('keeps Midtrans available when manual payment is null', () => {
     const snapPay = jasmine.createSpy('pay');
