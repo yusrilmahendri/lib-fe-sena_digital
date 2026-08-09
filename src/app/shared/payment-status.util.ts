@@ -575,12 +575,21 @@ function resolveActivePaymentMethods(data: any): PaymentMethodSummary[] {
   });
 
   const config = data.payment_config || data.paymentConfig || data;
-  addMethod(config?.payment_method, config);
-  if (config?.midtrans || config?.midtrans_payment || config?.snap) {
-    addMethod('midtrans', config.midtrans || config.midtrans_payment || config.snap);
+  const configuredPaymentMethod = normalizePaymentMethodType(config?.payment_method);
+  const midtransConfig = config?.midtrans || config?.midtrans_payment || config?.snap;
+  const manualConfig = config?.manual_payment || config?.manual || config?.rekening || config?.bank_account;
+
+  if (configuredPaymentMethod === 'midtrans' && isMidtransConfigAvailable(config)) {
+    addMethod('midtrans', midtransConfig || config);
+  } else if (configuredPaymentMethod === 'manual' && isPaymentMethodEnabled(manualConfig)) {
+    addMethod('manual', manualConfig);
+  } else if (!configuredPaymentMethod) {
+    if (midtransConfig) addMethod('midtrans', midtransConfig);
+    if (manualConfig) addMethod('manual', manualConfig);
   }
-  if (config?.manual_payment || config?.manual || config?.rekening || config?.bank_account) {
-    addMethod('manual', config.manual_payment || config.manual || config.rekening || config.bank_account);
+
+  if (configuredPaymentMethod !== 'manual' && manualConfig) {
+    addMethod('manual', manualConfig);
   }
 
   return methods;
@@ -597,9 +606,17 @@ function normalizePaymentMethodType(value: unknown): PaymentMethodSummary['type'
 function isPaymentMethodEnabled(value: any): boolean {
   if (value === false || value === null || value === undefined) return false;
   if (value === true) return true;
+  if (value?.configured === false) return false;
   const status = normalizeStatus(value?.status || value?.is_active || value?.enabled || value?.active);
   if (!status) return true;
   return !['0', 'false', 'inactive', 'disabled', 'off', 'nonaktif'].includes(status);
+}
+
+function isMidtransConfigAvailable(config: any): boolean {
+  if (!config) return false;
+  const midtrans = config.midtrans || config.midtrans_payment || config.snap;
+  if (!midtrans) return false;
+  return midtrans.enabled === true && midtrans.configured === true;
 }
 
 function resolvePaymentAction(state: {

@@ -187,4 +187,72 @@ describe('payment-status util', () => {
 
     expect(route).toBe('/pilih-paket');
   });
+
+  it('treats configured Midtrans with manual payment null as available', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        payment_config: {
+          payment_method: 'midtrans',
+          midtrans: { enabled: true, configured: true },
+          manual_payment: null,
+        },
+      },
+    });
+
+    expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['midtrans']);
+  });
+
+  it('does not expose Midtrans when it is disabled and manual payment is null', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        payment_config: {
+          payment_method: 'midtrans',
+          midtrans: { enabled: false, configured: true },
+          manual_payment: null,
+        },
+      },
+    });
+
+    expect(state.activePaymentMethods).toEqual([]);
+  });
+
+  it('does not expose Midtrans when it is unconfigured and manual payment is null', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        payment_config: {
+          payment_method: 'midtrans',
+          midtrans: { enabled: true, configured: false },
+          manual_payment: null,
+        },
+      },
+    });
+
+    expect(state.activePaymentMethods).toEqual([]);
+  });
+
+  it('exposes manual payment when Midtrans is disabled but manual details exist', () => {
+    const state = resolvePaymentState({
+      data: {
+        account_status: 'pending_payment',
+        is_verified: true,
+        initial_payment_required: true,
+        payment_config: {
+          payment_method: 'midtrans',
+          midtrans: { enabled: false, configured: true },
+          manual_payment: { bank_name: 'BCA', account_number: '123' },
+        },
+      },
+    });
+
+    expect(state.activePaymentMethods.map((method) => method.type)).toEqual(['manual']);
+  });
 });

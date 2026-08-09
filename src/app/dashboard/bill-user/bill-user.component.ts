@@ -113,7 +113,9 @@ export class BillUserComponent implements OnInit {
 
     const resume = invoice.resume || {};
     if (resume.available === false) {
-      this.showUnavailablePayment();
+      if (!this.continueWithConfiguredPaymentMethod(invoice)) {
+        this.showUnavailablePayment();
+      }
       return;
     }
 
@@ -125,7 +127,9 @@ export class BillUserComponent implements OnInit {
         this.showManualPayment(invoice);
         break;
       default:
-        this.showUnavailablePayment();
+        if (!this.continueWithConfiguredPaymentMethod(invoice)) {
+          this.showUnavailablePayment();
+        }
     }
   }
 
@@ -290,6 +294,61 @@ export class BillUserComponent implements OnInit {
 
   private createPayment(): void {
     this.router.navigateByUrl(this.onboardingPaymentRoute);
+  }
+
+  private continueWithConfiguredPaymentMethod(invoice: any): boolean {
+    const midtransMethod = this.findActivePaymentMethod('midtrans');
+    if (midtransMethod) {
+      this.refreshMidtransToken(this.mergePaymentMethodDetails(invoice, midtransMethod.details, 'midtrans'));
+      return true;
+    }
+
+    const manualMethod = this.findActivePaymentMethod('manual');
+    if (manualMethod) {
+      this.showManualPayment(this.mergePaymentMethodDetails(invoice, manualMethod.details, 'manual'));
+      return true;
+    }
+
+    return false;
+  }
+
+  private findActivePaymentMethod(type: 'midtrans' | 'manual'): any | null {
+    return (this.paymentState?.activePaymentMethods || []).find((method) => method.type === type) || null;
+  }
+
+  private mergePaymentMethodDetails(invoice: any, details: any, fallbackType: 'midtrans' | 'manual'): any {
+    const methodType = this.resolveConfiguredPaymentMethodType(details) || fallbackType;
+    const merged = {
+      ...invoice,
+      payment_method: invoice?.payment_method || methodType,
+      provider: invoice?.provider || methodType,
+    };
+
+    if (methodType === 'midtrans') {
+      return {
+        ...merged,
+        midtrans: {
+          ...(details || {}),
+          ...(invoice?.midtrans || {}),
+        },
+      };
+    }
+
+    if (methodType === 'manual') {
+      return {
+        ...merged,
+        manual_payment: invoice?.manual_payment || details,
+      };
+    }
+
+    return merged;
+  }
+
+  private resolveConfiguredPaymentMethodType(details: any): 'midtrans' | 'manual' | '' {
+    const type = String(details?.payment_method || details?.method || details?.type || details?.code || '').toLowerCase();
+    if (type.includes('midtrans') || type.includes('snap') || type.includes('online')) return 'midtrans';
+    if (type.includes('manual') || type.includes('transfer') || type.includes('bank')) return 'manual';
+    return '';
   }
 
   private mergePaymentConfig(profile: any, paymentConfig: any): any {

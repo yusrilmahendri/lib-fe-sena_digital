@@ -268,6 +268,7 @@ export interface UserPaymentConfig {
   };
   midtrans?: {
     enabled?: boolean;
+    configured?: boolean;
     client_key?: string;
     clientKey?: string;
   };

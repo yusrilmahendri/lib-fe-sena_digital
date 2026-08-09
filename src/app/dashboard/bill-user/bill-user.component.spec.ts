@@ -15,6 +15,7 @@ describe('BillUserComponent', () => {
     component = new BillUserComponent(
       {
         getProfile: jasmine.createSpy('getProfile').and.returnValue(of({ data: {} })),
+        getUserPaymentConfig: jasmine.createSpy('getUserPaymentConfig').and.returnValue(of(null)),
         create: jasmine.createSpy('create'),
       } as any,
       { snapshot: { data: {} } } as any,
@@ -172,6 +173,98 @@ describe('BillUserComponent', () => {
 
     expect(component.paymentUnavailableTitle).toBe('Metode Pembayaran Belum Tersedia');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('uses configured Midtrans when pending invoice has no provider', () => {
+    const snapPay = jasmine.createSpy('pay');
+    (window as any).snap = { pay: snapPay };
+    const dashboardService = (component as any).dashboardService;
+    dashboardService.create.and.returnValue(of({
+      data: {
+        reused: true,
+        order_id: 'INV-125',
+        snap_token: 'snap-configured',
+      },
+    }));
+    component.paymentState = {
+      pendingInvoice: {
+        id: 125,
+        invoice_code: 'INV-125',
+        order_id: 'INV-125',
+        is_payable: true,
+        payment_method: null,
+        provider: null,
+        resume: {},
+      },
+      activePaymentMethods: [
+        {
+          type: 'midtrans',
+          label: 'Bayar Online',
+          details: { enabled: true, configured: true },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(dashboardService.create).toHaveBeenCalledWith(
+      DashboardServiceType.MIDTRANS_CREATE_SNAP_TOKEN,
+      { order_id: 'INV-125', invoice_id: 125, invoice_code: 'INV-125' }
+    );
+    expect(snapPay).toHaveBeenCalledWith('snap-configured', jasmine.any(Object));
+    expect(component.paymentUnavailableTitle).toBe('');
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('shows unavailable only when neither Midtrans nor manual payment is available', () => {
+    component.paymentState = {
+      pendingInvoice: {
+        id: 125,
+        is_payable: true,
+        payment_method: null,
+        provider: null,
+        resume: {},
+      },
+      activePaymentMethods: [],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(component.paymentUnavailableTitle).toBe('Metode Pembayaran Belum Tersedia');
+    expect((component as any).dashboardService.create).not.toHaveBeenCalled();
+  });
+
+  it('uses configured manual payment when Midtrans is unavailable', () => {
+    component.paymentState = {
+      pendingInvoice: {
+        id: 125,
+        amount: 150000,
+        is_payable: true,
+        payment_method: null,
+        provider: null,
+        resume: {},
+      },
+      activePaymentMethods: [
+        {
+          type: 'manual',
+          label: 'Transfer Manual',
+          details: {
+            bank_name: 'BCA',
+            account_number: '1234567890',
+            account_name: 'Sena Digital',
+          },
+        },
+      ],
+      paymentAction: 'continue_payment',
+    } as any;
+
+    component.continuePayment();
+
+    expect(component.manualPaymentModalOpen).toBeTrue();
+    expect(component.manualPaymentBankName).toBe('BCA');
+    expect((component as any).dashboardService.create).not.toHaveBeenCalled();
   });
 
   it('offers a new payment action for expired non-payable invoices', () => {
