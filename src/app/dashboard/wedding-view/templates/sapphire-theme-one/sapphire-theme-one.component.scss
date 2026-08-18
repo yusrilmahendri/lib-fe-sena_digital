@@ -47,6 +47,8 @@
   overflow-x: hidden;
   position: relative;
   font-family: 'Inter', 'Roboto', sans-serif;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 .sapphire-theme-one,
@@ -84,6 +86,7 @@
   background-repeat: no-repeat;
   pointer-events: auto;
   isolation: isolate;
+  touch-action: manipulation;
 }
 
 .sapphire-opening::before {
@@ -245,10 +248,15 @@
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
+  animation: none !important;
+  transition: none !important;
+  overflow: visible;
+  touch-action: pan-y;
+  will-change: auto;
 }
 
 .sapphire-theme-one--opened .sapphire-content {
-  animation: sapphireCinematicReveal 1000ms ease both;
+  animation: none !important;
 }
 
 .sapphire-theme-one--opened .sapphire-content,
@@ -265,10 +273,15 @@
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
+  animation: none !important;
+  transition: none !important;
   min-height: 100vh !important;
   position: relative;
   z-index: 1;
   pointer-events: auto;
+  overflow: visible;
+  touch-action: pan-y;
+  will-change: auto;
 }
 
 .theme-cover {
@@ -543,6 +556,7 @@
   border-radius: 16px;
   background: #f5eeee;
   margin: 0;
+  touch-action: pan-y;
 }
 
 .sapphire-gallery-item--featured {
@@ -1150,17 +1164,41 @@
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gallery-divider,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gallery-date,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-couple-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-couple-photo-wrap,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-couple-name,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-couple-parent,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-couple-ig,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-divider,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-countdown__box,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-countdown__box strong,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-countdown__box span,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-block,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-block__title,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-date-row,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-time,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-venue,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-address,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-map-preview,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-event-block .sapphire-btn,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-form,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-label,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-input,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-textarea,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-chip,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-item,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-wish-item__top,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-desc,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-card__top,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-card__number,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-card__owner,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gift-card .sapphire-btn,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gallery-item,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-gallery-play,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-footer__content > * {
   opacity: 0;
-  filter: blur(5px);
-  transform: translate3d(0, 18px, 0);
+  filter: blur(6px);
+  transform: translate3d(0, 30px, 0);
 }
 
 .ia-reveal--visible .sapphire-kicker,
@@ -1188,12 +1226,45 @@
   animation: sapphirePhotoReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.ia-reveal--visible .sapphire-couple-photo-wrap {
+  animation: sapphirePhotoReveal 840ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .ia-reveal--visible .sapphire-countdown__box,
 .ia-reveal--visible .sapphire-event-block,
 .ia-reveal--visible .sapphire-wish-form,
 .ia-reveal--visible .sapphire-wish-item,
 .ia-reveal--visible .sapphire-gift-card {
   animation: sapphireCardReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .sapphire-couple-name,
+.ia-reveal--visible .sapphire-couple-parent,
+.ia-reveal--visible .sapphire-couple-ig,
+.ia-reveal--visible .sapphire-divider,
+.ia-reveal--visible .sapphire-countdown__box strong,
+.ia-reveal--visible .sapphire-countdown__box span,
+.ia-reveal--visible .sapphire-event-block__title,
+.ia-reveal--visible .sapphire-event-date-row,
+.ia-reveal--visible .sapphire-event-time,
+.ia-reveal--visible .sapphire-event-venue,
+.ia-reveal--visible .sapphire-event-address,
+.ia-reveal--visible .sapphire-map-preview,
+.ia-reveal--visible .sapphire-event-block .sapphire-btn,
+.ia-reveal--visible .sapphire-wish-label,
+.ia-reveal--visible .sapphire-wish-input,
+.ia-reveal--visible .sapphire-wish-textarea,
+.ia-reveal--visible .sapphire-wish-chip,
+.ia-reveal--visible .sapphire-wish-item__top,
+.ia-reveal--visible .sapphire-gift-card__top,
+.ia-reveal--visible .sapphire-gift-card__number,
+.ia-reveal--visible .sapphire-gift-card__owner,
+.ia-reveal--visible .sapphire-gift-card .sapphire-btn {
+  animation: sapphireMicroReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .sapphire-gallery-play {
+  animation: sapphirePlayReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 360ms both;
 }
 
 .ia-reveal--visible .sapphire-gift-desc,
@@ -1232,11 +1303,47 @@
   animation-delay: 420ms;
 }
 
+.ia-reveal--visible .sapphire-couple-photo-wrap,
+.ia-reveal--visible .sapphire-event-block__title,
+.ia-reveal--visible .sapphire-countdown__box strong,
+.ia-reveal--visible .sapphire-wish-label,
+.ia-reveal--visible .sapphire-gift-card__top {
+  animation-delay: 120ms;
+}
+
+.ia-reveal--visible .sapphire-couple-name,
+.ia-reveal--visible .sapphire-event-date-row,
+.ia-reveal--visible .sapphire-countdown__box span,
+.ia-reveal--visible .sapphire-wish-input,
+.ia-reveal--visible .sapphire-gift-card__number {
+  animation-delay: 200ms;
+}
+
+.ia-reveal--visible .sapphire-couple-parent,
+.ia-reveal--visible .sapphire-event-time,
+.ia-reveal--visible .sapphire-event-venue,
+.ia-reveal--visible .sapphire-map-preview,
+.ia-reveal--visible .sapphire-wish-textarea,
+.ia-reveal--visible .sapphire-gift-card__owner {
+  animation-delay: 280ms;
+}
+
+.ia-reveal--visible .sapphire-couple-ig,
+.ia-reveal--visible .sapphire-event-address,
+.ia-reveal--visible .sapphire-event-block .sapphire-btn,
+.ia-reveal--visible .sapphire-gift-card .sapphire-btn,
+.ia-reveal--visible .sapphire-wish-chip:nth-child(1) {
+  animation-delay: 360ms;
+}
+
+.ia-reveal--visible .sapphire-wish-chip:nth-child(2) { animation-delay: 440ms; }
+.ia-reveal--visible .sapphire-wish-chip:nth-child(3) { animation-delay: 520ms; }
+
 @keyframes sapphireCaptionReveal {
   from {
     opacity: 0;
     letter-spacing: 0.12em;
-    transform: translate3d(0, 13px, 0);
+    transform: translate3d(0, 26px, 0);
   }
   to {
     opacity: 1;
@@ -1248,8 +1355,8 @@
 @keyframes sapphireTitleReveal {
   from {
     opacity: 0;
-    filter: blur(6px);
-    transform: translate3d(0, 18px, 0) scale(0.98);
+    filter: blur(7px);
+    transform: translate3d(0, 30px, 0) scale(0.94);
   }
   to {
     opacity: 1;
@@ -1262,7 +1369,7 @@
   from {
     opacity: 0;
     filter: blur(5px);
-    transform: translate3d(-18px, 8px, 0);
+    transform: translate3d(-30px, 12px, 0);
   }
   to {
     opacity: 1;
@@ -1275,7 +1382,7 @@
   from {
     opacity: 0;
     filter: blur(5px);
-    transform: translate3d(18px, 8px, 0);
+    transform: translate3d(30px, 12px, 0);
   }
   to {
     opacity: 1;
@@ -1288,7 +1395,7 @@
   from {
     opacity: 0;
     filter: blur(4px);
-    transform: translate3d(0, 14px, 0);
+    transform: translate3d(0, 26px, 0);
   }
   to {
     opacity: 1;
@@ -1301,7 +1408,7 @@
   from {
     opacity: 0;
     filter: blur(7px);
-    transform: translate3d(0, 18px, 0) scale(1.035);
+    transform: translate3d(0, 28px, 0) scale(0.93);
   }
   to {
     opacity: 1;
@@ -1314,12 +1421,36 @@
   from {
     opacity: 0;
     filter: blur(5px);
-    transform: translate3d(0, 16px, 0) scale(0.97);
+    transform: translate3d(0, 30px, 0) scale(0.94);
   }
   to {
     opacity: 1;
     filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes sapphireMicroReveal {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate3d(0, 22px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes sapphirePlayReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -1384,13 +1515,37 @@
   .sapphire-gallery-divider,
   .sapphire-gallery-date,
   .sapphire-couple-card,
+  .sapphire-couple-photo-wrap,
+  .sapphire-couple-name,
+  .sapphire-couple-parent,
+  .sapphire-couple-ig,
+  .sapphire-divider,
   .sapphire-countdown__box,
+  .sapphire-countdown__box strong,
+  .sapphire-countdown__box span,
   .sapphire-event-block,
+  .sapphire-event-block__title,
+  .sapphire-event-date-row,
+  .sapphire-event-time,
+  .sapphire-event-venue,
+  .sapphire-event-address,
+  .sapphire-map-preview,
+  .sapphire-event-block .sapphire-btn,
   .sapphire-wish-form,
+  .sapphire-wish-label,
+  .sapphire-wish-input,
+  .sapphire-wish-textarea,
+  .sapphire-wish-chip,
   .sapphire-wish-item,
+  .sapphire-wish-item__top,
   .sapphire-gift-desc,
   .sapphire-gift-card,
+  .sapphire-gift-card__top,
+  .sapphire-gift-card__number,
+  .sapphire-gift-card__owner,
+  .sapphire-gift-card .sapphire-btn,
   .sapphire-gallery-item,
+  .sapphire-gallery-play,
   .sapphire-footer__content > * {
     animation: none !important;
     transition: none !important;

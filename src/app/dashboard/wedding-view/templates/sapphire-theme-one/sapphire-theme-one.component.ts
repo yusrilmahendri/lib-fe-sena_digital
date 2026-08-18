@@ -78,9 +78,10 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     this.isCoverVisible = false;
     this.isOpening = false;
     this.forceOpened = true;
-    this.cleanupPreviewLocks();
+    this.releaseScrollLocks();
 
     this.openInvitationRequested.emit();
+    this.releaseScrollLocks();
     this.cdr.markForCheck();
 
     console.log('[Garden] REAL CHILD openInvitation after', {
@@ -92,6 +93,17 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     });
 
   }
+  private releaseScrollLocks(): void {
+    this.cleanupPreviewLocks();
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => this.cleanupPreviewLocks());
+    window.setTimeout(() => this.cleanupPreviewLocks(), 0);
+  }
+
   private cleanupPreviewLocks(): void {
     if (typeof document === 'undefined') {
       return;

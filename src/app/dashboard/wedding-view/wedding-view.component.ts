@@ -124,6 +124,12 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       || this.activeThemeRenderKey === 'diamond-theme-one'
       || this.activeThemeRenderKey === 'diamond-theme-two';
   }
+
+  @HostBinding('class.theme-full-frame') get isFullFrameTheme(): boolean {
+    return this.activeThemeRenderKey === 'ruby-theme-one'
+      || this.activeThemeRenderKey === 'ruby-theme-two'
+      || this.activeThemeRenderKey === 'sapphire-theme-one';
+  }
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
   guestCode: string | null = null;

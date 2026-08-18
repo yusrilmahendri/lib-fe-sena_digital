@@ -86,8 +86,33 @@
 
 .wedding-container {
   position: relative;
-  // width: 100%;
+  width: 100%;
   // min-height: 100vh;
+}
+
+:host.theme-full-frame {
+  width: 100%;
+  padding: 0 !important;
+  background: transparent !important;
+  overflow-x: hidden;
+}
+
+:host.theme-full-frame::before,
+:host.theme-full-frame::after,
+:host.theme-full-frame .floral-bg {
+  display: none;
+}
+
+:host.theme-full-frame .wedding-container,
+:host.theme-full-frame wc-ruby-theme-one,
+:host.theme-full-frame wc-ruby-theme-two,
+:host.theme-full-frame wc-sapphire-theme-one {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* When ruby-theme-two is active, strip the outer floral/image background */

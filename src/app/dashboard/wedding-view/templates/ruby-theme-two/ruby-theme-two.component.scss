@@ -18,6 +18,8 @@
   background: var(--ruby-two-soft);
   overflow-x: hidden;
   color: var(--ruby-two-text);
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 .ruby-theme-two,
@@ -38,6 +40,8 @@
   transform: translateY(18px);
   transition: opacity 620ms ease, transform 620ms ease;
   will-change: opacity, transform;
+  overflow: visible;
+  touch-action: pan-y;
 }
 
 .ruby-two-main--visible {
@@ -71,10 +75,15 @@
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
+  animation: none !important;
+  transition: none !important;
   min-height: 100vh !important;
   position: relative;
   z-index: 1;
   pointer-events: auto;
+  overflow: visible;
+  touch-action: pan-y;
+  will-change: auto;
 }
 
 .theme-cover {
@@ -127,6 +136,7 @@
   text-align: center;
   transition: opacity 650ms ease, transform 650ms ease, filter 650ms ease;
   will-change: opacity, transform, filter;
+  touch-action: manipulation;
 }
 
 .ruby-two-cover--opening {
@@ -877,6 +887,7 @@
   overflow: hidden;
   border-radius: 18px;
   box-shadow: var(--ruby-two-shadow);
+  touch-action: pan-y;
 }
 
 .ruby-two-gallery-featured {
@@ -1232,17 +1243,34 @@
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-person-card p,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-person-card small,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card__label,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card h3,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card p,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card strong,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-map-preview,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-event-card .ruby-two-button,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card strong,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card span,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-item,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-featured,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-item,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-featured__play,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-form,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-label,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-input,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-textarea,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-chip,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-wish-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-wish-card__top,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-bank-card,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-bank-card__top,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-bank-icon,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-bank-card .ruby-two-button,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-closing__content > * {
   opacity: 0;
-  filter: blur(6px);
-  transform: translate3d(0, 18px, 0);
+  filter: blur(7px);
+  transform: translate3d(0, 30px, 0);
 }
 
 .ia-reveal--visible .ruby-two-section__eyebrow,
@@ -1298,6 +1326,29 @@
   animation: rubyTwoCardReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.ia-reveal--visible .ruby-two-event-card__label,
+.ia-reveal--visible .ruby-two-event-card h3,
+.ia-reveal--visible .ruby-two-event-card p,
+.ia-reveal--visible .ruby-two-event-card strong,
+.ia-reveal--visible .ruby-two-map-preview,
+.ia-reveal--visible .ruby-two-event-card .ruby-two-button,
+.ia-reveal--visible .ruby-two-countdown__card strong,
+.ia-reveal--visible .ruby-two-countdown__card span,
+.ia-reveal--visible .ruby-two-label,
+.ia-reveal--visible .ruby-two-input,
+.ia-reveal--visible .ruby-two-textarea,
+.ia-reveal--visible .ruby-two-chip,
+.ia-reveal--visible .ruby-two-wish-card__top,
+.ia-reveal--visible .ruby-two-bank-card__top,
+.ia-reveal--visible .ruby-two-bank-icon,
+.ia-reveal--visible .ruby-two-bank-card .ruby-two-button {
+  animation: rubyTwoMicroReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ia-reveal--visible .ruby-two-gallery-featured__play {
+  animation: rubyTwoPlayReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 360ms both;
+}
+
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) .ruby-two-person-card__frame,
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) h3,
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) p,
@@ -1335,11 +1386,39 @@
   animation-delay: 500ms;
 }
 
+.ia-reveal--visible .ruby-two-event-card__label,
+.ia-reveal--visible .ruby-two-countdown__card strong,
+.ia-reveal--visible .ruby-two-label,
+.ia-reveal--visible .ruby-two-bank-card__top {
+  animation-delay: 120ms;
+}
+
+.ia-reveal--visible .ruby-two-event-card h3,
+.ia-reveal--visible .ruby-two-event-card p:nth-of-type(1),
+.ia-reveal--visible .ruby-two-countdown__card span,
+.ia-reveal--visible .ruby-two-input,
+.ia-reveal--visible .ruby-two-bank-icon {
+  animation-delay: 200ms;
+}
+
+.ia-reveal--visible .ruby-two-event-card strong,
+.ia-reveal--visible .ruby-two-map-preview,
+.ia-reveal--visible .ruby-two-textarea,
+.ia-reveal--visible .ruby-two-wish-card__top,
+.ia-reveal--visible .ruby-two-bank-card .ruby-two-button {
+  animation-delay: 280ms;
+}
+
+.ia-reveal--visible .ruby-two-event-card .ruby-two-button,
+.ia-reveal--visible .ruby-two-chip:nth-child(1) { animation-delay: 360ms; }
+.ia-reveal--visible .ruby-two-chip:nth-child(2) { animation-delay: 440ms; }
+.ia-reveal--visible .ruby-two-chip:nth-child(3) { animation-delay: 520ms; }
+
 @keyframes rubyTwoCaptionReveal {
   from {
     opacity: 0;
     letter-spacing: 0.08em;
-    transform: translate3d(0, 14px, 0);
+    transform: translate3d(0, 26px, 0);
   }
   to {
     opacity: 1;
@@ -1352,7 +1431,7 @@
   from {
     opacity: 0;
     filter: blur(8px);
-    transform: translate3d(0, 18px, 0) scale(0.98);
+    transform: translate3d(0, 30px, 0) scale(0.94);
   }
   to {
     opacity: 1;
@@ -1365,7 +1444,7 @@
   from {
     opacity: 0;
     filter: blur(6px);
-    transform: translate3d(-18px, 8px, 0);
+    transform: translate3d(-30px, 12px, 0);
   }
   to {
     opacity: 1;
@@ -1378,7 +1457,7 @@
   from {
     opacity: 0;
     filter: blur(6px);
-    transform: translate3d(18px, 8px, 0);
+    transform: translate3d(30px, 12px, 0);
   }
   to {
     opacity: 1;
@@ -1402,7 +1481,7 @@
   from {
     opacity: 0;
     filter: blur(5px);
-    transform: translate3d(0, 14px, 0);
+    transform: translate3d(0, 26px, 0);
   }
   to {
     opacity: 1;
@@ -1415,7 +1494,7 @@
   from {
     opacity: 0;
     filter: blur(8px);
-    transform: translate3d(0, 18px, 0) scale(1.045);
+    transform: translate3d(0, 28px, 0) scale(0.93);
   }
   to {
     opacity: 1;
@@ -1428,12 +1507,36 @@
   from {
     opacity: 0;
     filter: blur(6px);
-    transform: translate3d(0, 18px, 0) scale(0.96);
+    transform: translate3d(0, 30px, 0) scale(0.94);
   }
   to {
     opacity: 1;
     filter: blur(0);
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes rubyTwoMicroReveal {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate3d(0, 22px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes rubyTwoPlayReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -1538,13 +1641,30 @@
   .ruby-two-person-card p,
   .ruby-two-person-card small,
   .ruby-two-event-card,
+  .ruby-two-event-card__label,
+  .ruby-two-event-card h3,
+  .ruby-two-event-card p,
+  .ruby-two-event-card strong,
+  .ruby-two-map-preview,
+  .ruby-two-event-card .ruby-two-button,
   .ruby-two-countdown__card,
+  .ruby-two-countdown__card strong,
+  .ruby-two-countdown__card span,
   .ruby-two-journey-item,
   .ruby-two-gallery-featured,
   .ruby-two-gallery-item,
+  .ruby-two-gallery-featured__play,
   .ruby-two-form,
+  .ruby-two-label,
+  .ruby-two-input,
+  .ruby-two-textarea,
+  .ruby-two-chip,
   .ruby-two-wish-card,
+  .ruby-two-wish-card__top,
   .ruby-two-bank-card,
+  .ruby-two-bank-card__top,
+  .ruby-two-bank-icon,
+  .ruby-two-bank-card .ruby-two-button,
   .ruby-two-closing__content > * {
     animation: none !important;
     transition: none !important;

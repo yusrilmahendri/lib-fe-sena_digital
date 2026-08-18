@@ -85,9 +85,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     this.isCoverVisible = false;
     this.isOpening = false;
     this.forceOpened = true;
-    this.cleanupPreviewLocks();
+    this.releaseScrollLocks();
 
     this.openInvitationRequested.emit();
+    this.releaseScrollLocks();
     this.cdr?.markForCheck();
 
     console.log('[Lavender] REAL CHILD openInvitation after', {
@@ -102,6 +103,17 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   override ngOnDestroy(): void {
     this.cleanupPreviewLocks();
     super.ngOnDestroy();
+  }
+
+  private releaseScrollLocks(): void {
+    this.cleanupPreviewLocks();
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => this.cleanupPreviewLocks());
+    window.setTimeout(() => this.cleanupPreviewLocks(), 0);
   }
 
   private cleanupPreviewLocks(): void {
