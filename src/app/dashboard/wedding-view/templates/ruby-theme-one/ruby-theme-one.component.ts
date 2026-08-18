@@ -58,6 +58,9 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   selectedGalleryVideoDirectUrl = '';
   selectedGalleryVideoTitle = '';
   selectedGalleryVideoType: 'youtube' | 'video' | '' = '';
+  selectedGalleryPhotoUrl = '';
+  selectedGalleryPhotoTitle = '';
+  activeGalleryIndex = 0;
   countdownDays = '00';
   countdownHours = '00';
   countdownMinutes = '00';
@@ -87,6 +90,11 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   private captionScrollRaf = 0;
   private captionDirection: RubyCaptionDirection = 'down';
   private captionLastScrollTop = 0;
+  private readonly rubyMapEmbedUrlCache = new Map<string, SafeResourceUrl>();
+  private galleryDragStartX = 0;
+  private galleryDragStartScrollLeft = 0;
+  private galleryIsDragging = false;
+  private galleryDidDrag = false;
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -112,6 +120,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     if (changes['weddingData']) {
       this.setupRubyReceptionFromEvents();
       this.initCountdown();
+      this.activeGalleryIndex = 0;
       this.scheduleRubyCaptionMotionRefresh();
     }
   }
@@ -198,6 +207,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   @HostListener('document:keydown.escape')
   onEscapeGalleryVideo(): void {
     this.closeGalleryVideo();
+    this.closeGalleryPhoto();
   }
 
   override getGuestName(): string {
@@ -309,6 +319,29 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return this.galleryPhotoItems.filter((item) => !main || item.id !== main.id);
   }
 
+  getGalleryCarouselItems(): GalleryItem[] {
+    const featuredVideo = this.getFeaturedGalleryVideoItem();
+    const photos = this.galleryPhotoItems.filter((item) => {
+      if (!featuredVideo) {
+        return true;
+      }
+
+      return this.getGalleryItemKey(item) !== this.getGalleryItemKey(featuredVideo);
+    });
+
+    return featuredVideo ? [featuredVideo, ...photos] : photos;
+  }
+
+  getGalleryActiveNumber(): string {
+    const total = this.getGalleryCarouselItems().length;
+    const current = total ? Math.min(this.activeGalleryIndex + 1, total) : 0;
+    return String(current).padStart(2, '0');
+  }
+
+  getGalleryTotalNumber(): string {
+    return String(this.getGalleryCarouselItems().length).padStart(2, '0');
+  }
+
   override getFeaturedGalleryItem(): GalleryItem | null {
     return this.getSafeGalleryPhotos()[0] || null;
   }
@@ -326,12 +359,19 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getGalleryDisplayImageUrl(item: any): string {
+    if (this.hasVideo(item)) {
+      const photoUrl = this.getGalleryPhotoUrl(item);
+      return this.getGalleryCustomThumbnailUrl(item) ||
+        (photoUrl && !this.isUnsafeThemeImage(photoUrl) ? photoUrl : '') ||
+        this.getGalleryYoutubeThumbnailUrl(item);
+    }
+
     const photoUrl = this.getGalleryPhotoUrl(item);
     if (photoUrl && !this.isUnsafeThemeImage(photoUrl)) {
       return photoUrl;
     }
 
-    return this.getGalleryYoutubeThumbnailUrl(item);
+    return '';
   }
 
   override getGalleryPhotoUrl(item: any): string {
@@ -356,8 +396,28 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     this.selectedGalleryVideoDirectUrl = '';
-    this.selectedGalleryVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(videoUrl);
+    this.selectedGalleryVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.withYoutubeAutoplay(videoUrl));
     this.selectedGalleryVideoType = 'youtube';
+  }
+
+  openGalleryItem(item: any): void {
+    if (this.galleryDidDrag) {
+      this.galleryDidDrag = false;
+      return;
+    }
+
+    if (this.hasVideo(item)) {
+      this.openGalleryVideo(item);
+      return;
+    }
+
+    const photoUrl = this.getGalleryPhotoUrl(item);
+    if (!photoUrl) {
+      return;
+    }
+
+    this.selectedGalleryPhotoUrl = photoUrl;
+    this.selectedGalleryPhotoTitle = item?.description || item?.nama_foto || 'Foto galeri';
   }
 
   closeGalleryVideo(): void {
@@ -365,6 +425,76 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     this.selectedGalleryVideoDirectUrl = '';
     this.selectedGalleryVideoTitle = '';
     this.selectedGalleryVideoType = '';
+  }
+
+  closeGalleryPhoto(): void {
+    this.selectedGalleryPhotoUrl = '';
+    this.selectedGalleryPhotoTitle = '';
+  }
+
+  scrollGalleryCarousel(direction: -1 | 1): void {
+    const track = this.elementRef?.nativeElement.querySelector<HTMLElement>('.ruby-gallery-track');
+    if (!track) {
+      return;
+    }
+
+    const firstSlide = track.querySelector<HTMLElement>('.ruby-gallery-slide');
+    const step = firstSlide ? firstSlide.offsetWidth + 14 : track.clientWidth * 0.86;
+    track.scrollBy({ left: direction * step, behavior: this.prefersReducedMotion() ? 'auto' : 'smooth' });
+  }
+
+  onGalleryCarouselScroll(event: Event): void {
+    const track = event.currentTarget as HTMLElement;
+    const slides = Array.from(track.querySelectorAll<HTMLElement>('.ruby-gallery-slide'));
+    if (!slides.length) {
+      this.activeGalleryIndex = 0;
+      return;
+    }
+
+    const trackCenter = track.scrollLeft + track.clientWidth / 2;
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    slides.forEach((slide, index) => {
+      const slideCenter = slide.offsetLeft + slide.offsetWidth / 2;
+      const distance = Math.abs(slideCenter - trackCenter);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    this.activeGalleryIndex = closestIndex;
+  }
+
+  onGalleryPointerDown(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse') {
+      return;
+    }
+
+    const track = event.currentTarget as HTMLElement;
+    this.galleryIsDragging = true;
+    this.galleryDidDrag = false;
+    this.galleryDragStartX = event.clientX;
+    this.galleryDragStartScrollLeft = track.scrollLeft;
+    track.setPointerCapture?.(event.pointerId);
+  }
+
+  onGalleryPointerMove(event: PointerEvent): void {
+    if (!this.galleryIsDragging || event.pointerType !== 'mouse') {
+      return;
+    }
+
+    const track = event.currentTarget as HTMLElement;
+    const delta = event.clientX - this.galleryDragStartX;
+    if (Math.abs(delta) > 6) {
+      this.galleryDidDrag = true;
+    }
+    track.scrollLeft = this.galleryDragStartScrollLeft - delta;
+  }
+
+  onGalleryPointerUp(): void {
+    this.galleryIsDragging = false;
   }
 
   getGalleryVideoUrl(item: any): string {
@@ -410,6 +540,41 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
     const videoId = this.getYoutubeVideoId(rawVideoUrl);
     return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+  }
+
+  private getGalleryCustomThumbnailUrl(item: any): string {
+    const candidates = [
+      item?.thumbnail_url,
+      item?.thumbnail,
+      item?.thumb_url,
+      item?.thumb,
+      item?.preview_url,
+      item?.cover_url,
+      item?.cover,
+    ];
+
+    for (const candidate of candidates) {
+      const thumbnail = this.normalizeMediaUrl(candidate);
+      if (thumbnail) {
+        return thumbnail;
+      }
+    }
+
+    return '';
+  }
+
+  private getGalleryItemKey(item: any): string {
+    return String(
+      item?.id ||
+      item?.uuid ||
+      item?.photo_url ||
+      item?.image_url ||
+      item?.url ||
+      item?.url_video ||
+      item?.video_url ||
+      item?.youtube_url ||
+      ''
+    );
   }
 
   private getRawGalleryVideoUrl(item: any): string {
@@ -470,6 +635,23 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     return normalizeYoutubeEmbedUrl(raw);
+  }
+
+  private withYoutubeAutoplay(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    try {
+      const url = new URL(value);
+      url.searchParams.set('autoplay', '1');
+      url.searchParams.set('mute', '1');
+      url.searchParams.set('rel', '0');
+      url.searchParams.set('playsinline', '1');
+      return url.toString();
+    } catch {
+      return value;
+    }
   }
 
   private isDirectVideoUrl(value: string): boolean {
@@ -551,12 +733,81 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getEventVenue(event: WeddingEvent): string {
-    return event.nama_acara || 'Lokasi acara';
+    const data = event as any;
+    return data?.nama_lokasi ||
+      data?.venue ||
+      data?.venue_name ||
+      data?.location_name ||
+      data?.tempat ||
+      data?.nama_tempat ||
+      event.nama_acara ||
+      'Lokasi acara';
   }
 
   getEventAddress(event: WeddingEvent): string {
     const data = event as any;
     return data?.address || event.alamat || data?.location_name || 'Alamat acara akan diumumkan segera.';
+  }
+
+  getRubyEventCards(): WeddingEvent[] {
+    return this.getEvents().filter((event) => !!event);
+  }
+
+  getRubyLocationEvents(): WeddingEvent[] {
+    return this.getRubyEventCards().filter((event) => {
+      const address = this.getEventAddress(event);
+      const venue = this.getEventVenue(event);
+      const mapUrl = this.getRubyGoogleMapsUrl(event);
+      return !!(mapUrl || address || venue);
+    });
+  }
+
+  getEventDisplayTitle(event: WeddingEvent): string {
+    const data = event as any;
+    const raw = String(data?.jenis_acara || data?.type || '').trim();
+    if (raw) {
+      return this.toTitleCase(raw.replace(/[_-]+/g, ' '));
+    }
+
+    const name = String(event?.nama_acara || '').trim();
+    if (/akad|nikah|pemberkatan/i.test(name)) {
+      return 'Akad Nikah';
+    }
+    if (/resepsi|reception|ngunduh/i.test(name)) {
+      return 'Resepsi';
+    }
+    return name || 'Acara';
+  }
+
+  getRubyGoogleMapsUrl(event: WeddingEvent): string {
+    return this.getEventMapUrl(event) || '';
+  }
+
+  getRubySafeMapEmbedUrl(event: WeddingEvent): SafeResourceUrl | null {
+    const mapQuery = this.getEventAddress(event) || this.getEventVenue(event);
+    if (!mapQuery) {
+      return null;
+    }
+
+    const cacheKey = `${event?.id || this.getEventDisplayTitle(event)}:${mapQuery}`;
+    if (!this.rubyMapEmbedUrlCache.has(cacheKey)) {
+      const embed = `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed`;
+      this.rubyMapEmbedUrlCache.set(cacheKey, this.sanitizer.bypassSecurityTrustResourceUrl(embed));
+    }
+
+    return this.rubyMapEmbedUrlCache.get(cacheKey) || null;
+  }
+
+  trackByRubyEvent(index: number, event: WeddingEvent): number | string {
+    return event?.id || `${event?.nama_acara || 'event'}-${index}`;
+  }
+
+  private toTitleCase(value: string): string {
+    return value
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
   }
 
   getLocationVenue(): string {

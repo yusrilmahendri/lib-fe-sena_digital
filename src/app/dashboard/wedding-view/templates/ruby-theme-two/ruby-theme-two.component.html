@@ -193,7 +193,7 @@
           <article class="ruby-two-gallery-featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
             <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-            <div class="ruby-two-gallery-featured__play" *ngIf="featured.url_video">
+            <div class="ruby-two-gallery-featured__play" *ngIf="hasGalleryVideo(featured)">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
           </article>
@@ -306,8 +306,7 @@
           <time>{{ getClosingDateLabel() }}</time>
           <small>{{ getPackageLabelText() }}</small>
           <div class="ruby-two-closing__credit">
-            <span>Crafted with love by</span>
-            <strong>Sena Digital</strong>
+            <span>Crafted with ❤️ by Sena Digital</span>
           </div>
         </div>
       </section>

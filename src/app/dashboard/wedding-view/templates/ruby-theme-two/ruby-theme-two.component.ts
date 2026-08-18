@@ -250,7 +250,11 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   override getGalleryPhotoUrl(item: any): string {
-    return resolveInvitationPhotoUrl(item);
+    return resolveInvitationPhotoUrl(item) || this.getGalleryVideoThumbnailUrl(item);
+  }
+
+  hasGalleryVideo(item: any): boolean {
+    return !!this.getRawGalleryVideoUrl(item);
   }
 
   override onImageError(event: Event): void {
@@ -584,6 +588,38 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       text: String(data.quote || data.qoute || '').replace(/^["“”]+|["“”]+$/g, '').trim(),
       source: String(data.name || data.source || data.reference || data.referensi || '').trim(),
     };
+  }
+
+  private getGalleryVideoThumbnailUrl(item: any): string {
+    const customThumbnail = this.getSafeImageUrl([
+      item?.thumbnail_url,
+      item?.thumbnail,
+      item?.thumb_url,
+      item?.thumb,
+      item?.preview_url,
+      item?.cover_url,
+      item?.cover,
+    ], '');
+    if (customThumbnail) {
+      return customThumbnail;
+    }
+
+    const youtubeId = this.getYoutubeVideoId(this.getRawGalleryVideoUrl(item));
+    return youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '';
+  }
+
+  private getRawGalleryVideoUrl(item: any): string {
+    return String(item?.url_video || item?.video_url || item?.youtube_url || item?.video || '').trim();
+  }
+
+  private getYoutubeVideoId(value: string): string {
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    return match?.[1] || '';
   }
 
   private getMapQuery(event: WeddingEvent): string {

@@ -287,7 +287,7 @@
   display: flex;
   inset: 0;
   justify-content: center;
-  padding: 24px;
+  padding: 16px;
   position: fixed;
   z-index: 1200;
 }
@@ -295,13 +295,15 @@
 .theme-feedback-modal {
   background: #fffafc;
   border: 1px solid #f1d6e1;
-  border-radius: 24px;
-  box-shadow: 0 28px 60px rgba(87, 48, 68, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 18px 44px rgba(87, 48, 68, 0.2);
   color: var(--theme-text);
+  height: auto;
   max-width: 420px;
-  padding: 28px 24px 22px;
+  min-height: 0;
+  padding: 20px 20px 18px;
   text-align: center;
-  width: min(100%, 420px);
+  width: min(100%, 360px);
 }
 
 .theme-feedback-modal--error {
@@ -310,31 +312,54 @@
 }
 
 .theme-feedback-modal h3 {
-  font-size: 1.45rem;
+  font-size: 1.28rem;
   font-weight: 700;
-  margin: 0 0 12px;
+  line-height: 1.25;
+  margin: 0 0 8px;
 }
 
 .theme-feedback-modal p {
   color: var(--theme-muted);
-  font-size: 1rem;
-  line-height: 1.6;
-  margin: 0 0 18px;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  margin: 0 0 14px;
 }
 
 .theme-feedback-modal button {
-  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-primary-dark) 100%);
-  border: 0;
+  background: #ffffff;
+  border: 1px solid #d9c2cf;
   border-radius: 999px;
-  color: #ffffff;
+  color: #211827;
   cursor: pointer;
-  font-size: 0.98rem;
-  font-weight: 600;
-  padding: 11px 22px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.2;
+  min-height: 44px;
+  min-width: 112px;
+  padding: 10px 22px;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.theme-feedback-modal button:hover,
+.theme-feedback-modal button:focus-visible {
+  background: #fff7fb;
+  border-color: #b98aa4;
+  box-shadow: 0 0 0 3px rgba(185, 138, 164, 0.22);
+  color: #211827;
+  outline: none;
+}
+
+.theme-feedback-modal button:active {
+  background: #f8edf3;
+  border-color: #a97793;
+  color: #211827;
+  transform: translateY(1px);
 }
 
 .theme-feedback-modal--error button {
-  background: linear-gradient(135deg, #eb5b73 0%, #d7445d 100%);
+  background: #ffffff;
+  border-color: #e3b2bd;
+  color: #211827;
 }
 
 .theme-picker__footer {
@@ -888,6 +913,34 @@
     border-radius: 12px;
     white-space: nowrap;
     width: 100% !important;
+  }
+
+  .theme-feedback-backdrop {
+    padding: 0;
+  }
+
+  .theme-feedback-modal {
+    border-radius: 18px;
+    max-width: 360px;
+    padding: 18px 18px 16px;
+    width: calc(100% - 32px);
+  }
+
+  .theme-feedback-modal h3 {
+    font-size: 1.2rem;
+    margin-bottom: 7px;
+  }
+
+  .theme-feedback-modal p {
+    font-size: 0.94rem;
+    margin-bottom: 12px;
+  }
+
+  .theme-feedback-modal button {
+    min-height: 44px;
+    min-width: 0;
+    padding: 10px 18px;
+    width: 100%;
   }
 }
 

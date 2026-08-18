@@ -124,34 +124,25 @@
         </div>
       </section>
 
-      <section class="ruby-event-section" *ngIf="isEventVisible()">
+      <section class="ruby-event-section" *ngIf="isEventVisible() && getRubyEventCards().length">
         <div class="ruby-event-content">
           <div class="ruby-caption ruby-caption--event" data-caption-motion="event">
             <p class="ruby-event-label ruby-caption__eyebrow">SAVE THE DATE</p>
-            <h2 class="ruby-caption__title">Akad Nikah</h2>
+            <h2 class="ruby-caption__title">Rangkaian Acara</h2>
           </div>
 
-          <div class="ruby-event-card">
-            <p class="ruby-event-date">{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</p>
-            <p class="ruby-event-time">{{ formatTimeRange(getAkadCard()) }}</p>
+          <div class="ruby-event-card" *ngFor="let event of getRubyEventCards(); trackBy: trackByRubyEvent">
+            <h3 class="ruby-event-card__title">{{ getEventDisplayTitle(event) }}</h3>
+            <p class="ruby-event-date">{{ formatDate(event.tanggal_acara, 'long') }}</p>
+            <p class="ruby-event-time">{{ formatTimeRange(event) }}</p>
             <div class="ruby-event-divider"></div>
-            <h3>{{ getEventVenue(getAkadCard()) }}</h3>
-            <p class="ruby-event-address">{{ getEventAddress(getAkadCard()) }}</p>
-          </div>
-
-          <h2 class="ruby-event-title-secondary">Resepsi</h2>
-
-          <div class="ruby-event-card">
-            <p class="ruby-event-date">{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</p>
-            <p class="ruby-event-time">{{ formatTimeRange(getReceptionCard()) }}</p>
-            <div class="ruby-event-divider"></div>
-            <h3>{{ getEventVenue(getReceptionCard()) }}</h3>
-            <p class="ruby-event-address">{{ getEventAddress(getReceptionCard()) }}</p>
+            <strong>{{ getEventVenue(event) }}</strong>
+            <p class="ruby-event-address">{{ getEventAddress(event) }}</p>
           </div>
         </div>
       </section>
 
-      <section class="ruby-location-section" *ngIf="isLocationVisible() && receptionEvent">
+      <section class="ruby-location-section" *ngIf="isLocationVisible() && getRubyLocationEvents().length">
         <img
           class="ruby-location-frame"
           src="assets/thema-1/frame-5.png"
@@ -162,38 +153,38 @@
         <div class="ruby-location-content">
           <div class="ruby-caption ruby-caption--location" data-caption-motion="location">
             <p class="ruby-section-label ruby-caption__eyebrow">TEMPAT</p>
-            <h2 class="ruby-caption__title">Lokasi Resepsi</h2>
+            <h2 class="ruby-caption__title">Lokasi Acara</h2>
           </div>
-          <h3 *ngIf="receptionVenueName">{{ receptionVenueName }}</h3>
 
-          <div class="ruby-map-card">
+          <article class="ruby-map-card" *ngFor="let event of getRubyLocationEvents(); trackBy: trackByRubyEvent">
+            <h3>{{ getEventDisplayTitle(event) }}</h3>
+            <strong class="ruby-location-name">{{ getEventVenue(event) }}</strong>
             <div class="ruby-map-preview">
               <iframe
-                *ngIf="safeMapEmbedUrl"
-                [src]="safeMapEmbedUrl"
+                *ngIf="getRubySafeMapEmbedUrl(event) as mapEmbed"
+                [src]="mapEmbed"
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
                 allowfullscreen>
               </iframe>
 
-              <div class="ruby-map-placeholder" *ngIf="!safeMapEmbedUrl">
+              <div class="ruby-map-placeholder" *ngIf="!getRubySafeMapEmbedUrl(event)">
                 <span class="ruby-map-pin">📍</span>
               </div>
             </div>
 
-            <p class="ruby-location-address" *ngIf="receptionAddress">{{ receptionAddress }}</p>
-          </div>
-
-          <a
-            class="ruby-map-button"
-            *ngIf="googleMapsUrl"
-            [href]="googleMapsUrl"
-            target="_blank"
-            rel="noopener"
-          >
-            <span class="ruby-map-button-icon">⌖</span>
-            Buka Google Maps
-          </a>
+            <p class="ruby-location-address">{{ getEventAddress(event) }}</p>
+            <a
+              class="ruby-map-button"
+              *ngIf="getRubyGoogleMapsUrl(event) as mapsUrl"
+              [href]="mapsUrl"
+              target="_blank"
+              rel="noopener"
+            >
+              <span class="ruby-map-button-icon">⌖</span>
+              Buka Google Maps
+            </a>
+          </article>
 
           <div class="ruby-countdown">
             <div class="ruby-caption ruby-caption--countdown" data-caption-motion="countdown">
@@ -223,7 +214,7 @@
         </div>
       </section>
 
-      <section class="ruby-gallery-section" *ngIf="mainGalleryPhoto">
+      <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && getGalleryCarouselItems().length">
         <div class="ruby-gallery-content">
           <div class="ruby-caption ruby-caption--gallery" data-caption-motion="gallery">
             <p class="ruby-gallery-label ruby-caption__eyebrow">MOMENTS</p>
@@ -231,46 +222,29 @@
             <div class="ruby-gallery-line ruby-caption__divider"></div>
           </div>
 
-          <button
-            class="ruby-gallery-feature gallery-card"
-            type="button"
-            [class.ruby-gallery-feature--video]="hasVideo(mainGalleryPhoto)"
-            [class.is-image-missing]="!getGalleryDisplayImageUrl(mainGalleryPhoto)"
-            [attr.aria-label]="hasVideo(mainGalleryPhoto) ? 'Putar video galeri utama' : 'Foto galeri utama'"
-            (click)="openGalleryVideo(mainGalleryPhoto)"
-          >
-            <img
-              *ngIf="getGalleryDisplayImageUrl(mainGalleryPhoto)"
-              [src]="getGalleryDisplayImageUrl(mainGalleryPhoto)"
-              [alt]="mainGalleryPhoto.nama_foto || 'Galeri foto utama'"
-              [style.object-fit]="getPhotoObjectFit(mainGalleryPhoto)"
-              [style.object-position]="getPhotoObjectPosition(mainGalleryPhoto)"
-              (error)="onGalleryImageError($event)"
-            />
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+          <div class="ruby-gallery-carousel">
+            <button class="ruby-gallery-nav ruby-gallery-nav--prev" type="button" aria-label="Foto sebelumnya" (click)="scrollGalleryCarousel(-1)">
+              <i class="fas fa-chevron-left" aria-hidden="true"></i>
+            </button>
 
-            <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true"></span>
-            <span class="ruby-gallery-video-badge" *ngIf="hasVideo(mainGalleryPhoto)">Video</span>
-            <span class="ruby-gallery-play" *ngIf="hasVideo(mainGalleryPhoto)" aria-hidden="true">
-              <i class="fas fa-play"></i>
-            </span>
-            <span class="ruby-gallery-watch-label" *ngIf="hasVideo(mainGalleryPhoto)">Tonton Video</span>
-          </button>
-
-          <div
-            class="ruby-gallery-slider"
-            *ngIf="galleryThumbs.length"
-            [class.ruby-gallery-slider--animate]="galleryThumbs.length > 2"
-          >
-            <div class="ruby-gallery-track">
+            <div
+              class="ruby-gallery-track"
+              (scroll)="onGalleryCarouselScroll($event)"
+              (pointerdown)="onGalleryPointerDown($event)"
+              (pointermove)="onGalleryPointerMove($event)"
+              (pointerup)="onGalleryPointerUp()"
+              (pointercancel)="onGalleryPointerUp()"
+              (pointerleave)="onGalleryPointerUp()"
+            >
               <button
-                class="ruby-gallery-thumb gallery-card"
+                class="ruby-gallery-slide gallery-card"
                 type="button"
-                *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
-                [class.ruby-gallery-thumb--video]="hasVideo(item)"
+                *ngFor="let item of getGalleryCarouselItems(); trackBy: trackByGallery; let i = index"
+                [class.ruby-gallery-slide--active]="i === activeGalleryIndex"
+                [class.ruby-gallery-slide--video]="hasVideo(item)"
                 [class.is-image-missing]="!getGalleryDisplayImageUrl(item)"
-                [attr.aria-label]="hasVideo(item) ? 'Putar video galeri' : 'Foto galeri'"
-                (click)="openGalleryVideo(item)"
+                [attr.aria-label]="hasVideo(item) ? 'Putar video galeri' : 'Buka foto galeri'"
+                (click)="openGalleryItem(item)"
               >
                 <img
                   *ngIf="getGalleryDisplayImageUrl(item)"
@@ -282,38 +256,28 @@
                 />
                 <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
                 <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(item)" aria-hidden="true"></span>
-                <span class="ruby-gallery-play ruby-gallery-play--small" *ngIf="hasVideo(item)" aria-hidden="true">
+                <span class="ruby-gallery-video-badge" *ngIf="hasVideo(item)">Video</span>
+                <span class="ruby-gallery-play" *ngIf="hasVideo(item)" aria-hidden="true">
                   <i class="fas fa-play"></i>
                 </span>
+                <span class="ruby-gallery-watch-label" *ngIf="hasVideo(item)">Tonton Video</span>
               </button>
-
-              <ng-container *ngIf="galleryThumbs.length > 2">
-                <button
-                  class="ruby-gallery-thumb gallery-card"
-                  type="button"
-                  *ngFor="let item of galleryThumbs; trackBy: trackByGallery"
-                  [class.ruby-gallery-thumb--video]="hasVideo(item)"
-                  [class.is-image-missing]="!getGalleryDisplayImageUrl(item)"
-                  aria-hidden="true"
-                  tabindex="-1"
-                  (click)="openGalleryVideo(item)"
-                >
-                  <img
-                    *ngIf="getGalleryDisplayImageUrl(item)"
-                    [src]="getGalleryDisplayImageUrl(item)"
-                    alt=""
-                    [style.object-fit]="getPhotoObjectFit(item)"
-                    [style.object-position]="getPhotoObjectPosition(item)"
-                    (error)="onGalleryImageError($event)"
-                  />
-                  <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-                  <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(item)" aria-hidden="true"></span>
-                  <span class="ruby-gallery-play ruby-gallery-play--small" *ngIf="hasVideo(item)" aria-hidden="true">
-                    <i class="fas fa-play"></i>
-                  </span>
-                </button>
-              </ng-container>
             </div>
+
+            <button class="ruby-gallery-nav ruby-gallery-nav--next" type="button" aria-label="Foto berikutnya" (click)="scrollGalleryCarousel(1)">
+              <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="ruby-gallery-pagination" *ngIf="getGalleryCarouselItems().length > 1" aria-label="Posisi galeri">
+            <span>{{ getGalleryActiveNumber() }}</span>
+            <div class="ruby-gallery-dots" aria-hidden="true">
+              <i
+                *ngFor="let item of getGalleryCarouselItems(); let i = index; trackBy: trackByGallery"
+                [class.ruby-gallery-dot--active]="i === activeGalleryIndex"
+              ></i>
+            </div>
+            <span>{{ getGalleryTotalNumber() }}</span>
           </div>
         </div>
       </section>
@@ -341,10 +305,26 @@
             <video
               *ngIf="selectedGalleryVideoType === 'video' && selectedGalleryVideoDirectUrl"
               [src]="selectedGalleryVideoDirectUrl"
+              autoplay
+              muted
               controls
               playsinline>
             </video>
           </div>
+        </div>
+      </div>
+
+      <div
+        class="ruby-photo-lightbox"
+        *ngIf="selectedGalleryPhotoUrl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Foto galeri"
+        (click)="closeGalleryPhoto()"
+      >
+        <div class="ruby-photo-lightbox__panel" (click)="$event.stopPropagation()">
+          <button class="ruby-video-modal__close" type="button" aria-label="Tutup foto" (click)="closeGalleryPhoto()">×</button>
+          <img [src]="selectedGalleryPhotoUrl" [alt]="selectedGalleryPhotoTitle || 'Foto galeri'" (error)="closeGalleryPhoto()">
         </div>
       </div>
 
@@ -441,8 +421,7 @@
             <h2 class="ruby-caption__title">Tanda Kasih</h2>
             <div class="ruby-gift-line ruby-caption__divider"></div>
             <p class="ruby-gift-description ruby-caption__subtitle">
-              Doa restu Anda adalah hadiah terindah. Namun jika<br>
-              ingin memberi tanda kasih, dapat melalui:
+              Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:
             </p>
           </div>
 
@@ -491,9 +470,7 @@
           <p class="ruby-footer-date">{{ getClosingDateLabel() }}</p>
 
           <div class="ruby-footer-credit">
-            <p>{{ getPackageLabelText() }}</p>
-            <span>Crafted with &#9829; by</span>
-            <strong>Sena Digital</strong>
+            <span>Crafted with ❤️ by Sena Digital</span>
           </div>
         </div>
       </section>
