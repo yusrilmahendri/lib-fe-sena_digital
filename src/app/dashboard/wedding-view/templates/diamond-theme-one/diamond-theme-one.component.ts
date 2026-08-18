@@ -42,7 +42,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.diamondOpened = Boolean(this.invitationOpened);
+    this.setDiamondOpenedState(Boolean(this.invitationOpened));
     this.startDiamondCountdown();
     if (!this.wishForm.kehadiran) {
       this.wishForm.kehadiran = 'hadir';
@@ -52,10 +52,9 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
     if (
-      changes['invitationOpened'] &&
-      changes['invitationOpened'].currentValue === true
+      changes['invitationOpened']
     ) {
-      this.diamondOpened = true;
+      this.setDiamondOpenedState(Boolean(changes['invitationOpened'].currentValue));
     }
     if (changes['weddingData']) {
       this.startDiamondCountdown();
@@ -76,44 +75,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (this.diamondOpened) {
+    if (this.hasOpened) {
       return;
     }
 
-    this.diamondOpened = true;
-    this.hasOpened = true;
-    this.isOpening = false;
-    this.isInvitationOpened = true;
+    this.setDiamondOpenedState(true);
+    this.diamondChangeDetector.detectChanges();
 
     document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
 
     this.openInvitationRequested.emit();
-
-    this.diamondChangeDetector.detectChanges();
-
-    const host = document.querySelector('wc-diamond-theme-one');
-    const runtimeComponent = (window as any).ng?.getComponent?.(host);
-
-    console.log('[DIAMOND DEFINITIVE STATE]', {
-      methodThisMatchesRuntimeComponent: runtimeComponent === this,
-      diamondOpened: this.diamondOpened,
-      runtimeDiamondOpened: runtimeComponent?.diamondOpened,
-      invitationOpened: this.invitationOpened,
-      openingCount: host?.querySelectorAll('.diamond-opening').length,
-      mainCount: host?.querySelectorAll('.diamond-main').length
-    });
-
-    setTimeout(() => {
-      console.log('[DIAMOND DEFINITIVE DOM 100MS]', {
-        diamondOpened: this.diamondOpened,
-        invitationOpened: this.invitationOpened,
-        openingCount:
-          host?.querySelectorAll('.diamond-opening').length,
-        mainCount:
-          host?.querySelectorAll('.diamond-main').length
-      });
-    }, 100);
 
     requestAnimationFrame(() => {
       window.scrollTo({
@@ -121,6 +93,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
         behavior: 'smooth'
       });
     });
+  }
+
+  private setDiamondOpenedState(opened: boolean): void {
+    this.diamondOpened = opened;
+    this.hasOpened = opened;
+    this.isOpening = false;
+    this.isInvitationOpened = opened;
+    this.isCoverVisible = !opened;
   }
 
   override getPrimaryDisplayName(): string {

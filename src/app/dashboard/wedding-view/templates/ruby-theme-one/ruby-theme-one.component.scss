@@ -202,158 +202,158 @@
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="quote"] .ruby-caption__title {
-  animation: rubyCaptionQuoteDown 760ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionQuoteDown 920ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="quote"] .ruby-caption__title {
-  animation: rubyCaptionQuoteUp 720ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionQuoteUp 880ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="quote"] .ruby-caption__divider {
-  animation: rubyCaptionDividerCenter 620ms var(--ruby-caption-ease) 120ms both;
+  animation: rubyCaptionDividerCenter 820ms var(--ruby-caption-ease) 140ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="couple"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="couple"] .ruby-caption__title {
-  animation: rubyCaptionFromLeft 720ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionFromLeft 880ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="couple"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="couple"] .ruby-caption__title {
-  animation: rubyCaptionFromRight 720ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionFromRight 880ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="couple"] .ruby-caption__title {
-  animation-delay: 90ms;
+  animation-delay: 130ms;
 }
 
 .ruby-caption--visible[data-caption-motion="couple"] .ruby-caption__divider {
-  animation: rubyCaptionDividerCenter 580ms var(--ruby-caption-ease) 170ms both;
+  animation: rubyCaptionDividerCenter 780ms var(--ruby-caption-ease) 240ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="event"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="event"] .ruby-caption__title {
-  animation: rubyCaptionEventDown 760ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionEventDown 920ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="event"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="event"] .ruby-caption__title {
-  animation: rubyCaptionEventUp 760ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionEventUp 900ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="event"] .ruby-caption__title {
-  animation-delay: 95ms;
+  animation-delay: 140ms;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="location"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="location"] .ruby-caption__title {
-  animation: rubyCaptionLocationDown 700ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionLocationDown 860ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="location"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="location"] .ruby-caption__title {
-  animation: rubyCaptionLocationUp 700ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionLocationUp 860ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="location"] .ruby-caption__title {
-  animation-delay: 90ms;
+  animation-delay: 130ms;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="countdown"] .ruby-caption__eyebrow {
-  animation: rubyCaptionScaleSoftDown 570ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionScaleSoftDown 760ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="countdown"] .ruby-caption__title {
-  animation: rubyCaptionScaleSoftDown 710ms var(--ruby-caption-ease) 95ms both;
+  animation: rubyCaptionScaleSoftDown 900ms var(--ruby-caption-ease) 140ms both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="countdown"] .ruby-caption__eyebrow {
-  animation: rubyCaptionScaleSoftUp 570ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionScaleSoftUp 760ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="countdown"] .ruby-caption__title {
-  animation: rubyCaptionScaleSoftUp 710ms var(--ruby-caption-ease) 95ms both;
+  animation: rubyCaptionScaleSoftUp 900ms var(--ruby-caption-ease) 140ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__eyebrow {
-  animation: rubyCaptionGalleryEyebrowDown 680ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionGalleryEyebrowDown 840ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__title {
-  animation: rubyCaptionGalleryTitleDown 760ms var(--ruby-caption-ease) 100ms both;
+  animation: rubyCaptionGalleryTitleDown 960ms var(--ruby-caption-ease) 150ms both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__eyebrow {
-  animation: rubyCaptionGalleryEyebrowUp 620ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionGalleryEyebrowUp 800ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__title {
-  animation: rubyCaptionGalleryTitleUp 740ms var(--ruby-caption-ease) 90ms both;
+  animation: rubyCaptionGalleryTitleUp 930ms var(--ruby-caption-ease) 140ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gallery"] .ruby-caption__divider {
-  animation: rubyCaptionDividerLeft 620ms var(--ruby-caption-ease) 190ms both;
+  animation: rubyCaptionDividerLeft 820ms var(--ruby-caption-ease) 260ms both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gallery"] .ruby-caption__divider {
-  animation: rubyCaptionDividerRight 620ms var(--ruby-caption-ease) 190ms both;
+  animation: rubyCaptionDividerRight 820ms var(--ruby-caption-ease) 260ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="wish"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="wish"] .ruby-caption__title {
-  animation: rubyCaptionWishDown 720ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionWishDown 880ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="wish"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="wish"] .ruby-caption__title {
-  animation: rubyCaptionWishUp 680ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionWishUp 840ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="wish"] .ruby-caption__title {
-  animation-delay: 95ms;
+  animation-delay: 140ms;
 }
 
 .ruby-caption--visible[data-caption-motion="wish"] .ruby-caption__divider {
-  animation: rubyCaptionDividerCenter 560ms var(--ruby-caption-ease) 175ms both;
+  animation: rubyCaptionDividerCenter 780ms var(--ruby-caption-ease) 250ms both;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__title,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="gift"] .ruby-caption__subtitle {
-  animation: rubyCaptionGiftDown 780ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionGiftDown 940ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__title,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="gift"] .ruby-caption__subtitle {
-  animation: rubyCaptionGiftUp 760ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionGiftUp 920ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__title {
-  animation-delay: 95ms;
+  animation-delay: 140ms;
   text-shadow: 0 8px 24px rgba(159, 53, 45, 0.14);
 }
 
 .ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__divider {
-  animation: rubyCaptionDividerCenter 580ms var(--ruby-caption-ease) 170ms both;
+  animation: rubyCaptionDividerCenter 800ms var(--ruby-caption-ease) 260ms both;
 }
 
 .ruby-caption--visible[data-caption-motion="gift"] .ruby-caption__subtitle {
-  animation-delay: 230ms;
+  animation-delay: 300ms;
 }
 
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="footer"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--down[data-caption-motion="footer"] .ruby-caption__title {
-  animation: rubyCaptionFooterDown 850ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionFooterDown 1020ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="footer"] .ruby-caption__eyebrow,
 .ruby-caption--visible.ruby-caption--up[data-caption-motion="footer"] .ruby-caption__title {
-  animation: rubyCaptionFooterUp 800ms var(--ruby-caption-ease) both;
+  animation: rubyCaptionFooterUp 980ms var(--ruby-caption-ease) both;
 }
 
 .ruby-caption--visible[data-caption-motion="footer"] .ruby-caption__title {
-  animation-delay: 120ms;
+  animation-delay: 170ms;
 }
 
 @keyframes rubyCaptionQuoteDown {
@@ -1602,7 +1602,7 @@
 .ruby-gallery-feature--video img,
 .ruby-gallery-thumb--video img {
   filter: brightness(0.82);
-  animation: rubyGalleryVideoFeatureIn 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyGalleryVideoFeatureIn 1040ms cubic-bezier(0.22, 1, 0.36, 1) both;
   transition: filter 180ms ease, transform 180ms ease;
 }
 
@@ -1663,8 +1663,8 @@
   font-size: 20px;
   line-height: 1;
   pointer-events: none;
-  animation: rubyGalleryPlayIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both,
-    rubyGalleryPlayBreath 2.8s ease-in-out 900ms infinite;
+  animation: rubyGalleryPlayIn 820ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both,
+    rubyGalleryPlayBreath 3.8s ease-in-out 1100ms infinite;
   transition: transform 180ms ease, background 180ms ease;
 }
 
@@ -1682,7 +1682,7 @@
   width: 42px;
   height: 42px;
   font-size: 15px;
-  animation: rubyGalleryPlayIn 540ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  animation: rubyGalleryPlayIn 780ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ruby-gallery-watch-label {
@@ -1705,7 +1705,7 @@
   box-shadow: 0 10px 20px rgba(38, 20, 18, 0.16);
   pointer-events: none;
   white-space: nowrap;
-  animation: rubyGalleryWatchLabelIn 600ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+  animation: rubyGalleryWatchLabelIn 820ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
 }
 
 @keyframes rubyGalleryVideoFeatureIn {
@@ -1780,18 +1780,18 @@
 }
 
 .ruby-cover-frame {
-  animation: rubyFloralCoverSway 8.5s ease-in-out infinite;
+  animation: rubyFloralCoverSway 10.6s ease-in-out infinite;
 }
 
 .ruby-quote-frame,
 .ruby-wish-frame,
 .ruby-footer-frame {
-  animation: rubyFloralLeftDrift 7.8s ease-in-out infinite;
+  animation: rubyFloralLeftDrift 10.2s ease-in-out infinite;
 }
 
 .ruby-location-frame,
 .ruby-gift-frame {
-  animation: rubyFloralRightDrift 8.6s ease-in-out 180ms infinite;
+  animation: rubyFloralRightDrift 11s ease-in-out 220ms infinite;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-quote-frame,
@@ -1809,8 +1809,8 @@
 .ia-reveal--visible .ruby-gift-frame,
 .ia-reveal--visible .ruby-footer-frame {
   animation-name: rubyFloralBloom, rubyFloralLeftDrift;
-  animation-duration: 980ms, 7.8s;
-  animation-delay: 0ms, 980ms;
+  animation-duration: 1180ms, 10.2s;
+  animation-delay: 0ms, 1180ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-in-out;
   animation-iteration-count: 1, infinite;
   animation-fill-mode: both, both;
@@ -1819,28 +1819,28 @@
 .ia-reveal--visible .ruby-location-frame,
 .ia-reveal--visible .ruby-gift-frame {
   animation-name: rubyFloralBloomRight, rubyFloralRightDrift;
-  animation-delay: 160ms, 1120ms;
-  animation-duration: 1040ms, 8.6s;
+  animation-delay: 180ms, 1360ms;
+  animation-duration: 1240ms, 11s;
 }
 
 .ruby-cover__names,
 .ruby-cover__date,
 .ruby-cover__guest,
 .ruby-cover__button {
-  animation: rubyCoverTextArrive 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyCoverTextArrive 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ruby-cover__date {
-  animation-delay: 90ms;
+  animation-delay: 130ms;
 }
 
 .ruby-cover__guest {
-  animation-delay: 180ms;
+  animation-delay: 260ms;
 }
 
 .ruby-cover__button {
   animation-name: rubyCoverButtonArrive;
-  animation-delay: 270ms;
+  animation-delay: 390ms;
 }
 
 .ruby-cover--opening .ruby-cover__names,
@@ -1859,15 +1859,15 @@
 }
 
 .ia-reveal--visible .ruby-quote-opening {
-  animation: rubyBodyTextReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  animation: rubyBodyTextReveal 900ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
 }
 
 .ia-reveal--visible .ruby-quote-text {
-  animation: rubyQuoteTextDown 820ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  animation: rubyQuoteTextDown 960ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
 }
 
 .ia-reveal--visible .ruby-quote-source {
-  animation: rubyBodyTextReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+  animation: rubyBodyTextReveal 860ms cubic-bezier(0.22, 1, 0.36, 1) 380ms both;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-couple-photo {
@@ -1885,7 +1885,7 @@
 }
 
 .ia-reveal--visible .ruby-couple-photo {
-  animation: rubyPhotoMaskReveal 920ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
+  animation: rubyPhotoMaskReveal 1120ms cubic-bezier(0.22, 1, 0.36, 1) 140ms both;
 }
 
 .ruby-couple-photo img,
@@ -1900,24 +1900,24 @@
 }
 
 .ia-reveal--visible .ruby-event-card {
-  animation: rubyCardRiseIn 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyCardRiseIn 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .ruby-event-card:nth-of-type(2) {
-  animation-delay: 90ms;
+  animation-delay: 140ms;
 }
 
 .ia-reveal--visible .ruby-event-card h3,
 .ia-reveal--visible .ruby-event-card p,
 .ia-reveal--visible .ruby-event-divider {
-  animation: rubyBodyTextReveal 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyBodyTextReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.ia-reveal--visible .ruby-event-card p:nth-child(1) { animation-delay: 110ms; }
-.ia-reveal--visible .ruby-event-card p:nth-child(2) { animation-delay: 170ms; }
-.ia-reveal--visible .ruby-event-card .ruby-event-divider { animation-delay: 230ms; }
-.ia-reveal--visible .ruby-event-card h3 { animation-delay: 290ms; }
-.ia-reveal--visible .ruby-event-card .ruby-event-address { animation-delay: 350ms; }
+.ia-reveal--visible .ruby-event-card p:nth-child(1) { animation-delay: 140ms; }
+.ia-reveal--visible .ruby-event-card p:nth-child(2) { animation-delay: 260ms; }
+.ia-reveal--visible .ruby-event-card .ruby-event-divider { animation-delay: 380ms; }
+.ia-reveal--visible .ruby-event-card h3 { animation-delay: 500ms; }
+.ia-reveal--visible .ruby-event-card .ruby-event-address { animation-delay: 620ms; }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-map-card {
   opacity: 0;
@@ -1925,11 +1925,11 @@
 }
 
 .ia-reveal--visible .ruby-map-card {
-  animation: rubyCardRiseIn 840ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  animation: rubyCardRiseIn 1000ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ia-reveal--visible .ruby-map-button {
-  animation: rubyBodyTextReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) 230ms both;
+  animation: rubyBodyTextReveal 840ms cubic-bezier(0.22, 1, 0.36, 1) 320ms both;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-countdown-box {
@@ -1938,13 +1938,13 @@
 }
 
 .ia-reveal--visible .ruby-countdown-box {
-  animation: rubyCountdownBoxIn 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyCountdownBoxIn 880ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .ruby-countdown-box:nth-child(1) { animation-delay: 0ms; }
-.ia-reveal--visible .ruby-countdown-box:nth-child(2) { animation-delay: 70ms; }
-.ia-reveal--visible .ruby-countdown-box:nth-child(3) { animation-delay: 140ms; }
-.ia-reveal--visible .ruby-countdown-box:nth-child(4) { animation-delay: 210ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(2) { animation-delay: 120ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(3) { animation-delay: 240ms; }
+.ia-reveal--visible .ruby-countdown-box:nth-child(4) { animation-delay: 360ms; }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gallery-feature {
   opacity: 0;
@@ -1952,12 +1952,12 @@
 }
 
 .ia-reveal--visible .ruby-gallery-feature {
-  animation: rubyGalleryFeatureIn 880ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+  animation: rubyGalleryFeatureIn 1080ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ia-reveal--visible .ruby-gallery-feature .ruby-gallery-play {
-  animation: rubyGalleryPlayIn 620ms cubic-bezier(0.22, 1, 0.36, 1) 330ms both,
-    rubyGalleryPlayBreath 2.8s ease-in-out 1100ms infinite;
+  animation: rubyGalleryPlayIn 820ms cubic-bezier(0.22, 1, 0.36, 1) 420ms both,
+    rubyGalleryPlayBreath 3.8s ease-in-out 1300ms infinite;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gallery-thumb {
@@ -1966,13 +1966,13 @@
 }
 
 .ia-reveal--visible .ruby-gallery-thumb {
-  animation: rubyThumbStaggerIn 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyThumbStaggerIn 940ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .ruby-gallery-thumb:nth-child(1) { animation-delay: 0ms; }
-.ia-reveal--visible .ruby-gallery-thumb:nth-child(2) { animation-delay: 90ms; }
-.ia-reveal--visible .ruby-gallery-thumb:nth-child(3) { animation-delay: 180ms; }
-.ia-reveal--visible .ruby-gallery-thumb:nth-child(4) { animation-delay: 270ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(2) { animation-delay: 130ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(3) { animation-delay: 260ms; }
+.ia-reveal--visible .ruby-gallery-thumb:nth-child(4) { animation-delay: 390ms; }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-wish-form,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-wish-card,
@@ -1982,20 +1982,20 @@
 }
 
 .ia-reveal--visible .ruby-wish-form {
-  animation: rubyCardRiseIn 780ms cubic-bezier(0.22, 1, 0.36, 1) 130ms both;
+  animation: rubyCardRiseIn 960ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ia-reveal--visible .ruby-wish-card,
 .ia-reveal--visible .ruby-bank-card {
-  animation: rubyCardRiseIn 740ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyCardRiseIn 920ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .ruby-wish-card:nth-child(1),
-.ia-reveal--visible .ruby-bank-card:nth-child(1) { animation-delay: 120ms; }
+.ia-reveal--visible .ruby-bank-card:nth-child(1) { animation-delay: 140ms; }
 .ia-reveal--visible .ruby-wish-card:nth-child(2),
-.ia-reveal--visible .ruby-bank-card:nth-child(2) { animation-delay: 210ms; }
-.ia-reveal--visible .ruby-wish-card:nth-child(3) { animation-delay: 300ms; }
-.ia-reveal--visible .ruby-wish-card:nth-child(4) { animation-delay: 390ms; }
+.ia-reveal--visible .ruby-bank-card:nth-child(2) { animation-delay: 280ms; }
+.ia-reveal--visible .ruby-wish-card:nth-child(3) { animation-delay: 420ms; }
+.ia-reveal--visible .ruby-wish-card:nth-child(4) { animation-delay: 560ms; }
 
 .ruby-copy-button {
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease;
@@ -2006,7 +2006,7 @@
 }
 
 .ia-reveal--visible .ruby-footer-content {
-  animation: rubyFooterSlowIn 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyFooterSlowIn 1180ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -3231,8 +3231,8 @@
 }
 
 .ruby-cover-frame {
-  animation: rubyFloralCoverBloom 880ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    rubyFloralCoverSway 8.5s ease-in-out 880ms infinite;
+  animation: rubyFloralCoverBloom 1160ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    rubyFloralCoverSway 10.6s ease-in-out 1160ms infinite;
 }
 
 .ruby-couple-section,
@@ -3492,7 +3492,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  animation: rubyPhotoSoftZoomIn 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyPhotoSoftZoomIn 1040ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ruby-gallery-slide--video img {
@@ -3725,24 +3725,24 @@
 .ia-reveal--visible .ruby-footer-message,
 .ia-reveal--visible .ruby-footer-date,
 .ia-reveal--visible .ruby-footer-credit {
-  animation: rubyBodyTextReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyBodyTextReveal 860ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .ruby-couple-card h3,
 .ia-reveal--visible .ruby-event-card__title,
 .ia-reveal--visible .ruby-location-name {
-  animation-delay: 160ms;
+  animation-delay: 180ms;
 }
 
 .ia-reveal--visible .ruby-couple-parent,
 .ia-reveal--visible .ruby-event-card strong,
 .ia-reveal--visible .ruby-location-address {
-  animation-delay: 230ms;
+  animation-delay: 310ms;
 }
 
 .ia-reveal--visible .ruby-couple-instagram,
 .ia-reveal--visible .ruby-footer-date {
-  animation-delay: 300ms;
+  animation-delay: 440ms;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-gallery-slide {
@@ -3751,38 +3751,38 @@
 }
 
 .ia-reveal--visible .ruby-gallery-slide {
-  animation: rubyGallerySlideReveal 860ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rubyGallerySlideReveal 1080ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.ia-reveal--visible .ruby-gallery-slide:nth-child(1) { animation-delay: 80ms; }
-.ia-reveal--visible .ruby-gallery-slide:nth-child(2) { animation-delay: 160ms; }
-.ia-reveal--visible .ruby-gallery-slide:nth-child(3) { animation-delay: 240ms; }
+.ia-reveal--visible .ruby-gallery-slide:nth-child(1) { animation-delay: 120ms; }
+.ia-reveal--visible .ruby-gallery-slide:nth-child(2) { animation-delay: 260ms; }
+.ia-reveal--visible .ruby-gallery-slide:nth-child(3) { animation-delay: 400ms; }
 .ia-reveal--visible .ruby-gallery-pagination {
-  animation: rubyBodyTextReveal 620ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both;
+  animation: rubyBodyTextReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) 440ms both;
 }
 
 .ia-reveal--visible.ruby-couple-section::before,
 .ia-reveal--visible .ruby-couple-section::before {
-  animation: rubyFloralBackdropBloom 980ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    rubyFloralBackdropFloatLeft 9.6s ease-in-out 980ms infinite;
+  animation: rubyFloralBackdropBloom 1240ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    rubyFloralBackdropFloatLeft 11.2s ease-in-out 1240ms infinite;
 }
 
 .ia-reveal--visible.ruby-event-section::before,
 .ia-reveal--visible .ruby-event-section::before {
-  animation: rubyFloralBackdropBloomRight 980ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    rubyFloralBackdropFloatRight 10.2s ease-in-out 980ms infinite;
+  animation: rubyFloralBackdropBloomRight 1280ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    rubyFloralBackdropFloatRight 11.8s ease-in-out 1280ms infinite;
 }
 
 .ia-reveal--visible.ruby-gallery-section::before,
 .ia-reveal--visible .ruby-gallery-section::before {
-  animation: rubyFloralAccentBloomLeft 880ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    rubyFloralAccentFloatLeft 8.8s ease-in-out 880ms infinite;
+  animation: rubyFloralAccentBloomLeft 1120ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    rubyFloralAccentFloatLeft 10.4s ease-in-out 1120ms infinite;
 }
 
 .ia-reveal--visible.ruby-gallery-section::after,
 .ia-reveal--visible .ruby-gallery-section::after {
-  animation: rubyFloralAccentBloomRight 920ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    rubyFloralAccentFloatRight 9.4s ease-in-out 920ms infinite;
+  animation: rubyFloralAccentBloomRight 1180ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    rubyFloralAccentFloatRight 11s ease-in-out 1180ms infinite;
 }
 
 @keyframes rubyGallerySlideReveal {

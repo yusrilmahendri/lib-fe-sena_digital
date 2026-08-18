@@ -1,7 +1,7 @@
 <section class="diamond-theme diamond-theme-one" appRevealScope="champagne-rose" *ngIf="weddingData">
   <article class="diamond-shell">
 
-    <section class="diamond-opening" *ngIf="!diamondOpened">
+    <section class="diamond-opening" *ngIf="!hasOpened">
       <img class="diamond-opening__bg" [appParallax]="9" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />
       <div class="diamond-opening__overlay"></div>
 
@@ -25,7 +25,7 @@
       </div>
     </section>
 
-    <main class="diamond-main" *ngIf="diamondOpened">
+    <main class="diamond-main" *ngIf="hasOpened">
       <!-- HERO -->
       <section class="diamond-hero">
         <img class="diamond-hero__bg" [appParallax]="8" [src]="getCoverPhotoUrl()" alt="Wedding cover" [style.object-fit]="getCoverPhotoObjectFit()" [style.object-position]="getCoverPhotoObjectPosition()" />

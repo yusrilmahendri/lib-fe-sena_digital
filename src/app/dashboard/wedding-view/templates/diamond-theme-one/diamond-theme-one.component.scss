@@ -186,12 +186,14 @@
   object-fit: cover;
   object-position: center center;
   z-index: 1;
+  pointer-events: none;
 }
 
 .diamond-opening__overlay {
   position: absolute;
   inset: 0;
   z-index: 2;
+  pointer-events: none;
   background:
     linear-gradient(180deg, rgba(6, 12, 8, .12) 0%, rgba(6, 12, 8, .28) 42%, rgba(6, 12, 8, .76) 100%),
     rgba(0, 0, 0, .18);
@@ -200,6 +202,7 @@
 .diamond-opening__content {
   position: relative;
   z-index: 3;
+  pointer-events: auto;
   min-height: 100vh;
   padding: 0 28px 64px;
   display: flex;
@@ -268,6 +271,8 @@
 }
 
 .diamond-opening__button {
+  position: relative;
+  z-index: 6;
   margin-top: 34px;
   width: 190px;
   height: 44px;
@@ -282,6 +287,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .diamond-cover {
@@ -2088,4 +2094,5 @@
 
 .diamond-opening__button {
   margin-top: 34px !important;
+  pointer-events: auto !important;
 }

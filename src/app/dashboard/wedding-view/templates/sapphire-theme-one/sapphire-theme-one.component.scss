@@ -1139,24 +1139,24 @@
 .ia-reveal--visible.sapphire-wishes::after,
 .ia-reveal--visible.sapphire-footer::after,
 .sapphire-opening::after {
-  animation: sapphireLeafBloomRight 920ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    sapphireLeafSwayRight 8.8s ease-in-out 920ms infinite;
+  animation: sapphireLeafBloomRight 1180ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    sapphireLeafSwayRight 10.6s ease-in-out 1180ms infinite;
 }
 
 .ia-reveal--visible.sapphire-couple::before,
 .ia-reveal--visible.sapphire-gallery::before,
 .ia-reveal--visible.sapphire-events::before,
 .ia-reveal--visible.sapphire-gift::before {
-  animation: sapphireLeafBloomLeft 860ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    sapphireLeafSwayLeft 8.2s ease-in-out 860ms infinite;
+  animation: sapphireLeafBloomLeft 1120ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    sapphireLeafSwayLeft 10.2s ease-in-out 1120ms infinite;
 }
 
 .ia-reveal--visible.sapphire-couple::after,
 .ia-reveal--visible.sapphire-gallery::after,
 .ia-reveal--visible.sapphire-events::after,
 .ia-reveal--visible.sapphire-gift::after {
-  animation: sapphireLeafBloomRight 940ms cubic-bezier(0.22, 1, 0.36, 1) both,
-    sapphireLeafSwayRight 9.4s ease-in-out 940ms infinite;
+  animation: sapphireLeafBloomRight 1240ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    sapphireLeafSwayRight 11.6s ease-in-out 1240ms infinite;
 }
 
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .sapphire-kicker,
@@ -1203,31 +1203,31 @@
 
 .ia-reveal--visible .sapphire-kicker,
 .ia-reveal--visible .sapphire-gallery-divider {
-  animation: sapphireCaptionReveal 700ms cubic-bezier(0.22, 1, 0.36, 1) 80ms both;
+  animation: sapphireCaptionReveal 840ms cubic-bezier(0.22, 1, 0.36, 1) 100ms both;
 }
 
 .ia-reveal--visible .sapphire-title,
 .ia-reveal--visible .sapphire-gallery-date {
-  animation: sapphireTitleReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
+  animation: sapphireTitleReveal 960ms cubic-bezier(0.22, 1, 0.36, 1) 180ms both;
 }
 
 .ia-reveal--fade-left.ia-reveal--visible .sapphire-kicker,
 .ia-reveal--fade-left.ia-reveal--visible .sapphire-title {
-  animation: sapphireTextRevealLeft 760ms cubic-bezier(0.22, 1, 0.36, 1) 130ms both;
+  animation: sapphireTextRevealLeft 940ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ia-reveal--clip-reveal.ia-reveal--visible .sapphire-kicker,
 .ia-reveal--clip-reveal.ia-reveal--visible .sapphire-title {
-  animation: sapphireTextRevealRight 760ms cubic-bezier(0.22, 1, 0.36, 1) 130ms both;
+  animation: sapphireTextRevealRight 940ms cubic-bezier(0.22, 1, 0.36, 1) 160ms both;
 }
 
 .ia-reveal--visible .sapphire-couple-card,
 .ia-reveal--visible .sapphire-gallery-item {
-  animation: sapphirePhotoReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sapphirePhotoReveal 1060ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .sapphire-couple-photo-wrap {
-  animation: sapphirePhotoReveal 840ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sapphirePhotoReveal 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .sapphire-countdown__box,
@@ -1235,7 +1235,7 @@
 .ia-reveal--visible .sapphire-wish-form,
 .ia-reveal--visible .sapphire-wish-item,
 .ia-reveal--visible .sapphire-gift-card {
-  animation: sapphireCardReveal 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sapphireCardReveal 980ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .sapphire-couple-name,
@@ -1260,16 +1260,16 @@
 .ia-reveal--visible .sapphire-gift-card__number,
 .ia-reveal--visible .sapphire-gift-card__owner,
 .ia-reveal--visible .sapphire-gift-card .sapphire-btn {
-  animation: sapphireMicroReveal 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sapphireMicroReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .sapphire-gallery-play {
-  animation: sapphirePlayReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 360ms both;
+  animation: sapphirePlayReveal 860ms cubic-bezier(0.22, 1, 0.36, 1) 440ms both;
 }
 
 .ia-reveal--visible .sapphire-gift-desc,
 .ia-reveal--visible .sapphire-footer__content > * {
-  animation: sapphireBodyReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sapphireBodyReveal 880ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .ia-reveal--visible .sapphire-couple-card:nth-child(1),
@@ -1287,20 +1287,20 @@
 .ia-reveal--visible .sapphire-event-block:nth-of-type(2),
 .ia-reveal--visible .sapphire-wish-item:nth-child(2),
 .ia-reveal--visible .sapphire-gift-card:nth-of-type(2) {
-  animation-delay: 260ms;
+  animation-delay: 320ms;
 }
 
 .ia-reveal--visible .sapphire-gallery-item:nth-child(3),
 .ia-reveal--visible .sapphire-countdown__box:nth-child(3),
 .ia-reveal--visible .sapphire-wish-item:nth-child(3),
 .ia-reveal--visible .sapphire-gift-card:nth-of-type(3) {
-  animation-delay: 340ms;
+  animation-delay: 460ms;
 }
 
 .ia-reveal--visible .sapphire-gallery-item:nth-child(4),
 .ia-reveal--visible .sapphire-countdown__box:nth-child(4),
 .ia-reveal--visible .sapphire-wish-item:nth-child(4) {
-  animation-delay: 420ms;
+  animation-delay: 600ms;
 }
 
 .ia-reveal--visible .sapphire-couple-photo-wrap,
@@ -1308,7 +1308,7 @@
 .ia-reveal--visible .sapphire-countdown__box strong,
 .ia-reveal--visible .sapphire-wish-label,
 .ia-reveal--visible .sapphire-gift-card__top {
-  animation-delay: 120ms;
+  animation-delay: 140ms;
 }
 
 .ia-reveal--visible .sapphire-couple-name,
@@ -1316,7 +1316,7 @@
 .ia-reveal--visible .sapphire-countdown__box span,
 .ia-reveal--visible .sapphire-wish-input,
 .ia-reveal--visible .sapphire-gift-card__number {
-  animation-delay: 200ms;
+  animation-delay: 260ms;
 }
 
 .ia-reveal--visible .sapphire-couple-parent,
@@ -1325,7 +1325,7 @@
 .ia-reveal--visible .sapphire-map-preview,
 .ia-reveal--visible .sapphire-wish-textarea,
 .ia-reveal--visible .sapphire-gift-card__owner {
-  animation-delay: 280ms;
+  animation-delay: 380ms;
 }
 
 .ia-reveal--visible .sapphire-couple-ig,
@@ -1333,11 +1333,11 @@
 .ia-reveal--visible .sapphire-event-block .sapphire-btn,
 .ia-reveal--visible .sapphire-gift-card .sapphire-btn,
 .ia-reveal--visible .sapphire-wish-chip:nth-child(1) {
-  animation-delay: 360ms;
+  animation-delay: 500ms;
 }
 
-.ia-reveal--visible .sapphire-wish-chip:nth-child(2) { animation-delay: 440ms; }
-.ia-reveal--visible .sapphire-wish-chip:nth-child(3) { animation-delay: 520ms; }
+.ia-reveal--visible .sapphire-wish-chip:nth-child(2) { animation-delay: 620ms; }
+.ia-reveal--visible .sapphire-wish-chip:nth-child(3) { animation-delay: 740ms; }
 
 @keyframes sapphireCaptionReveal {
   from {
