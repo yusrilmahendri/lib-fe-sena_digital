@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
+import { ToastService } from '../../../../toast.service';
 import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
 import {
@@ -36,7 +37,8 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   constructor(
     private svc: DashboardService,
     private sanitizer: DomSanitizer,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastService: ToastService
   ) {
     super();
   }
@@ -462,8 +464,10 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
 
     const userId = (this.weddingData as any)?.user_info?.id;
+    const domain = this.getInvitationDomain();
     const payload = {
       user_id: userId || 0,
+      domain,
       nama: this.wishForm.nama.trim(),
       pesan: this.wishForm.pesan.trim(),
       kehadiran: this.wishForm.kehadiran || 'hadir',
@@ -478,20 +482,24 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     if (!userId) {
       return;
     }
+    if (!domain) {
+      this.toastService.showToast('Domain undangan tidak tersedia untuk mengirim ucapan.', 'error');
+      return;
+    }
 
     this.isSubmittingWish = true;
 
     this.svc.create(DashboardServiceType.ATTENDANCE, payload).subscribe({
-      next: () => {
+      next: (response: { data?: Partial<GuestWish> }) => {
         const currentWishes = Array.isArray(this.weddingData?.guest_wishes)
           ? [...(this.weddingData?.guest_wishes || [])]
           : [];
         const nextWish: GuestWish = {
-          id: Date.now(),
-          nama: payload.nama,
-          kehadiran: payload.kehadiran,
-          pesan: payload.pesan,
-          created_at: new Date().toISOString(),
+          id: Number(response?.data?.id) || Date.now(),
+          nama: response?.data?.nama || payload.nama,
+          kehadiran: response?.data?.kehadiran || payload.kehadiran,
+          pesan: response?.data?.pesan || payload.pesan,
+          created_at: response?.data?.created_at || new Date().toISOString(),
         };
 
         if (this.weddingData) {
@@ -501,10 +509,13 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
           };
         }
 
+        this.wishSubmitted.emit(nextWish);
         this.isSubmittingWish = false;
         this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
       },
-      error: () => {
+      error: (error) => {
+        const message = error?.error?.message || 'Gagal mengirim ucapan. Silakan coba lagi.';
+        this.toastService.showToast(message, 'error');
         this.isSubmittingWish = false;
       },
     });

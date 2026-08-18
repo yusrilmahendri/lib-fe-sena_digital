@@ -8,6 +8,7 @@ import { Notyf } from 'notyf';
 // Attendance interface matching API contract
 interface AttendanceRequest {
   user_id: number;
+  domain: string;
   nama: string;
   kehadiran: 'hadir' | 'tidak_hadir' | 'mungkin';
   pesan: string;
@@ -40,6 +41,7 @@ interface PresenceFormData {
 })
 export class PresenceViewComponent implements OnInit, OnDestroy {
   @Input() weddingData: WeddingData | undefined;
+  @Input() invitationDomain: string | null = null;
 
   formData: PresenceFormData = {
     nama: '',
@@ -87,11 +89,18 @@ export class PresenceViewComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const domain = this.getInvitationDomain();
+    if (!domain) {
+      this.showError('Domain undangan tidak tersedia untuk mengirim konfirmasi kehadiran.');
+      return;
+    }
+
     this.isSubmitting = true;
 
     // Map form data to API format
     const attendanceData: AttendanceRequest = {
       user_id: this.weddingData.user_info.id,
+      domain,
       nama: this.formData.nama.trim(),
       kehadiran: this.mapKehadiranToAPI(this.formData.kehadiran),
       pesan: this.formData.ucapan.trim() || 'Terima kasih atas undangannya!'
@@ -122,6 +131,22 @@ export class PresenceViewComponent implements OnInit, OnDestroy {
 
   private isFormValid(): boolean {
     return !!(this.formData.nama.trim() && this.formData.kehadiran && this.formData.ucapan.trim());
+  }
+
+  private getInvitationDomain(): string {
+    const data: any = this.weddingData || {};
+    const domain = String(
+      this.invitationDomain ||
+      data?.settings?.domain ||
+      data?.domain ||
+      data?.domain_slug ||
+      data?.invitation?.domain ||
+      data?.wedding?.slug ||
+      data?.profile?.domain ||
+      ''
+    ).trim();
+
+    return domain.replace(/^https?:\/\//i, '').split('/')[0].split('?')[0];
   }
 
   private showValidationErrors(): void {

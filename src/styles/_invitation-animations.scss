@@ -1,20 +1,20 @@
 .ia-scope {
-  --ia-duration: 820ms;
-  --ia-distance: 28px;
-  --ia-blur: 12px;
+  --ia-duration: 980ms;
+  --ia-distance: 34px;
+  --ia-blur: 14px;
   --ia-ease: cubic-bezier(0.22, 1, 0.36, 1);
   overflow-x: clip;
 }
 
 .ia-package-ruby {
-  --ia-duration: 760ms;
-  --ia-distance: 30px;
+  --ia-duration: 980ms;
+  --ia-distance: 34px;
 }
 
 .ia-package-sapphire {
-  --ia-duration: 820ms;
-  --ia-distance: 24px;
-  --ia-blur: 14px;
+  --ia-duration: 1040ms;
+  --ia-distance: 32px;
+  --ia-blur: 15px;
 }
 
 .ia-package-diamond {
@@ -38,6 +38,16 @@
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) {
   opacity: 0;
   transform: translate3d(0, var(--ia-distance), 0);
+}
+
+.ia-motion-ready.ia-reveal[data-ia-scroll-direction="up"]:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal[data-ia-scroll-direction="up"]:not(.ia-reveal--visible) {
+  transform: translate3d(0, calc(var(--ia-distance) * -1), 0);
+}
+
+.ia-motion-ready.ia-reveal--fade-down:not(.ia-reveal--visible),
+.ia-motion-ready .ia-reveal--fade-down:not(.ia-reveal--visible) {
+  transform: translate3d(0, calc(var(--ia-distance) * -1), 0);
 }
 
 .ia-motion-ready.ia-reveal--fade-left:not(.ia-reveal--visible),
@@ -88,9 +98,10 @@
 
 .ia-stagger-item {
   transition:
-    opacity 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms),
-    transform 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms),
-    filter 680ms var(--ia-ease) var(--ia-stagger-delay, 80ms);
+    opacity var(--ia-stagger-duration, 900ms) var(--ia-ease) var(--ia-stagger-delay, 100ms),
+    transform var(--ia-stagger-duration, 900ms) var(--ia-ease) var(--ia-stagger-delay, 100ms),
+    filter var(--ia-stagger-duration, 900ms) var(--ia-ease) var(--ia-stagger-delay, 100ms);
+  will-change: opacity, transform, filter;
 }
 
 .ia-stagger-group > .ia-stagger-item {
@@ -100,8 +111,13 @@
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ia-stagger-item,
 .ia-motion-ready.ia-reveal:not(.ia-reveal--visible) .ia-stagger-item {
   opacity: 0;
-  filter: blur(6px);
-  transform: translate3d(0, 14px, 0);
+  filter: blur(8px);
+  transform: translate3d(0, 22px, 0);
+}
+
+.ia-motion-ready .ia-reveal[data-ia-scroll-direction="up"]:not(.ia-reveal--visible) .ia-stagger-item,
+.ia-motion-ready.ia-reveal[data-ia-scroll-direction="up"]:not(.ia-reveal--visible) .ia-stagger-item {
+  transform: translate3d(0, -22px, 0);
 }
 
 .ia-reveal--visible .ia-stagger-item {
@@ -213,13 +229,58 @@
 }
 
 .ia-theme-soft-ivory {
+  --ia-duration: 980ms;
+
   .ruby-cover__media,
   .ruby-two-cover__media {
     animation: iaRubyWarmZoom 6s var(--ia-ease) both;
   }
+
+  .ruby-caption__eyebrow,
+  .ruby-section-label,
+  .ruby-gallery-label,
+  .ruby-event-label,
+  .ruby-couple-label {
+    transition-duration: 820ms;
+  }
+
+  .ruby-caption__title,
+  .ruby-cover__names,
+  .ruby-couple-card h3 {
+    transition-duration: 1040ms;
+  }
+
+  .ruby-cover-frame,
+  .ruby-quote-frame,
+  .ruby-location-frame,
+  .ruby-wish-frame,
+  .ruby-gift-frame,
+  .ruby-footer-frame,
+  .ruby-floral {
+    animation: iaFloralBloomSoft 1300ms var(--ia-ease) both, iaFloralSwaySoft 9.5s ease-in-out 1300ms infinite;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .ruby-location-frame,
+  .ruby-gift-frame,
+  .ruby-floral--bottom-right,
+  .ruby-floral--event-bottom {
+    animation-name: iaFloralBloomSoftRight, iaFloralSwaySoftReverse;
+    animation-duration: 1400ms, 10.5s;
+  }
+
+  .ia-reveal--visible .ruby-couple-photo img,
+  .ia-reveal--visible .ruby-gallery-slide img,
+  .ia-reveal--visible .gallery-card img {
+    animation: iaPhotoSoftBreathe 1200ms var(--ia-ease) both;
+  }
 }
 
 .ia-theme-lavender-bloom {
+  --ia-duration: 1040ms;
+  --ia-distance: 32px;
+
   .ruby-two-cover__media,
   .lavender-cover__image,
   .ruby-cover-frame,
@@ -227,9 +288,68 @@
   .ruby-location-frame {
     animation: iaFloralDrift 9s ease-in-out infinite;
   }
+
+  .ruby-two-section__eyebrow,
+  .ruby-two-event-card__label {
+    transition-duration: 820ms;
+  }
+
+  .ruby-two-title,
+  .ruby-two-script,
+  .ruby-two-cover__names,
+  .ruby-two-person-card h3 {
+    transition-duration: 1080ms;
+  }
+
+  .ruby-two-copy,
+  .ruby-two-quote,
+  .ruby-two-person-card p,
+  .ruby-two-event-card p,
+  .ruby-two-gift-description {
+    transition-duration: 920ms;
+  }
+
+  .ruby-two-person-card__frame,
+  .ruby-two-event-card,
+  .ruby-two-map-preview,
+  .ruby-two-countdown__card,
+  .ruby-two-gallery-featured,
+  .ruby-two-gallery-item,
+  .ruby-two-form,
+  .ruby-two-wish-card,
+  .ruby-two-bank-card {
+    transition-duration: 1120ms;
+  }
+
+  .ruby-two-section::before,
+  .ruby-two-section::after,
+  .ruby-two-cover::before,
+  .ruby-two-cover::after,
+  .ruby-two-hero::before,
+  .ruby-two-hero::after,
+  .opening-divider,
+  .divider-mark {
+    animation: iaFloralBloomSoft 1350ms var(--ia-ease) both, iaDreamFloat 10.5s ease-in-out 1350ms infinite;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .ruby-two-section:nth-of-type(even)::before,
+  .ruby-two-section:nth-of-type(odd)::after {
+    animation-name: iaFloralBloomSoftRight, iaDreamFloatReverse;
+  }
+
+  .ia-reveal--visible .ruby-two-person-card__frame img,
+  .ia-reveal--visible .ruby-two-gallery-featured img,
+  .ia-reveal--visible .ruby-two-gallery-item img {
+    animation: iaPhotoSoftBreathe 1250ms var(--ia-ease) both;
+  }
 }
 
 .ia-theme-garden-whisper {
+  --ia-duration: 1060ms;
+  --ia-distance: 30px;
+
   .sapphire-opening,
   .sapphire-post-hero {
     position: relative;
@@ -257,6 +377,57 @@
   .sapphire-opening__names,
   .sapphire-post-hero__names {
     animation: iaBlurToSharp 1200ms var(--ia-ease) 220ms both;
+  }
+
+  .sapphire-kicker,
+  .sapphire-opening__eyebrow,
+  .sapphire-post-hero__eyebrow {
+    transition-duration: 820ms;
+  }
+
+  .sapphire-title,
+  .sapphire-opening__names,
+  .sapphire-post-hero__names,
+  .sapphire-couple-name {
+    transition-duration: 1080ms;
+  }
+
+  .sapphire-couple-photo-wrap,
+  .sapphire-gallery-item,
+  .sapphire-countdown__box,
+  .sapphire-event-block,
+  .sapphire-map-preview,
+  .sapphire-wish-form,
+  .sapphire-wish-item,
+  .sapphire-gift-card {
+    transition-duration: 1140ms;
+  }
+
+  .sapphire-divider,
+  .sapphire-divider__icon,
+  .sapphire-gallery-divider,
+  .sapphire-opening::after,
+  .sapphire-post-hero::after,
+  .sapphire-couple::before,
+  .sapphire-couple::after,
+  .sapphire-events::before,
+  .sapphire-events::after,
+  .sapphire-gift::before,
+  .sapphire-gift::after {
+    animation: iaLeafBloom 1400ms var(--ia-ease) both, iaLeafSway 10s ease-in-out 1400ms infinite;
+    transform-origin: center;
+    will-change: transform, opacity, filter;
+  }
+
+  .sapphire-couple::after,
+  .sapphire-events::after,
+  .sapphire-gift::after {
+    animation-name: iaLeafBloomRight, iaLeafSwayReverse;
+  }
+
+  .ia-reveal--visible .sapphire-couple-photo,
+  .ia-reveal--visible .sapphire-gallery-item img {
+    animation: iaPhotoSoftBreathe 1200ms var(--ia-ease) both;
   }
 }
 
@@ -428,6 +599,129 @@
   }
 }
 
+@keyframes iaFloralBloomSoft {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translate3d(-10px, 18px, 0) scale(0.9) rotate(-2.5deg);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes iaFloralBloomSoftRight {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translate3d(10px, 18px, 0) scale(0.9) rotate(2.5deg);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes iaFloralSwaySoft {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-0.4deg);
+  }
+  50% {
+    transform: translate3d(0, -9px, 0) rotate(1.4deg);
+  }
+}
+
+@keyframes iaFloralSwaySoftReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0.4deg);
+  }
+  50% {
+    transform: translate3d(0, -7px, 0) rotate(-1.3deg);
+  }
+}
+
+@keyframes iaDreamFloat {
+  0%, 100% {
+    opacity: 0.92;
+    transform: translate3d(0, 0, 0) rotate(-0.6deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(4px, -10px, 0) rotate(1.2deg);
+  }
+}
+
+@keyframes iaDreamFloatReverse {
+  0%, 100% {
+    opacity: 0.9;
+    transform: translate3d(0, 0, 0) rotate(0.6deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(-4px, -8px, 0) rotate(-1.2deg);
+  }
+}
+
+@keyframes iaLeafBloom {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(-12px, 16px, 0) scale(0.88) rotate(-3deg);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes iaLeafBloomRight {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(12px, 16px, 0) scale(0.88) rotate(3deg);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes iaLeafSway {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-0.5deg);
+  }
+  50% {
+    transform: translate3d(3px, -8px, 0) rotate(1.5deg);
+  }
+}
+
+@keyframes iaLeafSwayReverse {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0.5deg);
+  }
+  50% {
+    transform: translate3d(-3px, -8px, 0) rotate(-1.5deg);
+  }
+}
+
+@keyframes iaPhotoSoftBreathe {
+  from {
+    opacity: 0.65;
+    filter: blur(10px) saturate(0.94);
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0) saturate(1);
+    transform: scale(1);
+  }
+}
+
 @keyframes iaFloat {
   0%, 100% {
     transform: translate3d(0, 0, 0) rotate(0deg);
@@ -557,8 +851,8 @@
 
 @media (max-width: 767px) {
   .ia-scope {
-    --ia-duration: 620ms;
-    --ia-distance: 24px;
+    --ia-duration: 860ms;
+    --ia-distance: 22px;
     --ia-blur: 8px;
   }
 
@@ -567,8 +861,8 @@
   }
 
   .ia-package-ruby {
-    --ia-duration: 680ms;
-    --ia-distance: 24px;
+    --ia-duration: 880ms;
+    --ia-distance: 22px;
 
     .ia-reveal:not(.ia-reveal--visible) {
       .ruby-couple-card--bride,
@@ -583,6 +877,10 @@
       }
     }
   }
+
+  .ia-stagger-item {
+    transition-duration: min(var(--ia-stagger-duration, 860ms), 960ms);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -592,6 +890,28 @@
   .ia-stagger-item,
   .ia-floating-decoration,
   .ia-parallax,
+  .ia-theme-soft-ivory .ruby-cover-frame,
+  .ia-theme-soft-ivory .ruby-quote-frame,
+  .ia-theme-soft-ivory .ruby-location-frame,
+  .ia-theme-soft-ivory .ruby-wish-frame,
+  .ia-theme-soft-ivory .ruby-gift-frame,
+  .ia-theme-soft-ivory .ruby-footer-frame,
+  .ia-theme-soft-ivory .ruby-floral,
+  .ia-theme-lavender-bloom .ruby-two-section::before,
+  .ia-theme-lavender-bloom .ruby-two-section::after,
+  .ia-theme-lavender-bloom .ruby-two-cover::before,
+  .ia-theme-lavender-bloom .ruby-two-cover::after,
+  .ia-theme-lavender-bloom .ruby-two-hero::before,
+  .ia-theme-lavender-bloom .ruby-two-hero::after,
+  .ia-theme-garden-whisper .sapphire-divider,
+  .ia-theme-garden-whisper .sapphire-divider__icon,
+  .ia-theme-garden-whisper .sapphire-gallery-divider,
+  .ia-theme-garden-whisper .sapphire-couple::before,
+  .ia-theme-garden-whisper .sapphire-couple::after,
+  .ia-theme-garden-whisper .sapphire-events::before,
+  .ia-theme-garden-whisper .sapphire-events::after,
+  .ia-theme-garden-whisper .sapphire-gift::before,
+  .ia-theme-garden-whisper .sapphire-gift::after,
   .ruby-cover--opening,
   .ruby-two-cover--opening,
   .sapphire-opening--exiting,

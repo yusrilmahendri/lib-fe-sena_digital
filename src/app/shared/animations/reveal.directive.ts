@@ -20,6 +20,7 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
   @Input() appRevealDelay = 0;
 
   private observer?: IntersectionObserver;
+  private lastScrollTop = 0;
 
   constructor(
     private el: ElementRef<HTMLElement>,
@@ -43,9 +44,20 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
 
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
+        const scrollRoot = this.animationService.getScrollRoot(element);
+        const scrollTop = scrollRoot ? scrollRoot.scrollTop : window.scrollY || document.documentElement.scrollTop || 0;
+        const direction = scrollTop >= this.lastScrollTop ? 'down' : 'up';
+        this.lastScrollTop = scrollTop;
+        this.renderer.setAttribute(element, 'data-ia-scroll-direction', direction);
+
         if (entry.isIntersecting) {
           this.reveal(element);
-          this.observer?.unobserve(element);
+          return;
+        }
+
+        const rootHeight = entry.rootBounds?.height || window.innerHeight || 0;
+        if (entry.boundingClientRect.bottom < -160 || entry.boundingClientRect.top > rootHeight + 160) {
+          this.reset(element);
         }
       });
     }, {
@@ -63,5 +75,9 @@ export class RevealDirective implements AfterViewInit, OnDestroy {
 
   private reveal(element: HTMLElement): void {
     this.renderer.addClass(element, 'ia-reveal--visible');
+  }
+
+  private reset(element: HTMLElement): void {
+    this.renderer.removeClass(element, 'ia-reveal--visible');
   }
 }

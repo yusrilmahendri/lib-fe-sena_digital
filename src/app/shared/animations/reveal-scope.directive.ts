@@ -22,6 +22,7 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
   private mutationObserver?: MutationObserver;
   private refreshTimer: number | null = null;
   private initialized = false;
+  private lastScrollTop = 0;
 
   constructor(
     private el: ElementRef<HTMLElement>,
@@ -67,12 +68,8 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
 
     this.observer?.disconnect();
 
-    const sections = Array.from(root.querySelectorAll<HTMLElement>('main section, .ruby-main > section, .ruby-two-main > section, .diamond-garden-main > section'));
+    const sections = Array.from(root.querySelectorAll<HTMLElement>('main section, .ruby-main > section, .ruby-two-main > section, .sapphire-content > section, .diamond-garden-main > section'));
     sections.forEach((section, index) => {
-      if (section.classList.contains('ia-reveal')) {
-        return;
-      }
-
       const variant = this.animationService.getRevealVariant(profile.theme, index);
       this.renderer.addClass(section, 'ia-reveal');
       this.renderer.addClass(section, `ia-reveal--${variant}`);
@@ -82,6 +79,7 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
         `${profile.package === 'ruby' ? 0 : Math.min(index * 45, 220)}ms`,
         RendererStyleFlags2.DashCase
       );
+      this.renderer.setStyle(section, '--ia-section-index', `${index}`, RendererStyleFlags2.DashCase);
       this.prepareStaggerChildren(section, profile);
     });
 
@@ -92,9 +90,23 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
 
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
+        const section = entry.target as HTMLElement;
+        const rootElement = root;
+        const scrollRoot = this.animationService.getScrollRoot(rootElement);
+        const scrollTop = scrollRoot ? scrollRoot.scrollTop : window.scrollY || document.documentElement.scrollTop || 0;
+        const direction = scrollTop >= this.lastScrollTop ? 'down' : 'up';
+        this.lastScrollTop = scrollTop;
+        this.renderer.setAttribute(rootElement, 'data-ia-scroll-direction', direction);
+        this.renderer.setAttribute(section, 'data-ia-scroll-direction', direction);
+
         if (entry.isIntersecting) {
-          this.reveal(entry.target as HTMLElement);
-          this.observer?.unobserve(entry.target);
+          this.reveal(section);
+          return;
+        }
+
+        const rootHeight = entry.rootBounds?.height || window.innerHeight || 0;
+        if (entry.boundingClientRect.bottom < -160 || entry.boundingClientRect.top > rootHeight + 160) {
+          this.reset(section);
         }
       });
     }, {
@@ -130,18 +142,35 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
   }
 
   private prepareStaggerChildren(section: HTMLElement, profile: ReturnType<InvitationAnimationService['getProfile']>): void {
-    const children = Array.from(section.querySelectorAll<HTMLElement>(profile.staggerSelector)).slice(0, 24);
+    const children = Array.from(section.querySelectorAll<HTMLElement>(profile.staggerSelector)).slice(0, 36);
     children.forEach((child, index) => {
       this.renderer.addClass(child, 'ia-stagger-item');
       const delay = profile.package === 'ruby'
-        ? Math.min(index * 80, 420)
-        : 80 + index * 58;
+        ? Math.min(80 + index * 120, 760)
+        : Math.min(90 + index * 130, 820);
+      const duration = this.getChildDuration(child, index);
 
       this.renderer.setStyle(child, '--ia-stagger-delay', `${delay}ms`, RendererStyleFlags2.DashCase);
+      this.renderer.setStyle(child, '--ia-stagger-duration', `${duration}ms`, RendererStyleFlags2.DashCase);
     });
+  }
+
+  private getChildDuration(child: HTMLElement, index: number): number {
+    const selector = child.className || child.tagName.toLowerCase();
+
+    if (/caption|eyebrow|kicker|label/i.test(selector)) return 780 + (index % 2) * 80;
+    if (/title|names|script|h1|h2|h3/i.test(selector)) return 940 + (index % 2) * 120;
+    if (/photo|gallery|card|map|countdown|form|bank|gift|frame|floral|flower|leaf/i.test(selector)) return 1040 + (index % 2) * 140;
+    if (/p|blockquote|small|strong/i.test(selector)) return 860 + (index % 2) * 90;
+
+    return 900 + (index % 3) * 80;
   }
 
   private reveal(section: HTMLElement): void {
     this.renderer.addClass(section, 'ia-reveal--visible');
+  }
+
+  private reset(section: HTMLElement): void {
+    this.renderer.removeClass(section, 'ia-reveal--visible');
   }
 }

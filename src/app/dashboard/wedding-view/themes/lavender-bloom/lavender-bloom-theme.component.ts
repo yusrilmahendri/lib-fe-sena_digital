@@ -56,7 +56,9 @@ type FilterKey =
 export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   @Input() weddingData: WeddingData | null = null;
   @Input() invitationOpened = false;
+  @Input() invitationDomain: string | null = null;
   @Output() openInvitationRequested = new EventEmitter<void>();
+  @Output() wishSubmitted = new EventEmitter<GuestWish>();
 
   private countdownTimerId: number | null = null;
   private openingTimerId: number | null = null;
@@ -97,6 +99,22 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
       this.isInvitationOpened = false;
       this.isCoverVisible = true;
     }
+  }
+
+  protected getInvitationDomain(): string {
+    const data: any = this.weddingData || {};
+    const domain = String(
+      this.invitationDomain ||
+      data?.settings?.domain ||
+      data?.domain ||
+      data?.domain_slug ||
+      data?.invitation?.domain ||
+      data?.wedding?.slug ||
+      data?.profile?.domain ||
+      ''
+    ).trim();
+
+    return domain.replace(/^https?:\/\//i, '').split('/')[0].split('?')[0];
   }
 
   openInvitation(event?: Event): void {

@@ -27,6 +27,7 @@ import { normalizeYoutubeEmbedUrl } from '../../../../shared/wedding-theme-data.
 
 interface AttendanceRequest {
   user_id: number;
+  domain: string;
   nama: string;
   kehadiran: 'hadir' | 'tidak_hadir' | 'mungkin';
   pesan: string;
@@ -875,9 +876,11 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     this.isSubmittingWish = true;
+    const domain = this.getInvitationDomain();
 
     const payload: AttendanceRequest = {
       user_id: this.weddingData?.user_info?.id || 0,
+      domain,
       nama: this.wishForm.nama.trim(),
       kehadiran: this.wishForm.kehadiran as 'hadir' | 'mungkin' | 'tidak_hadir',
       pesan: this.wishForm.pesan.trim(),
@@ -887,6 +890,12 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       this.weddingData = appendPreviewGuestWish(this.weddingData!, payload);
       this.toastService.showToast('Ucapan preview ditambahkan', 'success');
       this.wishForm = { nama: '', kehadiran: '', pesan: '' };
+      this.isSubmittingWish = false;
+      return;
+    }
+
+    if (!domain) {
+      this.toastService.showToast('Domain undangan tidak tersedia untuk mengirim ucapan.', 'error');
       this.isSubmittingWish = false;
       return;
     }
@@ -901,17 +910,17 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       DashboardServiceType.ATTENDANCE,
       payload
     ).subscribe({
-      next: () => {
+      next: (response: { data?: Partial<GuestWish> }) => {
         const currentWishes = Array.isArray(this.weddingData?.guest_wishes)
           ? [...(this.weddingData?.guest_wishes || [])]
           : [];
 
         const nextWish: GuestWish = {
-          id: Date.now(),
-          nama: payload.nama,
-          kehadiran: payload.kehadiran,
-          pesan: payload.pesan,
-          created_at: new Date().toISOString(),
+          id: Number(response?.data?.id) || Date.now(),
+          nama: response?.data?.nama || payload.nama,
+          kehadiran: response?.data?.kehadiran || payload.kehadiran,
+          pesan: response?.data?.pesan || payload.pesan,
+          created_at: response?.data?.created_at || new Date().toISOString(),
         };
 
         if (this.weddingData) {
@@ -921,6 +930,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
           } as WeddingData;
         }
 
+        this.wishSubmitted.emit(nextWish);
         this.toastService.showToast('Ucapan berhasil dikirim', 'success');
         this.wishForm = { nama: '', kehadiran: '', pesan: '' };
         this.isSubmittingWish = false;

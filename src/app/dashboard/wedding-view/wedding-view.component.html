@@ -76,7 +76,8 @@
 
         <wc-presence-view
           *ngIf="isCurrentView(ContentView.PROFILE)"
-          [weddingData]="weddingData || undefined">
+          [weddingData]="weddingData || undefined"
+          [invitationDomain]="domain">
         </wc-presence-view>
 
         <wc-gift-view
@@ -93,36 +94,48 @@
             *ngSwitchCase="'ruby-theme-one'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-ruby-theme-one>
           <wc-ruby-theme-two
             *ngSwitchCase="'ruby-theme-two'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-ruby-theme-two>
           <wc-sapphire-theme-one
             *ngSwitchCase="'sapphire-theme-one'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-sapphire-theme-one>
           <wc-diamond-theme-one
             *ngSwitchCase="'diamond-theme-one'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-diamond-theme-one>
           <wc-diamond-theme-two
             *ngSwitchCase="'diamond-theme-two'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-diamond-theme-two>
           <wc-lavender-bloom-theme
             *ngSwitchCase="'lavender-bloom'"
             [weddingData]="weddingData"
             [invitationOpened]="invitationOpened"
+            [invitationDomain]="domain"
+            (wishSubmitted)="onGuestWishSubmitted($event)"
             (openInvitationRequested)="openInvitation()">
           </wc-lavender-bloom-theme>
           <ng-container *ngSwitchDefault>
@@ -160,7 +173,8 @@
 
         <wc-presence-view
           *ngIf="isCurrentView(ContentView.PROFILE)"
-          [weddingData]="weddingData || undefined">
+          [weddingData]="weddingData || undefined"
+          [invitationDomain]="domain">
         </wc-presence-view>
 
         <wc-gift-view

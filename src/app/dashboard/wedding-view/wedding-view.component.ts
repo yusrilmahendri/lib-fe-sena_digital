@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BsModalService, BsModalRef } from 'ngx-bootstrap/modal';
 import { DashboardService, DashboardServiceType } from 'src/app/dashboard.service';
-import { WeddingDataService, WeddingData, SelectedThemeSummary } from '../../services/wedding-data.service';
+import { WeddingDataService, WeddingData, SelectedThemeSummary, GuestWish } from '../../services/wedding-data.service';
 import { MusicTrack, resolveInvitationMusicSourceType, resolveInvitationMusicUrl } from '../../shared/invitation-music.model';
 import { normalizeInvitationMediaUrl } from '../../shared/user-photo.model';
 import { getReligionContentFromData } from '../../shared/religion-content.util';
@@ -31,6 +31,7 @@ import { environment } from '../../../environments/environment';
 // Attendance interface for type safety
 interface AttendanceRequest {
   user_id: number;
+  domain: string;
   nama: string;
   kehadiran: 'hadir' | 'tidak_hadir' | 'mungkin';
   pesan: string;
@@ -1445,11 +1446,18 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    const domain = this.getInvitationDomain();
+    if (!domain) {
+      console.warn('Cannot track attendance: invitation domain not available');
+      return;
+    }
+
     const attendanceData: AttendanceRequest = {
       user_id: this.weddingData.user_info.id,
+      domain,
       nama: 'Viewer', // Default name for view tracking
       kehadiran: 'hadir', // Default status for view tracking
-      pesan: `Undangan ${this.domain} telah dilihat` // Include domain in tracking message
+      pesan: `Undangan ${domain} telah dilihat` // Include domain in tracking message
     };
 
     console.log('Tracking invitation view with attendance data:', attendanceData);
@@ -1500,6 +1508,63 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     // templates that include all sections. The ngSwitch default in the
     // active theme template handles the fallback to lavender-bloom.
     return false;
+  }
+
+  onGuestWishSubmitted(wish: GuestWish): void {
+    if (!this.weddingData || !wish) {
+      return;
+    }
+
+    const currentWishes = Array.isArray(this.weddingData.guest_wishes)
+      ? this.weddingData.guest_wishes
+      : [];
+    const hasWish = currentWishes.some((item) => this.isSameGuestWish(item, wish));
+
+    this.weddingData = {
+      ...this.weddingData,
+      guest_wishes: hasWish ? currentWishes : [wish, ...currentWishes],
+      metadata: this.weddingData.metadata
+        ? {
+            ...this.weddingData.metadata,
+            total_guest_wishes: hasWish
+              ? this.weddingData.metadata.total_guest_wishes
+              : (this.weddingData.metadata.total_guest_wishes || currentWishes.length) + 1,
+          }
+        : this.weddingData.metadata,
+    };
+    this.weddingDataService.setWeddingData(this.weddingData);
+    this.saveStateToLocalStorage();
+
+    const domain = this.getInvitationDomain();
+    if (domain) {
+      this.loadWeddingDataFromAPI(domain, true, true);
+    }
+  }
+
+  private isSameGuestWish(a: GuestWish, b: GuestWish): boolean {
+    if (a?.id && b?.id && a.id === b.id) {
+      return true;
+    }
+
+    return String(a?.nama || '').trim() === String(b?.nama || '').trim()
+      && String(a?.pesan || '').trim() === String(b?.pesan || '').trim()
+      && String(a?.kehadiran || '').trim() === String(b?.kehadiran || '').trim();
+  }
+
+  private getInvitationDomain(): string {
+    const data: any = this.weddingData || {};
+    const domain = String(
+      this.domain ||
+      data?.settings?.domain ||
+      data?.domain ||
+      data?.domain_slug ||
+      data?.invitation?.domain ||
+      data?.wedding?.slug ||
+      data?.profile?.domain ||
+      ''
+    ).trim();
+
+    return domain.replace(/^https?:\/\//i, '').split('/')[0].split('?')[0];
   }
 
   showMessages(): void {
