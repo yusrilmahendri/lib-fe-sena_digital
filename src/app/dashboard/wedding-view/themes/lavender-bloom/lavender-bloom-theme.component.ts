@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import {
   GalleryItem,
   GuestWish,
@@ -23,6 +23,7 @@ import {
   getOrderedCollagePhotos,
   getPhotoObjectFit,
   getPhotoObjectPosition,
+  isInvitationVideoMedia,
   logInvitationImageError,
   normalizeInvitationMediaUrl,
   resolveInvitationPhotoUrl,
@@ -66,6 +67,12 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   isOpening = false;
   isInvitationOpened = false;
   isCoverVisible = true;
+  selectedLavenderGalleryPhotoIndex = -1;
+
+  private galleryTouchStartX = 0;
+  private galleryTouchStartY = 0;
+  private galleryScrollY = 0;
+  private readonly gallerySwipeThreshold = 48;
 
   ngOnInit(): void {
     this.countdownTimerId = window.setInterval(() => {
@@ -74,6 +81,8 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
   }
 
   ngOnDestroy(): void {
+    this.unlockGalleryLightboxScroll();
+
     if (this.countdownTimerId !== null) {
       window.clearInterval(this.countdownTimerId);
     }
@@ -407,6 +416,93 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
     return this.getGalleryItems().slice(1, 5);
   }
 
+  getLavenderGalleryLightboxPhotos(): GalleryItem[] {
+    return this.getGalleryItems().filter((item) => !isInvitationVideoMedia(item));
+  }
+
+  get isLavenderGalleryLightboxOpen(): boolean {
+    return this.selectedLavenderGalleryPhotoIndex >= 0 && this.getLavenderGalleryLightboxPhotos().length > 0;
+  }
+
+  get selectedLavenderGalleryPhoto(): GalleryItem | null {
+    return this.getLavenderGalleryLightboxPhotos()[this.selectedLavenderGalleryPhotoIndex] || null;
+  }
+
+  openLavenderGalleryLightbox(item: GalleryItem): void {
+    if (isInvitationVideoMedia(item)) {
+      return;
+    }
+
+    const index = this.getLavenderGalleryLightboxPhotos().findIndex((photo) => photo === item || photo.id === item.id);
+
+    if (index < 0) {
+      return;
+    }
+
+    this.selectedLavenderGalleryPhotoIndex = index;
+    this.lockGalleryLightboxScroll();
+  }
+
+  closeLavenderGalleryLightbox(): void {
+    this.selectedLavenderGalleryPhotoIndex = -1;
+    this.unlockGalleryLightboxScroll();
+  }
+
+  showPreviousLavenderGalleryPhoto(): void {
+    const total = this.getLavenderGalleryLightboxPhotos().length;
+
+    if (!total) {
+      return;
+    }
+
+    this.selectedLavenderGalleryPhotoIndex = (this.selectedLavenderGalleryPhotoIndex - 1 + total) % total;
+  }
+
+  showNextLavenderGalleryPhoto(): void {
+    const total = this.getLavenderGalleryLightboxPhotos().length;
+
+    if (!total) {
+      return;
+    }
+
+    this.selectedLavenderGalleryPhotoIndex = (this.selectedLavenderGalleryPhotoIndex + 1) % total;
+  }
+
+  onLavenderGalleryLightboxTouchStart(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    this.galleryTouchStartX = touch.clientX;
+    this.galleryTouchStartY = touch.clientY;
+  }
+
+  onLavenderGalleryLightboxTouchEnd(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    const deltaX = touch.clientX - this.galleryTouchStartX;
+    const deltaY = touch.clientY - this.galleryTouchStartY;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < this.gallerySwipeThreshold || horizontalDistance < verticalDistance * 1.2) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      this.showNextLavenderGalleryPhoto();
+      return;
+    }
+
+    this.showPreviousLavenderGalleryPhoto();
+  }
+
   getGuestWishes(): GuestWish[] {
     return Array.isArray(this.weddingData?.guest_wishes) ? this.weddingData?.guest_wishes || [] : [];
   }
@@ -611,6 +707,27 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
     return item.id || index;
   }
 
+  @HostListener('document:keydown', ['$event'])
+  onLavenderGalleryLightboxKeydown(event: KeyboardEvent): void {
+    if (!this.isLavenderGalleryLightboxOpen) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.closeLavenderGalleryLightbox();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      this.showPreviousLavenderGalleryPhoto();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      this.showNextLavenderGalleryPhoto();
+    }
+  }
+
   trackByWish(index: number, item: GuestWish): number {
     return item.id || index;
   }
@@ -629,6 +746,34 @@ export class LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy
 
   normalizeMediaUrl(value: any): string {
     return normalizeInvitationMediaUrl(value);
+  }
+
+  private lockGalleryLightboxScroll(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    this.galleryScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${this.galleryScrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+  }
+
+  private unlockGalleryLightboxScroll(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    const scrollY = this.galleryScrollY;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+
+    if (scrollY > 0) {
+      window.scrollTo(0, scrollY);
+    }
   }
 
   getYoutubeVideos() {

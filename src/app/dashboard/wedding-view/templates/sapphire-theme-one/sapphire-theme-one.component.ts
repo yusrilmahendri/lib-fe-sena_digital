@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -34,10 +34,15 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   forceOpened = false;
   selectedGalleryVideoUrl: SafeResourceUrl | null = null;
   selectedGalleryVideoTitle = '';
+  selectedGalleryPhotoIndex = -1;
   isWishPageChanging = false;
 
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
   private wishPageAnimationTimer: ReturnType<typeof setTimeout> | null = null;
+  private lightboxTouchStartX = 0;
+  private lightboxTouchStartY = 0;
+  private lightboxScrollY = 0;
+  private readonly lightboxSwipeThreshold = 48;
 
   constructor(
     private svc: DashboardService,
@@ -65,6 +70,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       this.wishPageAnimationTimer = null;
     }
 
+    this.unlockLightboxScroll();
     this.cleanupPreviewLocks();
     super.ngOnDestroy();
   }
@@ -122,6 +128,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       return;
     }
 
+    const lockedScrollY = this.getLockedBodyScrollY();
     const classes = [
       'no-scroll',
       'modal-open',
@@ -138,7 +145,21 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     });
 
     document.body.style.overflow = '';
+    document.body.style.overflowY = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.touchAction = '';
     document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowY = '';
+    document.documentElement.style.position = '';
+    document.documentElement.style.top = '';
+    document.documentElement.style.width = '';
+    document.documentElement.style.touchAction = '';
+
+    if (lockedScrollY > 0 && typeof window !== 'undefined') {
+      window.scrollTo(0, lockedScrollY);
+    }
   }
 
   getCoupleNames(): string {
@@ -628,6 +649,10 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     return this.getGalleryPhotos();
   }
 
+  getGalleryLightboxPhotos(): GalleryItem[] {
+    return this.getGalleryPhotos();
+  }
+
   override getGalleryPhotoUrl(item: any): string {
     return resolveInvitationPhotoUrl(item);
   }
@@ -658,6 +683,107 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   closeGalleryVideo(): void {
     this.selectedGalleryVideoUrl = null;
     this.selectedGalleryVideoTitle = '';
+  }
+
+  get isGalleryLightboxOpen(): boolean {
+    return this.selectedGalleryPhotoIndex >= 0 && this.getGalleryLightboxPhotos().length > 0;
+  }
+
+  get selectedGalleryPhoto(): GalleryItem | null {
+    const photos = this.getGalleryLightboxPhotos();
+    return photos[this.selectedGalleryPhotoIndex] || null;
+  }
+
+  openGalleryPhoto(index: number): void {
+    const photos = this.getGalleryLightboxPhotos();
+
+    if (index < 0 || index >= photos.length) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = index;
+    this.lockLightboxScroll();
+  }
+
+  closeGalleryPhoto(): void {
+    this.selectedGalleryPhotoIndex = -1;
+    this.unlockLightboxScroll();
+  }
+
+  showPreviousGalleryPhoto(): void {
+    const total = this.getGalleryLightboxPhotos().length;
+
+    if (!total) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = (this.selectedGalleryPhotoIndex - 1 + total) % total;
+  }
+
+  showNextGalleryPhoto(): void {
+    const total = this.getGalleryLightboxPhotos().length;
+
+    if (!total) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = (this.selectedGalleryPhotoIndex + 1) % total;
+  }
+
+  onGalleryLightboxTouchStart(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    this.lightboxTouchStartX = touch.clientX;
+    this.lightboxTouchStartY = touch.clientY;
+  }
+
+  onGalleryLightboxTouchEnd(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+
+    if (!touch) {
+      return;
+    }
+
+    const deltaX = touch.clientX - this.lightboxTouchStartX;
+    const deltaY = touch.clientY - this.lightboxTouchStartY;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < this.lightboxSwipeThreshold || horizontalDistance < verticalDistance * 1.2) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      this.showNextGalleryPhoto();
+      return;
+    }
+
+    this.showPreviousGalleryPhoto();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onGalleryLightboxKeydown(event: KeyboardEvent): void {
+    if (!this.isGalleryLightboxOpen) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.closeGalleryPhoto();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      this.showPreviousGalleryPhoto();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      this.showNextGalleryPhoto();
+    }
   }
 
   override onImageError(event: Event): void {
@@ -972,6 +1098,55 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       this.wishPageAnimationTimer = null;
       this.cdr.markForCheck();
     }, 420);
+  }
+
+  private lockLightboxScroll(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    this.lightboxScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${this.lightboxScrollY}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    document.body.style.overflowY = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overflowY = 'hidden';
+  }
+
+  private unlockLightboxScroll(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    const scrollY = this.lightboxScrollY || this.getLockedBodyScrollY();
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.overflow = '';
+    document.body.style.overflowY = '';
+    document.body.style.touchAction = '';
+    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflowY = '';
+    document.documentElement.style.touchAction = '';
+
+    if (scrollY > 0) {
+      window.scrollTo(0, scrollY);
+    }
+  }
+
+  private getLockedBodyScrollY(): number {
+    if (typeof document === 'undefined') {
+      return 0;
+    }
+
+    if (document.body.style.position !== 'fixed') {
+      return 0;
+    }
+
+    const top = Number.parseFloat(document.body.style.top || '0');
+    return Number.isFinite(top) && top < 0 ? Math.abs(top) : 0;
   }
 
   private getWishIdentity(wish: GuestWish): string {

@@ -10,7 +10,7 @@
     [style.background-position]="getCoverPhotoObjectPosition()">
     <div class="sapphire-opening__content" appRevealStagger>
       <p class="sapphire-opening__eyebrow">THE WEDDING OF</p>
-      <h1 class="sapphire-opening__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h1>
+      <h1 class="sapphire-opening__names">{{ getGroomDisplayName() }} &amp; {{ getBrideDisplayName() }}</h1>
       <div class="sapphire-opening__date">
         <span>{{ getWeddingDayPart() }}</span><span>·</span>
         <span>{{ getWeddingMonthPart() }}</span><span>·</span>
@@ -117,10 +117,16 @@
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
           </button>
-          <figure class="sapphire-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+          <button
+            class="sapphire-gallery-item sapphire-gallery-item--photo gallery-card"
+            type="button"
+            *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index"
+            [class.is-image-missing]="!getGalleryPhotoUrl(item)"
+            [attr.aria-label]="'Buka foto galeri ' + (i + 1)"
+            (click)="openGalleryPhoto(i)">
             <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
-          </figure>
+          </button>
         </div>
       </ng-container>
 
@@ -128,6 +134,46 @@
         <div class="sapphire-empty sapphire-empty--light sapphire-gallery-empty">Galeri foto akan segera diperbarui.</div>
       </ng-template>
     </section>
+
+    <div
+      class="sapphire-gallery-lightbox"
+      *ngIf="isGalleryLightboxOpen && selectedGalleryPhoto as photo"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galeri foto"
+      (click)="closeGalleryPhoto()"
+      (touchstart)="onGalleryLightboxTouchStart($event)"
+      (touchend)="onGalleryLightboxTouchEnd($event)"
+    >
+      <div class="sapphire-gallery-lightbox__bar">
+        <span>{{ selectedGalleryPhotoIndex + 1 }} / {{ getGalleryLightboxPhotos().length }}</span>
+        <button type="button" aria-label="Tutup galeri" (click)="closeGalleryPhoto(); $event.stopPropagation()">×</button>
+      </div>
+
+      <button
+        type="button"
+        class="sapphire-gallery-lightbox__nav sapphire-gallery-lightbox__nav--prev"
+        aria-label="Foto sebelumnya"
+        (click)="showPreviousGalleryPhoto(); $event.stopPropagation()">
+        ‹
+      </button>
+
+      <img
+        class="sapphire-gallery-lightbox__image"
+        [src]="getGalleryPhotoUrl(photo)"
+        [alt]="getGalleryAlt(photo, selectedGalleryPhotoIndex)"
+        (click)="$event.stopPropagation()"
+        (error)="onImageError($event)"
+      >
+
+      <button
+        type="button"
+        class="sapphire-gallery-lightbox__nav sapphire-gallery-lightbox__nav--next"
+        aria-label="Foto berikutnya"
+        (click)="showNextGalleryPhoto(); $event.stopPropagation()">
+        ›
+      </button>
+    </div>
 
     <!-- Countdown -->
     <section class="sapphire-countdown" [style.background-image]="'url(' + getCountdownBackground() + ')'">

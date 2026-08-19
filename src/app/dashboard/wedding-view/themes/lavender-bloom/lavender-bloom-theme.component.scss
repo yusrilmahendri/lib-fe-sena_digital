@@ -107,6 +107,14 @@
   overflow: hidden;
 }
 
+.gallery-item {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .person-photo img,
 .gallery-featured img,
 .gallery-item img {
@@ -138,6 +146,144 @@
 .gallery-featured.is-image-missing .image-placeholder,
 .gallery-item.is-image-missing .image-placeholder {
   display: flex;
+}
+
+.lavender-photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 62px 18px 54px;
+  background: rgba(15, 11, 13, 0.92);
+  animation: lavenderLightboxFadeIn 280ms ease both;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.lavender-photo-lightbox__bar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: 18px;
+  right: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lavender-photo-lightbox__bar button,
+.lavender-photo-lightbox__nav {
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.lavender-photo-lightbox__bar button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.lavender-photo-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 34px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.lavender-photo-lightbox__bar button:hover,
+.lavender-photo-lightbox__nav:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+.lavender-photo-lightbox__nav--prev {
+  left: 18px;
+}
+
+.lavender-photo-lightbox__nav--next {
+  right: 18px;
+}
+
+.lavender-photo-lightbox__image {
+  width: 100%;
+  height: 100%;
+  max-width: min(960px, 100vw - 36px);
+  max-height: calc(100vh - 126px);
+  object-fit: contain;
+  display: block;
+  animation: lavenderLightboxImageIn 320ms ease both;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 430px) {
+  .lavender-photo-lightbox {
+    padding: 58px 12px 46px;
+  }
+
+  .lavender-photo-lightbox__bar {
+    left: 14px;
+    right: 14px;
+  }
+
+  .lavender-photo-lightbox__nav {
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+
+  .lavender-photo-lightbox__nav--prev {
+    left: 12px;
+  }
+
+  .lavender-photo-lightbox__nav--next {
+    right: 12px;
+  }
+
+  .lavender-photo-lightbox__image {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 104px);
+  }
+}
+
+@keyframes lavenderLightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lavenderLightboxImageIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @import "../../templates/ruby-theme-one/ruby-theme-one.component.scss";

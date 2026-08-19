@@ -1,10 +1,13 @@
 <div class="gallery-container">
   <div class="container-custom" *ngIf="hasImages(); else noGalleryTemplate">
-    <div
+    <button
       *ngFor="let item of getGalleryImages(); let i = index; trackBy: trackByGalleryId"
       class="gallery-card"
+      type="button"
       [class.is-image-missing]="!getImageUrl(item)"
       [ngClass]="'img-' + (i + 1)"
+      [attr.aria-label]="'Buka foto galeri ' + (i + 1)"
+      (click)="openLightbox(item)"
     >
       <img
         *ngIf="getImageUrl(item)"
@@ -19,7 +22,7 @@
         <i class="fas fa-image" aria-hidden="true"></i>
         <span>Foto belum tersedia</span>
       </div>
-    </div>
+    </button>
   </div>
 
   <ng-template #noGalleryTemplate>
@@ -50,4 +53,31 @@
       />
     </div>
   </ng-template>
+
+  <div
+    class="photo-lightbox"
+    *ngIf="isLightboxOpen && selectedImage as image"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Galeri foto"
+    (click)="closeLightbox()"
+    (touchstart)="onLightboxTouchStart($event)"
+    (touchend)="onLightboxTouchEnd($event)">
+    <div class="photo-lightbox__bar">
+      <span>{{ selectedImageIndex + 1 }} / {{ getLightboxImages().length }}</span>
+      <button type="button" aria-label="Tutup galeri" (click)="closeLightbox(); $event.stopPropagation()">×</button>
+    </div>
+
+    <button type="button" class="photo-lightbox__nav photo-lightbox__nav--prev" aria-label="Foto sebelumnya" (click)="showPreviousImage(); $event.stopPropagation()">‹</button>
+
+    <img
+      class="photo-lightbox__image"
+      [src]="getImageUrl(image)"
+      [alt]="getImageAlt(image, selectedImageIndex)"
+      (click)="$event.stopPropagation()"
+      (error)="onImageError($event)"
+    />
+
+    <button type="button" class="photo-lightbox__nav photo-lightbox__nav--next" aria-label="Foto berikutnya" (click)="showNextImage(); $event.stopPropagation()">›</button>
+  </div>
 </div>
