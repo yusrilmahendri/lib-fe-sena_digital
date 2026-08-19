@@ -288,6 +288,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   getSafeGalleryPhotos(): GalleryItem[] {
     const photos = this.getGalleryItems().filter((item) => {
+      if (this.isValidGalleryVideoItem(item)) {
+        return false;
+      }
+
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
@@ -296,7 +300,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   override hasGallery(): boolean {
-    return this.galleryPhotoItems.length > 0 || !!this.getFeaturedGalleryVideoItem();
+    return this.galleryPhotoItems.length > 0 || this.getGalleryVideoItems().length > 0;
   }
 
   get galleryPhotos(): GalleryItem[] {
@@ -306,13 +310,17 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   get galleryPhotoItems(): GalleryItem[] {
     const photos = this.getGalleryItems();
     return photos.filter((item) => {
+      if (this.isValidGalleryVideoItem(item)) {
+        return false;
+      }
+
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
   }
 
   get mainGalleryPhoto(): GalleryItem | null {
-    return this.getFeaturedGalleryVideoItem() || this.galleryPhotoItems[0] || null;
+    return this.galleryPhotoItems[0] || null;
   }
 
   get galleryThumbs(): GalleryItem[] {
@@ -321,16 +329,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   getGalleryCarouselItems(): GalleryItem[] {
-    const featuredVideo = this.getFeaturedGalleryVideoItem();
-    const photos = this.galleryPhotoItems.filter((item) => {
-      if (!featuredVideo) {
-        return true;
-      }
-
-      return this.getGalleryItemKey(item) !== this.getGalleryItemKey(featuredVideo);
-    });
-
-    return featuredVideo ? [featuredVideo, ...photos] : photos;
+    return this.galleryPhotoItems;
   }
 
   getGalleryActiveNumber(): string {
@@ -356,15 +355,12 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   }
 
   hasVideo(item: any): boolean {
-    return !!this.getGalleryVideoUrl(item);
+    return this.isValidGalleryVideoItem(item);
   }
 
   getGalleryDisplayImageUrl(item: any): string {
     if (this.hasVideo(item)) {
-      const photoUrl = this.getGalleryPhotoUrl(item);
-      return this.getGalleryCustomThumbnailUrl(item) ||
-        (photoUrl && !this.isUnsafeThemeImage(photoUrl) ? photoUrl : '') ||
-        this.getGalleryYoutubeThumbnailUrl(item);
+      return this.getGalleryVideoCoverUrl(item);
     }
 
     const photoUrl = this.getGalleryPhotoUrl(item);
@@ -373,6 +369,23 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     }
 
     return '';
+  }
+
+  getGalleryVideoItems(): GalleryItem[] {
+    return this.getGalleryItems().filter((item) => this.isValidGalleryVideoItem(item));
+  }
+
+  getGalleryVideoCoverUrl(item: any): string {
+    const photoUrl = this.getGalleryPhotoUrl(item);
+    if (photoUrl && !this.isUnsafeThemeImage(photoUrl)) {
+      return photoUrl;
+    }
+
+    return this.getGalleryCustomThumbnailUrl(item) || this.getGalleryYoutubeThumbnailUrl(item);
+  }
+
+  isValidGalleryVideoItem(item: any): boolean {
+    return !!this.getGalleryVideoUrl(item);
   }
 
   override getGalleryPhotoUrl(item: any): string {
@@ -521,15 +534,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
     const resolvedVideoUrl = resolveInvitationVideoUrl(item);
     const resolvedYoutubeEmbedUrl = this.getYoutubeEmbedUrl(resolvedVideoUrl);
-    if (!resolvedVideoUrl || resolvedYoutubeEmbedUrl) {
-      return resolvedYoutubeEmbedUrl;
-    }
-
-    return this.isDirectVideoUrl(resolvedVideoUrl) ? resolvedVideoUrl : '';
-  }
-
-  private getFeaturedGalleryVideoItem(): GalleryItem | null {
-    return this.getGalleryItems().find((item) => !!this.getGalleryVideoUrl(item)) || null;
+    return resolvedYoutubeEmbedUrl || '';
   }
 
   private getGalleryYoutubeThumbnailUrl(item: any): string {
@@ -945,22 +950,22 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     this.subscriptions.add(attendanceSubscription);
   }
 
-  copyAccountNumber(value: string): void {
-    const accountNumber = String(value || '').trim();
-    if (!accountNumber) {
+  copyAccountNumber(bank: any): void {
+    const accountText = this.getBankClipboardText(bank);
+    if (!accountText) {
       this.toastService.showToast('Nomor rekening tidak tersedia.', 'warning');
       return;
     }
 
-    const copyAction = navigator?.clipboard?.writeText(accountNumber);
+    const copyAction = navigator?.clipboard?.writeText(accountText);
     if (copyAction) {
       copyAction
-        .then(() => this.toastService.showToast('Nomor rekening disalin', 'success'))
-        .catch(() => this.fallbackCopy(accountNumber));
+        .then(() => this.toastService.showToast('Data rekening berhasil disalin', 'success'))
+        .catch(() => this.fallbackCopy(accountText));
       return;
     }
 
-    this.fallbackCopy(accountNumber);
+    this.fallbackCopy(accountText);
   }
 
   getAttendanceLabel(value: string): string {
@@ -1163,12 +1168,23 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       textarea.style.left = '-9999px';
       document.body.appendChild(textarea);
       textarea.select();
-      document.execCommand('copy');
+      const copied = document.execCommand('copy');
       document.body.removeChild(textarea);
-      this.toastService.showToast('Nomor rekening disalin', 'success');
+      if (!copied) {
+        throw new Error('copy failed');
+      }
+      this.toastService.showToast('Data rekening berhasil disalin', 'success');
     } catch {
-      this.toastService.showToast('Gagal menyalin nomor rekening.', 'error');
+      this.toastService.showToast('Data rekening gagal disalin', 'error');
     }
+  }
+
+  private getBankClipboardText(bank: any): string {
+    const bankName = String(bank?.nama_bank || bank?.bank_name || bank?.bank?.name || bank?.bank?.nama_bank || bank?.bank?.kode_bank || bank?.kode_bank || '').trim();
+    const accountHolder = String(bank?.nama_pemilik || bank?.atas_nama || bank?.account_holder || bank?.pemilik || bank?.owner || '').trim();
+    const accountNumber = String(bank?.nomor_rekening || bank?.account_number || bank?.rekening || '').trim();
+
+    return [bankName, accountHolder, accountNumber].filter(Boolean).join('\n');
   }
 
   private getSafeImageUrl(candidates: Array<string | null | undefined>, fallback: string): string {

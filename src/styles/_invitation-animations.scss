@@ -272,6 +272,7 @@
 
   .ia-reveal--visible .ruby-couple-photo img,
   .ia-reveal--visible .ruby-gallery-slide img,
+  .ia-reveal--visible .ruby-video-card img,
   .ia-reveal--visible .gallery-card img {
     animation: iaPhotoSoftBreathe 1200ms var(--ia-ease) both;
   }
@@ -341,7 +342,8 @@
 
   .ia-reveal--visible .ruby-two-person-card__frame img,
   .ia-reveal--visible .ruby-two-gallery-featured img,
-  .ia-reveal--visible .ruby-two-gallery-item img {
+  .ia-reveal--visible .ruby-two-gallery-item img,
+  .ia-reveal--visible .ruby-two-video-card img {
     animation: iaPhotoSoftBreathe 1250ms var(--ia-ease) both;
   }
 }
@@ -497,7 +499,9 @@
 .gallery-card,
 .sapphire-gallery-item,
 .ruby-gallery-thumb,
+.ruby-video-card,
 .ruby-two-gallery-item,
+.ruby-two-video-card,
 .diamond-gallery-item,
 .diamond-garden-gallery-item {
   backface-visibility: hidden;
@@ -506,7 +510,9 @@
 .ia-reveal--visible .gallery-card,
 .ia-reveal--visible .sapphire-gallery-item,
 .ia-reveal--visible .ruby-gallery-thumb,
+.ia-reveal--visible .ruby-video-card,
 .ia-reveal--visible .ruby-two-gallery-item,
+.ia-reveal--visible .ruby-two-video-card,
 .ia-reveal--visible .diamond-gallery-item,
 .ia-reveal--visible .diamond-garden-gallery-item {
   animation: iaGalleryDepth 760ms var(--ia-ease) both;

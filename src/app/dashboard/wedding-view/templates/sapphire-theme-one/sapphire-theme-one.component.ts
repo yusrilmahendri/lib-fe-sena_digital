@@ -30,8 +30,9 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   isSubmittingWish = false;
   hasOpened = false;
   forceOpened = false;
+  selectedGalleryVideoUrl: SafeResourceUrl | null = null;
+  selectedGalleryVideoTitle = '';
 
-  private readonly FALLBACK_EVENT = {} as WeddingEvent;
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
 
   constructor(
@@ -292,29 +293,37 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   hasGalleryVideo(item: any): boolean {
-    return !!this.getRawGalleryVideoUrl(item);
+    return !!this.getYoutubeEmbedUrl(this.getRawGalleryVideoUrl(item));
   }
 
   getEventWeekday(event: WeddingEvent): string {
     const date = this.parseEventDate(event);
     if (!date) {
-      return 'Minggu';
+      return '';
     }
     return date.toLocaleDateString('id-ID', { weekday: 'long' });
   }
 
   getEventDayNumber(event: WeddingEvent): string {
     const date = this.parseEventDate(event);
-    return date ? String(date.getDate()) : '12';
+    return date ? String(date.getDate()) : '';
   }
 
   getEventMonthYear(event: WeddingEvent): string {
     const date = this.parseEventDate(event);
     if (!date) {
-      return 'Desember 2026';
+      return '';
     }
     const month = date.toLocaleDateString('id-ID', { month: 'long' });
     return `${month} ${date.getFullYear()}`;
+  }
+
+  override formatTimeRange(event?: WeddingEvent | null): string {
+    if (!event?.start_acara) {
+      return '';
+    }
+
+    return super.formatTimeRange(event);
   }
 
   getWeddingGiftIntro(): string {
@@ -364,17 +373,23 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     return ['Keluarga Besar', 'Saudara & Kerabat', 'Teman Terkasih'];
   }
 
-  getAkadCard(): WeddingEvent {
-    return this.getAkadEvent() ?? this.FALLBACK_EVENT;
+  getDisplayEvents(): WeddingEvent[] {
+    return this.getEvents().filter((event) => this.isDisplayEvent(event));
   }
 
-  getReceptionCard(): WeddingEvent {
-    return this.getReceptionEvent() ?? this.FALLBACK_EVENT;
+  trackByEvent(index: number, event: WeddingEvent): string | number {
+    const data = event as any;
+    return data?.id || data?.uuid || data?.slug || data?.nama_acara || index;
+  }
+
+  getEventTitle(event: WeddingEvent): string {
+    const data = event as any;
+    return data?.nama_acara || data?.title || data?.name || 'Acara';
   }
 
   getEventAddress(event: WeddingEvent): string {
     const data = event as any;
-    return data?.address || event?.alamat || data?.location_name || 'Alamat menyusul';
+    return data?.address || event?.alamat || '';
   }
 
   getDetailEventVenue(event: WeddingEvent): string {
@@ -386,13 +401,12 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       data?.venue ||
       data?.tempat ||
       data?.lokasi ||
-      event?.nama_acara ||
-      'Lokasi menyusul'
+      ''
     );
   }
 
   getEventMapLink(event: WeddingEvent): string | null {
-    return this.getEventMapUrl(event);
+    return this.getDirectEventMapUrl(event, true);
   }
 
   getMapEmbedUrl(event: any): string {
@@ -402,18 +416,19 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       data?.map_embed,
       data?.embed_maps,
       data?.iframe_maps,
-    ].map((value) => String(value || '').trim()).find((value) => !!value);
+    ].map((value) => String(value || '').trim()).find((value) => this.isValidMapEmbedUrl(value));
 
     if (directEmbed) {
       return directEmbed;
     }
 
-    const query = this.getMapQuery(event);
-    if (!query) {
-      return '';
+    const coordinateQuery = this.getEventCoordinateQuery(event);
+    if (coordinateQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(coordinateQuery)}&output=embed`;
     }
 
-    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
+    const query = this.getMapQuery(event);
+    return query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : '';
   }
 
   getSafeMapUrl(event: any): SafeResourceUrl | null {
@@ -439,8 +454,8 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       : [];
   }
 
-  copyAccountNumber(number: string): void {
-    this.copyText(number);
+  copyAccountNumber(bank: any): void {
+    this.copyText(this.getBankClipboardText(bank), 'Data rekening berhasil disalin', 'Data rekening gagal disalin');
   }
 
   getDisplayedWishes(): GuestWish[] {
@@ -522,19 +537,62 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   }
 
   getGalleryPhotos(): GalleryItem[] {
-    return this.getGalleryItems();
+    return this.getGalleryItems().filter((item) => {
+      if ((item as any)?.status === false) {
+        return false;
+      }
+
+      if (this.hasGalleryVideo(item)) {
+        return false;
+      }
+
+      const photoUrl = this.getGalleryPhotoUrl(item);
+      return !!photoUrl;
+    });
+  }
+
+  override hasGallery(): boolean {
+    return this.getGalleryPhotos().length > 0 || !!this.getFeaturedGalleryVideoItem();
   }
 
   override getFeaturedGalleryItem(): GalleryItem | null {
-    return this.getGalleryPhotos()[0] || null;
+    return this.getFeaturedGalleryVideoItem();
   }
 
   override getGalleryGridItems(): GalleryItem[] {
-    return this.getGalleryPhotos().slice(1, 5);
+    return this.getGalleryPhotos();
   }
 
   override getGalleryPhotoUrl(item: any): string {
-    return resolveInvitationPhotoUrl(item) || this.getGalleryVideoThumbnailUrl(item);
+    return resolveInvitationPhotoUrl(item);
+  }
+
+  getFeaturedGalleryVideoItem(): GalleryItem | null {
+    return this.getGalleryItems().find((item: any) => item?.status !== false && this.hasGalleryVideo(item)) || null;
+  }
+
+  getGalleryVideoCoverUrl(item: any): string {
+    const photoUrl = resolveInvitationPhotoUrl(item);
+    if (photoUrl) {
+      return photoUrl;
+    }
+
+    return this.getGalleryVideoThumbnailUrl(item);
+  }
+
+  openGalleryVideo(item: any): void {
+    const embedUrl = this.getYoutubeEmbedUrl(this.getRawGalleryVideoUrl(item));
+    if (!embedUrl) {
+      return;
+    }
+
+    this.selectedGalleryVideoTitle = item?.description || item?.nama_foto || 'Video undangan';
+    this.selectedGalleryVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.withYoutubeAutoplay(embedUrl));
+  }
+
+  closeGalleryVideo(): void {
+    this.selectedGalleryVideoUrl = null;
+    this.selectedGalleryVideoTitle = '';
   }
 
   override onImageError(event: Event): void {
@@ -586,25 +644,121 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     return String(item?.url_video || item?.video_url || item?.youtube_url || item?.video || '').trim();
   }
 
+  private getYoutubeEmbedUrl(value: string): string {
+    const videoId = this.getYoutubeVideoId(value);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  }
+
+  private withYoutubeAutoplay(value: string): string {
+    const separator = value.includes('?') ? '&' : '?';
+    return `${value}${separator}autoplay=1&mute=1&rel=0&playsinline=1`;
+  }
+
   private getYoutubeVideoId(value: string): string {
     const raw = String(value || '').trim();
     if (!raw) {
       return '';
     }
 
-    const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-    return match?.[1] || '';
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.replace(/^www\./, '');
+      if (host === 'youtu.be') {
+        return this.normalizeYoutubeVideoId(url.pathname.replace(/^\//, ''));
+      }
+
+      if (host.endsWith('youtube.com')) {
+        if (url.pathname === '/watch') {
+          return this.normalizeYoutubeVideoId(url.searchParams.get('v'));
+        }
+
+        const match = url.pathname.match(/\/(?:embed|shorts|live)\/([^/?#]+)/);
+        return this.normalizeYoutubeVideoId(match?.[1] || '');
+      }
+    } catch {
+      const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      return this.normalizeYoutubeVideoId(match?.[1] || '');
+    }
+
+    return '';
+  }
+
+  private normalizeYoutubeVideoId(value: string | null | undefined): string {
+    const id = String(value || '').trim().split(/[?&#/]/)[0];
+    return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : '';
+  }
+
+  private isDisplayEvent(event: WeddingEvent | null | undefined): boolean {
+    if (!event || typeof event !== 'object') {
+      return false;
+    }
+
+    const data = event as any;
+    return [
+      data?.tanggal_acara,
+      data?.start_acara,
+      data?.tanggal,
+      data?.date,
+      data?.location_name,
+      data?.address,
+      data?.alamat,
+      data?.link_maps,
+      data?.google_maps_url,
+    ].some((value) => String(value || '').trim());
+  }
+
+  private getDirectEventMapUrl(event: WeddingEvent | null | undefined, buttonOnly = false): string | null {
+    const data = event as any;
+    const buttonLinks = [
+      data?.link_maps,
+      data?.google_maps_url,
+    ];
+    const extraLinks = [
+      data?.maps_url,
+      data?.map_url,
+      data?.google_map_url,
+      data?.location_url,
+      data?.url_maps,
+      data?.maps_link,
+    ];
+    const candidates = buttonOnly ? buttonLinks : [...buttonLinks, ...extraLinks];
+    const directLink = candidates.map((value) => String(value || '').trim()).find((value) => this.isValidEventMapUrl(value));
+
+    return directLink || null;
+  }
+
+  private isValidEventMapUrl(value: string | null | undefined): boolean {
+    const normalized = String(value || '').trim();
+    if (!normalized) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(normalized);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  private isValidMapEmbedUrl(value: string | null | undefined): boolean {
+    const normalized = String(value || '').trim();
+    if (!this.isValidEventMapUrl(normalized)) {
+      return false;
+    }
+
+    return /\/maps\/embed\b|[?&]output=embed\b/i.test(normalized);
+  }
+
+  private getEventCoordinateQuery(event: WeddingEvent): string {
+    const data = event as any;
+    const latitude = String(data?.latitude || data?.lat || '').trim();
+    const longitude = String(data?.longitude || data?.lng || data?.long || '').trim();
+
+    return latitude && longitude ? `${latitude},${longitude}` : '';
   }
 
   private getMapQuery(event: WeddingEvent): string {
-    const data = event as any;
-    const latitude = String(data?.latitude || '').trim();
-    const longitude = String(data?.longitude || '').trim();
-
-    if (latitude && longitude) {
-      return `${latitude},${longitude}`;
-    }
-
     return [
       this.getEventAddress(event),
       this.getDetailEventVenue(event),
@@ -613,13 +767,49 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       .join(', ');
   }
 
-  private copyText(value: string): void {
+  private copyText(value: string, successMessage = 'Data berhasil disalin', errorMessage = 'Data gagal disalin'): void {
     const text = String(value || '').trim();
-    if (!text || !navigator?.clipboard) {
+    if (!text) {
       return;
     }
 
-    navigator.clipboard.writeText(text).catch(() => {});
+    const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : null;
+    if (clipboard?.writeText) {
+      clipboard.writeText(text)
+        .then(() => this.toastService.showToast(successMessage, 'success'))
+        .catch(() => this.fallbackCopyText(text, successMessage, errorMessage));
+      return;
+    }
+
+    this.fallbackCopyText(text, successMessage, errorMessage);
+  }
+
+  private fallbackCopyText(text: string, successMessage: string, errorMessage: string): void {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (!copied) {
+        throw new Error('copy failed');
+      }
+      this.toastService.showToast(successMessage, 'success');
+    } catch {
+      this.toastService.showToast(errorMessage, 'error');
+    }
+  }
+
+  private getBankClipboardText(bank: any): string {
+    const bankName = String(bank?.nama_bank || bank?.bank_name || bank?.bank?.name || bank?.bank?.nama_bank || '').trim();
+    const accountHolder = String(bank?.nama_pemilik || bank?.atas_nama || bank?.account_holder || bank?.pemilik || bank?.owner || '').trim();
+    const accountNumber = String(bank?.nomor_rekening || bank?.account_number || bank?.rekening || '').trim();
+
+    return [bankName, accountHolder, accountNumber].filter(Boolean).join('\n');
   }
 
   private formatOpeningDate(dateValue?: string | null): string {

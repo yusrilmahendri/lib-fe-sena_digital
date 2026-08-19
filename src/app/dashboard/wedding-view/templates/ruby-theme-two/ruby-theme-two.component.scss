@@ -881,8 +881,8 @@
   margin: 0;
 }
 
-.ruby-two-gallery-featured,
-.ruby-two-gallery-item {
+.ruby-two-gallery-item,
+.ruby-two-video-card {
   position: relative;
   overflow: hidden;
   border-radius: 18px;
@@ -890,13 +890,8 @@
   touch-action: pan-y;
 }
 
-.ruby-two-gallery-featured {
-  margin-top: 18px;
-  height: 210px;
-}
-
-.ruby-two-gallery-featured img,
-.ruby-two-gallery-item img {
+.ruby-two-gallery-item img,
+.ruby-two-video-card img {
   width: 100%;
   height: 100%;
   display: block;
@@ -907,15 +902,15 @@
 
 @media (hover: hover) and (pointer: fine) {
   .ruby-two-person-card__frame:hover img,
-  .ruby-two-gallery-featured:hover img,
-  .ruby-two-gallery-item:hover img {
+  .ruby-two-gallery-item:hover img,
+  .ruby-two-video-card:hover img {
     transform: scale(1.045);
   }
 }
 
 .ruby-two-person-card__frame .image-placeholder,
-.ruby-two-gallery-featured .image-placeholder,
-.ruby-two-gallery-item .image-placeholder {
+.ruby-two-gallery-item .image-placeholder,
+.ruby-two-video-card .image-placeholder {
   display: none;
   width: 100%;
   height: 100%;
@@ -933,20 +928,9 @@
 }
 
 .ruby-two-person-card__frame.is-image-missing .image-placeholder,
-.ruby-two-gallery-featured.is-image-missing .image-placeholder,
-.ruby-two-gallery-item.is-image-missing .image-placeholder {
+.ruby-two-gallery-item.is-image-missing .image-placeholder,
+.ruby-two-video-card.is-image-missing .image-placeholder {
   display: flex;
-}
-
-.ruby-two-gallery-featured__play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, transparent 0%, rgba(36, 32, 42, 0.28) 100%);
-  color: #fff;
-  font-size: 1.9rem;
 }
 
 .ruby-two-gallery-grid {
@@ -958,6 +942,171 @@
 
 .ruby-two-gallery-item {
   height: 112px;
+}
+
+.ruby-two-video-card {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 210px;
+  margin: 20px 0 10px;
+  border: 0;
+  padding: 0;
+  background: #f7f2f5;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.ruby-two-video-card img {
+  filter: brightness(0.82);
+}
+
+.ruby-two-video-card:hover img {
+  filter: brightness(0.76);
+}
+
+.ruby-two-video-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    radial-gradient(circle at center, rgba(42, 35, 48, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(36, 32, 42, 0.04), rgba(36, 32, 42, 0.28));
+  pointer-events: none;
+}
+
+.ruby-two-video-card__badge {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #8a5d91;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 22px rgba(62, 43, 70, 0.18);
+  pointer-events: none;
+}
+
+.ruby-two-video-card__play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(132, 88, 142, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  box-shadow: 0 16px 34px rgba(56, 38, 64, 0.26);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-size: 1.2rem;
+  pointer-events: none;
+  transition: transform 220ms ease, background 220ms ease;
+}
+
+.ruby-two-video-card__play i {
+  margin-left: 3px;
+}
+
+.ruby-two-video-card:hover .ruby-two-video-card__play {
+  transform: translate(-50%, -50%) scale(1.06);
+  background: rgba(143, 93, 152, 0.95);
+}
+
+.ruby-two-video-card__label {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 4;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #6f4b78;
+  font-family: "Poppins", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.ruby-two-video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(32, 24, 38, 0.78);
+}
+
+.ruby-two-video-modal__panel {
+  position: relative;
+  width: min(100%, 720px);
+  padding: 18px;
+  border-radius: 18px;
+  background: #fffafc;
+  box-shadow: 0 24px 80px rgba(26, 18, 32, 0.34);
+}
+
+.ruby-two-video-modal__panel h3 {
+  margin: 0 42px 14px 0;
+  color: #5f4468;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.ruby-two-video-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: #f1e5ef;
+  color: #5f4468;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ruby-two-video-modal__frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #211927;
+  aspect-ratio: 16 / 9;
+}
+
+.ruby-two-video-modal__frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .ruby-two-form {
@@ -1016,6 +1165,31 @@
   margin-top: 18px;
   display: grid;
   gap: 12px;
+  overflow-x: hidden;
+}
+
+.ruby-two-wishes-list--scrollable {
+  max-height: 348px;
+  overflow-y: auto;
+  padding-right: 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 93, 145, 0.42) rgba(138, 93, 145, 0.08);
+}
+
+.ruby-two-wishes-list--scrollable::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ruby-two-wishes-list--scrollable::-webkit-scrollbar-track {
+  background: rgba(138, 93, 145, 0.08);
+  border-radius: 999px;
+}
+
+.ruby-two-wishes-list--scrollable::-webkit-scrollbar-thumb {
+  background: rgba(138, 93, 145, 0.42);
+  border-radius: 999px;
 }
 
 .ruby-two-wish-card {
@@ -1252,10 +1426,11 @@
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card strong,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-countdown__card span,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-timeline::before,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-item,
-.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-featured,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-dot,
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-content > *,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-item,
-.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-gallery-featured__play,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-form,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-label,
 .ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-input,
@@ -1271,6 +1446,15 @@
   opacity: 0;
   filter: blur(7px);
   transform: translate3d(0, 30px, 0);
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-timeline::before {
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.ia-motion-ready .ia-reveal:not(.ia-reveal--visible) .ruby-two-journey-dot {
+  transform: scale(0.45);
 }
 
 .ia-reveal--visible .ruby-two-section__eyebrow,
@@ -1312,7 +1496,6 @@
 }
 
 .ia-reveal--visible .ruby-two-person-card__frame,
-.ia-reveal--visible .ruby-two-gallery-featured,
 .ia-reveal--visible .ruby-two-gallery-item {
   animation: rubyTwoPhotoReveal 1080ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -1334,6 +1517,7 @@
 .ia-reveal--visible .ruby-two-event-card .ruby-two-button,
 .ia-reveal--visible .ruby-two-countdown__card strong,
 .ia-reveal--visible .ruby-two-countdown__card span,
+.ia-reveal--visible .ruby-two-journey-content > *,
 .ia-reveal--visible .ruby-two-label,
 .ia-reveal--visible .ruby-two-input,
 .ia-reveal--visible .ruby-two-textarea,
@@ -1345,15 +1529,18 @@
   animation: rubyTwoMicroReveal 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.ia-reveal--visible .ruby-two-gallery-featured__play {
-  animation: rubyTwoPlayReveal 860ms cubic-bezier(0.22, 1, 0.36, 1) 440ms both;
+.ia-reveal--visible .ruby-two-journey-timeline::before {
+  animation: rubyTwoTimelineGrow 1180ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
+}
+
+.ia-reveal--visible .ruby-two-journey-dot {
+  animation: rubyTwoDotReveal 720ms cubic-bezier(0.22, 1, 0.36, 1) 260ms both;
 }
 
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) .ruby-two-person-card__frame,
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) h3,
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(1) p,
-.ia-reveal--visible .ruby-two-person-card:nth-of-type(1) small,
-.ia-reveal--visible .ruby-two-gallery-featured {
+.ia-reveal--visible .ruby-two-person-card:nth-of-type(1) small {
   animation-delay: 180ms;
 }
 
@@ -1363,6 +1550,9 @@
 .ia-reveal--visible .ruby-two-person-card:nth-of-type(2) small,
 .ia-reveal--visible .ruby-two-gallery-item:nth-child(1),
 .ia-reveal--visible .ruby-two-event-card:nth-of-type(1),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(1),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(1) .ruby-two-journey-dot,
+.ia-reveal--visible .ruby-two-journey-item:nth-child(1) .ruby-two-journey-content > *,
 .ia-reveal--visible .ruby-two-countdown__card:nth-child(1),
 .ia-reveal--visible .ruby-two-bank-card:nth-of-type(1) {
   animation-delay: 320ms;
@@ -1370,18 +1560,27 @@
 
 .ia-reveal--visible .ruby-two-gallery-item:nth-child(2),
 .ia-reveal--visible .ruby-two-event-card:nth-of-type(2),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(2),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(2) .ruby-two-journey-dot,
+.ia-reveal--visible .ruby-two-journey-item:nth-child(2) .ruby-two-journey-content > *,
 .ia-reveal--visible .ruby-two-countdown__card:nth-child(2),
 .ia-reveal--visible .ruby-two-bank-card:nth-of-type(2) {
   animation-delay: 460ms;
 }
 
 .ia-reveal--visible .ruby-two-gallery-item:nth-child(3),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(3),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(3) .ruby-two-journey-dot,
+.ia-reveal--visible .ruby-two-journey-item:nth-child(3) .ruby-two-journey-content > *,
 .ia-reveal--visible .ruby-two-countdown__card:nth-child(3),
 .ia-reveal--visible .ruby-two-bank-card:nth-of-type(3) {
   animation-delay: 600ms;
 }
 
 .ia-reveal--visible .ruby-two-gallery-item:nth-child(4),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(4),
+.ia-reveal--visible .ruby-two-journey-item:nth-child(4) .ruby-two-journey-dot,
+.ia-reveal--visible .ruby-two-journey-item:nth-child(4) .ruby-two-journey-content > *,
 .ia-reveal--visible .ruby-two-countdown__card:nth-child(4) {
   animation-delay: 740ms;
 }
@@ -1540,6 +1739,30 @@
   }
 }
 
+@keyframes rubyTwoTimelineGrow {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+}
+
+@keyframes rubyTwoDotReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes rubyTwoFloralBloomLeft {
   from {
     opacity: 0;
@@ -1651,9 +1874,7 @@
   .ruby-two-countdown__card strong,
   .ruby-two-countdown__card span,
   .ruby-two-journey-item,
-  .ruby-two-gallery-featured,
   .ruby-two-gallery-item,
-  .ruby-two-gallery-featured__play,
   .ruby-two-form,
   .ruby-two-label,
   .ruby-two-input,

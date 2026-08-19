@@ -23,6 +23,7 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
   private refreshTimer: number | null = null;
   private initialized = false;
   private lastScrollTop = 0;
+  private revealedSections = new WeakSet<HTMLElement>();
 
   constructor(
     private el: ElementRef<HTMLElement>,
@@ -106,7 +107,7 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
 
         const rootHeight = entry.rootBounds?.height || window.innerHeight || 0;
         if (entry.boundingClientRect.bottom < -160 || entry.boundingClientRect.top > rootHeight + 160) {
-          this.reset(section);
+          this.reset(section, profile.theme);
         }
       });
     }, {
@@ -167,10 +168,15 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
   }
 
   private reveal(section: HTMLElement): void {
+    this.revealedSections.add(section);
     this.renderer.addClass(section, 'ia-reveal--visible');
   }
 
-  private reset(section: HTMLElement): void {
+  private reset(section: HTMLElement, theme: string): void {
+    if (theme === 'garden-whisper' && this.revealedSections.has(section)) {
+      return;
+    }
+
     this.renderer.removeClass(section, 'ia-reveal--visible');
   }
 }

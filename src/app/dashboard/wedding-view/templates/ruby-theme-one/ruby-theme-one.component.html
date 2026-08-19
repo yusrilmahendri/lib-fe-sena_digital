@@ -214,7 +214,7 @@
         </div>
       </section>
 
-      <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && getGalleryCarouselItems().length">
+      <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && hasGallery()">
         <div class="ruby-gallery-content">
           <div class="ruby-caption ruby-caption--gallery" data-caption-motion="gallery">
             <p class="ruby-gallery-label ruby-caption__eyebrow">MOMENTS</p>
@@ -222,7 +222,32 @@
             <div class="ruby-gallery-line ruby-caption__divider"></div>
           </div>
 
-          <div class="ruby-gallery-carousel">
+          <button
+            class="ruby-video-card gallery-card"
+            type="button"
+            *ngFor="let item of getGalleryVideoItems(); trackBy: trackByGallery"
+            [class.is-image-missing]="!getGalleryVideoCoverUrl(item)"
+            [attr.aria-label]="'Putar video ' + (item.nama_foto || item.description || 'undangan')"
+            (click)="openGalleryVideo(item)"
+          >
+            <img
+              *ngIf="getGalleryVideoCoverUrl(item)"
+              [src]="getGalleryVideoCoverUrl(item)"
+              [alt]="item.nama_foto || item.description || 'Thumbnail video'"
+              [style.object-fit]="getPhotoObjectFit(item)"
+              [style.object-position]="getPhotoObjectPosition(item)"
+              (error)="onGalleryImageError($event)"
+            />
+            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Thumbnail video belum tersedia</span></div>
+            <span class="ruby-gallery-video-overlay" aria-hidden="true"></span>
+            <span class="ruby-gallery-video-badge">VIDEO</span>
+            <span class="ruby-gallery-play" aria-hidden="true">
+              <i class="fas fa-play"></i>
+            </span>
+            <span class="ruby-gallery-watch-label">Tonton Video</span>
+          </button>
+
+          <div class="ruby-gallery-carousel" *ngIf="getGalleryCarouselItems().length">
             <button class="ruby-gallery-nav ruby-gallery-nav--prev" type="button" aria-label="Foto sebelumnya" (click)="scrollGalleryCarousel(-1)">
               <i class="fas fa-chevron-left" aria-hidden="true"></i>
             </button>
@@ -394,7 +419,7 @@
             </button>
           </div>
 
-          <div class="ruby-wish-list" *ngIf="visibleGuestWishes.length > 0; else emptyWishes">
+          <div class="ruby-wish-list" [class.ruby-wish-list--scrollable]="visibleGuestWishes.length > 3" *ngIf="visibleGuestWishes.length > 0; else emptyWishes">
             <article class="ruby-wish-card" *ngFor="let wish of visibleGuestWishes; trackBy: trackByWish">
               <div class="ruby-wish-card__header">
                 <p class="ruby-wish-card__name">{{ wish.nama }}</p>
@@ -438,9 +463,9 @@
               <button
                 type="button"
                 class="ruby-copy-button"
-                (click)="copyAccountNumber(bank.nomor_rekening)"
+                (click)="copyAccountNumber(bank)"
               >
-                Salin No. Rekening
+                Salin Rekening
               </button>
             </article>
           </div>

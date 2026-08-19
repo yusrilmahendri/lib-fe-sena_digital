@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, Simp
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
-import { BankAccount, GalleryItem, GuestWish, WeddingData, WeddingEvent } from '../../../../services/wedding-data.service';
+import { BankAccount, GalleryItem, GuestWish, WeddingData, WeddingEvent, WeddingStory } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
 import {
   logInvitationImageError,
@@ -31,11 +31,12 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
   isSubmittingWish = false;
+  selectedGalleryVideoUrl: SafeResourceUrl | null = null;
+  selectedGalleryVideoTitle = '';
   override isOpening = false;
   hasOpened = false;
   forceOpened = false;
 
-  private readonly FALLBACK_EVENT = {} as WeddingEvent;
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
 
   constructor(
@@ -242,6 +243,10 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   getSafeGalleryPhotos(): GalleryItem[] {
     return this.getGalleryItems().filter((item) => {
+      if (this.hasGalleryVideo(item)) {
+        return false;
+      }
+
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
@@ -252,7 +257,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   override hasGallery(): boolean {
-    return this.getSafeGalleryPhotos().length > 0;
+    return this.getSafeGalleryPhotos().length > 0 || this.getGalleryVideoItems().length > 0;
   }
 
   override getFeaturedGalleryItem(): GalleryItem | null {
@@ -260,15 +265,43 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   override getGalleryGridItems(): GalleryItem[] {
-    return this.getSafeGalleryPhotos().slice(1, 5);
+    return this.getSafeGalleryPhotos();
   }
 
   override getGalleryPhotoUrl(item: any): string {
-    return resolveInvitationPhotoUrl(item) || this.getGalleryVideoThumbnailUrl(item);
+    return resolveInvitationPhotoUrl(item);
   }
 
   hasGalleryVideo(item: any): boolean {
-    return !!this.getRawGalleryVideoUrl(item);
+    return !!this.getYoutubeEmbedUrl(this.getRawGalleryVideoUrl(item));
+  }
+
+  getGalleryVideoItems(): GalleryItem[] {
+    return this.getGalleryItems().filter((item) => this.hasGalleryVideo(item));
+  }
+
+  getGalleryVideoCoverUrl(item: any): string {
+    const photoUrl = resolveInvitationPhotoUrl(item);
+    if (photoUrl && !this.isUnsafeThemeImage(photoUrl)) {
+      return photoUrl;
+    }
+
+    return this.getGalleryVideoThumbnailUrl(item);
+  }
+
+  openGalleryVideo(item: any): void {
+    const embedUrl = this.getYoutubeEmbedUrl(this.getRawGalleryVideoUrl(item));
+    if (!embedUrl || !this.sanitizer) {
+      return;
+    }
+
+    this.selectedGalleryVideoTitle = item?.description || item?.nama_foto || 'Video undangan';
+    this.selectedGalleryVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.withYoutubeAutoplay(embedUrl));
+  }
+
+  closeGalleryVideo(): void {
+    this.selectedGalleryVideoUrl = null;
+    this.selectedGalleryVideoTitle = '';
   }
 
   override onImageError(event: Event): void {
@@ -289,17 +322,23 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   // ─── Event cards ─────────────────────────────────────────────────────
 
-  getAkadCard(): WeddingEvent {
-    return this.getAkadEvent() ?? this.FALLBACK_EVENT;
+  getDisplayEvents(): WeddingEvent[] {
+    return this.getEvents().filter((event) => this.isDisplayEvent(event));
   }
 
-  getReceptionCard(): WeddingEvent {
-    return this.getReceptionEvent() ?? this.FALLBACK_EVENT;
+  trackByEvent(index: number, event: WeddingEvent): string | number {
+    const data = event as any;
+    return data?.id || data?.uuid || data?.slug || data?.nama_acara || index;
+  }
+
+  getEventTitle(event: WeddingEvent): string {
+    const data = event as any;
+    return data?.nama_acara || data?.title || data?.name || 'Acara';
   }
 
   getEventAddress(event: WeddingEvent): string {
     const data = event as any;
-    return data?.address || event?.alamat || data?.location_name || 'Alamat menyusul';
+    return data?.address || event?.alamat || '';
   }
 
   getDetailEventVenue(event: WeddingEvent): string {
@@ -311,21 +350,12 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       data?.venue ||
       data?.tempat ||
       data?.lokasi ||
-      event?.nama_acara ||
-      'Lokasi menyusul'
+      ''
     );
   }
 
-  getAkadMapLink(): string | null {
-    return this.getEventMapLink(this.getAkadCard());
-  }
-
-  getReceptionMapLink(): string | null {
-    return this.getEventMapLink(this.getReceptionCard());
-  }
-
   getEventMapLink(event: WeddingEvent): string | null {
-    return this.getEventMapUrl(event);
+    return this.getDirectEventMapUrl(event, true);
   }
 
   getMapEmbedUrl(event: any): string {
@@ -335,18 +365,19 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       data?.map_embed,
       data?.embed_maps,
       data?.iframe_maps,
-    ].map((value) => String(value || '').trim()).find((value) => !!value);
+    ].map((value) => String(value || '').trim()).find((value) => this.isValidMapEmbedUrl(value));
 
     if (directEmbed) {
       return directEmbed;
     }
 
-    const query = this.getMapQuery(event);
-    if (!query) {
-      return '';
+    const coordinateQuery = this.getEventCoordinateQuery(event);
+    if (coordinateQuery) {
+      return `https://www.google.com/maps?q=${encodeURIComponent(coordinateQuery)}&output=embed`;
     }
 
-    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
+    const query = this.getMapQuery(event);
+    return query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : '';
   }
 
   getSafeMapUrl(event: any): SafeResourceUrl | null {
@@ -382,8 +413,8 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       : [];
   }
 
-  copyAccountNumber(number: string): void {
-    this.copyText(number);
+  copyAccountNumber(bank: any): void {
+    this.copyText(this.getBankClipboardText(bank), 'Data rekening berhasil disalin', 'Data rekening gagal disalin');
   }
 
   getGiftAddress(bank?: any): string {
@@ -491,6 +522,76 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
 
   // ─── Love story ───────────────────────────────────────────────────────
 
+  override getStories(): WeddingStory[] {
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.stories,
+      data?.love_story,
+      data?.story,
+      data?.journey,
+      data?.wedding_story,
+      data?.wedding_stories,
+      data?.love_stories,
+      data?.cerita,
+      data?.list_cerita,
+      data?.cerita_cinta,
+      data?.collage,
+      data?.invitation_package?.stories,
+      data?.invitation_package?.love_story,
+      data?.invitation_package?.story,
+      data?.invitation_package?.journey,
+      data?.invitation_package?.wedding_story,
+      data?.invitation_package?.wedding_stories,
+      data?.invitation_package?.cerita,
+      data?.data?.stories,
+      data?.data?.love_story,
+      data?.data?.story,
+      data?.data?.journey,
+      data?.data?.wedding_story,
+      data?.data?.wedding_stories,
+      data?.data?.cerita,
+      data?.data?.list_cerita,
+    ];
+    const rows = candidates.find((item) => Array.isArray(item)) || [];
+
+    return rows
+      .map((story: any, index: number) => {
+        const date = String(story?.tanggal_cerita || story?.date || story?.tanggal || story?.year || story?.tahun || '').trim();
+        const title = String(story?.title || story?.judul || story?.name || story?.nama_cerita || '').trim();
+        const lead = String(
+          story?.lead_cerita ||
+          story?.description ||
+          story?.deskripsi ||
+          story?.content ||
+          story?.cerita ||
+          story?.isi ||
+          story?.story ||
+          ''
+        ).trim();
+
+        return {
+          ...story,
+          id: Number(story?.id ?? index + 1),
+          title,
+          lead_cerita: lead,
+          tanggal_cerita: date,
+          created_at: String(story?.created_at || ''),
+        } as WeddingStory;
+      })
+      .filter((story: WeddingStory) => !!(story.title || story.lead_cerita || story.tanggal_cerita))
+      .sort((a: any, b: any) => {
+        const orderA = Number(a?.sort_order ?? a?.sortOrder ?? Number.MAX_SAFE_INTEGER);
+        const orderB = Number(b?.sort_order ?? b?.sortOrder ?? Number.MAX_SAFE_INTEGER);
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        const timeA = new Date(a?.tanggal_cerita || 0).getTime() || Number.MAX_SAFE_INTEGER;
+        const timeB = new Date(b?.tanggal_cerita || 0).getTime() || Number.MAX_SAFE_INTEGER;
+        return timeA - timeB;
+      });
+  }
+
   getLoveStories(): Array<{ year: string; title: string; description: string }> {
     const rawStories = this.getStories();
 
@@ -514,28 +615,7 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       });
     }
 
-    return [
-      {
-        year: '2019',
-        title: 'Pertama Bertemu',
-        description: 'Dipertemukan di sebuah acara, percakapan singkat berubah menjadi awal dari segalanya.',
-      },
-      {
-        year: '2022',
-        title: 'Menjalin Hubungan',
-        description: 'Setiap hari menjadi lebih berwarna. Kami belajar tumbuh dan saling melengkapi.',
-      },
-      {
-        year: '2025',
-        title: 'Lamaran',
-        description: 'Di bawah langit senja, sebuah janji diucapkan untuk melangkah ke jenjang yang lebih serius.',
-      },
-      {
-        year: '2026',
-        title: 'Hari Bahagia',
-        description: 'Dengan restu keluarga, kami siap memulai babak baru sebagai pasangan suami istri.',
-      },
-    ];
+    return [];
   }
 
   getLoveStoryItems(): Array<{ title: string; date: string; description: string }> {
@@ -567,23 +647,6 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────
-
-  private fallbackStoryTitle(i: number): string {
-    return (
-      ['Pertemuan Pertama', 'Menjalin Hubungan', 'Lamaran', 'Hari Bahagia'][i] || 'Cerita Kami'
-    );
-  }
-
-  private fallbackStoryDescription(i: number): string {
-    return (
-      [
-        'Kami dipertemukan dalam sebuah momen yang sederhana, lalu saling menemukan alasan untuk bertahan.',
-        'Perjalanan kami dipenuhi percakapan hangat, tawa, dan dukungan yang membuat cinta tumbuh semakin kuat.',
-        'Dengan restu keluarga besar, kami memutuskan untuk melangkah ke tahap yang lebih serius.',
-        'Hari ini menjadi awal baru bagi kami untuk membangun kisah rumah tangga bersama.',
-      ][i] || 'Cerita cinta kami akan terus bertumbuh.'
-    );
-  }
 
   private getLoveStoryYear(story: any): string {
     const rawDate = story?.tanggal_cerita || story?.date || story?.tanggal || story?.year || story?.tahun || '';
@@ -635,25 +698,137 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     return String(item?.url_video || item?.video_url || item?.youtube_url || item?.video || '').trim();
   }
 
+  private getYoutubeEmbedUrl(value: string): string {
+    const videoId = this.getYoutubeVideoId(value);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  }
+
+  private withYoutubeAutoplay(value: string): string {
+    if (!value) {
+      return '';
+    }
+
+    try {
+      const url = new URL(value);
+      url.searchParams.set('autoplay', '1');
+      url.searchParams.set('mute', '1');
+      url.searchParams.set('rel', '0');
+      url.searchParams.set('playsinline', '1');
+      return url.toString();
+    } catch {
+      return value;
+    }
+  }
+
   private getYoutubeVideoId(value: string): string {
     const raw = String(value || '').trim();
     if (!raw) {
       return '';
     }
 
-    const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-    return match?.[1] || '';
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.replace(/^www\./, '').toLowerCase();
+
+      if (host === 'youtu.be') {
+        return this.normalizeYoutubeVideoId(url.pathname.split('/').filter(Boolean)[0]);
+      }
+
+      if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+        if (url.pathname.startsWith('/watch')) {
+          return this.normalizeYoutubeVideoId(url.searchParams.get('v') || '');
+        }
+
+        const parts = url.pathname.split('/').filter(Boolean);
+        if (['embed', 'shorts', 'live'].includes(parts[0])) {
+          return this.normalizeYoutubeVideoId(parts[1]);
+        }
+      }
+    } catch {
+      const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      return this.normalizeYoutubeVideoId(match?.[1] || '');
+    }
+
+    return '';
+  }
+
+  private normalizeYoutubeVideoId(value: string | undefined | null): string {
+    const id = String(value || '').trim().split(/[?&#/]/)[0];
+    return /^[A-Za-z0-9_-]{6,}$/.test(id) ? id : '';
+  }
+
+  private isDisplayEvent(event: WeddingEvent | null | undefined): boolean {
+    if (!event || typeof event !== 'object') {
+      return false;
+    }
+
+    const data = event as any;
+    return [
+      data?.tanggal_acara,
+      data?.start_acara,
+      data?.tanggal,
+      data?.date,
+      data?.location_name,
+      data?.address,
+      data?.alamat,
+      data?.link_maps,
+      data?.google_maps_url,
+    ].some((value) => String(value || '').trim());
+  }
+
+  private getDirectEventMapUrl(event: WeddingEvent | null | undefined, buttonOnly = false): string | null {
+    const data = event as any;
+    const buttonLinks = [
+      data?.link_maps,
+      data?.google_maps_url,
+    ];
+    const extraLinks = [
+      data?.maps_url,
+      data?.map_url,
+      data?.google_map_url,
+      data?.location_url,
+      data?.url_maps,
+      data?.maps_link,
+    ];
+    const candidates = buttonOnly ? buttonLinks : [...buttonLinks, ...extraLinks];
+    const directLink = candidates.map((value) => String(value || '').trim()).find((value) => this.isValidEventMapUrl(value));
+
+    return directLink || null;
+  }
+
+  private isValidEventMapUrl(value: string | null | undefined): boolean {
+    const normalized = String(value || '').trim();
+    if (!normalized) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(normalized);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  private isValidMapEmbedUrl(value: string | null | undefined): boolean {
+    const normalized = String(value || '').trim();
+    if (!this.isValidEventMapUrl(normalized)) {
+      return false;
+    }
+
+    return /\/maps\/embed\b|[?&]output=embed\b/i.test(normalized);
+  }
+
+  private getEventCoordinateQuery(event: WeddingEvent): string {
+    const data = event as any;
+    const latitude = String(data?.latitude || data?.lat || '').trim();
+    const longitude = String(data?.longitude || data?.lng || data?.long || '').trim();
+
+    return latitude && longitude ? `${latitude},${longitude}` : '';
   }
 
   private getMapQuery(event: WeddingEvent): string {
     const data = event as any;
-    const latitude = String(data?.latitude || '').trim();
-    const longitude = String(data?.longitude || '').trim();
-
-    if (latitude && longitude) {
-      return `${latitude},${longitude}`;
-    }
-
     return [
       this.getEventAddress(event),
       this.getDetailEventVenue(event),
@@ -672,13 +847,49 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     return normalized.startsWith('@') ? normalized : `@${normalized}`;
   }
 
-  private copyText(value: string): void {
+  private copyText(value: string, successMessage = 'Data berhasil disalin', errorMessage = 'Data gagal disalin'): void {
     const text = String(value || '').trim();
-    if (!text || !navigator?.clipboard) {
+    if (!text) {
       return;
     }
 
-    navigator.clipboard.writeText(text).catch(() => {});
+    const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : null;
+    if (clipboard?.writeText) {
+      clipboard.writeText(text)
+        .then(() => this.toastService.showToast(successMessage, 'success'))
+        .catch(() => this.fallbackCopyText(text, successMessage, errorMessage));
+      return;
+    }
+
+    this.fallbackCopyText(text, successMessage, errorMessage);
+  }
+
+  private fallbackCopyText(text: string, successMessage: string, errorMessage: string): void {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (!copied) {
+        throw new Error('copy failed');
+      }
+      this.toastService.showToast(successMessage, 'success');
+    } catch {
+      this.toastService.showToast(errorMessage, 'error');
+    }
+  }
+
+  private getBankClipboardText(bank: any): string {
+    const bankName = String(bank?.nama_bank || bank?.bank_name || bank?.bank?.name || bank?.bank?.nama_bank || bank?.bank?.kode_bank || bank?.kode_bank || '').trim();
+    const accountHolder = String(bank?.nama_pemilik || bank?.atas_nama || bank?.account_holder || bank?.pemilik || bank?.owner || '').trim();
+    const accountNumber = String(bank?.nomor_rekening || bank?.account_number || bank?.rekening || '').trim();
+
+    return [bankName, accountHolder, accountNumber].filter(Boolean).join('\n');
   }
 
   private formatOpeningDate(dateValue?: string | null): string {

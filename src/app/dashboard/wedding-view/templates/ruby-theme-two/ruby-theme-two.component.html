@@ -103,52 +103,25 @@
         </article>
       </section>
 
-      <section class="ruby-two-section ruby-two-section--events" *ngIf="isEventVisible()">
+      <section class="ruby-two-section ruby-two-section--events" *ngIf="isEventVisible() && getDisplayEvents().length">
         <p class="ruby-two-section__eyebrow">Save The Date</p>
         <h2 class="ruby-two-title">Detail Acara</h2>
 
-        <article class="ruby-two-event-card">
-          <span class="ruby-two-event-card__label">Akad Nikah</span>
-          <h3>{{ formatDate(getAkadCard().tanggal_acara, 'long') }}</h3>
-          <p>{{ formatTimeRange(getAkadCard()) }}</p>
-          <strong>{{ getDetailEventVenue(getAkadCard()) }}</strong>
-          <p>{{ getEventAddress(getAkadCard()) }}</p>
-          <div class="ruby-two-map-preview" role="img" aria-label="Preview peta akad nikah">
+        <article class="ruby-two-event-card" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent">
+          <span class="ruby-two-event-card__label">{{ getEventTitle(event) }}</span>
+          <h3 *ngIf="event.tanggal_acara">{{ formatDate(event.tanggal_acara, 'long') }}</h3>
+          <p *ngIf="formatTimeRange(event)">{{ formatTimeRange(event) }}</p>
+          <strong *ngIf="getDetailEventVenue(event)">{{ getDetailEventVenue(event) }}</strong>
+          <p *ngIf="getEventAddress(event)">{{ getEventAddress(event) }}</p>
+          <div class="ruby-two-map-preview" *ngIf="getSafeMapUrl(event) as mapEmbed" role="img" [attr.aria-label]="'Preview peta ' + getEventTitle(event)">
             <iframe
-              *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder"
               [src]="mapEmbed"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
               allowfullscreen>
             </iframe>
-            <ng-template #akadMapPlaceholder>
-              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-            </ng-template>
           </div>
-          <a *ngIf="getAkadMapLink() as mapsLink" class="ruby-two-button ruby-two-button--ghost" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-            Lihat Lokasi
-          </a>
-        </article>
-
-        <article class="ruby-two-event-card">
-          <span class="ruby-two-event-card__label">Resepsi</span>
-          <h3>{{ formatDate(getReceptionCard().tanggal_acara, 'long') }}</h3>
-          <p>{{ formatTimeRange(getReceptionCard()) }}</p>
-          <strong>{{ getDetailEventVenue(getReceptionCard()) }}</strong>
-          <p>{{ getEventAddress(getReceptionCard()) }}</p>
-          <div class="ruby-two-map-preview" role="img" aria-label="Preview peta resepsi">
-            <iframe
-              *ngIf="getSafeMapUrl(getReceptionCard()) as mapEmbed; else receptionMapPlaceholder"
-              [src]="mapEmbed"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              allowfullscreen>
-            </iframe>
-            <ng-template #receptionMapPlaceholder>
-              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-            </ng-template>
-          </div>
-          <a *ngIf="getReceptionMapLink() as mapsLink" class="ruby-two-button ruby-two-button--ghost" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+          <a *ngIf="getEventMapLink(event) as mapsLink" class="ruby-two-button ruby-two-button--ghost" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
             Lihat Lokasi
           </a>
         </article>
@@ -185,31 +158,58 @@
         </div>
       </section>
 
-      <section class="ruby-two-section ruby-two-section--gallery" *ngIf="isGalleryVisible()">
+      <section class="ruby-two-section ruby-two-section--gallery" *ngIf="isGalleryVisible() && hasGallery()">
         <p class="ruby-two-section__eyebrow">Our Moments</p>
         <h2 class="ruby-two-title">Galeri Foto</h2>
 
-        <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
-          <article class="ruby-two-gallery-featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
-            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
+        <button
+          class="ruby-two-video-card gallery-card"
+          type="button"
+          *ngFor="let item of getGalleryVideoItems(); trackBy: trackByGallery"
+          [class.is-image-missing]="!getGalleryVideoCoverUrl(item)"
+          [attr.aria-label]="'Putar video ' + (item.nama_foto || item.description || 'undangan')"
+          (click)="openGalleryVideo(item)"
+        >
+          <img *ngIf="getGalleryVideoCoverUrl(item)" [src]="getGalleryVideoCoverUrl(item)" [alt]="getGalleryAlt(item, 0)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
+          <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Thumbnail video belum tersedia</span></div>
+          <span class="ruby-two-video-card__overlay" aria-hidden="true"></span>
+          <span class="ruby-two-video-card__badge">VIDEO</span>
+          <span class="ruby-two-video-card__play" aria-hidden="true">
+            <i class="fas fa-play"></i>
+          </span>
+          <span class="ruby-two-video-card__label">Tonton Video</span>
+        </button>
+
+        <div class="ruby-two-gallery-grid" *ngIf="getGalleryGridItems().length">
+          <article class="ruby-two-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
+            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-            <div class="ruby-two-gallery-featured__play" *ngIf="hasGalleryVideo(featured)">
-              <i class="fas fa-play" aria-hidden="true"></i>
-            </div>
           </article>
-
-          <div class="ruby-two-gallery-grid">
-            <article class="ruby-two-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-              <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
-              <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
-            </article>
-          </div>
-        </ng-container>
-
-        <ng-template #emptyGallery>
-          <div class="ruby-two-empty">Galeri foto akan segera diperbarui.</div>
-        </ng-template>
+        </div>
       </section>
+
+      <div
+        class="ruby-two-video-modal"
+        *ngIf="selectedGalleryVideoUrl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ruby-two-video-modal-title"
+        (click)="closeGalleryVideo()"
+      >
+        <div class="ruby-two-video-modal__panel" (click)="$event.stopPropagation()">
+          <button class="ruby-two-video-modal__close" type="button" aria-label="Tutup video" (click)="closeGalleryVideo()">×</button>
+          <h3 id="ruby-two-video-modal-title">{{ selectedGalleryVideoTitle }}</h3>
+          <div class="ruby-two-video-modal__frame">
+            <iframe
+              [src]="selectedGalleryVideoUrl"
+              title="Video galeri"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      </div>
 
       <section class="ruby-two-section ruby-two-section--wishes" *ngIf="isWishVisible()">
         <p class="ruby-two-section__eyebrow">Send Your Wishes</p>
@@ -234,7 +234,7 @@
           </button>
         </div>
 
-        <div class="ruby-two-wishes-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
+        <div class="ruby-two-wishes-list" [class.ruby-two-wishes-list--scrollable]="getDisplayedWishes().length > 3" *ngIf="getDisplayedWishes().length; else emptyWishes">
           <article class="ruby-two-wish-card" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
             <div class="ruby-two-wish-card__top">
               <strong>{{ wish.nama }}</strong>
@@ -262,8 +262,8 @@
             </div>
             <strong>{{ bank.nomor_rekening }}</strong>
             <p>a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
-            <button class="ruby-two-button ruby-two-button--ghost" type="button" (click)="copyAccountNumber(bank.nomor_rekening)">
-              Salin No. Rekening
+            <button class="ruby-two-button ruby-two-button--ghost" type="button" (click)="copyAccountNumber(bank)">
+              Salin Rekening
             </button>
           </article>
         </ng-container>

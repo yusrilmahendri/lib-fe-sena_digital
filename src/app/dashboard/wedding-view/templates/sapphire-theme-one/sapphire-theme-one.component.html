@@ -84,7 +84,7 @@
     </section>
 
     <!-- Gallery -->
-    <section class="sapphire-gallery" *ngIf="isGalleryVisible()">
+    <section class="sapphire-gallery" *ngIf="isGalleryVisible() && hasGallery()">
       <div class="sapphire-gallery-date-block">
         <div class="sapphire-gallery-divider">
           <span></span>
@@ -101,17 +101,24 @@
         </div>
       </div>
 
-      <ng-container *ngIf="getFeaturedGalleryItem() as featured; else emptyGallery">
+      <ng-container *ngIf="hasGallery(); else emptyGallery">
         <div class="sapphire-gallery-grid">
-          <figure class="sapphire-gallery-item sapphire-gallery-item--featured gallery-card" [class.is-image-missing]="!getGalleryPhotoUrl(featured)">
-            <img *ngIf="getGalleryPhotoUrl(featured)" [src]="getGalleryPhotoUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
+          <button
+            class="sapphire-gallery-item sapphire-gallery-item--featured sapphire-gallery-item--video gallery-card"
+            type="button"
+            *ngIf="getFeaturedGalleryVideoItem() as featured"
+            [class.is-image-missing]="!getGalleryVideoCoverUrl(featured)"
+            [attr.aria-label]="'Putar video ' + (featured.nama_foto || featured.description || 'galeri')"
+            (click)="openGalleryVideo(featured)"
+          >
+            <img *ngIf="getGalleryVideoCoverUrl(featured)" [src]="getGalleryVideoCoverUrl(featured)" [alt]="getGalleryAlt(featured, 0)" [style.object-fit]="getPhotoObjectFit(featured)" [style.object-position]="getPhotoObjectPosition(featured)" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
-            <div class="sapphire-gallery-play" *ngIf="hasGalleryVideo(featured)">
+            <div class="sapphire-gallery-play">
               <i class="fas fa-play" aria-hidden="true"></i>
             </div>
-          </figure>
+          </button>
           <figure class="sapphire-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i + 1)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
+            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
           </figure>
         </div>
@@ -138,57 +145,52 @@
     </section>
 
     <!-- Save The Date -->
-    <section class="sapphire-events" *ngIf="isEventVisible()">
+    <section class="sapphire-events" *ngIf="isEventVisible() && getDisplayEvents().length">
       <div class="sapphire-section-head">
         <p class="sapphire-kicker">Save The Date</p>
       </div>
 
-      <article class="sapphire-event-block sapphire-event-block--akad">
-        <h3 class="sapphire-event-block__title">Akad</h3>
-        <div class="sapphire-event-date-row">
-          <span class="sapphire-event-date-side">{{ getEventWeekday(getAkadCard()) }}</span>
-          <strong class="sapphire-event-date-day">{{ getEventDayNumber(getAkadCard()) }}</strong>
-          <span class="sapphire-event-date-side">{{ getEventMonthYear(getAkadCard()) }}</span>
+      <article class="sapphire-event-block" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent">
+        <h3 class="sapphire-event-block__title">{{ getEventTitle(event) }}</h3>
+        <div class="sapphire-event-date-row" *ngIf="event.tanggal_acara">
+          <span class="sapphire-event-date-side">{{ getEventWeekday(event) }}</span>
+          <strong class="sapphire-event-date-day">{{ getEventDayNumber(event) }}</strong>
+          <span class="sapphire-event-date-side">{{ getEventMonthYear(event) }}</span>
         </div>
-        <p class="sapphire-event-time">{{ formatTimeRange(getAkadCard()) }}</p>
-        <strong class="sapphire-event-venue">{{ getDetailEventVenue(getAkadCard()) }}</strong>
-        <p class="sapphire-event-address">{{ getEventAddress(getAkadCard()) }}</p>
-        <div class="sapphire-map-preview sapphire-map-preview--akad" *ngIf="getSafeMapUrl(getAkadCard()) as mapEmbed; else akadMapPlaceholder">
+        <p class="sapphire-event-time" *ngIf="formatTimeRange(event)">{{ formatTimeRange(event) }}</p>
+        <strong class="sapphire-event-venue" *ngIf="getDetailEventVenue(event)">{{ getDetailEventVenue(event) }}</strong>
+        <p class="sapphire-event-address" *ngIf="getEventAddress(event)">{{ getEventAddress(event) }}</p>
+        <div class="sapphire-map-preview" *ngIf="getSafeMapUrl(event) as mapEmbed">
           <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
         </div>
-        <ng-template #akadMapPlaceholder>
-          <div class="sapphire-map-preview sapphire-map-preview--akad sapphire-map-preview--placeholder">
-            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-          </div>
-        </ng-template>
-        <a *ngIf="getEventMapLink(getAkadCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
-          Buka Google Maps
-        </a>
-      </article>
-
-      <article class="sapphire-event-block">
-        <h3 class="sapphire-event-block__title">Resepsi</h3>
-        <div class="sapphire-event-date-row">
-          <span class="sapphire-event-date-side">{{ getEventWeekday(getReceptionCard()) }}</span>
-          <strong class="sapphire-event-date-day">{{ getEventDayNumber(getReceptionCard()) }}</strong>
-          <span class="sapphire-event-date-side">{{ getEventMonthYear(getReceptionCard()) }}</span>
-        </div>
-        <p class="sapphire-event-time">{{ formatTimeRange(getReceptionCard()) }}</p>
-        <strong class="sapphire-event-venue">{{ getDetailEventVenue(getReceptionCard()) }}</strong>
-        <p class="sapphire-event-address">{{ getEventAddress(getReceptionCard()) }}</p>
-        <div class="sapphire-map-preview" *ngIf="getSafeMapUrl(getReceptionCard()) as mapEmbed; else receptionMapPlaceholder">
-          <iframe [src]="mapEmbed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
-        </div>
-        <ng-template #receptionMapPlaceholder>
-          <div class="sapphire-map-preview sapphire-map-preview--placeholder">
-            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-          </div>
-        </ng-template>
-        <a *ngIf="getEventMapLink(getReceptionCard()) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
+        <a *ngIf="getEventMapLink(event) as mapsLink" class="sapphire-btn sapphire-btn--primary" [href]="mapsLink" target="_blank" rel="noopener noreferrer">
           Buka Google Maps
         </a>
       </article>
     </section>
+
+    <div
+      class="sapphire-video-modal"
+      *ngIf="selectedGalleryVideoUrl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sapphire-video-modal-title"
+      (click)="closeGalleryVideo()"
+    >
+      <div class="sapphire-video-modal__panel" (click)="$event.stopPropagation()">
+        <button class="sapphire-video-modal__close" type="button" aria-label="Tutup video" (click)="closeGalleryVideo()">×</button>
+        <h3 id="sapphire-video-modal-title">{{ selectedGalleryVideoTitle }}</h3>
+        <div class="sapphire-video-modal__frame">
+          <iframe
+            [src]="selectedGalleryVideoUrl"
+            title="Video galeri"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
 
     <!-- Ucapan & Doa -->
     <section class="sapphire-wishes" *ngIf="isWishVisible()" [style.background-image]="'url(' + getWishesBackground() + ')'">
@@ -217,7 +219,7 @@
           </button>
         </div>
 
-        <div class="sapphire-wish-list" *ngIf="getDisplayedWishes().length; else emptyWishes">
+        <div class="sapphire-wish-list" [class.sapphire-wish-list--scrollable]="getDisplayedWishes().length > 3" *ngIf="getDisplayedWishes().length; else emptyWishes">
           <article class="sapphire-wish-item" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
             <div class="sapphire-wish-item__top">
               <strong>{{ wish.nama }}</strong>
@@ -245,12 +247,11 @@
         <article class="sapphire-gift-card" *ngFor="let bank of getVisibleBankAccounts()">
           <div class="sapphire-gift-card__top">
             <span class="sapphire-gift-card__bank">{{ bank.nama_bank || 'Bank' }}</span>
-            <small>{{ bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
           </div>
           <strong class="sapphire-gift-card__number">{{ bank.nomor_rekening }}</strong>
           <p class="sapphire-gift-card__owner">a/n {{ bank.nama_pemilik || 'Mempelai' }}</p>
-          <button type="button" class="sapphire-btn sapphire-btn--outline" (click)="copyAccountNumber(bank.nomor_rekening)">
-            Salin No. Rekening
+          <button type="button" class="sapphire-btn sapphire-btn--outline" (click)="copyAccountNumber(bank)">
+            Salin Rekening
           </button>
         </article>
       </ng-container>
