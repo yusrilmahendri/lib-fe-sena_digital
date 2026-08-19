@@ -219,8 +219,8 @@
           </button>
         </div>
 
-        <div class="sapphire-wish-list" [class.sapphire-wish-list--scrollable]="getDisplayedWishes().length > 3" *ngIf="getDisplayedWishes().length; else emptyWishes">
-          <article class="sapphire-wish-item" *ngFor="let wish of getDisplayedWishes(); trackBy: trackByWish">
+        <div class="sapphire-wish-list" [class.sapphire-wish-list--changing]="isWishPageChanging" *ngIf="getDisplayedWishes().length; else emptyWishes">
+          <article class="sapphire-wish-item" *ngFor="let wish of paginatedWishes; trackBy: trackByWish">
             <div class="sapphire-wish-item__top">
               <strong>{{ wish.nama }}</strong>
               <span>{{ getAttendanceLabel(wish.kehadiran) }}</span>
@@ -228,6 +228,42 @@
             <p>{{ wish.pesan }}</p>
           </article>
         </div>
+
+        <nav class="sapphire-wish-pagination" *ngIf="wishTotalPages > 1" aria-label="Pagination ucapan dan doa">
+          <button
+            type="button"
+            class="sapphire-wish-pagination__button sapphire-wish-pagination__button--nav"
+            [class.is-disabled]="wishPage === 1"
+            [attr.aria-disabled]="wishPage === 1"
+            aria-label="Halaman sebelumnya"
+            (click)="goToPreviousWishPage()">
+            ‹
+          </button>
+
+          <ng-container *ngFor="let page of wishPaginationItems">
+            <span class="sapphire-wish-pagination__ellipsis" *ngIf="page === 'ellipsis'">...</span>
+            <button
+              *ngIf="page !== 'ellipsis'"
+              type="button"
+              class="sapphire-wish-pagination__button"
+              [class.is-active]="page === wishPage"
+              [attr.aria-current]="page === wishPage ? 'page' : null"
+              [attr.aria-label]="'Halaman ' + page"
+              (click)="goToWishPage(page)">
+              {{ page }}
+            </button>
+          </ng-container>
+
+          <button
+            type="button"
+            class="sapphire-wish-pagination__button sapphire-wish-pagination__button--nav"
+            [class.is-disabled]="wishPage === wishTotalPages"
+            [attr.aria-disabled]="wishPage === wishTotalPages"
+            aria-label="Halaman berikutnya"
+            (click)="goToNextWishPage()">
+            ›
+          </button>
+        </nav>
 
         <ng-template #emptyWishes>
           <div class="sapphire-empty sapphire-empty--on-dark">Belum ada ucapan. Jadilah yang pertama mengirim doa terbaik.</div>

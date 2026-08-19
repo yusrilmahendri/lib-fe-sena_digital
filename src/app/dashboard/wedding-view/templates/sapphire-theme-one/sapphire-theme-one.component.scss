@@ -873,35 +873,12 @@
   overflow-x: hidden;
 }
 
-.sapphire-wish-list--scrollable {
-  max-height: 330px;
-  overflow-y: auto;
-  padding-right: 6px;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(95, 123, 72, 0.45) rgba(255, 255, 255, 0.14);
-}
-
-.sapphire-wish-list--scrollable::-webkit-scrollbar {
-  width: 5px;
-}
-
-.sapphire-wish-list--scrollable::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-}
-
-.sapphire-wish-list--scrollable::-webkit-scrollbar-thumb {
-  background: rgba(95, 123, 72, 0.45);
-  border-radius: 999px;
-}
-
 .sapphire-wish-item {
   background: var(--sapphire-card);
   border-radius: 14px;
   padding: 14px 16px;
   color: var(--sapphire-text);
+  transition: opacity 180ms ease, transform 180ms ease, box-shadow 180ms ease;
 
   p {
     margin: 8px 0 0;
@@ -909,6 +886,10 @@
     line-height: 1.55;
     color: var(--sapphire-muted);
   }
+}
+
+.sapphire-wish-list--changing .sapphire-wish-item {
+  animation: sapphireWishPageFade 380ms ease both;
 }
 
 .sapphire-wish-item__top {
@@ -928,6 +909,80 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     color: var(--sapphire-primary);
+  }
+}
+
+.sapphire-wish-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 22px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.sapphire-wish-pagination__button {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border: 1px solid rgba(155, 63, 131, 0.32);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--sapphire-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 18px rgba(24, 35, 20, 0.1);
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+.sapphire-wish-pagination__button:hover {
+  transform: translateY(-1px);
+}
+
+.sapphire-wish-pagination__button.is-active {
+  background: var(--sapphire-primary);
+  border-color: var(--sapphire-primary);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(155, 63, 131, 0.3);
+  transform: scale(1.03);
+}
+
+.sapphire-wish-pagination__button--nav {
+  font-size: 22px;
+  padding-bottom: 2px;
+}
+
+.sapphire-wish-pagination__button.is-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.sapphire-wish-pagination__ellipsis {
+  width: 18px;
+  min-width: 18px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 36px;
+  text-align: center;
+}
+
+@keyframes sapphireWishPageFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

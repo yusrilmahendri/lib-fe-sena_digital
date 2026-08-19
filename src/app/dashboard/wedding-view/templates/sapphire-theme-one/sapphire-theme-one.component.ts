@@ -27,13 +27,17 @@ interface WishForm {
 })
 export class SapphireThemeOneComponent extends LavenderBloomThemeComponent implements OnInit, OnChanges, OnDestroy {
   wishForm: WishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
+  wishPage = 1;
+  readonly wishPerPage = 3;
   isSubmittingWish = false;
   hasOpened = false;
   forceOpened = false;
   selectedGalleryVideoUrl: SafeResourceUrl | null = null;
   selectedGalleryVideoTitle = '';
+  isWishPageChanging = false;
 
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
+  private wishPageAnimationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private svc: DashboardService,
@@ -52,9 +56,15 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
   override ngOnChanges(changes: SimpleChanges): void {
     console.log('[Garden Whisper] ngOnChanges');
     super.ngOnChanges(changes);
+    this.ensureValidWishPage();
   }
 
   override ngOnDestroy(): void {
+    if (this.wishPageAnimationTimer) {
+      clearTimeout(this.wishPageAnimationTimer);
+      this.wishPageAnimationTimer = null;
+    }
+
     this.cleanupPreviewLocks();
     super.ngOnDestroy();
   }
@@ -460,8 +470,58 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getDisplayedWishes(): GuestWish[] {
     return this.getGuestWishes()
-      .filter((item) => this.isRealGuestWish(item))
-      .slice(0, 8);
+      .filter((item) => this.isRealGuestWish(item));
+  }
+
+  get paginatedWishes(): GuestWish[] {
+    const wishes = this.getDisplayedWishes();
+    const validPage = this.getValidWishPage();
+    const start = (validPage - 1) * this.wishPerPage;
+
+    return wishes.slice(start, start + this.wishPerPage);
+  }
+
+  get wishTotalPages(): number {
+    return Math.ceil(this.getDisplayedWishes().length / this.wishPerPage);
+  }
+
+  get wishPaginationItems(): Array<number | 'ellipsis'> {
+    const totalPages = this.wishTotalPages;
+    const currentPage = this.getValidWishPage();
+
+    if (totalPages <= 4) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPage <= 3) {
+      return [1, 2, 3, 'ellipsis', totalPages];
+    }
+
+    if (currentPage >= totalPages - 2) {
+      return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [1, 'ellipsis', currentPage, 'ellipsis', totalPages];
+  }
+
+  goToWishPage(page: number): void {
+    const totalPages = this.wishTotalPages;
+
+    if (page < 1 || page > totalPages || page === this.wishPage) {
+      return;
+    }
+
+    this.wishPage = page;
+    this.playWishPageTransition();
+    this.cdr.markForCheck();
+  }
+
+  goToPreviousWishPage(): void {
+    this.goToWishPage(this.wishPage - 1);
+  }
+
+  goToNextWishPage(): void {
+    this.goToWishPage(this.wishPage + 1);
   }
 
   getAttendanceLabel(kehadiran: string): string {
@@ -490,6 +550,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
     if (isThemePreviewWeddingData(this.weddingData)) {
       this.weddingData = appendPreviewGuestWish(this.weddingData as any, payload);
+      this.wishPage = 1;
       this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
       return;
     }
@@ -520,10 +581,14 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
         if (this.weddingData) {
           this.weddingData = {
             ...this.weddingData,
-            guest_wishes: [nextWish, ...currentWishes],
+            guest_wishes: [
+              nextWish,
+              ...currentWishes.filter((wish) => this.getWishIdentity(wish) !== this.getWishIdentity(nextWish)),
+            ],
           };
         }
 
+        this.wishPage = 1;
         this.wishSubmitted.emit(nextWish);
         this.isSubmittingWish = false;
         this.wishForm = { nama: '', pesan: '', kehadiran: 'hadir' };
@@ -876,5 +941,50 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       normalizedMessage.startsWith('undangan ') &&
       normalizedMessage.endsWith(' telah dilihat')
     );
+  }
+
+  private ensureValidWishPage(): void {
+    const validPage = this.getValidWishPage();
+
+    if (this.wishPage !== validPage) {
+      this.wishPage = validPage;
+    }
+  }
+
+  private getValidWishPage(): number {
+    const totalPages = this.wishTotalPages;
+
+    if (totalPages <= 1) {
+      return 1;
+    }
+
+    return Math.min(Math.max(this.wishPage, 1), totalPages);
+  }
+
+  private playWishPageTransition(): void {
+    if (this.wishPageAnimationTimer) {
+      clearTimeout(this.wishPageAnimationTimer);
+    }
+
+    this.isWishPageChanging = true;
+    this.wishPageAnimationTimer = setTimeout(() => {
+      this.isWishPageChanging = false;
+      this.wishPageAnimationTimer = null;
+      this.cdr.markForCheck();
+    }, 420);
+  }
+
+  private getWishIdentity(wish: GuestWish): string {
+    const id = (wish as any)?.id;
+
+    if (id) {
+      return `id:${id}`;
+    }
+
+    return [
+      (wish as any)?.nama || '',
+      (wish as any)?.pesan || '',
+      (wish as any)?.created_at || '',
+    ].join('|').toLowerCase();
   }
 }
