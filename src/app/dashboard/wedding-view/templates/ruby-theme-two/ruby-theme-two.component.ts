@@ -222,21 +222,7 @@ onGalleryTouchEnd(event: TouchEvent): void {
       return;
     }
 
-    window.requestAnimationFrame(() => {
-      this.cleanupPreviewLocks();
-    });
-
-    window.setTimeout(() => {
-      this.cleanupPreviewLocks();
-    }, 0);
-
-    window.setTimeout(() => {
-      this.cleanupPreviewLocks();
-    }, 50);
-
-    window.setTimeout(() => {
-      this.cleanupPreviewLocks();
-    }, 250);
+    window.requestAnimationFrame(() => this.cleanupPreviewLocks());
   }
 
   private cleanupPreviewLocks(): void {

@@ -86,7 +86,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   hasOpened = false;
 
   private readonly subscriptions = new Subscription();
-  private openingTimer: any;
   private countdownTimer?: any;
   private captionObserver?: IntersectionObserver;
   private captionMutationObserver?: MutationObserver;
@@ -154,25 +153,63 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (this.isOpening || this.hasOpened) {
+    if (this.hasOpened) {
       return;
     }
 
-    this.isOpening = true;
     this.hasOpened = true;
     this.isInvitationOpened = true;
-    this.openInvitationRequested.emit();
+    this.isCoverVisible = false;
+    this.isOpening = false;
+    this.releaseScrollLocks();
 
-    this.openingTimer = setTimeout(() => {
-      this.isOpening = false;
-      this.scheduleRubyCaptionMotionRefresh();
-    }, 850);
+    // Open content and unlock scroll synchronously; audio runs in parent async.
+    this.openInvitationRequested.emit();
+    this.releaseScrollLocks();
+    this.scheduleRubyCaptionMotionRefresh();
+  }
+
+  private releaseScrollLocks(): void {
+    this.cleanupPreviewLocks();
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => this.cleanupPreviewLocks());
+  }
+
+  private cleanupPreviewLocks(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const body = document.body;
+    const html = document.documentElement;
+    const lockClasses = [
+      'no-scroll',
+      'modal-open',
+      'preview-open',
+      'invitation-open',
+      'cover-active',
+      'opening-active',
+      'theme-opening-active',
+    ];
+
+    lockClasses.forEach((className) => {
+      body.classList.remove(className);
+      html.classList.remove(className);
+    });
+
+    ['overflow', 'overflow-y', 'position', 'top', 'left', 'right', 'width', 'height', 'touch-action', 'overscroll-behavior'].forEach(
+      (property) => {
+        body.style.removeProperty(property);
+        html.style.removeProperty(property);
+      }
+    );
   }
 
   override ngOnDestroy(): void {
-    if (this.openingTimer) {
-      clearTimeout(this.openingTimer);
-    }
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
       this.countdownTimer = undefined;

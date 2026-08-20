@@ -3206,7 +3206,7 @@
 .ruby-theme-one {
   background: #fffaf8;
   overflow-x: clip;
-  touch-action: manipulation;
+  touch-action: pan-y;
 }
 
 .ruby-shell,
@@ -4110,4 +4110,37 @@
 :host ::ng-deep .ruby-cover,
 :host ::ng-deep .ruby-cover * {
   --bs-body-bg: #fff;
+}
+
+/* Opened state: allow immediate vertical scroll, no scroll trap on shell/main. */
+.ruby-theme-one--opened {
+  overflow-x: hidden;
+  overflow-y: visible;
+  touch-action: pan-y;
+
+  .ruby-shell,
+  .ruby-main {
+    overflow: visible;
+    overflow-y: visible;
+    touch-action: pan-y;
+  }
+
+  /* Text/images that were revealed stay visible — no replay on scroll. */
+  .ia-reveal--visible,
+  .ia-reveal--visible .ia-stagger-item,
+  .ia-reveal--visible h1,
+  .ia-reveal--visible h2,
+  .ia-reveal--visible h3,
+  .ia-reveal--visible p,
+  .ia-reveal--visible img,
+  .ia-reveal--visible blockquote,
+  .ia-reveal--visible strong,
+  .ia-reveal--visible small,
+  .ia-reveal--visible button,
+  .ia-reveal--visible a,
+  .ia-reveal--visible iframe {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+  }
 }

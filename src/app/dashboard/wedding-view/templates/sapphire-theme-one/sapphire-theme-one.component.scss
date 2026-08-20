@@ -1858,3 +1858,37 @@
     opacity: 1 !important;
   }
 }
+
+/* Opened: vertical scroll only on page; horizontal swipe reserved for lightbox. */
+.sapphire-theme-one--opened {
+  overflow-x: hidden;
+  overflow-y: visible;
+  touch-action: pan-y;
+
+  .sapphire-content {
+    overflow: visible;
+    overflow-y: visible;
+    touch-action: pan-y;
+  }
+
+  .ia-reveal--visible,
+  .ia-reveal--visible .ia-stagger-item,
+  .ia-reveal--visible h1,
+  .ia-reveal--visible h2,
+  .ia-reveal--visible h3,
+  .ia-reveal--visible p,
+  .ia-reveal--visible img,
+  .ia-reveal--visible strong,
+  .ia-reveal--visible small,
+  .ia-reveal--visible label,
+  .ia-reveal--visible input,
+  .ia-reveal--visible textarea,
+  .ia-reveal--visible button,
+  .ia-reveal--visible a,
+  .ia-reveal--visible iframe,
+  .ia-reveal--visible article {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+  }
+}

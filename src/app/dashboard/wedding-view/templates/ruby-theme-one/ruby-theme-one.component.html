@@ -1,8 +1,15 @@
-<section class="ruby-theme-one" appRevealScope="soft-ivory" *ngIf="weddingData as data">
+<section
+  class="ruby-theme-one"
+  appRevealScope="soft-ivory"
+  *ngIf="weddingData as data"
+  [class.ruby-theme-one--opened]="hasOpened || invitationOpened"
+>
   <article class="ruby-shell">
-    <section class="ruby-cover"
-             [class.ruby-cover--opening]="isOpening"
-             [class.ruby-cover--opened]="hasOpened || invitationOpened">
+    <section
+      class="ruby-cover"
+      *ngIf="!(hasOpened || invitationOpened)"
+      [class.ruby-cover--opening]="isOpening"
+    >
       <ng-container *ngIf="getCoverPhoto() as coverPhoto; else coverPlaceholder">
         <div
           class="ruby-cover__media ruby-cover__bg"

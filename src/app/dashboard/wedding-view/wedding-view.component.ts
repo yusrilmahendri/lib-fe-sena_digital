@@ -1425,8 +1425,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
     // remains rendered and shows its full scrollable content.
     this.setCurrentView(ContentView.MAIN);
 
+    // Audio is a side-effect only — never block opening or scroll on play promise.
     if (!this.isPlaying) {
-      this.togglePlay(true);
+      setTimeout(() => this.togglePlay(true), 0);
     }
 
     // Track invitation view via attendance API

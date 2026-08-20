@@ -173,10 +173,19 @@ export class RevealScopeDirective implements AfterViewInit, OnChanges, OnDestroy
   }
 
   private reset(section: HTMLElement, theme: string): void {
-    if (theme === 'garden-whisper' && this.revealedSections.has(section)) {
+    // Once a section has been revealed on landing themes, never hide it again
+    // (prevents text/image flicker when scrolling back through viewport).
+    if (this.shouldPersistReveal(theme) && this.revealedSections.has(section)) {
       return;
     }
 
     this.renderer.removeClass(section, 'ia-reveal--visible');
+  }
+
+  /** Landing themes where scroll-reveal must not replay on re-entry. */
+  private shouldPersistReveal(theme: string): boolean {
+    return theme === 'soft-ivory'
+      || theme === 'lavender-bloom'
+      || theme === 'garden-whisper';
   }
 }
