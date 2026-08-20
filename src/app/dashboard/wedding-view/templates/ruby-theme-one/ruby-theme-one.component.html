@@ -261,15 +261,19 @@
 
                 <span
                   class="ruby-story-year"
-                  *ngIf="story.year">
-                  {{ story.year }}
+                  *ngIf="story.date">
+                  {{ story.date }}
                 </span>
 
                 <h3 *ngIf="story.title">
                   {{ story.title }}
                 </h3>
 
-                <p *ngIf="story.description">
+                <p class="ruby-story-lead" *ngIf="story.lead">
+                  {{ story.lead }}
+                </p>
+
+                <p class="ruby-story-body" *ngIf="story.description">
                   {{ story.description }}
                 </p>
 
@@ -310,11 +314,9 @@
             />
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Thumbnail video belum tersedia</span></div>
             <span class="ruby-gallery-video-overlay" aria-hidden="true"></span>
-            <span class="ruby-gallery-video-badge">VIDEO</span>
             <span class="ruby-gallery-play" aria-hidden="true">
               <i class="fas fa-play"></i>
             </span>
-            <span class="ruby-gallery-watch-label">Tonton Video</span>
           </button>
 
           <div class="ruby-gallery-carousel" *ngIf="getGalleryCarouselItems().length" appOnceReveal="fade-up" [orDelay]="240" [orDuration]="900">
@@ -351,11 +353,9 @@
                 />
                 <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
                 <span class="ruby-gallery-video-overlay" *ngIf="hasVideo(item)" aria-hidden="true"></span>
-                <span class="ruby-gallery-video-badge" *ngIf="hasVideo(item)">Video</span>
                 <span class="ruby-gallery-play" *ngIf="hasVideo(item)" aria-hidden="true">
                   <i class="fas fa-play"></i>
                 </span>
-                <span class="ruby-gallery-watch-label" *ngIf="hasVideo(item)">Tonton Video</span>
               </button>
             </div>
 

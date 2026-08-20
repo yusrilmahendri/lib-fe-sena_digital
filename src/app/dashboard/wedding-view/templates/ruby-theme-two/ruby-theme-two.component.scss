@@ -876,11 +876,22 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   font-weight: 600;
 }
 
-.ruby-two-journey-content p {
+.ruby-two-journey-lead {
+  color: #9b4de3;
+  font-size: 13px;
+  font-weight: 600;
+  font-style: italic;
+  line-height: 1.6;
+  margin: 0 0 6px;
+}
+
+.ruby-two-journey-body {
   color: #7b6f82;
   font-size: 13px;
   line-height: 1.65;
   margin: 0;
+  white-space: pre-line;
+  overflow-wrap: break-word;
 }
 
 .ruby-two-gallery-item,
@@ -978,33 +989,20 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   pointer-events: none;
 }
 
-.ruby-two-video-card__badge {
-  position: absolute;
-  right: 14px;
-  top: 14px;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  color: #8a5d91;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  box-shadow: 0 10px 22px rgba(62, 43, 70, 0.18);
-  pointer-events: none;
+.ruby-two-video-card__badge,
+.ruby-two-video-card__label {
+  display: none !important;
 }
 
 .ruby-two-video-card__play {
   position: absolute;
-  left: 50%;
   top: 50%;
+  left: 50%;
   z-index: 4;
   transform: translate(-50%, -50%);
   width: 58px;
   height: 58px;
+  margin: 0;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -1016,39 +1014,20 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   font-size: 1.2rem;
+  line-height: 1;
   pointer-events: none;
   transition: transform 220ms ease, background 220ms ease;
 }
 
 .ruby-two-video-card__play i {
-  margin-left: 3px;
+  margin: 0;
+  padding-left: 2px;
+  line-height: 1;
 }
 
 .ruby-two-video-card:hover .ruby-two-video-card__play {
   transform: translate(-50%, -50%) scale(1.06);
   background: rgba(143, 93, 152, 0.95);
-}
-
-.ruby-two-video-card__label {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  z-index: 4;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.86);
-  color: #6f4b78;
-  font-family: "Poppins", system-ui, sans-serif;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
 }
 
 .ruby-two-video-modal {
@@ -2308,6 +2287,24 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
     clip-path: none !important;
     transform: none;
     animation: none !important;
+  }
+
+  /* Play icon must keep centering transform (opened span/button rule above resets it). */
+  .ruby-two-main > section .ruby-two-video-card__play {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    margin: 0 !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .ruby-two-main > section .ruby-two-video-card:hover .ruby-two-video-card__play {
+    transform: translate(-50%, -50%) scale(1.06) !important;
+  }
+
+  .ruby-two-main > section .ruby-two-video-card__badge,
+  .ruby-two-main > section .ruby-two-video-card__label {
+    display: none !important;
   }
 
   .ruby-two-main > section .ruby-two-journey-timeline::before {

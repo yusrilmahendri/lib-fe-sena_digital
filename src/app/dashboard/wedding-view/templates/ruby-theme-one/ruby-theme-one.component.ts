@@ -41,8 +41,10 @@ interface RubyWishForm {
 
 interface RubyLoveStoryItem {
   id: string | number;
+  date: string;
   year: string;
   title: string;
+  lead: string;
   description: string;
 }
 
@@ -340,41 +342,42 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   this.loveStoryItems = stories
       .map((item: any, index: number): RubyLoveStoryItem => {
+        const rawDate = String(
+          item?.tanggal_cerita ?? item?.date ?? item?.tanggal ?? item?.year ?? item?.tahun ?? ''
+        ).trim();
+
+        const lead = String(
+          item?.subtitle ?? item?.lead_cerita ?? item?.short_description ?? ''
+        ).trim();
+
+        const body = String(
+          item?.cerita ?? item?.content ?? item?.body ?? item?.description ?? item?.deskripsi ?? item?.lead_cerita ?? ''
+        ).trim();
+
         return {
           id: item?.id ?? item?.uuid ?? index,
-
-          year: String(
-            item?.year ??
-            item?.tahun ??
-            item?.date ??
-            item?.tanggal ??
-            ''
-          ).trim(),
-
+          date: this.formatStoryDate(rawDate),
+          year: /^\d{4}$/.test(rawDate) ? rawDate : (rawDate ? String(rawDate).slice(0, 4) : ''),
           title: String(
-            item?.title ??
-            item?.judul ??
-            item?.judul_cerita ??
-            item?.nama_cerita ??
-            item?.name ??
-            ''
+            item?.title ?? item?.judul ?? item?.judul_cerita ?? item?.nama_cerita ?? item?.name ?? ''
           ).trim(),
-
-          description: String(
-            item?.description ??
-            item?.deskripsi ??
-            item?.content ??
-            item?.cerita ??
-            item?.story ??
-            ''
-          ).trim(),
+          lead: lead !== body ? lead : '',
+          description: body,
         };
       })
       .filter((item: RubyLoveStoryItem) =>
-        !!item.year ||
-        !!item.title ||
-        !!item.description
+        !!item.date || !!item.title || !!item.description
       );
+  }
+
+  private formatStoryDate(raw: string): string {
+    if (!raw) { return ''; }
+    if (/^\d{4}$/.test(raw)) { return raw; }
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+    return raw;
   }
 
   trackByLoveStory(

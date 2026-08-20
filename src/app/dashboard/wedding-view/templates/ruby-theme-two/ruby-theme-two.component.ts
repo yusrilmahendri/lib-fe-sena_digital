@@ -716,30 +716,44 @@ onGalleryTouchEnd(event: TouchEvent): void {
       });
   }
 
-  getLoveStories(): Array<{ year: string; title: string; description: string }> {
+  getLoveStories(): Array<{ date: string; year: string; title: string; lead: string; description: string }> {
     const rawStories = this.getStories();
 
     if (Array.isArray(rawStories) && rawStories.length) {
       return rawStories.map((story: any) => {
-        const date = story.tanggal_cerita || story.date || story.tanggal || '';
-        const year = date ? String(date).slice(0, 4) : String(story.year || story.tahun || '');
+        const rawDate = story.tanggal_cerita || story.date || story.tanggal || '';
+        const year = rawDate ? String(rawDate).slice(0, 4) : String(story.year || story.tahun || '');
+
+        const lead = String(
+          story.subtitle || story.lead_cerita || story.short_description || ''
+        ).trim();
+
+        const body = String(
+          story.cerita || story.content || story.body || story.description ||
+          story.deskripsi || story.lead_cerita || ''
+        ).trim();
 
         return {
+          date: this.formatLoveStoryDate(String(rawDate || year)),
           year,
           title: story.title || story.judul || story.name || 'Cerita Kami',
-          description:
-            story.lead_cerita ||
-            story.description ||
-            story.deskripsi ||
-            story.content ||
-            story.cerita ||
-            story.story ||
-            '',
+          lead: lead !== body ? lead : '',
+          description: body,
         };
       });
     }
 
     return [];
+  }
+
+  private formatLoveStoryDate(raw: string): string {
+    if (!raw) { return ''; }
+    if (/^\d{4}$/.test(raw)) { return raw; }
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+    return raw;
   }
 
   getLoveStoryItems(): Array<{ title: string; date: string; description: string }> {

@@ -417,14 +417,26 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       });
   }
 
-  getJourneyStories(): Array<{ id: number; date: string; title: string; description: string }> {
+  getJourneyStories(): Array<{ id: number; date: string; title: string; lead: string; description: string }> {
     return this.getStories().map((story, index) => {
       const normalized = this.normalizeJourneyStory(story, index);
+      const raw = story as any;
+
+      const lead = String(
+        raw?.subtitle || raw?.lead_cerita || raw?.short_description || ''
+      ).trim();
+
+      const body = String(
+        raw?.cerita || raw?.content || raw?.body || raw?.description ||
+        raw?.deskripsi || raw?.lead_cerita || ''
+      ).trim();
+
       return {
         id: normalized.id || index,
         date: this.getJourneyStoryDate(normalized),
         title: normalized.title || 'Cerita Kami',
-        description: (normalized as any).lead_cerita || (normalized as any).description || '',
+        lead: lead !== body ? lead : '',
+        description: body,
       };
     });
   }

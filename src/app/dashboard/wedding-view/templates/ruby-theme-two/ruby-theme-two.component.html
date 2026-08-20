@@ -149,9 +149,10 @@
             <span class="ruby-two-journey-dot"></span>
 
             <div class="ruby-two-journey-content">
-              <p class="ruby-two-journey-year">{{ story.year }}</p>
-              <h3>{{ story.title }}</h3>
-              <p>{{ story.description }}</p>
+              <p class="ruby-two-journey-year" *ngIf="story.date">{{ story.date }}</p>
+              <h3 *ngIf="story.title">{{ story.title }}</h3>
+              <p class="ruby-two-journey-lead" *ngIf="story.lead">{{ story.lead }}</p>
+              <p class="ruby-two-journey-body" *ngIf="story.description">{{ story.description }}</p>
             </div>
           </div>
         </div>
@@ -173,11 +174,9 @@
           <img *ngIf="getGalleryVideoCoverUrl(item)" [src]="getGalleryVideoCoverUrl(item)" [alt]="getGalleryAlt(item, 0)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
           <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Thumbnail video belum tersedia</span></div>
           <span class="ruby-two-video-card__overlay" aria-hidden="true"></span>
-          <span class="ruby-two-video-card__badge">VIDEO</span>
           <span class="ruby-two-video-card__play" aria-hidden="true">
             <i class="fas fa-play"></i>
           </span>
-          <span class="ruby-two-video-card__label">Tonton Video</span>
         </button>
 
         <div class="ruby-two-gallery-grid" *ngIf="getGalleryGridItems().length">
