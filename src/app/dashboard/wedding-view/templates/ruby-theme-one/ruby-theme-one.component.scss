@@ -67,37 +67,6 @@
   filter: none !important;
 }
 
-.ruby-opening-veil {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 250, 245, 0.92) 45%,
-    rgba(255, 255, 255, 0.98) 52%,
-    rgba(255, 250, 245, 0.8) 60%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  transform: translateX(-110%);
-  animation: rubyIvoryVeil 900ms ease forwards;
-}
-
-@keyframes rubyIvoryVeil {
-  0% {
-    opacity: 0;
-    transform: translateX(-110%);
-  }
-  18% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(110%);
-  }
-}
-
 .ruby-cover__media,
 .ruby-cover__bg,
 .ruby-cover__background img {
@@ -3155,6 +3124,7 @@
   padding-left: 0 !important;
   padding-right: 0 !important;
   background: transparent !important;
+  touch-action: manipulation;
   overflow: hidden;
   opacity: 0;
   transform: translateY(22px);
@@ -3236,6 +3206,7 @@
 .ruby-theme-one {
   background: #fffaf8;
   overflow-x: clip;
+  touch-action: manipulation;
 }
 
 .ruby-shell,
@@ -3512,6 +3483,7 @@
   cursor: grab;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
+  touch-action: pan-x pan-y;
 }
 
 .ruby-gallery-track::-webkit-scrollbar {
@@ -3679,6 +3651,147 @@
   font-weight: 800;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.ruby-story-section {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  background: #fffaf8;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ruby-story-content {
+  position: relative;
+  padding: 92px 28px 88px;
+}
+
+.ruby-story-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.ruby-story-eyebrow {
+  margin: 0 0 8px;
+  color: var(--ruby-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.38em;
+}
+
+.ruby-story-header h2 {
+  margin: 0;
+  color: var(--ruby-primary);
+  font-family: "Great Vibes", "Brush Script MT",
+    "Segoe Script", cursive;
+  font-size: clamp(34px, 10vw, 44px);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.ruby-story-divider {
+  width: 48px;
+  height: 1px;
+  margin: 18px auto 0;
+  background: rgba(159, 53, 45, 0.5);
+}
+
+.ruby-story-timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.ruby-story-timeline::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 12px;
+  left: 5px;
+  width: 1px;
+  background: rgba(159, 53, 45, 0.28);
+}
+
+.ruby-story-item {
+  position: relative;
+  padding: 0 0 38px 24px;
+}
+
+.ruby-story-item:last-child {
+  padding-bottom: 0;
+}
+
+.ruby-story-dot {
+  position: absolute;
+  left: -24px;
+  top: 7px;
+  width: 11px;
+  height: 11px;
+  border: 3px solid #fffaf8;
+  border-radius: 50%;
+  background: var(--ruby-primary);
+  box-shadow: 0 0 0 1px rgba(159, 53, 45, 0.32);
+}
+
+.ruby-story-card {
+  text-align: left;
+}
+
+.ruby-story-year {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ruby-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.ruby-story-card h3 {
+  margin: 0 0 9px;
+  color: var(--ruby-text);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ruby-story-card p {
+  margin: 0;
+  color: rgba(33, 25, 35, 0.72);
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+}
+
+.ruby-caption--visible[data-caption-motion="story"]
+.ruby-caption__eyebrow {
+  animation: rubyStoryHeaderIn
+    780ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ruby-caption--visible[data-caption-motion="story"]
+.ruby-caption__title {
+  animation: rubyStoryHeaderIn
+    900ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.ruby-caption--visible[data-caption-motion="story"]
+.ruby-caption__divider {
+  animation: rubyStoryHeaderIn
+    800ms cubic-bezier(0.22, 1, 0.36, 1) 220ms both;
+}
+
+@keyframes rubyStoryHeaderIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes rubyPhotoSoftZoomIn {

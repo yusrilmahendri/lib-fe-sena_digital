@@ -24,8 +24,6 @@
         aria-hidden="true"
       >
 
-      <div class="ruby-opening-veil" *ngIf="isOpening" aria-hidden="true"></div>
-
       <div class="ruby-cover__content" appRevealStagger>
         <h1 class="ruby-cover__names">
           <span>{{ getPrimaryDisplayName() }}</span>
@@ -212,6 +210,69 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <section
+        class="ruby-story-section"
+        *ngIf="loveStoryItems.length">
+
+        <div class="ruby-story-content">
+
+          <div
+            class="ruby-story-header ruby-caption"
+            data-caption-motion="story">
+
+            <p class="ruby-story-eyebrow ruby-caption__eyebrow">
+              OUR JOURNEY
+            </p>
+
+            <h2 class="ruby-caption__title">
+              Cerita Cinta
+            </h2>
+
+            <div class="ruby-story-divider ruby-caption__divider"></div>
+
+          </div>
+
+          <div class="ruby-story-timeline">
+
+            <article
+              class="ruby-story-item"
+              *ngFor="
+                let story of loveStoryItems;
+                let i = index;
+                trackBy: trackByLoveStory
+              ">
+
+              <span
+                class="ruby-story-dot"
+                aria-hidden="true">
+              </span>
+
+              <div class="ruby-story-card">
+
+                <span
+                  class="ruby-story-year"
+                  *ngIf="story.year">
+                  {{ story.year }}
+                </span>
+
+                <h3 *ngIf="story.title">
+                  {{ story.title }}
+                </h3>
+
+                <p *ngIf="story.description">
+                  {{ story.description }}
+                </p>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </div>
+
       </section>
 
       <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && hasGallery()">

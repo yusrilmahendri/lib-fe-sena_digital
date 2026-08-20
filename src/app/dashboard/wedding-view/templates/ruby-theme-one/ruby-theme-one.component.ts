@@ -39,6 +39,13 @@ interface RubyWishForm {
   pesan: string;
 }
 
+interface RubyLoveStoryItem {
+  id: string | number;
+  year: string;
+  title: string;
+  description: string;
+}
+
 type RubyCaptionDirection = 'down' | 'up';
 
 @Component({
@@ -61,6 +68,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
   selectedGalleryVideoType: 'youtube' | 'video' | '' = '';
   selectedGalleryPhotoUrl = '';
   selectedGalleryPhotoTitle = '';
+  loveStoryItems: RubyLoveStoryItem[] = [];
   activeGalleryIndex = 0;
   countdownDays = '00';
   countdownHours = '00';
@@ -79,12 +87,10 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   private readonly subscriptions = new Subscription();
   private openingTimer: any;
-  private openingTimer2: any;
   private countdownTimer?: any;
   private captionObserver?: IntersectionObserver;
   private captionMutationObserver?: MutationObserver;
   private captionObservedElements = new Set<HTMLElement>();
-  private captionVisibility = new WeakMap<HTMLElement, boolean>();
   private captionScrollRoot: HTMLElement | null = null;
   private captionScrollCleanup?: () => void;
   private captionRefreshTimer?: any;
@@ -111,6 +117,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     super.ngOnInit();
     this.setupRubyReceptionFromEvents();
     this.initCountdown();
+    this.setupLoveStory();
     if (this.invitationOpened) {
       this.hasOpened = true;
     }
@@ -121,6 +128,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     if (changes['weddingData']) {
       this.setupRubyReceptionFromEvents();
       this.initCountdown();
+      this.setupLoveStory();
       this.activeGalleryIndex = 0;
       this.scheduleRubyCaptionMotionRefresh();
     }
@@ -146,13 +154,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     event?.preventDefault();
     event?.stopPropagation();
 
-    console.log('[Soft Ivory] open clicked');
-    console.log('[Soft Ivory] before', {
-      hasOpened: this.hasOpened,
-      isOpening: this.isOpening,
-      isInvitationOpened: this.isInvitationOpened,
-    });
-
     if (this.isOpening || this.hasOpened) {
       return;
     }
@@ -171,22 +172,12 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     this.openingTimer = setTimeout(() => {
       this.isOpening = false;
       this.scheduleRubyCaptionMotionRefresh();
-
-      this.openingTimer2 = setTimeout(() => {
-        const openingSection = document.querySelector('.ruby-opening-section');
-        if (openingSection) {
-          openingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 50);
     }, 850);
   }
 
   override ngOnDestroy(): void {
     if (this.openingTimer) {
       clearTimeout(this.openingTimer);
-    }
-    if (this.openingTimer2) {
-      clearTimeout(this.openingTimer2);
     }
     if (this.countdownTimer) {
       clearInterval(this.countdownTimer);
@@ -307,6 +298,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     return this.galleryPhotoItems;
   }
 
+
   get galleryPhotoItems(): GalleryItem[] {
     const photos = this.getGalleryItems();
     return photos.filter((item) => {
@@ -317,6 +309,72 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       const photoUrl = this.getGalleryPhotoUrl(item);
       return !!photoUrl && !this.isUnsafeThemeImage(photoUrl);
     });
+  }
+
+  private setupLoveStory(): void {
+  const data: any = this.weddingData || {};
+
+  const rawStories =
+    data?.love_story ??
+    data?.love_stories ??
+    data?.stories ??
+    data?.story ??
+    data?.journey ??
+    data?.cerita_cinta ??
+    [];
+
+  const stories = Array.isArray(rawStories)
+    ? rawStories
+    : Array.isArray(rawStories?.data)
+      ? rawStories.data
+      : rawStories
+        ? [rawStories]
+        : [];
+
+  this.loveStoryItems = stories
+      .map((item: any, index: number): RubyLoveStoryItem => {
+        return {
+          id: item?.id ?? item?.uuid ?? index,
+
+          year: String(
+            item?.year ??
+            item?.tahun ??
+            item?.date ??
+            item?.tanggal ??
+            ''
+          ).trim(),
+
+          title: String(
+            item?.title ??
+            item?.judul ??
+            item?.judul_cerita ??
+            item?.nama_cerita ??
+            item?.name ??
+            ''
+          ).trim(),
+
+          description: String(
+            item?.description ??
+            item?.deskripsi ??
+            item?.content ??
+            item?.cerita ??
+            item?.story ??
+            ''
+          ).trim(),
+        };
+      })
+      .filter((item: RubyLoveStoryItem) =>
+        !!item.year ||
+        !!item.title ||
+        !!item.description
+      );
+  }
+
+  trackByLoveStory(
+    index: number,
+    item: RubyLoveStoryItem
+  ): string | number {
+    return item.id ?? index;
   }
 
   get mainGalleryPhoto(): GalleryItem | null {
@@ -1030,7 +1088,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     captions.forEach((caption) => {
       caption.classList.add('ruby-caption--ready');
       if (!this.captionObservedElements.has(caption)) {
-        this.captionVisibility.set(caption, false);
         this.captionObserver?.observe(caption);
         this.captionObservedElements.add(caption);
       }
@@ -1039,38 +1096,34 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   private onRubyCaptionIntersections(entries: IntersectionObserverEntry[]): void {
     entries.forEach((entry) => {
-      const caption = entry.target as HTMLElement;
-      const wasVisible = this.captionVisibility.get(caption) || false;
-      const isVisible = entry.isIntersecting && entry.intersectionRatio >= 0.22;
-
-      if (isVisible && !wasVisible) {
-        this.captionVisibility.set(caption, true);
-        this.playRubyCaptionAnimation(caption);
+      if (!entry.isIntersecting || entry.intersectionRatio < 0.12) {
         return;
       }
 
-      if (!isVisible && wasVisible && this.isRubyCaptionOutsideResetBand(entry)) {
-        this.captionVisibility.set(caption, false);
-        caption.classList.remove('ruby-caption--visible', 'ruby-caption--down', 'ruby-caption--up');
+      const caption = entry.target as HTMLElement;
+
+      if (!caption.classList.contains('ruby-caption--visible')) {
+        this.playRubyCaptionAnimation(caption);
       }
+
+      // Setelah tampil, jangan diamati lagi.
+      this.captionObserver?.unobserve(caption);
     });
   }
 
   private playRubyCaptionAnimation(caption: HTMLElement): void {
-    caption.classList.remove('ruby-caption--visible', 'ruby-caption--down', 'ruby-caption--up');
-    void caption.offsetWidth;
-    caption.classList.add('ruby-caption--visible', `ruby-caption--${this.captionDirection}`);
+    caption.classList.remove(
+      'ruby-caption--down',
+      'ruby-caption--up'
+    );
+
+    caption.classList.add(
+      `ruby-caption--${this.captionDirection}`,
+      'ruby-caption--visible'
+    );
   }
 
-  private isRubyCaptionOutsideResetBand(entry: IntersectionObserverEntry): boolean {
-    const resetGap = 28;
-    const rootBounds = entry.rootBounds;
-    const rootTop = rootBounds?.top ?? 0;
-    const rootBottom = rootBounds?.bottom ?? window.innerHeight;
 
-    return entry.boundingClientRect.bottom < rootTop - resetGap ||
-      entry.boundingClientRect.top > rootBottom + resetGap;
-  }
 
   private setupRubyCaptionScrollDirection(): void {
     this.captionScrollCleanup?.();
