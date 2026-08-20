@@ -313,6 +313,28 @@
   color: #fff;
 }
 
+@keyframes sapphireMainEntry {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sapphireFloralEntry {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .sapphire-content {
   display: block;
   pointer-events: auto;
@@ -320,16 +342,14 @@
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
-  animation: none !important;
-  transition: none !important;
   overflow-x: hidden;
   overflow-y: visible;
   touch-action: pan-y;
   will-change: auto;
 }
 
-.sapphire-theme-one--opened .sapphire-content {
-  animation: none !important;
+main.sapphire-content.sapphire-content.theme-content--opened {
+  animation: sapphireMainEntry 980ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 
 .sapphire-theme-one--opened .sapphire-content,
@@ -2141,7 +2161,8 @@
   .sapphire-content > section.sapphire-events::after,
   .sapphire-content > section.sapphire-gift::after {
     opacity: 1;
-    animation: sapphireLeafSwayRight 10.6s ease-in-out infinite;
+    animation: sapphireFloralEntry 1200ms cubic-bezier(0.22, 1, 0.36, 1) both,
+               sapphireLeafSwayRight 10.6s ease-in-out 1200ms infinite;
   }
 
   .sapphire-content > section.sapphire-couple::before,
@@ -2149,7 +2170,8 @@
   .sapphire-content > section.sapphire-events::before,
   .sapphire-content > section.sapphire-gift::before {
     opacity: 1;
-    animation: sapphireLeafSwayLeft 10.2s ease-in-out infinite;
+    animation: sapphireFloralEntry 1200ms cubic-bezier(0.22, 1, 0.36, 1) both,
+               sapphireLeafSwayLeft 10.2s ease-in-out 1200ms infinite;
   }
 
   .sapphire-content .or:not(.or--visible) {

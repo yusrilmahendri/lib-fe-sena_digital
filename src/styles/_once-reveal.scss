@@ -13,7 +13,7 @@ $or-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 .or {
   --or-delay: 0ms;
-  --or-duration: 750ms;
+  --or-duration: 850ms;
   --or-stagger: 0ms;
 
   transition:
@@ -26,27 +26,27 @@ $or-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
 .or[class].or--fade-up:not(.or--visible) {
   opacity: 0 !important;
-  transform: translateY(22px) !important;
+  transform: translateY(34px) !important;
 }
 
 .or[class].or--fade-left:not(.or--visible) {
   opacity: 0 !important;
-  transform: translateX(-22px) !important;
+  transform: translateX(-34px) !important;
 }
 
 .or[class].or--fade-right:not(.or--visible) {
   opacity: 0 !important;
-  transform: translateX(22px) !important;
+  transform: translateX(34px) !important;
 }
 
 .or[class].or--zoom:not(.or--visible) {
   opacity: 0 !important;
-  transform: translateY(18px) scale(0.96) !important;
+  transform: translateY(16px) scale(0.94) !important;
 }
 
 .or[class].or--card:not(.or--visible) {
   opacity: 0 !important;
-  transform: translateY(28px) scale(0.98) !important;
+  transform: translateY(36px) scale(0.975) !important;
 }
 
 /* ── Revealed state — permanent ────────────────────────────── */

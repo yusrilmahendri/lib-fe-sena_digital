@@ -68,18 +68,18 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--intro">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Pembuka</p>
-        <h2 class="ruby-two-script" appOnceReveal="fade-up" [orDelay]="100">{{ getOpeningHeading() }}</h2>
-        <p class="ruby-two-copy ruby-two-copy--center invitation-opening-text" appOnceReveal="fade-up" [orDelay]="260" [innerText]="getInvitationOpeningText()"></p>
-        <blockquote class="ruby-two-quote" appOnceReveal="fade-up" [orDelay]="380">{{ getQuranQuote() }}</blockquote>
-        <p class="ruby-two-quote__source" *ngIf="getQuranSource()" appOnceReveal="fade-up" [orDelay]="440">{{ getQuranSource() }}</p>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="950">Pembuka</p>
+        <h2 class="ruby-two-script" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="950">{{ getOpeningHeading() }}</h2>
+        <p class="ruby-two-copy ruby-two-copy--center invitation-opening-text" appOnceReveal="fade-up" [orDelay]="280" [orDuration]="950" [innerText]="getInvitationOpeningText()"></p>
+        <blockquote class="ruby-two-quote" appOnceReveal="fade-up" [orDelay]="400">{{ getQuranQuote() }}</blockquote>
+        <p class="ruby-two-quote__source" *ngIf="getQuranSource()" appOnceReveal="fade-up" [orDelay]="480">{{ getQuranSource() }}</p>
       </section>
 
       <section class="ruby-two-section ruby-two-section--couple" *ngIf="isCoupleVisible()">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Mempelai</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Kedua Mempelai</h2>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Mempelai</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Kedua Mempelai</h2>
 
-        <article class="ruby-two-person-card" appOnceReveal="fade-left" [orDelay]="200" [orDuration]="850">
+        <article class="ruby-two-person-card" appOnceReveal="fade-left" [orDelay]="220" [orDuration]="900">
           <div class="ruby-two-person-card__frame gallery-card" [class.is-image-missing]="!getBridePhoto()">
             <img *ngIf="getBridePhoto()" [src]="getBridePhoto()" [alt]="getBrideName()" (error)="onImageError($event)">
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
@@ -89,9 +89,9 @@
           <small *ngIf="getBrideInstagram() as instagram">◎ {{ instagram }}</small>
         </article>
 
-        <div class="ruby-two-separator" appOnceReveal="fade-up" [orDelay]="320">&amp;</div>
+        <div class="ruby-two-separator" appOnceReveal="fade-up" [orDelay]="340">&amp;</div>
 
-        <article class="ruby-two-person-card" appOnceReveal="fade-right" [orDelay]="400" [orDuration]="850">
+        <article class="ruby-two-person-card" appOnceReveal="fade-right" [orDelay]="420" [orDuration]="900">
           <div class="ruby-two-person-card__frame gallery-card" [class.is-image-missing]="!getGroomPhoto()">
             <img *ngIf="getGroomPhoto()" [src]="getGroomPhoto()" [alt]="getGroomName()" (error)="onImageError($event)">
             <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
@@ -103,10 +103,10 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--events" *ngIf="isEventVisible() && getDisplayEvents().length">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Save The Date</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Detail Acara</h2>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Save The Date</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Detail Acara</h2>
 
-        <article class="ruby-two-event-card" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent; let i = index" appOnceReveal="card" [orDelay]="200" [orStagger]="i * 130">
+        <article class="ruby-two-event-card" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent; let i = index" appOnceReveal="card" [orDelay]="220" [orStagger]="i * 140">
           <span class="ruby-two-event-card__label">{{ getEventTitle(event) }}</span>
           <h3 *ngIf="event.tanggal_acara">{{ formatDate(event.tanggal_acara, 'long') }}</h3>
           <p *ngIf="formatTimeRange(event)">{{ formatTimeRange(event) }}</p>
@@ -127,10 +127,10 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--countdown">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Menuju Hari Bahagia</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Hitung Mundur</h2>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Menuju Hari Bahagia</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Hitung Mundur</h2>
         <div class="ruby-two-countdown">
-          <div class="ruby-two-countdown__card" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart; let i = index" appOnceReveal="fade-up" [orDelay]="200" [orStagger]="i * 130">
+          <div class="ruby-two-countdown__card" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart; let i = index" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="i * 120">
             <strong>{{ part.value }}</strong>
             <span>{{ part.label }}</span>
           </div>
@@ -138,14 +138,14 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--journey" *ngIf="isStoryVisible() && hasStories()">
-        <div class="ruby-two-section-heading" appOnceReveal="fade-up">
+        <div class="ruby-two-section-heading" appOnceReveal="fade-up" [orDuration]="800">
           <p>OUR JOURNEY</p>
           <h2>Cerita Cinta</h2>
           <span></span>
         </div>
 
         <div class="ruby-two-journey-timeline">
-          <div class="ruby-two-journey-item" *ngFor="let story of getLoveStories(); trackBy: getStoryTrackBy; let i = index" appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+          <div class="ruby-two-journey-item" *ngFor="let story of getLoveStories(); trackBy: getStoryTrackBy; let i = index" appOnceReveal="card" [orDelay]="180" [orStagger]="i * 140">
             <span class="ruby-two-journey-dot"></span>
 
             <div class="ruby-two-journey-content">
@@ -158,13 +158,13 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--gallery" *ngIf="isGalleryVisible() && hasGallery()">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Our Moments</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Galeri Foto</h2>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Our Moments</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Galeri Foto</h2>
 
         <button
           class="ruby-two-video-card gallery-card"
           type="button"
-          appOnceReveal="zoom" [orDelay]="200"
+          appOnceReveal="zoom" [orDelay]="220" [orDuration]="950"
           *ngFor="let item of getGalleryVideoItems(); trackBy: trackByGallery"
           [class.is-image-missing]="!getGalleryVideoCoverUrl(item)"
           [attr.aria-label]="'Putar video ' + (item.nama_foto || item.description || 'undangan')"
@@ -188,7 +188,7 @@
               trackBy: trackByGallery;
               let i = index
             "
-            appOnceReveal="zoom" [orDelay]="200" [orStagger]="i * 100"
+            appOnceReveal="zoom" [orDelay]="240" [orStagger]="i * 120"
             [class.is-image-missing]="!getGalleryPhotoUrl(item)"
             (click)="openGalleryPhoto(i)">
 
@@ -283,10 +283,10 @@
       </div>
 
       <section class="ruby-two-section ruby-two-section--wishes" *ngIf="isWishVisible()">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Send Your Wishes</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Ucapan &amp; Doa</h2>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Send Your Wishes</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Ucapan &amp; Doa</h2>
 
-        <div class="ruby-two-form" appOnceReveal="card" [orDelay]="200">
+        <div class="ruby-two-form" appOnceReveal="card" [orDelay]="220">
           <label class="ruby-two-label" for="ruby-two-name">Nama Lengkap</label>
           <input id="ruby-two-name" class="ruby-two-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama kamu">
 
@@ -321,12 +321,12 @@
       </section>
 
       <section class="ruby-two-section ruby-two-section--gift" *ngIf="isGiftVisible()">
-        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up">Wedding Gift</p>
-        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="100">Tanda Kasih</h2>
-        <p class="ruby-two-gift-description" appOnceReveal="fade-up" [orDelay]="200">{{ getWeddingGiftIntro() }}</p>
+        <p class="ruby-two-section__eyebrow" appOnceReveal="fade-up" [orDuration]="800">Wedding Gift</p>
+        <h2 class="ruby-two-title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Tanda Kasih</h2>
+        <p class="ruby-two-gift-description" appOnceReveal="fade-up" [orDelay]="220">{{ getWeddingGiftIntro() }}</p>
 
         <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
-          <article class="ruby-two-bank-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="280" [orStagger]="i * 130">
+          <article class="ruby-two-bank-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="320" [orStagger]="i * 140">
             <div class="ruby-two-bank-card__top">
               <span class="ruby-two-bank-icon" aria-hidden="true"><i class="fas fa-gift"></i></span>
               <small>{{ bank.nama_bank || bank.bank?.name || bank.bank?.kode_bank || bank.kode_bank || 'BANK' }}</small>
@@ -368,8 +368,8 @@
         <div class="ruby-two-closing__overlay"></div>
         <div class="ruby-two-closing__content">
           <p appOnceReveal="fade-up">{{ getClosingText() }}</p>
-          <span class="ruby-two-closing__label" appOnceReveal="fade-up" [orDelay]="120">KAMI YANG BERBAHAGIA</span>
-          <h2 appOnceReveal="fade-up" [orDelay]="200">
+          <span class="ruby-two-closing__label" appOnceReveal="fade-up" [orDelay]="140">KAMI YANG BERBAHAGIA</span>
+          <h2 appOnceReveal="fade-up" [orDelay]="260">
             <span>{{ getPrimaryDisplayName() }}</span>
             <em>&amp;</em>
             <span>{{ getSecondaryDisplayName() }}</span>

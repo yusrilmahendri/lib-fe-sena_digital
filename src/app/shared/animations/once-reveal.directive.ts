@@ -23,7 +23,7 @@ export class OnceRevealDirective implements AfterViewInit, OnDestroy {
   @Input() orDelay = 0;
   @Input() orDuration = 0;
   @Input() orStagger = 0;
-  @Input() orThreshold = 0.12;
+  @Input() orThreshold = 0.1;
 
   private observer?: IntersectionObserver;
 
@@ -64,7 +64,10 @@ export class OnceRevealDirective implements AfterViewInit, OnDestroy {
             }
           }
         },
-        { threshold: this.orThreshold }
+        {
+          threshold: this.orThreshold,
+          rootMargin: '0px 0px -8% 0px',
+        }
       );
 
       this.observer.observe(host);

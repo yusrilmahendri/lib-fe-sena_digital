@@ -49,13 +49,13 @@
 
     <!-- data Kedua Mempelai -->
     <section class="sapphire-couple" *ngIf="isCoupleVisible()">
-      <div class="sapphire-section-head" appOnceReveal="fade-up">
+      <div class="sapphire-section-head" appOnceReveal="fade-up" [orDuration]="800">
         <p class="sapphire-kicker">Mempelai</p>
         <h2 class="sapphire-title">Kedua Mempelai</h2>
       </div>
 
       <div class="sapphire-couple-grid">
-        <article class="sapphire-couple-card" appOnceReveal="fade-left" [orDelay]="120" [orDuration]="850">
+        <article class="sapphire-couple-card" appOnceReveal="fade-left" [orDelay]="160" [orDuration]="900">
           <div class="sapphire-couple-photo-wrap gallery-card" [class.is-image-missing]="!getGroomPhoto()">
             <img *ngIf="getGroomPhoto()" class="sapphire-couple-photo" [src]="getGroomPhoto()" [alt]="getGroomName()" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
@@ -65,7 +65,7 @@
           <small *ngIf="getGroomInstagram() as ig" class="sapphire-couple-ig">{{ ig }}</small>
         </article>
 
-        <article class="sapphire-couple-card" appOnceReveal="fade-right" [orDelay]="280" [orDuration]="850">
+        <article class="sapphire-couple-card" appOnceReveal="fade-right" [orDelay]="320" [orDuration]="900">
           <div class="sapphire-couple-photo-wrap gallery-card" [class.is-image-missing]="!getBridePhoto()">
             <img *ngIf="getBridePhoto()" class="sapphire-couple-photo" [src]="getBridePhoto()" [alt]="getBrideName()" (error)="onImageError($event)">
             <div class="image-placeholder"><span>Foto belum tersedia</span></div>
@@ -127,10 +127,10 @@
     <section class="sapphire-countdown" [style.background-image]="'url(' + getCountdownBackground() + ')'">
       <div class="sapphire-countdown__overlay"></div>
       <div class="sapphire-countdown__content">
-        <p class="sapphire-kicker sapphire-kicker--light" appOnceReveal="fade-up">Menuju Hari Bahagia</p>
-        <h2 class="sapphire-title sapphire-title--light" appOnceReveal="fade-up" [orDelay]="100">Hitung Mundur</h2>
+        <p class="sapphire-kicker sapphire-kicker--light" appOnceReveal="fade-up" [orDuration]="800">Menuju Hari Bahagia</p>
+        <h2 class="sapphire-title sapphire-title--light" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Hitung Mundur</h2>
         <div class="sapphire-countdown__grid">
-          <div class="sapphire-countdown__box" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart; let i = index" appOnceReveal="fade-up" [orDelay]="200" [orStagger]="i * 130">
+          <div class="sapphire-countdown__box" *ngFor="let part of getCountdownParts(); trackBy: trackByCountdownPart; let i = index" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="i * 120">
             <strong>{{ part.value }}</strong>
             <span>{{ part.label | uppercase }}</span>
           </div>
@@ -139,19 +139,19 @@
     </section>
 
     <section class="sapphire-journey" *ngIf="isStoryVisible() && hasStories()">
-      <div class="sapphire-section-head" appOnceReveal="fade-up">
+      <div class="sapphire-section-head" appOnceReveal="fade-up" [orDuration]="800">
         <p class="sapphire-kicker">OUR JOURNEY</p>
         <h2 class="sapphire-title">Cerita Cinta</h2>
       </div>
 
-      <div class="sapphire-divider sapphire-divider--journey" aria-hidden="true" appOnceReveal="fade-up" [orDelay]="100">
+      <div class="sapphire-divider sapphire-divider--journey" aria-hidden="true" appOnceReveal="fade-up" [orDelay]="120">
         <span class="sapphire-divider__line"></span>
         <span class="sapphire-divider__icon">◊</span>
         <span class="sapphire-divider__line"></span>
       </div>
 
       <div class="sapphire-journey-timeline">
-        <article class="sapphire-journey-item" *ngFor="let story of getJourneyStories(); trackBy: trackByJourneyStory; let i = index" appOnceReveal="card" [orDelay]="160" [orStagger]="i * 130">
+        <article class="sapphire-journey-item" *ngFor="let story of getJourneyStories(); trackBy: trackByJourneyStory; let i = index" appOnceReveal="card" [orDelay]="200" [orStagger]="i * 140">
           <span class="sapphire-journey-dot" aria-hidden="true"></span>
 
           <div class="sapphire-journey-content">
@@ -165,7 +165,7 @@
 
     <!-- Gallery -->
     <section class="sapphire-gallery" *ngIf="isGalleryVisible() && hasGallery()">
-      <div class="sapphire-gallery-date-block" appOnceReveal="fade-up">
+      <div class="sapphire-gallery-date-block" appOnceReveal="fade-up" [orDuration]="800">
         <div class="sapphire-gallery-divider">
           <span></span>
           <i class="fa fa-diamond" aria-hidden="true"></i>
@@ -186,7 +186,7 @@
           <button
             class="sapphire-gallery-item sapphire-gallery-item--featured sapphire-gallery-item--video gallery-card"
             type="button"
-            appOnceReveal="zoom" [orDelay]="120"
+            appOnceReveal="zoom" [orDelay]="160" [orDuration]="950"
             *ngIf="getFeaturedGalleryVideoItem() as featured"
             [class.is-image-missing]="!getGalleryVideoCoverUrl(featured)"
             [attr.aria-label]="'Putar video ' + (featured.nama_foto || featured.description || 'galeri')"
@@ -201,7 +201,7 @@
           <button
             class="sapphire-gallery-item sapphire-gallery-item--photo gallery-card"
             type="button"
-            appOnceReveal="zoom" [orDelay]="200" [orStagger]="i * 100"
+            appOnceReveal="zoom" [orDelay]="240" [orStagger]="i * 120"
             *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index"
             [class.is-image-missing]="!getGalleryPhotoUrl(item)"
             [attr.aria-label]="'Buka foto galeri ' + (i + 1)"
@@ -219,11 +219,11 @@
 
     <!-- Save The Date -->
     <section class="sapphire-events" *ngIf="isEventVisible() && getDisplayEvents().length">
-      <div class="sapphire-section-head" appOnceReveal="fade-up">
+      <div class="sapphire-section-head" appOnceReveal="fade-up" [orDuration]="800">
         <p class="sapphire-kicker">Save The Date</p>
       </div>
 
-      <article class="sapphire-event-block" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent; let i = index" appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+      <article class="sapphire-event-block" *ngFor="let event of getDisplayEvents(); trackBy: trackByEvent; let i = index" appOnceReveal="card" [orDelay]="160" [orStagger]="i * 140">
         <h3 class="sapphire-event-block__title">{{ getEventTitle(event) }}</h3>
         <div class="sapphire-event-date-row" *ngIf="event.tanggal_acara">
           <span class="sapphire-event-date-side">{{ getEventWeekday(event) }}</span>
@@ -269,12 +269,12 @@
     <section class="sapphire-wishes" *ngIf="isWishVisible()" [style.background-image]="'url(' + getWishesBackground() + ')'">
       <div class="sapphire-wishes__overlay"></div>
       <div class="sapphire-wishes__content">
-        <div class="sapphire-section-head" appOnceReveal="fade-up">
+        <div class="sapphire-section-head" appOnceReveal="fade-up" [orDuration]="800">
           <p class="sapphire-kicker sapphire-kicker--light">Doa &amp; Harapan</p>
           <h2 class="sapphire-title sapphire-title--light">Ucapan &amp; Doa</h2>
         </div>
 
-        <div class="sapphire-wish-form" appOnceReveal="card" [orDelay]="120">
+        <div class="sapphire-wish-form" appOnceReveal="card" [orDelay]="160">
           <label class="sapphire-wish-label" for="sapphire-name">Nama Lengkap</label>
           <input id="sapphire-name" class="sapphire-wish-input" type="text" [(ngModel)]="wishForm.nama" placeholder="Nama kamu">
 
@@ -346,14 +346,14 @@
 
     <!-- Tanda Kasih -->
     <section class="sapphire-gift" *ngIf="isGiftVisible()">
-      <div class="sapphire-section-head" appOnceReveal="fade-up">
+      <div class="sapphire-section-head" appOnceReveal="fade-up" [orDuration]="800">
         <p class="sapphire-kicker">Wedding Gift</p>
         <h2 class="sapphire-title">Tanda Kasih</h2>
       </div>
-      <p class="sapphire-gift-desc" appOnceReveal="fade-up" [orDelay]="120">{{ getWeddingGiftIntro() }}</p>
+      <p class="sapphire-gift-desc" appOnceReveal="fade-up" [orDelay]="140">{{ getWeddingGiftIntro() }}</p>
 
       <ng-container *ngIf="getVisibleBankAccounts().length; else emptyBanks">
-        <article class="sapphire-gift-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="200" [orStagger]="i * 130">
+        <article class="sapphire-gift-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="240" [orStagger]="i * 140">
           <div class="sapphire-gift-card__top">
             <span class="sapphire-gift-card__bank">{{ bank.nama_bank || 'Bank' }}</span>
           </div>
@@ -386,9 +386,9 @@
       <div class="sapphire-footer__overlay"></div>
       <div class="sapphire-footer__content">
         <p class="sapphire-footer__thanks" appOnceReveal="fade-up">{{ getClosingText() }}</p>
-        <span class="sapphire-footer__label" appOnceReveal="fade-up" [orDelay]="120">KAMI YANG BERBAHAGIA</span>
-        <h2 class="sapphire-footer__names" appOnceReveal="fade-up" [orDelay]="200">{{ getGroomName() }} &amp; {{ getBrideName() }}</h2>
-        <time class="sapphire-footer__date" appOnceReveal="fade-up" [orDelay]="280">{{ getWeddingDate() }}</time>
+        <span class="sapphire-footer__label" appOnceReveal="fade-up" [orDelay]="140">KAMI YANG BERBAHAGIA</span>
+        <h2 class="sapphire-footer__names" appOnceReveal="fade-up" [orDelay]="260">{{ getGroomName() }} &amp; {{ getBrideName() }}</h2>
+        <time class="sapphire-footer__date" appOnceReveal="fade-up" [orDelay]="360">{{ getWeddingDate() }}</time>
         <small class="sapphire-footer__package">{{ getPackageLabelText() }}</small>
         <div class="sapphire-footer__credit">
           <span>Crafted with ❤️ by Sena Digital</span>

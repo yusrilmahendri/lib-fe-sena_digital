@@ -66,17 +66,17 @@
         >
 
         <div class="ruby-quote-content">
-          <div class="ruby-caption ruby-caption--quote" data-caption-motion="quote" appOnceReveal="fade-up">
+          <div class="ruby-caption ruby-caption--quote" data-caption-motion="quote" appOnceReveal="fade-up" [orDuration]="950">
             <h2 class="ruby-caption__title">{{ getOpeningHeading() }}</h2>
             <div class="ruby-quote-line ruby-caption__divider"></div>
           </div>
 
-          <p class="ruby-quote-opening invitation-opening-text" appOnceReveal="fade-up" [orDelay]="160" [innerText]="getInvitationOpeningText()"></p>
+          <p class="ruby-quote-opening invitation-opening-text" appOnceReveal="fade-up" [orDelay]="180" [orDuration]="950" [innerText]="getInvitationOpeningText()"></p>
 
-          <p class="ruby-quote-text" *ngIf="getQuoteText() as quoteText" appOnceReveal="fade-up" [orDelay]="280">
+          <p class="ruby-quote-text" *ngIf="getQuoteText() as quoteText" appOnceReveal="fade-up" [orDelay]="320" [orDuration]="950">
             "{{ getShortQuote(quoteText) }}"
           </p>
-          <p class="ruby-quote-source" *ngIf="getQuoteName() as quoteName" appOnceReveal="fade-up" [orDelay]="340">
+          <p class="ruby-quote-source" *ngIf="getQuoteName() as quoteName" appOnceReveal="fade-up" [orDelay]="420">
             {{ quoteName }}
           </p>
         </div>
@@ -84,13 +84,13 @@
 
       <section class="ruby-couple-section" *ngIf="isCoupleVisible()">
         <div class="ruby-couple-content">
-          <div class="ruby-couple-header ruby-caption ruby-caption--couple" data-caption-motion="couple" appOnceReveal="fade-up">
+          <div class="ruby-couple-header ruby-caption ruby-caption--couple" data-caption-motion="couple" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-couple-label ruby-caption__eyebrow">MEMPELAI</p>
             <h2 class="ruby-caption__title">Kedua Mempelai</h2>
             <div class="ruby-couple-line ruby-caption__divider"></div>
           </div>
 
-          <div class="ruby-couple-card ruby-couple-card--bride" appOnceReveal="fade-left" [orDelay]="120" [orDuration]="850">
+          <div class="ruby-couple-card ruby-couple-card--bride" appOnceReveal="fade-left" [orDelay]="140" [orDuration]="900">
             <ng-container *ngIf="getBridePhoto() as bridePhoto; else bridePlaceholder">
               <div class="ruby-couple-photo gallery-card">
                 <img [src]="bridePhoto" [alt]="getBrideName()" (error)="onImageError($event)">
@@ -107,9 +107,9 @@
             <p class="ruby-couple-instagram" *ngIf="getBrideInstagram() as instagram">◎ {{ instagram }}</p>
           </div>
 
-          <div class="ruby-couple-separator" appOnceReveal="fade-up" [orDelay]="220">&amp;</div>
+          <div class="ruby-couple-separator" appOnceReveal="fade-up" [orDelay]="260">&amp;</div>
 
-          <div class="ruby-couple-card ruby-couple-card--groom" appOnceReveal="fade-right" [orDelay]="280" [orDuration]="850">
+          <div class="ruby-couple-card ruby-couple-card--groom" appOnceReveal="fade-right" [orDelay]="320" [orDuration]="900">
             <ng-container *ngIf="getGroomPhoto() as groomPhoto; else groomPlaceholder">
               <div class="ruby-couple-photo gallery-card">
                 <img [src]="groomPhoto" [alt]="getGroomName()" (error)="onImageError($event)">
@@ -130,12 +130,12 @@
 
       <section class="ruby-event-section" *ngIf="isEventVisible() && getRubyEventCards().length">
         <div class="ruby-event-content">
-          <div class="ruby-caption ruby-caption--event" data-caption-motion="event" appOnceReveal="fade-up">
+          <div class="ruby-caption ruby-caption--event" data-caption-motion="event" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-event-label ruby-caption__eyebrow">SAVE THE DATE</p>
             <h2 class="ruby-caption__title">Rangkaian Acara</h2>
           </div>
 
-          <div class="ruby-event-card" *ngFor="let event of getRubyEventCards(); trackBy: trackByRubyEvent; let i = index" appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+          <div class="ruby-event-card" *ngFor="let event of getRubyEventCards(); trackBy: trackByRubyEvent; let i = index" appOnceReveal="card" [orDelay]="160" [orStagger]="i * 140">
             <h3 class="ruby-event-card__title">{{ getEventDisplayTitle(event) }}</h3>
             <p class="ruby-event-date">{{ formatDate(event.tanggal_acara, 'long') }}</p>
             <p class="ruby-event-time">{{ formatTimeRange(event) }}</p>
@@ -155,12 +155,12 @@
         >
 
         <div class="ruby-location-content">
-          <div class="ruby-caption ruby-caption--location" data-caption-motion="location" appOnceReveal="fade-up">
+          <div class="ruby-caption ruby-caption--location" data-caption-motion="location" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-section-label ruby-caption__eyebrow">TEMPAT</p>
             <h2 class="ruby-caption__title">Lokasi Acara</h2>
           </div>
 
-          <article class="ruby-map-card" *ngFor="let event of getRubyLocationEvents(); trackBy: trackByRubyEvent; let i = index" appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+          <article class="ruby-map-card" *ngFor="let event of getRubyLocationEvents(); trackBy: trackByRubyEvent; let i = index" appOnceReveal="card" [orDelay]="160" [orStagger]="i * 140">
             <h3>{{ getEventDisplayTitle(event) }}</h3>
             <strong class="ruby-location-name">{{ getEventVenue(event) }}</strong>
             <div class="ruby-map-preview">
@@ -191,25 +191,25 @@
           </article>
 
           <div class="ruby-countdown">
-            <div class="ruby-caption ruby-caption--countdown" data-caption-motion="countdown" appOnceReveal="fade-up">
+            <div class="ruby-caption ruby-caption--countdown" data-caption-motion="countdown" appOnceReveal="fade-up" [orDuration]="800">
               <p class="ruby-section-label ruby-section-label--countdown ruby-caption__eyebrow">{{ getCountdownHeading() }}</p>
               <h2 class="ruby-caption__title">Hitung Mundur</h2>
             </div>
 
             <div class="ruby-countdown-grid">
-              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="120">
+              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="160">
                 <strong>{{ countdownDays }}</strong>
                 <span>HARI</span>
               </div>
-              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="250">
+              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="280">
                 <strong>{{ countdownHours }}</strong>
                 <span>JAM</span>
               </div>
-              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="380">
+              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="400">
                 <strong>{{ countdownMinutes }}</strong>
                 <span>MENIT</span>
               </div>
-              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="510">
+              <div class="ruby-countdown-box" appOnceReveal="fade-up" [orDelay]="520">
                 <strong>{{ countdownSeconds }}</strong>
                 <span>DETIK</span>
               </div>
@@ -227,7 +227,7 @@
           <div
             class="ruby-story-header ruby-caption"
             data-caption-motion="story"
-            appOnceReveal="fade-up">
+            appOnceReveal="fade-up" [orDuration]="800">
 
             <p class="ruby-story-eyebrow ruby-caption__eyebrow">
               OUR JOURNEY
@@ -250,7 +250,7 @@
                 let i = index;
                 trackBy: trackByLoveStory
               "
-              appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+              appOnceReveal="card" [orDelay]="160" [orStagger]="i * 140">
 
               <span
                 class="ruby-story-dot"
@@ -285,7 +285,7 @@
 
       <section class="ruby-gallery-section" *ngIf="isGalleryVisible() && hasGallery()">
         <div class="ruby-gallery-content">
-          <div class="ruby-caption ruby-caption--gallery" data-caption-motion="gallery" appOnceReveal="fade-up">
+          <div class="ruby-caption ruby-caption--gallery" data-caption-motion="gallery" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-gallery-label ruby-caption__eyebrow">MOMENTS</p>
             <h2 class="ruby-caption__title">Galeri Foto</h2>
             <div class="ruby-gallery-line ruby-caption__divider"></div>
@@ -294,7 +294,7 @@
           <button
             class="ruby-video-card gallery-card"
             type="button"
-            appOnceReveal="zoom" [orDelay]="120"
+            appOnceReveal="zoom" [orDelay]="160" [orDuration]="950"
             *ngFor="let item of getGalleryVideoItems(); trackBy: trackByGallery"
             [class.is-image-missing]="!getGalleryVideoCoverUrl(item)"
             [attr.aria-label]="'Putar video ' + (item.nama_foto || item.description || 'undangan')"
@@ -317,7 +317,7 @@
             <span class="ruby-gallery-watch-label">Tonton Video</span>
           </button>
 
-          <div class="ruby-gallery-carousel" *ngIf="getGalleryCarouselItems().length" appOnceReveal="fade-up" [orDelay]="200" [orDuration]="850">
+          <div class="ruby-gallery-carousel" *ngIf="getGalleryCarouselItems().length" appOnceReveal="fade-up" [orDelay]="240" [orDuration]="900">
             <button class="ruby-gallery-nav ruby-gallery-nav--prev" type="button" aria-label="Foto sebelumnya" (click)="scrollGalleryCarousel(-1)">
               <i class="fas fa-chevron-left" aria-hidden="true"></i>
             </button>
@@ -427,13 +427,13 @@
         <img class="ruby-wish-frame" src="assets/thema-1/frame-6.png" alt="" aria-hidden="true">
 
         <div class="ruby-wish-content">
-          <div class="ruby-wish-header ruby-caption ruby-caption--wish" data-caption-motion="wish" appOnceReveal="fade-up">
+          <div class="ruby-wish-header ruby-caption ruby-caption--wish" data-caption-motion="wish" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-wish-label ruby-caption__eyebrow">DOA &amp; HARAPAN</p>
             <h2 class="ruby-caption__title">Ucapan &amp; Doa</h2>
             <div class="ruby-wish-line ruby-caption__divider"></div>
           </div>
 
-          <div class="ruby-wish-form" appOnceReveal="card" [orDelay]="120">
+          <div class="ruby-wish-form" appOnceReveal="card" [orDelay]="160">
             <label for="ruby-nama">Nama Lengkap</label>
             <input
               id="ruby-nama"
@@ -511,7 +511,7 @@
         <img class="ruby-gift-frame" src="assets/thema-1/frame-7.png" alt="" aria-hidden="true">
 
         <div class="ruby-gift-content">
-          <div class="ruby-gift-header ruby-caption ruby-caption--gift" data-caption-motion="gift" appOnceReveal="fade-up">
+          <div class="ruby-gift-header ruby-caption ruby-caption--gift" data-caption-motion="gift" appOnceReveal="fade-up" [orDuration]="800">
             <p class="ruby-gift-label ruby-caption__eyebrow">WEDDING GIFT</p>
             <h2 class="ruby-caption__title">Tanda Kasih</h2>
             <div class="ruby-gift-line ruby-caption__divider"></div>
@@ -521,7 +521,7 @@
           </div>
 
           <div class="ruby-bank-list" *ngIf="getVisibleBankAccounts().length; else emptyBank">
-            <article class="ruby-bank-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="120" [orStagger]="i * 130">
+            <article class="ruby-bank-card" *ngFor="let bank of getVisibleBankAccounts(); let i = index" appOnceReveal="card" [orDelay]="200" [orStagger]="i * 140">
               <div class="ruby-bank-card__top">
                 <span class="ruby-bank-icon" aria-hidden="true">🎁</span>
                 <span class="ruby-bank-name">{{ bank.nama_bank || bank.bank?.name || 'Bank' }}</span>
@@ -552,7 +552,7 @@
         <div class="ruby-footer-content">
           <p class="ruby-footer-message" appOnceReveal="fade-up" [innerText]="getClosingText()"></p>
 
-          <div class="ruby-caption ruby-caption--footer" data-caption-motion="footer" appOnceReveal="fade-up" [orDelay]="120">
+          <div class="ruby-caption ruby-caption--footer" data-caption-motion="footer" appOnceReveal="fade-up" [orDelay]="140">
             <p class="ruby-footer-label ruby-caption__eyebrow">KAMI YANG BERBAHAGIA</p>
 
             <h2 class="ruby-footer-names ruby-caption__title">
@@ -562,7 +562,7 @@
             </h2>
           </div>
 
-          <p class="ruby-footer-date" appOnceReveal="fade-up" [orDelay]="200">{{ getClosingDateLabel() }}</p>
+          <p class="ruby-footer-date" appOnceReveal="fade-up" [orDelay]="260">{{ getClosingDateLabel() }}</p>
 
           <div class="ruby-footer-credit">
             <span>Crafted with ❤️ by Sena Digital</span>
