@@ -115,6 +115,7 @@ import { RevealScopeDirective } from './shared/animations/reveal-scope.directive
 import { RevealStaggerDirective } from './shared/animations/reveal-stagger.directive';
 import { FloatingDecorationDirective } from './shared/animations/floating-decoration.directive';
 import { ParallaxDirective } from './shared/animations/parallax.directive';
+import { OnceRevealDirective } from './shared/animations/once-reveal.directive';
 import { VerifyAccountComponent } from './verify-account/verify-account.component';
 import { VerifyAccountCodeComponent } from './verify-account-code/verify-account-code.component';
 import { VerifyAccountSuccessComponent } from './verify-account-success/verify-account-success.component';
@@ -221,6 +222,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
     RevealStaggerDirective,
     FloatingDecorationDirective,
     ParallaxDirective,
+    OnceRevealDirective,
     VerifyAccountComponent,
     VerifyAccountCodeComponent,
     VerifyAccountSuccessComponent,

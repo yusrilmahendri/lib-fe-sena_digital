@@ -196,7 +196,7 @@
 }
 
 .sapphire-opening__guest {
-  margin: 0 auto 20px;
+  margin: 0 auto 24px;
   max-width: 280px;
 }
 
@@ -218,29 +218,85 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  min-width: 190px;
+  gap: 8px;
+  min-width: min(100%, 220px);
+  max-width: 100%;
+  min-height: 46px;
   height: 48px;
+  padding: 0 28px;
   border-radius: 999px;
-  border: 0;
-  background: var(--sapphire-primary);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #b34f92 0%, var(--sapphire-primary) 100%);
   color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  box-shadow: 0 12px 28px rgba(80, 22, 66, 0.35);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow:
+    0 10px 22px rgba(82, 28, 73, 0.2),
+    0 2px 8px rgba(82, 28, 73, 0.12);
   cursor: pointer;
-  transition: transform 160ms ease, opacity 160ms ease;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
   position: relative;
   z-index: 3;
   pointer-events: auto;
+  white-space: nowrap;
+  text-align: center;
+  opacity: 1 !important;
+  visibility: visible !important;
+  filter: none !important;
+  transform: none;
+  animation: none !important;
 
   &:hover:not(:disabled) {
     transform: translateY(-1px);
+    box-shadow:
+      0 12px 24px rgba(82, 28, 73, 0.22),
+      0 3px 10px rgba(82, 28, 73, 0.14);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   &:disabled {
     opacity: 0.72;
     cursor: not-allowed;
+  }
+}
+
+.sapphire-opening__button-icon {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+  transform: translateY(-0.5px);
+}
+
+.sapphire-opening__button-label {
+  display: inline-block;
+  line-height: 1;
+}
+
+@media (max-width: 360px) {
+  .sapphire-opening__guest {
+    margin-bottom: 22px;
+    max-width: 252px;
+  }
+
+  .sapphire-opening__button {
+    min-width: auto;
+    width: min(100%, 214px);
+    min-height: 44px;
+    height: 46px;
+    padding-inline: 24px;
+    font-size: 13px;
+  }
+
+  .sapphire-opening__button-icon {
+    font-size: 11px;
   }
 }
 
@@ -819,6 +875,156 @@
     letter-spacing: 1px;
     font-weight: 700;
     color: var(--sapphire-muted);
+  }
+}
+
+/* ── Journey / Cerita Cinta ─────────────────────────────────────── */
+.sapphire-journey {
+  position: relative;
+  background: var(--sapphire-bg);
+  padding: 46px 28px 50px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sapphire-journey::before {
+  left: -10px;
+  top: 26px;
+  width: clamp(88px, 28vw, 124px);
+  height: clamp(88px, 28vw, 124px);
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(120, 159, 101, 0.2) 0 18%, transparent 19%),
+    radial-gradient(ellipse at 35% 54%, rgba(155, 63, 131, 0.12) 0 16%, transparent 17%),
+    radial-gradient(ellipse at 68% 58%, rgba(115, 150, 96, 0.18) 0 18%, transparent 19%);
+  transform-origin: left top;
+}
+
+.sapphire-journey::after {
+  right: -10px;
+  bottom: 28px;
+  width: clamp(90px, 29vw, 128px);
+  height: clamp(90px, 29vw, 128px);
+  background:
+    radial-gradient(ellipse at 48% 20%, rgba(155, 63, 131, 0.12) 0 15%, transparent 16%),
+    radial-gradient(ellipse at 32% 52%, rgba(122, 162, 105, 0.18) 0 18%, transparent 19%),
+    radial-gradient(ellipse at 68% 62%, rgba(191, 222, 180, 0.28) 0 18%, transparent 19%);
+  transform-origin: right bottom;
+}
+
+.sapphire-divider--journey {
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+  margin-bottom: 28px;
+}
+
+.sapphire-journey-timeline {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 22px;
+  padding-left: 24px;
+}
+
+.sapphire-journey-timeline::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 7px;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(155, 63, 131, 0.2), rgba(110, 145, 92, 0.32));
+}
+
+.sapphire-journey-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  opacity: 1;
+  visibility: visible;
+  filter: none;
+}
+
+.sapphire-journey-dot {
+  position: absolute;
+  top: 8px;
+  left: -24px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(91, 123, 72, 0.4);
+  background: #fff7f7;
+  box-shadow: 0 0 0 4px rgba(155, 63, 131, 0.08);
+}
+
+.sapphire-journey-content {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(155, 63, 131, 0.1);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 14px 30px rgba(92, 56, 79, 0.08);
+  backdrop-filter: blur(8px);
+  opacity: 1;
+  visibility: visible;
+  filter: none;
+}
+
+.sapphire-journey-date {
+  margin: 0 0 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 2.4px;
+  font-weight: 700;
+  color: #8b4a79;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.sapphire-journey-title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: var(--sapphire-text);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.sapphire-journey-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--sapphire-muted);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+@media (max-width: 360px) {
+  .sapphire-journey {
+    padding-inline: 20px;
+  }
+
+  .sapphire-journey-timeline {
+    padding-left: 22px;
+  }
+
+  .sapphire-journey-dot {
+    left: -22px;
+  }
+
+  .sapphire-journey-content {
+    padding: 16px 16px 14px;
+  }
+
+  .sapphire-journey-title {
+    font-size: 20px;
+  }
+
+  .sapphire-journey-description {
+    font-size: 12.5px;
   }
 }
 
@@ -1944,5 +2150,10 @@
   .sapphire-content > section.sapphire-gift::before {
     opacity: 1;
     animation: sapphireLeafSwayLeft 10.2s ease-in-out infinite;
+  }
+
+  .sapphire-content .or:not(.or--visible) {
+    opacity: 0 !important;
+    visibility: visible !important;
   }
 }

@@ -4212,4 +4212,9 @@
     opacity: 1;
     animation: rubyFloralAccentFloatRight 11s ease-in-out infinite;
   }
+
+  .ruby-main .or:not(.or--visible) {
+    opacity: 0 !important;
+    visibility: visible !important;
+  }
 }

@@ -1,0 +1,69 @@
+/* ═══════════════════════════════════════════════════════════════
+   Once-Reveal — one-time viewport-enter transitions.
+   Uses CSS transitions (not @keyframes) so the existing
+   `animation: none !important` anti-flicker overrides in
+   theme SCSS don't interfere.
+
+   The [class] attribute selector boosts specificity to (0,4,0)
+   so these rules beat the theme opened-state overrides that
+   force `opacity: 1 !important` on content elements.
+   ═══════════════════════════════════════════════════════════════ */
+
+$or-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+.or {
+  --or-delay: 0ms;
+  --or-duration: 750ms;
+  --or-stagger: 0ms;
+
+  transition:
+    opacity var(--or-duration) $or-ease calc(var(--or-delay) + var(--or-stagger)),
+    transform var(--or-duration) $or-ease calc(var(--or-delay) + var(--or-stagger));
+  will-change: opacity, transform;
+}
+
+/* ── Initial hidden states per variant ─────────────────────── */
+
+.or[class].or--fade-up:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translateY(22px) !important;
+}
+
+.or[class].or--fade-left:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translateX(-22px) !important;
+}
+
+.or[class].or--fade-right:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translateX(22px) !important;
+}
+
+.or[class].or--zoom:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translateY(18px) scale(0.96) !important;
+}
+
+.or[class].or--card:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translateY(28px) scale(0.98) !important;
+}
+
+/* ── Revealed state — permanent ────────────────────────────── */
+
+.or[class].or--visible {
+  opacity: 1 !important;
+  transform: none !important;
+  will-change: auto;
+}
+
+/* Reduced motion: skip the transition entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .or,
+  .or[class].or--visible,
+  .or[class]:not(.or--visible) {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

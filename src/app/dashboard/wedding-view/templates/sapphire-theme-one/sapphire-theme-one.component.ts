@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, HostListener, OnChanges, OnDestroy, OnIni
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService, DashboardServiceType } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
-import { BankAccount, GalleryItem, GuestWish, WeddingEvent } from '../../../../services/wedding-data.service';
+import { BankAccount, GalleryItem, GuestWish, WeddingEvent, WeddingStory } from '../../../../services/wedding-data.service';
 import { LavenderBloomThemeComponent } from '../../themes/lavender-bloom/lavender-bloom-theme.component';
 import {
   logInvitationImageError,
@@ -359,6 +359,78 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
 
   getWeddingGiftIntro(): string {
     return 'Doa restu Anda adalah hadiah terindah. Namun jika ingin memberi tanda kasih, dapat melalui:';
+  }
+
+  override getStories(): WeddingStory[] {
+    const inheritedStories = super.getStories();
+    if (inheritedStories.length) {
+      return inheritedStories
+        .map((story, index) => this.normalizeJourneyStory(story, index))
+        .filter((story: WeddingStory) => !!(story.title || (story as any).lead_cerita || (story as any).tanggal_cerita));
+    }
+
+    const data = this.weddingData as any;
+    const candidates = [
+      data?.stories,
+      data?.love_story,
+      data?.love_stories,
+      data?.story,
+      data?.journey,
+      data?.wedding_story,
+      data?.wedding_stories,
+      data?.cerita,
+      data?.cerita_cinta,
+      data?.invitation_package?.stories,
+      data?.invitation_package?.love_story,
+      data?.invitation_package?.love_stories,
+      data?.invitation_package?.story,
+      data?.invitation_package?.journey,
+      data?.invitation_package?.wedding_story,
+      data?.invitation_package?.wedding_stories,
+      data?.invitation_package?.cerita,
+      data?.invitation_package?.cerita_cinta,
+      data?.data?.stories,
+      data?.data?.love_story,
+      data?.data?.love_stories,
+      data?.data?.story,
+      data?.data?.journey,
+      data?.data?.wedding_story,
+      data?.data?.wedding_stories,
+      data?.data?.cerita,
+      data?.data?.cerita_cinta,
+    ];
+
+    const rows = candidates.find((item) => Array.isArray(item)) || [];
+    return rows
+      .map((story: any, index: number) => this.normalizeJourneyStory(story, index))
+      .filter((story: WeddingStory) => !!(story.title || (story as any).lead_cerita || (story as any).tanggal_cerita))
+      .sort((a: any, b: any) => {
+        const orderA = Number(a?.sort_order ?? a?.sortOrder ?? Number.MAX_SAFE_INTEGER);
+        const orderB = Number(b?.sort_order ?? b?.sortOrder ?? Number.MAX_SAFE_INTEGER);
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        const timeA = new Date(a?.tanggal_cerita || 0).getTime() || Number.MAX_SAFE_INTEGER;
+        const timeB = new Date(b?.tanggal_cerita || 0).getTime() || Number.MAX_SAFE_INTEGER;
+        return timeA - timeB;
+      });
+  }
+
+  getJourneyStories(): Array<{ id: number; date: string; title: string; description: string }> {
+    return this.getStories().map((story, index) => {
+      const normalized = this.normalizeJourneyStory(story, index);
+      return {
+        id: normalized.id || index,
+        date: this.getJourneyStoryDate(normalized),
+        title: normalized.title || 'Cerita Kami',
+        description: (normalized as any).lead_cerita || (normalized as any).description || '',
+      };
+    });
+  }
+
+  trackByJourneyStory(index: number, item: { id: number; title: string }): number | string {
+    return item.id || `${index}-${item.title}`;
   }
 
   getGiftAddress(): string {
@@ -1161,5 +1233,74 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
       (wish as any)?.pesan || '',
       (wish as any)?.created_at || '',
     ].join('|').toLowerCase();
+  }
+
+  private normalizeJourneyStory(story: any, index: number): WeddingStory {
+    const date = String(
+      story?.tanggal_cerita ||
+      story?.date ||
+      story?.tanggal ||
+      story?.year ||
+      story?.tahun ||
+      ''
+    ).trim();
+    const title = String(
+      story?.title ||
+      story?.judul ||
+      story?.nama_cerita ||
+      story?.name ||
+      ''
+    ).trim();
+    const lead = String(
+      story?.lead_cerita ||
+      story?.description ||
+      story?.deskripsi ||
+      story?.content ||
+      story?.cerita ||
+      story?.story ||
+      story?.isi ||
+      ''
+    ).trim();
+
+    return {
+      ...story,
+      id: Number(story?.id ?? index + 1),
+      title,
+      lead_cerita: lead,
+      description: lead,
+      tanggal_cerita: date,
+      date,
+      created_at: String(story?.created_at || ''),
+    } as WeddingStory;
+  }
+
+  private getJourneyStoryDate(story: any): string {
+    const rawDate = String(
+      story?.tanggal_cerita ||
+      story?.date ||
+      story?.tanggal ||
+      story?.year ||
+      story?.tahun ||
+      ''
+    ).trim();
+
+    if (!rawDate) {
+      return '';
+    }
+
+    if (/^\d{4}$/.test(rawDate)) {
+      return rawDate;
+    }
+
+    const parsed = new Date(rawDate);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    }
+
+    return rawDate;
   }
 }

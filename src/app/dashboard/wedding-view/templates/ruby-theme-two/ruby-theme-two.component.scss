@@ -2327,4 +2327,9 @@
     opacity: 1;
     animation: rubyTwoFloralFloatRight 11.2s ease-in-out infinite;
   }
+
+  .ruby-two-main .or:not(.or--visible) {
+    opacity: 0 !important;
+    visibility: visible !important;
+  }
 }
