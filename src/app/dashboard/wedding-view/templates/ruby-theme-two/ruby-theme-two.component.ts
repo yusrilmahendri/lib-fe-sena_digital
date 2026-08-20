@@ -36,6 +36,9 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
   override isOpening = false;
   hasOpened = false;
   forceOpened = false;
+  selectedGalleryPhotoIndex = -1;
+  private lavenderLightboxTouchStartX = 0;
+  private lavenderLightboxTouchStartY = 0;
 
   private readonly mapUrlCache = new Map<string, SafeResourceUrl>();
 
@@ -108,6 +111,110 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     super.ngOnDestroy();
   }
 
+  get selectedGalleryPhoto(): GalleryItem | null {
+    const photos = this.getGalleryGridItems();
+
+    if (
+      this.selectedGalleryPhotoIndex < 0 ||
+      this.selectedGalleryPhotoIndex >= photos.length
+    ) {
+      return null;
+    }
+
+    return photos[this.selectedGalleryPhotoIndex];
+  }
+
+  get galleryLightboxTotal(): number {
+    return this.getGalleryGridItems().length;
+  }
+
+  get selectedGalleryPhotoUrl(): string {
+    const photo = this.selectedGalleryPhoto;
+
+    return photo
+      ? this.getGalleryPhotoUrl(photo)
+      : '';
+  }
+
+  openGalleryPhoto(index: number): void {
+    const photos = this.getGalleryGridItems();
+
+    if (!photos.length || index < 0 || index >= photos.length) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = index;
+  }
+
+  nextGalleryPhoto(event?: Event): void {
+    event?.stopPropagation();
+
+    const total = this.galleryLightboxTotal;
+
+      if (total <= 1) {
+        return;
+      }
+
+      this.selectedGalleryPhotoIndex =
+        (this.selectedGalleryPhotoIndex + 1) % total;
+    }
+
+    onGalleryTouchStart(event: TouchEvent): void {
+  const touch = event.touches[0];
+
+  if (!touch) {
+    return;
+  }
+
+  this.lavenderLightboxTouchStartX = touch.clientX;
+  this.lavenderLightboxTouchStartY = touch.clientY;
+}
+
+onGalleryTouchEnd(event: TouchEvent): void {
+  const touch = event.changedTouches[0];
+
+  if (!touch) {
+    return;
+  }
+
+  const deltaX =
+    touch.clientX - this.lavenderLightboxTouchStartX;
+
+  const deltaY =
+    touch.clientY - this.lavenderLightboxTouchStartY;
+
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  // Bukan swipe horizontal
+  if (absX < 45 || absX <= absY) {
+    return;
+  }
+
+  if (deltaX < 0) {
+    this.nextGalleryPhoto();
+  } else {
+    this.previousGalleryPhoto();
+  }
+}
+
+  previousGalleryPhoto(event?: Event): void {
+    event?.stopPropagation();
+
+    const total = this.galleryLightboxTotal;
+
+    if (total <= 1) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex =
+      (this.selectedGalleryPhotoIndex - 1 + total) % total;
+  }
+
+  closeGalleryPhoto(): void {
+    this.selectedGalleryPhotoIndex = -1;
+  }
+
   private releaseScrollLocks(): void {
     this.cleanupPreviewLocks();
 
@@ -115,14 +222,30 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
       return;
     }
 
-    window.requestAnimationFrame(() => this.cleanupPreviewLocks());
-    window.setTimeout(() => this.cleanupPreviewLocks(), 0);
+    window.requestAnimationFrame(() => {
+      this.cleanupPreviewLocks();
+    });
+
+    window.setTimeout(() => {
+      this.cleanupPreviewLocks();
+    }, 0);
+
+    window.setTimeout(() => {
+      this.cleanupPreviewLocks();
+    }, 50);
+
+    window.setTimeout(() => {
+      this.cleanupPreviewLocks();
+    }, 250);
   }
 
   private cleanupPreviewLocks(): void {
     if (typeof document === 'undefined') {
       return;
     }
+
+    const body = document.body;
+    const html = document.documentElement;
 
     const classes = [
       'no-scroll',
@@ -135,12 +258,27 @@ export class RubyThemeTwoComponent extends LavenderBloomThemeComponent implement
     ];
 
     classes.forEach((className) => {
-      document.body.classList.remove(className);
-      document.documentElement.classList.remove(className);
+      body.classList.remove(className);
+      html.classList.remove(className);
     });
 
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
+    const lockedStyles = [
+      'overflow',
+      'overflow-y',
+      'position',
+      'top',
+      'left',
+      'right',
+      'width',
+      'height',
+      'touch-action',
+      'overscroll-behavior'
+    ];
+
+    lockedStyles.forEach((property) => {
+      body.style.removeProperty(property);
+      html.style.removeProperty(property);
+    });
   }
 
   // ─── Display helpers ─────────────────────────────────────────────────

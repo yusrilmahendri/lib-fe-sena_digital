@@ -163,12 +163,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     this.isInvitationOpened = true;
     this.openInvitationRequested.emit();
 
-    console.log('[Soft Ivory] after', {
-      hasOpened: this.hasOpened,
-      isOpening: this.isOpening,
-      isInvitationOpened: this.isInvitationOpened,
-    });
-
     this.openingTimer = setTimeout(() => {
       this.isOpening = false;
       this.scheduleRubyCaptionMotionRefresh();

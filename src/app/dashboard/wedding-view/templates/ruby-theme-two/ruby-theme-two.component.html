@@ -181,12 +181,82 @@
         </button>
 
         <div class="ruby-two-gallery-grid" *ngIf="getGalleryGridItems().length">
-          <article class="ruby-two-gallery-item gallery-card" *ngFor="let item of getGalleryGridItems(); trackBy: trackByGallery; let i = index" [class.is-image-missing]="!getGalleryPhotoUrl(item)">
-            <img *ngIf="getGalleryPhotoUrl(item)" [src]="getGalleryPhotoUrl(item)" [alt]="getGalleryAlt(item, i)" [style.object-fit]="getPhotoObjectFit(item)" [style.object-position]="getPhotoObjectPosition(item)" (error)="onImageError($event)">
-            <div class="image-placeholder"><i class="fas fa-image" aria-hidden="true"></i><span>Foto belum tersedia</span></div>
+          <article
+            class="ruby-two-gallery-item gallery-card"
+            *ngFor="
+              let item of getGalleryGridItems();
+              trackBy: trackByGallery;
+              let i = index
+            "
+            [class.is-image-missing]="!getGalleryPhotoUrl(item)"
+            (click)="openGalleryPhoto(i)">
+
+            <img
+              *ngIf="getGalleryPhotoUrl(item)"
+              [src]="getGalleryPhotoUrl(item)"
+              [alt]="getGalleryAlt(item, i)"
+              [style.object-fit]="getPhotoObjectFit(item)"
+              [style.object-position]="getPhotoObjectPosition(item)"
+              (error)="onImageError($event)">
+
+            <div class="image-placeholder">
+              <i class="fas fa-image"></i>
+              <span>Foto belum tersedia</span>
+            </div>
           </article>
         </div>
       </section>
+
+      <div
+  class="ruby-two-photo-lightbox"
+  *ngIf="selectedGalleryPhoto as photo"
+  (click)="closeGalleryPhoto()"
+  (touchstart)="onGalleryTouchStart($event)"
+  (touchend)="onGalleryTouchEnd($event)">
+
+  <div
+    class="ruby-two-photo-lightbox__content"
+    (click)="$event.stopPropagation()">
+
+    <button
+      type="button"
+      class="ruby-two-photo-lightbox__close"
+      (click)="closeGalleryPhoto()">
+      ×
+    </button>
+
+    <div class="ruby-two-photo-lightbox__counter">
+      {{ selectedGalleryPhotoIndex + 1 }}
+      /
+      {{ galleryLightboxTotal }}
+    </div>
+
+    <button
+      *ngIf="galleryLightboxTotal > 1"
+      type="button"
+      class="ruby-two-photo-lightbox__nav ruby-two-photo-lightbox__nav--prev"
+      (click)="previousGalleryPhoto($event)">
+      ‹
+    </button>
+
+    <img
+      [src]="selectedGalleryPhotoUrl"
+      [alt]="getGalleryAlt(
+        photo,
+        selectedGalleryPhotoIndex
+      )">
+
+    <button
+      *ngIf="galleryLightboxTotal > 1"
+      type="button"
+      class="ruby-two-photo-lightbox__nav ruby-two-photo-lightbox__nav--next"
+      (click)="nextGalleryPhoto($event)">
+      ›
+    </button>
+
+  </div>
+
+</div>
 
       <div
         class="ruby-two-video-modal"

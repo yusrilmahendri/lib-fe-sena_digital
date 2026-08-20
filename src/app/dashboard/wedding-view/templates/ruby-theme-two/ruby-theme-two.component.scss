@@ -1398,6 +1398,355 @@
     rubyTwoFloralFloatRight 11.2s ease-in-out 1280ms infinite;
 }
 
+
+
+/* =========================================================
+   LAVENDER BLOOM — PHOTO LIGHTBOX
+   ========================================================= */
+
+.ruby-two-photo-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  width: 100%;
+  height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    max(16px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(14px, env(safe-area-inset-left));
+
+  background: rgba(14, 9, 19, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  overflow: hidden;
+
+  animation:
+    lavenderLightboxBackdropIn
+    280ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* container utama */
+.ruby-two-photo-lightbox__content {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  max-width: 1100px;
+  max-height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 62px 48px 52px;
+
+  box-sizing: border-box;
+}
+
+/* FOTO */
+.ruby-two-photo-lightbox__content img {
+  display: block;
+
+  width: auto;
+  height: auto;
+
+  max-width: 100%;
+  max-height: calc(100dvh - 130px);
+
+  object-fit: contain;
+  object-position: center;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.38);
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+
+  animation:
+    lavenderLightboxPhotoIn
+    340ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+/* COUNTER */
+.ruby-two-photo-lightbox__counter {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 5;
+
+  transform: translateX(-50%);
+
+  min-width: 54px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 12px;
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* CLOSE */
+.ruby-two-photo-lightbox__close {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  z-index: 10;
+
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.ruby-two-photo-lightbox__close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.05);
+}
+
+/* NAVIGATION */
+.ruby-two-photo-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+
+  background: rgba(22, 14, 29, 0.6);
+  color: #fff;
+
+  font-size: 30px;
+  font-weight: 300;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transform: translateY(-50%);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  transition:
+    background 180ms ease,
+    transform 180ms ease;
+}
+
+.ruby-two-photo-lightbox__nav:hover {
+  background: rgba(155, 77, 227, 0.78);
+}
+
+.ruby-two-photo-lightbox__nav--prev {
+  left: 0;
+}
+
+.ruby-two-photo-lightbox__nav--next {
+  right: 0;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .ruby-two-photo-lightbox {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      8px
+      max(10px, env(safe-area-inset-bottom));
+  }
+
+  .ruby-two-photo-lightbox__content {
+    width: 100%;
+    height: 100%;
+
+    padding:
+      58px
+      10px
+      48px;
+  }
+
+  .ruby-two-photo-lightbox__content img {
+    max-width: calc(100vw - 28px);
+    max-height: calc(100dvh - 125px);
+
+    border-radius: 10px;
+  }
+
+  .ruby-two-photo-lightbox__close {
+    top: 8px;
+    right: 8px;
+
+    width: 40px;
+    height: 40px;
+
+    font-size: 25px;
+  }
+
+  .ruby-two-photo-lightbox__counter {
+    top: 12px;
+
+    height: 28px;
+
+    font-size: 11px;
+  }
+
+  .ruby-two-photo-lightbox__nav {
+    width: 38px;
+    height: 38px;
+
+    font-size: 27px;
+
+    background: rgba(18, 11, 24, 0.72);
+  }
+
+  .ruby-two-photo-lightbox__nav--prev {
+    left: 14px;
+  }
+
+  .ruby-two-photo-lightbox__nav--next {
+    right: 14px;
+  }
+}
+
+/* sangat kecil: 320px */
+@media (max-width: 340px) {
+  .ruby-two-photo-lightbox__content {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .ruby-two-photo-lightbox__content img {
+    max-width: calc(100vw - 20px);
+  }
+
+  .ruby-two-photo-lightbox__nav {
+    width: 36px;
+    height: 36px;
+    font-size: 25px;
+  }
+
+  .ruby-two-photo-lightbox__nav--prev {
+    left: 10px;
+  }
+
+  .ruby-two-photo-lightbox__nav--next {
+    right: 10px;
+  }
+}
+
+/* landscape */
+@media (max-height: 520px) and (orientation: landscape) {
+  .ruby-two-photo-lightbox__content {
+    padding-top: 42px;
+    padding-bottom: 18px;
+  }
+
+  .ruby-two-photo-lightbox__content img {
+    max-height: calc(100dvh - 68px);
+  }
+
+  .ruby-two-photo-lightbox__counter {
+    top: 6px;
+  }
+
+  .ruby-two-photo-lightbox__close {
+    top: 4px;
+  }
+}
+
+/* animations */
+@keyframes lavenderLightboxBackdropIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lavenderLightboxPhotoIn {
+  from {
+    opacity: 0;
+    transform: scale(0.965);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruby-two-photo-lightbox,
+  .ruby-two-photo-lightbox__content img {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 .ruby-two-cover::after {
   animation: rubyTwoFloralBloomRight 1220ms cubic-bezier(0.22, 1, 0.36, 1) both,
     rubyTwoFloralFloatRight 10.8s ease-in-out 1220ms infinite;
