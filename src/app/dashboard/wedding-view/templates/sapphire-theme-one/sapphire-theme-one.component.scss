@@ -44,7 +44,9 @@
   min-height: 100vh;
   background: var(--sapphire-bg);
   color: var(--sapphire-text);
-  overflow-x: hidden;
+  /* `clip` instead of `hidden`: `overflow-x: hidden` coerces the computed
+     `overflow-y` to `auto` and creates a nested scrollport. */
+  overflow-x: clip;
   overflow-y: visible;
   position: relative;
   font-family: 'Inter', 'Roboto', sans-serif;
@@ -294,7 +296,7 @@
   position: relative;
   z-index: 1;
   pointer-events: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: visible;
   touch-action: pan-y;
   will-change: auto;
@@ -1861,34 +1863,86 @@
 
 /* Opened: vertical scroll only on page; horizontal swipe reserved for lightbox. */
 .sapphire-theme-one--opened {
-  overflow-x: hidden;
+  position: relative;
+  height: auto;
+  max-height: none;
+  overflow-x: clip;
   overflow-y: visible;
   touch-action: pan-y;
+  overscroll-behavior-y: auto;
 
   .sapphire-content {
-    overflow: visible;
+    position: relative;
+    height: auto;
+    max-height: none;
+    overflow-x: clip;
     overflow-y: visible;
     touch-action: pan-y;
   }
 
-  .ia-reveal--visible,
-  .ia-reveal--visible .ia-stagger-item,
-  .ia-reveal--visible h1,
-  .ia-reveal--visible h2,
-  .ia-reveal--visible h3,
-  .ia-reveal--visible p,
-  .ia-reveal--visible img,
-  .ia-reveal--visible strong,
-  .ia-reveal--visible small,
-  .ia-reveal--visible label,
-  .ia-reveal--visible input,
-  .ia-reveal--visible textarea,
-  .ia-reveal--visible button,
-  .ia-reveal--visible a,
-  .ia-reveal--visible iframe,
-  .ia-reveal--visible article {
+  /* Scoped to `> section` so the gallery lightbox / video modal are untouched. */
+  .sapphire-content,
+  .sapphire-content > section,
+  .sapphire-content > section h1,
+  .sapphire-content > section h2,
+  .sapphire-content > section h3,
+  .sapphire-content > section p,
+  .sapphire-content > section span,
+  .sapphire-content > section strong,
+  .sapphire-content > section small,
+  .sapphire-content > section time,
+  .sapphire-content > section label,
+  .sapphire-content > section input,
+  .sapphire-content > section textarea,
+  .sapphire-content > section a,
+  .sapphire-content > section button,
+  .sapphire-content > section img,
+  .sapphire-content > section iframe,
+  .sapphire-content > section article,
+  .sapphire-content > section .sapphire-kicker,
+  .sapphire-content > section .sapphire-title,
+  .sapphire-content > section .sapphire-divider,
+  .sapphire-content > section .sapphire-gallery-divider,
+  .sapphire-content > section .sapphire-gallery-date,
+  .sapphire-content > section .sapphire-gallery-item,
+  .sapphire-content > section .sapphire-couple-card,
+  .sapphire-content > section .sapphire-couple-photo-wrap,
+  .sapphire-content > section .sapphire-countdown__box,
+  .sapphire-content > section .sapphire-event-block,
+  .sapphire-content > section .sapphire-event-date-row,
+  .sapphire-content > section .sapphire-map-preview,
+  .sapphire-content > section .sapphire-wish-form,
+  .sapphire-content > section .sapphire-wish-item,
+  .sapphire-content > section .sapphire-wish-chip,
+  .sapphire-content > section .sapphire-gift-card,
+  .sapphire-content > section .sapphire-btn,
+  .sapphire-content > section .sapphire-footer {
     opacity: 1 !important;
     visibility: visible !important;
     filter: none !important;
+    clip-path: none !important;
+    transform: none;
+    animation: none !important;
+  }
+
+  /* Leaf/decoration keeps its idle sway only. */
+  .sapphire-content > section.sapphire-post-hero::after,
+  .sapphire-content > section.sapphire-countdown::after,
+  .sapphire-content > section.sapphire-wishes::after,
+  .sapphire-content > section.sapphire-footer::after,
+  .sapphire-content > section.sapphire-couple::after,
+  .sapphire-content > section.sapphire-gallery::after,
+  .sapphire-content > section.sapphire-events::after,
+  .sapphire-content > section.sapphire-gift::after {
+    opacity: 1;
+    animation: sapphireLeafSwayRight 10.6s ease-in-out infinite;
+  }
+
+  .sapphire-content > section.sapphire-couple::before,
+  .sapphire-content > section.sapphire-gallery::before,
+  .sapphire-content > section.sapphire-events::before,
+  .sapphire-content > section.sapphire-gift::before {
+    opacity: 1;
+    animation: sapphireLeafSwayLeft 10.2s ease-in-out infinite;
   }
 }

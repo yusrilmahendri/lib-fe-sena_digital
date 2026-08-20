@@ -16,7 +16,9 @@
   margin: 0 auto;
   min-height: 100vh;
   background: var(--ruby-two-soft);
-  overflow-x: hidden;
+  /* `clip` instead of `hidden`: `overflow-x: hidden` coerces the computed
+     `overflow-y` to `auto` and creates a nested scrollport. */
+  overflow-x: clip;
   color: var(--ruby-two-text);
   touch-action: pan-y;
   overscroll-behavior-x: none;
@@ -2245,37 +2247,84 @@
 }
 
 /* Opened: scroll immediately; revealed content stays visible. */
+/* Opened state: normal document flow, no nested scrollport, no scroll reveal. */
 .ruby-theme-two--opened {
-  overflow-x: hidden;
+  position: relative;
+  height: auto;
+  max-height: none;
+  overflow-x: clip;
   overflow-y: visible;
   touch-action: pan-y;
+  overscroll-behavior-y: auto;
 
   .ruby-two-shell,
   .ruby-two-main {
-    overflow: visible;
+    position: relative;
+    height: auto;
+    max-height: none;
+    overflow-x: clip;
     overflow-y: visible;
     touch-action: pan-y;
   }
 
-  .ia-reveal--visible,
-  .ia-reveal--visible .ia-stagger-item,
-  .ia-reveal--visible h1,
-  .ia-reveal--visible h2,
-  .ia-reveal--visible h3,
-  .ia-reveal--visible p,
-  .ia-reveal--visible img,
-  .ia-reveal--visible blockquote,
-  .ia-reveal--visible strong,
-  .ia-reveal--visible small,
-  .ia-reveal--visible label,
-  .ia-reveal--visible input,
-  .ia-reveal--visible textarea,
-  .ia-reveal--visible button,
-  .ia-reveal--visible a,
-  .ia-reveal--visible iframe,
-  .ia-reveal--visible article {
+  /* Scoped to `> section` so the gallery lightbox / video modal are untouched. */
+  .ruby-two-main,
+  .ruby-two-main > section,
+  .ruby-two-main > section h1,
+  .ruby-two-main > section h2,
+  .ruby-two-main > section h3,
+  .ruby-two-main > section p,
+  .ruby-two-main > section span,
+  .ruby-two-main > section strong,
+  .ruby-two-main > section small,
+  .ruby-two-main > section time,
+  .ruby-two-main > section blockquote,
+  .ruby-two-main > section label,
+  .ruby-two-main > section input,
+  .ruby-two-main > section textarea,
+  .ruby-two-main > section a,
+  .ruby-two-main > section button,
+  .ruby-two-main > section img,
+  .ruby-two-main > section iframe,
+  .ruby-two-main > section article,
+  .ruby-two-main > section .ruby-two-person-card,
+  .ruby-two-main > section .ruby-two-person-card__frame,
+  .ruby-two-main > section .ruby-two-event-card,
+  .ruby-two-main > section .ruby-two-map-preview,
+  .ruby-two-main > section .ruby-two-countdown__card,
+  .ruby-two-main > section .ruby-two-journey-item,
+  .ruby-two-main > section .ruby-two-journey-dot,
+  .ruby-two-main > section .ruby-two-gallery-item,
+  .ruby-two-main > section .ruby-two-gallery-featured,
+  .ruby-two-main > section .ruby-two-video-card,
+  .ruby-two-main > section .ruby-two-form,
+  .ruby-two-main > section .ruby-two-chip,
+  .ruby-two-main > section .ruby-two-wish-card,
+  .ruby-two-main > section .ruby-two-bank-card,
+  .ruby-two-main > section .ruby-two-footer {
     opacity: 1 !important;
     visibility: visible !important;
     filter: none !important;
+    clip-path: none !important;
+    transform: none;
+    animation: none !important;
+  }
+
+  .ruby-two-main > section .ruby-two-journey-timeline::before {
+    transform: none;
+    animation: none;
+  }
+
+  /* Floral/decoration keeps its idle float only. */
+  .ruby-two-main > section.ruby-two-section::before,
+  .ruby-two-main > section.ruby-two-hero::after,
+  .ruby-two-main > section.ruby-two-closing::after {
+    opacity: 1;
+    animation: rubyTwoFloralFloatLeft 10.4s ease-in-out infinite;
+  }
+
+  .ruby-two-main > section.ruby-two-section::after {
+    opacity: 1;
+    animation: rubyTwoFloralFloatRight 11.2s ease-in-out infinite;
   }
 }

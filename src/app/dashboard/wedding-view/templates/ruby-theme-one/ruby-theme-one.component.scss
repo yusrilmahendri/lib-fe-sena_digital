@@ -22,7 +22,10 @@
   min-width: 0;
   margin: 0 auto;
   min-height: 100vh;
-  overflow-x: hidden;
+  /* `clip` instead of `hidden`: `overflow-x: hidden` coerces the computed
+     `overflow-y` to `auto`, turning every wrapper into a nested scrollport
+     that swallows the first touch on iOS Safari. */
+  overflow-x: clip;
   padding: 0;
   box-sizing: border-box;
 }
@@ -38,7 +41,7 @@
   padding-right: 0 !important;
   background: transparent !important;
   box-shadow: none;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .ruby-cover {
@@ -3124,8 +3127,8 @@
   padding-left: 0 !important;
   padding-right: 0 !important;
   background: transparent !important;
-  touch-action: manipulation;
-  overflow: hidden;
+  touch-action: pan-y;
+  overflow: clip;
   opacity: 0;
   transform: translateY(22px);
   transition:
@@ -3224,7 +3227,7 @@
   max-width: 430px;
   margin: 0 auto !important;
   border-radius: 0 !important;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .ruby-main {
@@ -4112,35 +4115,101 @@
   --bs-body-bg: #fff;
 }
 
-/* Opened state: allow immediate vertical scroll, no scroll trap on shell/main. */
+/* Opened state: normal document flow, no nested scrollport, no scroll reveal. */
 .ruby-theme-one--opened {
-  overflow-x: hidden;
+  position: relative;
+  height: auto;
+  max-height: none;
+  overflow-x: clip;
   overflow-y: visible;
   touch-action: pan-y;
+  overscroll-behavior-y: auto;
 
   .ruby-shell,
   .ruby-main {
-    overflow: visible;
+    position: relative;
+    height: auto;
+    max-height: none;
+    overflow-x: clip;
     overflow-y: visible;
     touch-action: pan-y;
   }
 
-  /* Text/images that were revealed stay visible — no replay on scroll. */
-  .ia-reveal--visible,
-  .ia-reveal--visible .ia-stagger-item,
-  .ia-reveal--visible h1,
-  .ia-reveal--visible h2,
-  .ia-reveal--visible h3,
-  .ia-reveal--visible p,
-  .ia-reveal--visible img,
-  .ia-reveal--visible blockquote,
-  .ia-reveal--visible strong,
-  .ia-reveal--visible small,
-  .ia-reveal--visible button,
-  .ia-reveal--visible a,
-  .ia-reveal--visible iframe {
+  /* Scroll reveal is disabled for this theme — content is permanently visible.
+     Scoped to `> section` so the gallery lightbox / video modal keep their own
+     animations. */
+  .ruby-main,
+  .ruby-main > section,
+  .ruby-main > section h1,
+  .ruby-main > section h2,
+  .ruby-main > section h3,
+  .ruby-main > section p,
+  .ruby-main > section span,
+  .ruby-main > section strong,
+  .ruby-main > section small,
+  .ruby-main > section time,
+  .ruby-main > section blockquote,
+  .ruby-main > section a,
+  .ruby-main > section button,
+  .ruby-main > section img,
+  .ruby-main > section iframe,
+  .ruby-main > section article,
+  .ruby-main > section .ruby-caption,
+  .ruby-main > section .ruby-couple-card,
+  .ruby-main > section .ruby-couple-photo,
+  .ruby-main > section .ruby-event-card,
+  .ruby-main > section .ruby-map-card,
+  .ruby-main > section .ruby-map-preview,
+  .ruby-main > section .ruby-countdown,
+  .ruby-main > section .ruby-countdown-box,
+  .ruby-main > section .gallery-card,
+  .ruby-main > section .ruby-gallery-slide,
+  .ruby-main > section .ruby-gallery-feature,
+  .ruby-main > section .ruby-gallery-thumb,
+  .ruby-main > section .ruby-video-card,
+  .ruby-main > section .ruby-wish-form,
+  .ruby-main > section .ruby-wish-card,
+  .ruby-main > section .ruby-bank-card,
+  .ruby-main > section .ruby-footer-content {
     opacity: 1 !important;
     visibility: visible !important;
     filter: none !important;
+    clip-path: none !important;
+    transform: none;
+    animation: none !important;
+  }
+
+  /* Floral/decoration keeps its idle drift (no bloom replay, no layout shift). */
+  .ruby-main > section .ruby-quote-frame,
+  .ruby-main > section .ruby-wish-frame,
+  .ruby-main > section .ruby-footer-frame {
+    opacity: 1 !important;
+    animation: rubyFloralLeftDrift 10.2s ease-in-out infinite !important;
+  }
+
+  .ruby-main > section .ruby-location-frame,
+  .ruby-main > section .ruby-gift-frame {
+    opacity: 1 !important;
+    animation: rubyFloralRightDrift 11s ease-in-out infinite !important;
+  }
+
+  .ruby-couple-section::before {
+    opacity: 1;
+    animation: rubyFloralBackdropFloatLeft 11.2s ease-in-out infinite;
+  }
+
+  .ruby-event-section::before {
+    opacity: 1;
+    animation: rubyFloralBackdropFloatRight 11.8s ease-in-out infinite;
+  }
+
+  .ruby-gallery-section::before {
+    opacity: 1;
+    animation: rubyFloralAccentFloatLeft 10.4s ease-in-out infinite;
+  }
+
+  .ruby-gallery-section::after {
+    opacity: 1;
+    animation: rubyFloralAccentFloatRight 11s ease-in-out infinite;
   }
 }

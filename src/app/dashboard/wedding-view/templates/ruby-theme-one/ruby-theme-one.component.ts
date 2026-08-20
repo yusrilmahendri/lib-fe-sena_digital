@@ -46,8 +46,6 @@ interface RubyLoveStoryItem {
   description: string;
 }
 
-type RubyCaptionDirection = 'down' | 'up';
-
 @Component({
   selector: 'wc-ruby-theme-one',
   templateUrl: './ruby-theme-one.component.html',
@@ -87,15 +85,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
 
   private readonly subscriptions = new Subscription();
   private countdownTimer?: any;
-  private captionObserver?: IntersectionObserver;
-  private captionMutationObserver?: MutationObserver;
-  private captionObservedElements = new Set<HTMLElement>();
-  private captionScrollRoot: HTMLElement | null = null;
-  private captionScrollCleanup?: () => void;
   private captionRefreshTimer?: any;
-  private captionScrollRaf = 0;
-  private captionDirection: RubyCaptionDirection = 'down';
-  private captionLastScrollTop = 0;
   private readonly rubyMapEmbedUrlCache = new Map<string, SafeResourceUrl>();
   private galleryDragStartX = 0;
   private galleryDragStartScrollLeft = 0;
@@ -138,15 +128,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
       return;
     }
 
-    const hostElement = this.elementRef.nativeElement;
-    this.ngZone.runOutsideAngular(() => {
-      this.scheduleRubyCaptionMotionRefresh();
-      this.captionMutationObserver = new MutationObserver(() => this.scheduleRubyCaptionMotionRefresh());
-      this.captionMutationObserver.observe(hostElement, {
-        childList: true,
-        subtree: true,
-      });
-    });
+    this.ngZone.runOutsideAngular(() => this.scheduleRubyCaptionMotionRefresh());
   }
 
   override openInvitation(event?: Event): void {
@@ -217,12 +199,6 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     if (this.captionRefreshTimer) {
       clearTimeout(this.captionRefreshTimer);
     }
-    if (this.captionScrollRaf) {
-      cancelAnimationFrame(this.captionScrollRaf);
-    }
-    this.captionObserver?.disconnect();
-    this.captionMutationObserver?.disconnect();
-    this.captionScrollCleanup?.();
     this.subscriptions.unsubscribe();
     super.ngOnDestroy();
   }
@@ -1077,131 +1053,24 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
     this.captionRefreshTimer = setTimeout(() => this.setupRubyCaptionMotion(), 40);
   }
 
+  /**
+   * Captions are shown immediately instead of on scroll intersection. The old
+   * observer chain re-measured the whole subtree on every DOM mutation, which
+   * both janked the first swipe and re-triggered the caption animation.
+   */
   private setupRubyCaptionMotion(): void {
     if (!this.elementRef) {
       return;
     }
 
-    const captions = Array.from(
-      this.elementRef.nativeElement.querySelectorAll<HTMLElement>('.ruby-caption[data-caption-motion]')
+    const captions = this.elementRef.nativeElement.querySelectorAll<HTMLElement>(
+      '.ruby-caption[data-caption-motion]:not(.ruby-caption--visible)'
     );
-
-    if (!captions.length) {
-      return;
-    }
-
-    if (this.prefersReducedMotion()) {
-      this.captionObserver?.disconnect();
-      this.captionObservedElements.clear();
-      captions.forEach((caption) => {
-        caption.classList.remove('ruby-caption--ready', 'ruby-caption--down', 'ruby-caption--up');
-        caption.classList.add('ruby-caption--visible');
-      });
-      return;
-    }
-
-    const nextRoot = this.resolveRubyCaptionScrollRoot(captions[0]);
-    if (!this.captionObserver || nextRoot !== this.captionScrollRoot) {
-      this.captionObserver?.disconnect();
-      this.captionObservedElements.clear();
-      this.captionScrollRoot = nextRoot;
-      this.captionObserver = new IntersectionObserver(
-        (entries) => this.onRubyCaptionIntersections(entries),
-        {
-          root: this.captionScrollRoot,
-          rootMargin: '-10% 0px -18% 0px',
-          threshold: [0, 0.22, 0.3],
-        }
-      );
-      this.setupRubyCaptionScrollDirection();
-    }
 
     captions.forEach((caption) => {
-      caption.classList.add('ruby-caption--ready');
-      if (!this.captionObservedElements.has(caption)) {
-        this.captionObserver?.observe(caption);
-        this.captionObservedElements.add(caption);
-      }
+      caption.classList.remove('ruby-caption--ready', 'ruby-caption--down', 'ruby-caption--up');
+      caption.classList.add('ruby-caption--visible');
     });
-  }
-
-  private onRubyCaptionIntersections(entries: IntersectionObserverEntry[]): void {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting || entry.intersectionRatio < 0.12) {
-        return;
-      }
-
-      const caption = entry.target as HTMLElement;
-
-      if (!caption.classList.contains('ruby-caption--visible')) {
-        this.playRubyCaptionAnimation(caption);
-      }
-
-      // Setelah tampil, jangan diamati lagi.
-      this.captionObserver?.unobserve(caption);
-    });
-  }
-
-  private playRubyCaptionAnimation(caption: HTMLElement): void {
-    caption.classList.remove(
-      'ruby-caption--down',
-      'ruby-caption--up'
-    );
-
-    caption.classList.add(
-      `ruby-caption--${this.captionDirection}`,
-      'ruby-caption--visible'
-    );
-  }
-
-
-
-  private setupRubyCaptionScrollDirection(): void {
-    this.captionScrollCleanup?.();
-    const target: HTMLElement | Window = this.captionScrollRoot || window;
-    this.captionLastScrollTop = this.getRubyCaptionScrollTop();
-
-    const onScroll = () => {
-      if (this.captionScrollRaf) {
-        return;
-      }
-
-      this.captionScrollRaf = requestAnimationFrame(() => {
-        const currentScrollTop = this.getRubyCaptionScrollTop();
-        if (Math.abs(currentScrollTop - this.captionLastScrollTop) > 2) {
-          this.captionDirection = currentScrollTop > this.captionLastScrollTop ? 'down' : 'up';
-          this.captionLastScrollTop = currentScrollTop;
-        }
-        this.captionScrollRaf = 0;
-      });
-    };
-
-    target.addEventListener('scroll', onScroll, { passive: true });
-    this.captionScrollCleanup = () => target.removeEventListener('scroll', onScroll);
-  }
-
-  private getRubyCaptionScrollTop(): number {
-    if (this.captionScrollRoot) {
-      return this.captionScrollRoot.scrollTop;
-    }
-
-    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-  }
-
-  private resolveRubyCaptionScrollRoot(element: HTMLElement): HTMLElement | null {
-    let parent = element.parentElement;
-
-    while (parent && parent !== document.body) {
-      const style = window.getComputedStyle(parent);
-      const overflowY = style.overflowY;
-      const canScroll = /(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight + 1;
-      if (canScroll) {
-        return parent;
-      }
-      parent = parent.parentElement;
-    }
-
-    return null;
   }
 
   private prefersReducedMotion(): boolean {

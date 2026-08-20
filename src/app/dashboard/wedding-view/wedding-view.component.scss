@@ -90,12 +90,25 @@
   // min-height: 100vh;
 }
 
+/* `overflow-x: hidden` forces the computed `overflow-y` to `auto`, which turns
+   this host into a nested scrollport and swallows the first touch on iOS.
+   `clip` constrains the x axis without creating a scroll container. */
 :host.theme-full-frame {
   width: 100%;
+  height: auto;
+  max-height: none;
   padding: 0 !important;
   background: transparent !important;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: visible;
+  touch-action: pan-y;
+  overscroll-behavior-y: auto;
+}
+
+:host.theme-full-frame .wedding-container {
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 :host.theme-full-frame::before,
