@@ -257,11 +257,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenGallery(): any[] {
-    const gallery: any[] = this.getGalleryItems();
-
-    return gallery.filter((item: any) => {
-      return Boolean(resolveInvitationPhotoUrl(item));
-    });
+    return this.getGalleryItems().filter((item: any) => this.isDiamondPhotoItem(item));
   }
 
   getGardenHeroImage(index: number): string {
@@ -408,6 +404,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenGalleryPhotoUrl(item: any): string {
+    if (this.isDiamondVideoItem(item)) {
+      return '';
+    }
+
     const raw = resolveInvitationPhotoUrl(item);
 
     if (!raw) return '';
@@ -420,6 +420,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentPhotoUrl(item: any): string {
+    if (this.isDiamondVideoItem(item)) {
+      return '';
+    }
+
     const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizeGardenPhotoUrl(rawUrl) || this.getGardenFallbackImage(1);

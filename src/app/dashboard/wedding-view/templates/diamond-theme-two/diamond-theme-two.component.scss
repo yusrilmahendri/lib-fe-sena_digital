@@ -2,6 +2,7 @@
 
 :host {
   display: block;
+  overflow: visible;
 }
 
 .diamond-garden-theme {
@@ -1584,7 +1585,7 @@
   position: relative;
   width: 100% !important;
   max-width: 410px;
-  height: 886px;
+  height: auto;
   min-height: 886px;
   margin: 0 auto;
   padding: 0;
@@ -1610,7 +1611,7 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  height: 886px;
+  height: auto;
   min-height: 886px;
   padding: 70px 28px 72px;
   box-sizing: border-box;
@@ -1619,6 +1620,12 @@
   align-items: center;
   text-align: center;
   background: transparent;
+}
+
+.diamond-garden-moments .diamond-video-section {
+  width: calc(100% + 56px);
+  margin: 8px -28px 18px;
+  z-index: 5;
 }
 
 .diamond-garden-moments__eyebrow {
@@ -1834,7 +1841,7 @@
   position: relative !important;
   width: 100% !important;
   max-width: 410px !important;
-  height: 886px !important;
+  height: auto !important;
   min-height: 886px !important;
   margin: 0 auto !important;
   padding: 0 !important;
@@ -1860,7 +1867,7 @@
   position: relative !important;
   z-index: 2 !important;
   width: 100% !important;
-  height: 886px !important;
+  height: auto !important;
   min-height: 886px !important;
   padding: 70px 28px 72px !important;
   box-sizing: border-box !important;
@@ -2962,6 +2969,12 @@
   visibility: visible !important;
   animation: none !important;
   transition: none !important;
+}
+
+.diamond-garden-theme .diamond-video-section iframe {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: none !important;
 }
 
 .diamond-garden-opening__media {

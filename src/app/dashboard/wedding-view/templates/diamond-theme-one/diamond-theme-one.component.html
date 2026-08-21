@@ -1,4 +1,23 @@
-<section class="diamond-theme diamond-theme-one" [class.diamond-theme-one--opened]="diamondOpened" *ngIf="weddingData">
+<ng-container *ngIf="weddingData">
+<div
+  class="diamond-global-particles"
+  *ngIf="diamondOpened"
+  aria-hidden="true">
+  <span
+    class="particle"
+    *ngFor="let particle of diamondGlobalParticles; trackBy: trackByDiamondParticle"
+    [class.particle--glow]="particle.glow"
+    [class.particle--star]="particle.kind === 'star'"
+    [style.left]="particle.left"
+    [style.width.px]="particle.size"
+    [style.height.px]="particle.size"
+    [style.opacity]="particle.opacity"
+    [style.--p-duration]="particle.duration + 's'"
+    [style.--p-delay]="particle.delay + 's'"
+    [style.--p-drift]="particle.drift + 'px'">
+  </span>
+</div>
+<section class="diamond-theme diamond-theme-one" [class.diamond-theme-one--opened]="diamondOpened">
   <article class="diamond-shell">
 
     <section class="diamond-opening" *ngIf="!diamondOpened">
@@ -256,6 +275,21 @@
         </div>
       </section>
 
+      <section
+        class="diamond-video-section"
+        *ngIf="diamondInlineYoutubeSrc"
+        appOnceReveal="ref-fade-up">
+        <div class="diamond-video-section__frame">
+          <iframe
+            [src]="diamondInlineYoutubeSrc"
+            title="Wedding video"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            allowfullscreen
+            loading="eager">
+          </iframe>
+        </div>
+      </section>
+
       <!-- CERITA CINTA -->
       <section class="diamond-section diamond-section--story" *ngIf="isStoryVisible() && getLoveStoryItems().length">
         <p class="diamond-eyebrow" appOnceReveal="ref-fade" [orDelay]="200">Our Journey</p>
@@ -264,8 +298,8 @@
           <article
             class="diamond-story-item"
             *ngFor="let item of getLoveStoryItems(); trackBy: getStoryTrackBy; let i = index"
-            appOnceReveal="ref-fade"
-            [orDelay]="300"
+            appOnceReveal="ref-fade-up"
+            [orDelay]="400"
             [orStagger]="i * 80">
             <span class="diamond-story-item__year" *ngIf="item.date">{{ item.date }}</span>
             <div class="diamond-story-item__body">
@@ -444,7 +478,7 @@
       </section>
 
       <!-- MOMENTS -->
-      <section class="diamond-moments" *ngIf="getDiamondFeaturedVideoItem() || getMomentPhotoItems().length">
+      <section class="diamond-moments" *ngIf="getMomentPhotoItems().length">
         <div class="diamond-moments__section diamond-moments__section--one">
           <img
             class="diamond-moments__bg"
@@ -457,28 +491,6 @@
           <div class="diamond-moments__content">
             <p class="diamond-moments__label" appOnceReveal="ref-fade" [orDelay]="200">MOMENTS</p>
             <h2 appOnceReveal="ref-fade-down" [orDelay]="300">CERITA DALAM<br />LENSA #1</h2>
-
-            <div
-              class="diamond-ref-reveal"
-              *ngIf="getDiamondFeaturedVideoItem() as featured"
-              appOnceReveal="ref-fade"
-              [orDelay]="300">
-              <button
-                type="button"
-                class="diamond-moments__featured"
-                (click)="openGalleryVideo(featured)"
-                [attr.aria-label]="'Putar video'">
-                <img
-                  [src]="getGalleryVideoCoverUrl(featured)"
-                  [alt]="getMomentAlt(featured, 0)"
-                  [style.object-fit]="getPhotoObjectFit(featured)"
-                  [style.object-position]="getPhotoObjectPosition(featured)"
-                  (error)="onMomentImageError($event)" />
-                <span class="diamond-moments__play" aria-hidden="true">
-                  <i class="fas fa-play"></i>
-                </span>
-              </button>
-            </div>
 
             <div class="diamond-moments__grid diamond-moments__grid--one" *ngIf="getMomentPhotosPartOne().length" appOnceReveal="ref-fade-up" [orDelay]="400">
               <div
@@ -531,33 +543,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- LIVE STREAMING -->
-      <section class="diamond-live" *ngIf="hasLiveStreaming()">
-        <img
-          class="diamond-live__bg"
-          [src]="getLiveStreamingPhotoUrl()"
-          alt=""
-          (error)="onCoverImageError($event)" />
-
-        <div class="diamond-live__overlay"></div>
-
-        <div class="diamond-live__content">
-          <p class="diamond-live__label" appOnceReveal="ref-fade" [orDelay]="200">HADIRI SECARA ONLINE</p>
-          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">LIVE STREAMING</h2>
-
-          <a
-            class="diamond-live__button"
-            [href]="getLiveStreamingUrl()"
-            target="_blank"
-            rel="noopener"
-            appOnceReveal="ref-fade-up"
-            [orDelay]="600">
-            <i class="fab fa-youtube"></i>
-            Gabung Live Streaming
-          </a>
         </div>
       </section>
 
@@ -643,9 +628,9 @@
           <p class="diamond-footer__label" appOnceReveal="ref-fade" [orDelay]="200">KAMI YANG BERBAHAGIA</p>
 
           <h2 appOnceReveal="ref-fade-down" [orDelay]="300">
-            {{ getGroomName() }}<br />
+            {{ getGroomShortName() }}<br />
             <span>&amp;</span><br />
-            {{ getBrideName() }}
+            {{ getBrideShortName() }}
           </h2>
 
           <p class="diamond-footer__date" appOnceReveal="ref-fade" [orDelay]="400">
@@ -731,3 +716,4 @@
     </div>
   </article>
 </section>
+</ng-container>

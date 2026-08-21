@@ -3,6 +3,7 @@
 :host {
   display: block;
   width: 100%;
+  overflow: visible;
 }
 
 .diamond-theme {
@@ -84,7 +85,8 @@
 .diamond-prayer,
 .diamond-person-full,
 .diamond-event,
-.diamond-countdown {
+.diamond-countdown,
+.diamond-video-section {
   width: 100% !important;
   max-width: 410px;
   margin-left: auto;
@@ -1880,39 +1882,72 @@
 }
 
 .diamond-story-item {
-  display: flex;
-  gap: 14px;
+  display: block;
+  width: 100%;
   padding: 16px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
 }
 
 .diamond-story-item__year {
-  flex-shrink: 0;
-  font-size: 0.78rem;
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--diamond-accent-soft);
 }
 
+.diamond-story-item__body {
+  width: 100%;
+  text-align: left;
+}
+
 .diamond-story-item__body h3 {
-  margin: 0 0 4px;
-  font-size: 1.1rem;
+  margin: 0 0 8px;
+  font-size: 1.45rem;
+  line-height: 1.2;
   color: #fff;
 }
 
 .diamond-story-item__body p {
   margin: 0 0 8px;
+  width: 100%;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 0.82rem;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.78);
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-align: left;
 }
 
 .diamond-story-item__body p:last-child {
   margin-bottom: 0;
+}
+
+@media (min-width: 601px) {
+  .diamond-story-item {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 14px;
+  }
+
+  .diamond-story-item__year {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .diamond-story-item {
+    display: block;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Gallery ──────────────────────────────────────────────────── */
@@ -2208,6 +2243,12 @@
   visibility: visible !important;
   animation: none !important;
   transition: none !important;
+}
+
+.diamond-theme-one .diamond-video-section iframe {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: none !important;
 }
 
 .diamond-theme-one .diamond-ref-reveal {

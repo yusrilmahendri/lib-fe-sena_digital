@@ -32,6 +32,43 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   selectedGalleryPhotoIndex = -1;
   currentWishPage = 1;
   wishPageSize = 3;
+  diamondInlineYoutubeSrc: SafeResourceUrl | null = null;
+  readonly diamondGlobalParticles: Array<{
+    left: string;
+    size: number;
+    opacity: number;
+    duration: number;
+    delay: number;
+    drift: number;
+    glow: boolean;
+    kind: 'dot' | 'star';
+  }> = [
+    { left: '4%', size: 2, opacity: 0.18, duration: 14.4, delay: -12.1, drift: -6, glow: false, kind: 'dot' },
+    { left: '9%', size: 4, opacity: 0.32, duration: 11.2, delay: -8.4, drift: 8, glow: true, kind: 'dot' },
+    { left: '13%', size: 3, opacity: 0.22, duration: 15.6, delay: -3.2, drift: -4, glow: false, kind: 'dot' },
+    { left: '18%', size: 5, opacity: 0.28, duration: 9.8, delay: -14.6, drift: 11, glow: true, kind: 'star' },
+    { left: '23%', size: 2, opacity: 0.16, duration: 13.1, delay: -1.1, drift: -8, glow: false, kind: 'dot' },
+    { left: '28%', size: 3, opacity: 0.4, duration: 8.6, delay: -9.7, drift: 5, glow: false, kind: 'dot' },
+    { left: '34%', size: 6, opacity: 0.24, duration: 16, delay: -6.3, drift: 10, glow: true, kind: 'dot' },
+    { left: '39%', size: 2, opacity: 0.2, duration: 12.4, delay: -13.8, drift: -5, glow: false, kind: 'dot' },
+    { left: '44%', size: 4, opacity: 0.36, duration: 10.2, delay: -4.5, drift: 7, glow: true, kind: 'star' },
+    { left: '49%', size: 3, opacity: 0.18, duration: 14.8, delay: -0.8, drift: -7, glow: false, kind: 'dot' },
+    { left: '54%', size: 2, opacity: 0.3, duration: 9.1, delay: -11.2, drift: 12, glow: false, kind: 'dot' },
+    { left: '58%', size: 5, opacity: 0.26, duration: 13.7, delay: -7.6, drift: -3, glow: true, kind: 'dot' },
+    { left: '63%', size: 3, opacity: 0.42, duration: 11.6, delay: -2.4, drift: 6, glow: false, kind: 'star' },
+    { left: '68%', size: 2, opacity: 0.15, duration: 15.2, delay: -10.9, drift: -8, glow: false, kind: 'dot' },
+    { left: '73%', size: 4, opacity: 0.34, duration: 8.4, delay: -5.1, drift: 9, glow: true, kind: 'dot' },
+    { left: '78%', size: 3, opacity: 0.21, duration: 12.8, delay: -14.1, drift: 4, glow: false, kind: 'dot' },
+    { left: '82%', size: 6, opacity: 0.27, duration: 10.7, delay: -1.8, drift: -6, glow: true, kind: 'star' },
+    { left: '86%', size: 2, opacity: 0.19, duration: 14.1, delay: -8.8, drift: 8, glow: false, kind: 'dot' },
+    { left: '90%', size: 3, opacity: 0.38, duration: 9.4, delay: -3.7, drift: 11, glow: false, kind: 'dot' },
+    { left: '94%', size: 4, opacity: 0.23, duration: 15.8, delay: -12.6, drift: -4, glow: true, kind: 'dot' },
+    { left: '7%', size: 2, opacity: 0.17, duration: 11.9, delay: -6.8, drift: 3, glow: false, kind: 'dot' },
+    { left: '41%', size: 5, opacity: 0.29, duration: 13.3, delay: -9.2, drift: -7, glow: true, kind: 'star' },
+    { left: '71%', size: 3, opacity: 0.33, duration: 8.9, delay: -0.4, drift: 10, glow: false, kind: 'dot' },
+    { left: '96%', size: 2, opacity: 0.2, duration: 12.1, delay: -15.4, drift: 5, glow: false, kind: 'dot' },
+  ];
+  private diamondInlineYoutubeId = '';
   private countdownInterval: any = null;
   private mapEmbedUrlCache = new Map<string, SafeResourceUrl>();
   private lightboxTouchStartX = 0;
@@ -51,6 +88,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     super.ngOnInit();
     this.startDiamondCountdown();
     this.syncWishPage();
+    this.refreshDiamondInlineYoutube();
     if (!this.wishForm.kehadiran) {
       this.wishForm.kehadiran = 'hadir';
     }
@@ -61,6 +99,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     if (changes['weddingData']) {
       this.startDiamondCountdown();
       this.syncWishPage();
+      this.refreshDiamondInlineYoutube();
       this.debugDiamondEvents();
       this.debugDiamondDate();
       this.debugDiamondMap();
@@ -207,14 +246,16 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getCoverPhotoUrl(): string {
-    const featuredGalleryPhoto = this.getFeaturedGalleryItem();
-    const featuredGalleryUrl = featuredGalleryPhoto ? this.getGalleryPhotoUrl(featuredGalleryPhoto) : '';
-    const gallery = this.getGalleryItems();
-    const namedCover = gallery.find((item: any) => {
+    const photos = this.getDiamondPhotoItems();
+    const featuredGalleryPhoto = photos[0] || this.getFeaturedGalleryItem();
+    const featuredGalleryUrl = featuredGalleryPhoto && this.isDiamondPhotoItem(featuredGalleryPhoto)
+      ? this.getGalleryPhotoUrl(featuredGalleryPhoto)
+      : '';
+    const namedCover = photos.find((item: any) => {
       const name = String(item?.nama_foto || item?.name || '').toLowerCase();
       return (name.includes('cover') || name.includes('outdoor')) && this.getGalleryCandidateUrl(item);
     });
-    const firstGalleryPhoto = gallery.find((item: any) => this.getGalleryCandidateUrl(item));
+    const firstGalleryPhoto = photos.find((item: any) => this.getGalleryCandidateUrl(item));
 
     const candidates = [
       featuredGalleryUrl,
@@ -239,8 +280,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   private getGalleryCandidateUrl(item: any): string {
-    const galleryItem: any = item || {};
-    return resolveInvitationPhotoUrl(galleryItem);
+    if (!this.isDiamondPhotoItem(item)) {
+      return '';
+    }
+
+    return resolveInvitationPhotoUrl(item);
   }
 
   getOpeningPhoto(): string {
@@ -248,27 +292,17 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getPrayerPhotoUrl(): string {
-    const gallery = this.getGalleryItems();
+    const item = this.pickDiamondPhotoItem([
+      'couple',
+      'pasangan',
+      'berdua',
+      'outdoor',
+      'prewedding',
+      'sampul',
+      'cover',
+    ], 1);
 
-    const preferred =
-      gallery.find((item: any) => {
-        const name = String(item?.nama_foto || item?.name || item?.title || '').toLowerCase();
-        return (
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('berdua') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding') ||
-          name.includes('sampul') ||
-          name.includes('cover')
-        );
-      }) ||
-      gallery.find((item: any) => item?.url_video) ||
-      gallery[1] ||
-      gallery[0];
-
-    const preferredItem: any = preferred || {};
-    const rawUrl = resolveInvitationPhotoUrl(preferredItem);
+    const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
   }
@@ -538,25 +572,15 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getEventPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('venue') ||
-          name.includes('lokasi') ||
-          name.includes('tempat') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding') ||
-          name.includes('couple') ||
-          name.includes('pasangan')
-        );
-      }) ||
-      gallery[2] ||
-      gallery[1] ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'venue',
+      'lokasi',
+      'tempat',
+      'outdoor',
+      'prewedding',
+      'couple',
+      'pasangan',
+    ], 2);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 
@@ -652,24 +676,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getCountdownPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('countdown') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('berdua') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding')
-        );
-      }) ||
-      gallery[2] ||
-      gallery[1] ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'countdown',
+      'couple',
+      'pasangan',
+      'berdua',
+      'outdoor',
+      'prewedding',
+    ], 2);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 
@@ -841,25 +855,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getWishesPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('wish') ||
-          name.includes('ucapan') ||
-          name.includes('doa') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('outdoor')
-        );
-      }) ||
-      gallery[3] ||
-      gallery[2] ||
-      gallery[1] ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'wish',
+      'ucapan',
+      'doa',
+      'couple',
+      'pasangan',
+      'outdoor',
+    ], 3);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 
@@ -1167,6 +1170,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return `${index}-${item.title}`;
   }
 
+  trackByDiamondParticle(index: number): number {
+    return index;
+  }
+
   trackByEvent(index: number, event: WeddingEvent): number {
     return event.id || index;
   }
@@ -1350,24 +1357,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getGiftPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('gift') ||
-          name.includes('hadiah') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding')
-        );
-      }) ||
-      gallery[2] ||
-      gallery[1] ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'gift',
+      'hadiah',
+      'couple',
+      'pasangan',
+      'outdoor',
+      'prewedding',
+    ], 2);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 
@@ -1460,6 +1457,67 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   isDiamondVideoItem(item: any): boolean {
     return this.hasDiamondVideoUrl(item);
+  }
+
+  isDiamondPhotoItem(item: any): boolean {
+    if (!item || this.isDiamondVideoItem(item)) {
+      return false;
+    }
+
+    return Boolean(resolveInvitationPhotoUrl(item) || this.getGalleryPhotoUrl(item));
+  }
+
+  getDiamondPhotoItems(): any[] {
+    return this.getGalleryItems().filter((item: any) => this.isDiamondPhotoItem(item));
+  }
+
+  private pickDiamondPhotoItem(tokens: string[], fallbackIndex = 0): any {
+    const photos = this.getDiamondPhotoItems();
+    return photos.find((photo: any) => {
+      const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
+      return tokens.some((token) => name.includes(token));
+    }) || photos[fallbackIndex] || photos[0] || null;
+  }
+
+  getDiamondInlineVideoId(): string {
+    const item = this.getDiamondFeaturedVideoItem();
+    if (!item) {
+      return '';
+    }
+
+    const embedUrl = this.getGalleryVideoUrl(item);
+    const embedMatch = String(embedUrl || '').match(/embed\/([a-zA-Z0-9_-]{6,})/i);
+    if (embedMatch?.[1]) {
+      return embedMatch[1];
+    }
+
+    const rawVideoUrl = String(
+      item?.youtube_url ||
+      item?.youtube_link ||
+      item?.link_youtube ||
+      item?.video_url ||
+      item?.url_video ||
+      item?.link_video ||
+      item?.youtube ||
+      ''
+    ).trim();
+    const rawEmbed = normalizeYoutubeEmbedUrl(rawVideoUrl);
+    const rawMatch = String(rawEmbed || '').match(/embed\/([a-zA-Z0-9_-]{6,})/i);
+    return rawMatch?.[1] || '';
+  }
+
+  private refreshDiamondInlineYoutube(): void {
+    const videoId = this.getDiamondInlineVideoId();
+    if (videoId === this.diamondInlineYoutubeId) {
+      return;
+    }
+
+    this.diamondInlineYoutubeId = videoId;
+    this.diamondInlineYoutubeSrc = videoId
+      ? this.diamondSanitizer.bypassSecurityTrustResourceUrl(
+          `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&rel=0&loop=1&playlist=${encodeURIComponent(videoId)}`
+        )
+      : null;
   }
 
   override getGalleryVideoUrl(item: any): string {
@@ -1646,6 +1704,10 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getMomentPhotoUrl(item: any): string {
+    if (this.isDiamondVideoItem(item)) {
+      return '';
+    }
+
     const rawUrl = resolveInvitationPhotoUrl(item);
 
     return this.normalizePhotoUrl(rawUrl) || this.getCoverPhotoUrl();
@@ -1767,23 +1829,14 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getLiveStreamingPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('live') ||
-          name.includes('stream') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding')
-        );
-      }) ||
-      gallery[1] ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'live',
+      'stream',
+      'couple',
+      'pasangan',
+      'outdoor',
+      'prewedding',
+    ], 1);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 
@@ -1791,22 +1844,13 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   getFooterPhotoUrl(): string {
-    const gallery: any[] = this.getGalleryItems();
-
-    const item: any =
-      gallery.find((photo: any) => {
-        const name = String(photo?.nama_foto || photo?.name || photo?.title || '').toLowerCase();
-        return (
-          name.includes('footer') ||
-          name.includes('closing') ||
-          name.includes('couple') ||
-          name.includes('pasangan') ||
-          name.includes('outdoor') ||
-          name.includes('prewedding')
-        );
-      }) ||
-      gallery[0] ||
-      null;
+    const item = this.pickDiamondPhotoItem([
+      'footer',
+      'closing',
+      'couple',
+      'pasangan',
+      'outdoor',
+    ], 1);
 
     const rawUrl = resolveInvitationPhotoUrl(item);
 

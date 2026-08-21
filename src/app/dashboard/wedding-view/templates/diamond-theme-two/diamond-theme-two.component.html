@@ -1,4 +1,23 @@
-<section class="diamond-garden-theme" *ngIf="weddingData">
+<ng-container *ngIf="weddingData">
+<div
+  class="diamond-global-particles"
+  *ngIf="isInvitationOpened"
+  aria-hidden="true">
+  <span
+    class="particle"
+    *ngFor="let particle of diamondGlobalParticles; trackBy: trackByDiamondParticle"
+    [class.particle--glow]="particle.glow"
+    [class.particle--star]="particle.kind === 'star'"
+    [style.left]="particle.left"
+    [style.width.px]="particle.size"
+    [style.height.px]="particle.size"
+    [style.opacity]="particle.opacity"
+    [style.--p-duration]="particle.duration + 's'"
+    [style.--p-delay]="particle.delay + 's'"
+    [style.--p-drift]="particle.drift + 'px'">
+  </span>
+</div>
+<section class="diamond-garden-theme">
   <article class="diamond-garden-shell">
     <section class="diamond-garden-opening" *ngIf="!isInvitationOpened">
       <div class="diamond-garden-opening__media">
@@ -291,24 +310,20 @@
             </div>
           </div>
 
-          <button
-            type="button"
-            class="diamond-garden-moments__featured"
-            *ngIf="getGardenFeaturedVideoItem() as featuredPhoto"
-            appOnceReveal="ref-fade"
-            [orDelay]="300"
-            (click)="openGalleryVideo(featuredPhoto)"
-            [attr.aria-label]="'Putar video'">
-            <img
-              [src]="getGalleryVideoCoverUrl(featuredPhoto) || getGardenGalleryPhotoUrl(featuredPhoto)"
-              alt="Video undangan"
-              [style.object-fit]="getPhotoObjectFit(featuredPhoto)"
-              [style.object-position]="getPhotoObjectPosition(featuredPhoto)"
-              (error)="onGardenImageError($event)" />
-            <span class="diamond-garden-moments__play" aria-hidden="true">
-              <i class="fas fa-play"></i>
-            </span>
-          </button>
+          <div
+            class="diamond-video-section"
+            *ngIf="diamondInlineYoutubeSrc"
+            appOnceReveal="ref-fade-up">
+            <div class="diamond-video-section__frame">
+              <iframe
+                [src]="diamondInlineYoutubeSrc"
+                title="Wedding video"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowfullscreen
+                loading="eager">
+              </iframe>
+            </div>
+          </div>
 
           <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="ref-fade-up" [orDelay]="400">
             <div class="diamond-garden-moments__track">
@@ -451,9 +466,9 @@
             <article
               class="diamond-garden-story__item"
               *ngFor="let story of getGardenStories(); trackBy: trackByGardenStory; let i = index"
-              appOnceReveal="ref-fade"
-              [orDelay]="300"
-              [orStagger]="i * 80">
+            appOnceReveal="ref-fade-up"
+            [orDelay]="400"
+            [orStagger]="i * 80">
               <span class="diamond-garden-story__dot"></span>
 
               <div class="diamond-garden-story__body">
@@ -534,9 +549,9 @@
           <p class="diamond-garden-footer__label" appOnceReveal="ref-fade" [orDelay]="200">KAMI YANG BERBAHAGIA</p>
 
           <h2 class="diamond-garden-footer__names" appOnceReveal="ref-fade-down" [orDelay]="300">
-            {{ getGroomName() || getBrideName() }}
+            {{ getGroomShortName() }}
             <span>&amp;</span>
-            {{ getBrideName() || getGroomName() }}
+            {{ getBrideShortName() }}
           </h2>
 
           <p class="diamond-garden-footer__date" appOnceReveal="ref-fade" [orDelay]="400">{{ getGardenHeroDateLabel() }}</p>
@@ -619,3 +634,4 @@
     </div>
   </article>
 </section>
+</ng-container>
