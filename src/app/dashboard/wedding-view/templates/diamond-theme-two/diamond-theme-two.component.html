@@ -148,7 +148,7 @@
 
             <h3 appOnceReveal="ref-fade-down" [orDelay]="300">{{ getBrideName() }}</h3>
 
-            <p class="diamond-garden-person__parents" appOnceReveal="ref-fade-up" [orDelay]="400">
+            <p class="diamond-garden-person__parents" *ngIf="getBrideParents()" appOnceReveal="ref-fade-up" [orDelay]="400">
               {{ getBrideParents() }}
             </p>
 
@@ -179,7 +179,7 @@
 
             <h3 appOnceReveal="ref-fade-down" [orDelay]="480">{{ getGroomName() }}</h3>
 
-            <p class="diamond-garden-person__parents" appOnceReveal="ref-fade-up" [orDelay]="580">
+            <p class="diamond-garden-person__parents" *ngIf="getGroomParents()" appOnceReveal="ref-fade-up" [orDelay]="580">
               {{ getGroomParents() }}
             </p>
 
@@ -210,64 +210,68 @@
         <div class="diamond-garden-event__content">
           <p class="diamond-garden-event__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">SAVE THE DATE</p>
 
-          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">Akad Nikah</h2>
-
           <p class="diamond-garden-event__intro" appOnceReveal="ref-fade-up" [orDelay]="400" [innerText]="getInvitationOpeningText()"></p>
 
-          <div class="diamond-garden-event__date-row" appOnceReveal="ref-fade" [orDelay]="300">
-            <span class="diamond-garden-event__month">
-              {{ getGardenEventMonthLabel(getAkadEvent()) }}
-            </span>
+          <article
+            class="diamond-garden-event__block"
+            *ngFor="let event of getOrderedEvents(); trackBy: trackByDiamondEvent; let i = index">
+            <h2 appOnceReveal="ref-fade-down" [orDelay]="300" [orStagger]="i * 80">
+              {{ getEventTypeLabel(event) }}
+            </h2>
 
-            <strong class="diamond-garden-event__day">
-              {{ getGardenEventDayNumber(getAkadEvent()) }}
-            </strong>
+            <div class="diamond-garden-event__date-row" appOnceReveal="ref-fade" [orDelay]="300" [orStagger]="i * 80">
+              <span class="diamond-garden-event__month">
+                {{ getGardenEventMonthLabel(event) }}
+              </span>
 
-            <span class="diamond-garden-event__year">
-              {{ getGardenEventYearLabel(getAkadEvent()) }}
-            </span>
-          </div>
+              <strong class="diamond-garden-event__day">
+                {{ getGardenEventDayNumber(event) }}
+              </strong>
 
-          <p class="diamond-garden-event__time" *ngIf="getAkadTimeLabel()" appOnceReveal="ref-fade-up" [orDelay]="400">
-            {{ getAkadTimeLabel() }}
-          </p>
+              <span class="diamond-garden-event__year">
+                {{ getGardenEventYearLabel(event) }}
+              </span>
+            </div>
 
-          <h3 appOnceReveal="ref-fade-down" [orDelay]="300">
-            {{ getDetailEventVenue(getAkadEvent()) || getEventVenueName(getAkadEvent()) || 'Tempat acara belum tersedia' }}
-          </h3>
+            <p class="diamond-garden-event__time" *ngIf="getDiamondEventTimeLabel(event)" appOnceReveal="ref-fade-up" [orDelay]="400" [orStagger]="i * 80">
+              {{ getDiamondEventTimeLabel(event) }}
+            </p>
 
-          <p class="diamond-garden-event__address" appOnceReveal="ref-fade-up" [orDelay]="400">
-            {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
-          </p>
+            <h3 appOnceReveal="ref-fade-down" [orDelay]="300" [orStagger]="i * 80">
+              {{ getDiamondEventVenue(event) || getEventVenueName(event) || 'Tempat acara belum tersedia' }}
+            </h3>
 
-          <div class="diamond-garden-event__map" appOnceReveal="ref-fade" [orDelay]="400">
-            <iframe
-              *ngIf="diamondGardenMapSafeSrc; else diamondGardenMapEmpty"
-              class="diamond-garden-event__map-iframe"
-              [src]="diamondGardenMapSafeSrc"
-              title="Lokasi acara"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              allowfullscreen>
-            </iframe>
+            <p class="diamond-garden-event__address" *ngIf="getDetailEventAddress(event) || getEventAddress(event)" appOnceReveal="ref-fade-up" [orDelay]="400" [orStagger]="i * 80">
+              {{ getDetailEventAddress(event) || getEventAddress(event) }}
+            </p>
 
-            <ng-template #diamondGardenMapEmpty>
-              <div class="diamond-garden-event__map-empty">
-                Preview maps belum tersedia
+            <ng-container *ngIf="hasDiamondEventMap(event)">
+              <div class="diamond-garden-event__map diamond-map-card" appOnceReveal="ref-fade" [orDelay]="400" [orStagger]="i * 80">
+                <iframe
+                  *ngIf="getEventMapEmbedUrl(event)"
+                  class="diamond-garden-event__map-iframe"
+                  [src]="getEventMapEmbedUrl(event)"
+                  [title]="'Lokasi ' + getEventTypeLabel(event)"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  allowfullscreen>
+                </iframe>
               </div>
-            </ng-template>
-          </div>
 
-          <button
-            type="button"
-            class="diamond-garden-event__location-button"
-            *ngIf="diamondGardenMapLink"
-            (click)="openDiamondGardenMap()"
-            appOnceReveal="ref-fade-up"
-            [orDelay]="600">
-            <i class="fas fa-map-marker-alt"></i>
-            Lihat Lokasi
-          </button>
+              <a
+                class="diamond-garden-event__location-button"
+                *ngIf="getEventMapsLink(event)"
+                [href]="getEventMapsLink(event)"
+                target="_blank"
+                rel="noopener"
+                appOnceReveal="ref-fade-up"
+                [orDelay]="600"
+                [orStagger]="i * 80">
+                <i class="fas fa-map-marker-alt"></i>
+                Buka Google Maps
+              </a>
+            </ng-container>
+          </article>
         </div>
       </section>
 

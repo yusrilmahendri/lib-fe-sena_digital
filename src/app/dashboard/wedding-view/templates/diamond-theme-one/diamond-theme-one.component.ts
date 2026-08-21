@@ -453,19 +453,29 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     );
   }
 
-  getEventVenueName(): string {
-    const event = this.getEventForLocation();
-    if (!event) return '';
+  getDiamondEventTimeLabel(event?: any): string {
+    if (!event) {
+      return '';
+    }
+
+    return this.formatEventTime(
+      event?.start_acara || event?.jam_mulai || event?.start_time || event?.mulai,
+      event?.end_acara || event?.jam_selesai || event?.end_time || event?.selesai
+    );
+  }
+
+  getEventVenueName(event?: any): string {
+    const selectedEvent = event || this.getEventForLocation();
+    if (!selectedEvent) return '';
 
     return String(
-      event?.nama_tempat ||
-      event?.tempat ||
-      event?.venue ||
-      event?.lokasi ||
-      event?.location ||
-      event?.gedung ||
-      event?.nama_lokasi ||
-      event?.nama_acara ||
+      selectedEvent?.nama_tempat ||
+      selectedEvent?.tempat ||
+      selectedEvent?.venue ||
+      selectedEvent?.lokasi ||
+      selectedEvent?.location ||
+      selectedEvent?.gedung ||
+      selectedEvent?.nama_lokasi ||
       ''
     ).trim();
   }
@@ -487,6 +497,59 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   getEventMapLink(): string {
     const event = this.getEventForLocation();
     return this.getEventMapUrl(event) || '';
+  }
+
+  getDiamondMapEvents(): any[] {
+    return this.getOrderedEvents().filter((event) => this.hasDiamondEventMap(event));
+  }
+
+  hasDiamondEventMap(event?: any): boolean {
+    return !!this.getDirectEventMapLink(event);
+  }
+
+  getDiamondEventVenue(event?: any): string {
+    if (!event) {
+      return '';
+    }
+
+    return String(
+      event?.nama_tempat ||
+      event?.nama_lokasi ||
+      event?.tempat ||
+      event?.venue ||
+      event?.venue_name ||
+      event?.lokasi ||
+      event?.location ||
+      event?.gedung ||
+      ''
+    ).trim();
+  }
+
+  getEventMapEmbedUrl(event?: any): SafeResourceUrl | null {
+    if (!event || !this.hasDiamondEventMap(event)) {
+      return null;
+    }
+
+    const mapLink = this.getDirectEventMapLink(event) || this.getEventMapUrl(event) || '';
+    const address = this.getEventAddress(event);
+    const venue = this.getDiamondEventVenue(event);
+    const rawEmbedUrl = this.buildGoogleMapsEmbedUrl(mapLink, address, venue);
+
+    if (!rawEmbedUrl) {
+      return null;
+    }
+
+    if (this.mapEmbedUrlCache.has(rawEmbedUrl)) {
+      return this.mapEmbedUrlCache.get(rawEmbedUrl) || null;
+    }
+
+    const safeUrl = this.diamondSanitizer.bypassSecurityTrustResourceUrl(rawEmbedUrl);
+    this.mapEmbedUrlCache.set(rawEmbedUrl, safeUrl);
+    return safeUrl;
+  }
+
+  trackByDiamondEvent(index: number, event: any): string {
+    return String(event?.id || event?.nama_acara || event?.jenis_acara || index);
   }
 
   getMapPreviewUrl(): string {
@@ -970,69 +1033,11 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   override getBrideParents(): string {
-    const bride = this.getBrideData();
-
-    const father =
-      bride?.nama_ayah ||
-      bride?.ayah ||
-      bride?.father ||
-      bride?.bapak ||
-      '';
-
-    const mother =
-      bride?.nama_ibu ||
-      bride?.ibu ||
-      bride?.mother ||
-      '';
-
-    const custom =
-      bride?.orang_tua ||
-      bride?.nama_orang_tua ||
-      bride?.parents ||
-      bride?.putri_dari ||
-      bride?.anak_dari ||
-      '';
-
-    if (custom) return String(custom).trim();
-
-    if (father && mother) return `Putri pertama dari Bapak ${father} dan Ibu ${mother}`;
-    if (father) return `Putri pertama dari Bapak ${father}`;
-    if (mother) return `Putri pertama dari Ibu ${mother}`;
-
-    return this.getBrideParentLine() || '';
+    return this.formatDiamondParentLine('wanita', this.getBrideData());
   }
 
   override getGroomParents(): string {
-    const groom = this.getGroomData();
-
-    const father =
-      groom?.nama_ayah ||
-      groom?.ayah ||
-      groom?.father ||
-      groom?.bapak ||
-      '';
-
-    const mother =
-      groom?.nama_ibu ||
-      groom?.ibu ||
-      groom?.mother ||
-      '';
-
-    const custom =
-      groom?.orang_tua ||
-      groom?.nama_orang_tua ||
-      groom?.parents ||
-      groom?.putra_dari ||
-      groom?.anak_dari ||
-      '';
-
-    if (custom) return String(custom).trim();
-
-    if (father && mother) return `Putra pertama dari Bapak ${father} dan Ibu ${mother}`;
-    if (father) return `Putra pertama dari Bapak ${father}`;
-    if (mother) return `Putra pertama dari Ibu ${mother}`;
-
-    return this.getGroomParentLine() || '';
+    return this.formatDiamondParentLine('pria', this.getGroomData());
   }
 
   override getBrideInstagram(): string {
@@ -1910,5 +1915,97 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const datePart = parsed.toISOString().slice(0, 10).replace(/-/g, '');
     const safeTime = (time || '00:00').slice(0, 5).replace(':', '');
     return `${datePart}T${safeTime}00`;
+  }
+
+  private getDirectEventMapLink(event?: any): string {
+    if (!event) {
+      return '';
+    }
+
+    const directLink = [
+      event?.maps_url,
+      event?.map_url,
+      event?.google_maps_url,
+      event?.google_map_url,
+      event?.location_url,
+      event?.link_maps,
+      event?.link_map,
+      event?.maps,
+      event?.url_maps,
+      event?.google_maps,
+      event?.google_map,
+      event?.maps_link,
+    ].map((value) => String(value || '').trim()).find((value) => /^https?:\/\//i.test(value));
+
+    if (directLink) {
+      return directLink;
+    }
+
+    const latitude = String(event?.latitude || event?.lat || '').trim();
+    const longitude = String(event?.longitude || event?.lng || event?.long || '').trim();
+    if (latitude && longitude) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+    }
+
+    return '';
+  }
+
+  private formatDiamondParentLine(gender: 'pria' | 'wanita', person: any): string {
+    const father = this.firstFilled([
+      person?.nama_ayah,
+      person?.ayah,
+      person?.father,
+      person?.bapak,
+      person?.nama_bapak,
+    ], '');
+
+    const mother = this.firstFilled([
+      person?.nama_ibu,
+      person?.ibu,
+      person?.mother,
+      person?.nama_mama,
+    ], '');
+
+    const custom = this.stripParentOrder(this.firstFilled([
+      person?.orang_tua,
+      person?.nama_orang_tua,
+      person?.parents,
+      person?.putri_dari,
+      person?.putra_dari,
+      person?.anak_dari,
+    ], ''));
+
+    if (custom && !this.isIncompleteParentLine(custom)) {
+      return custom;
+    }
+
+    const label = gender === 'pria' ? 'Putra' : 'Putri';
+    if (father && mother) {
+      return `${label} dari Bapak ${father} dan Ibu ${mother}`;
+    }
+    if (father) {
+      return `${label} dari Bapak ${father}`;
+    }
+    if (mother) {
+      return `${label} dari Ibu ${mother}`;
+    }
+
+    return '';
+  }
+
+  private stripParentOrder(value: string): string {
+    return String(value || '')
+      .replace(/\s+(ke-?\d+|pertama|kedua|ketiga|keempat|kelima|keenam|ketujuh|kedelapan|kesembilan|kesepuluh)\s+/gi, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
+  private isIncompleteParentLine(value: string): boolean {
+    const normalized = String(value || '').replace(/\s+/g, ' ').trim();
+    return !normalized ||
+      /bapak\s+dan\s+ibu/i.test(normalized) ||
+      /dari\s*$/i.test(normalized) ||
+      /bapak\s*$/i.test(normalized) ||
+      /ibu\s*$/i.test(normalized);
   }
 }

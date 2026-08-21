@@ -1298,6 +1298,7 @@
   width: 100% !important;
   max-width: 410px;
   min-height: 904px;
+  height: auto;
   margin: 0 auto;
   overflow: hidden;
   background: #18351f;
@@ -1320,15 +1321,17 @@
   position: relative;
   z-index: 2;
   min-height: 904px;
-  padding: 78px 28px 78px;
+  height: auto;
+  padding: 78px 0 78px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   text-align: center;
 }
 
 .diamond-garden-couple__eyebrow {
   margin: 0 0 12px;
+  padding: 0 28px;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 10px;
   line-height: 1;
@@ -1338,7 +1341,8 @@
 }
 
 .diamond-garden-couple h2 {
-  margin: 0 0 46px;
+  margin: 0 0 28px;
+  padding: 0 28px;
   font-size: 33px;
   line-height: 1.12;
   font-weight: 700;
@@ -1354,44 +1358,51 @@
 }
 
 .diamond-garden-person--bride {
-  margin-bottom: 34px;
+  margin-bottom: 28px;
 }
 
 .diamond-garden-person--groom {
-  margin-top: 24px;
+  margin-top: 18px;
 }
 
 .diamond-garden-person__photo {
-  width: 156px;
-  height: 210px;
-  padding: 9px;
-  background: #fff;
-  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.25);
+  position: relative;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: 3 / 4;
+  min-height: 320px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
   overflow: hidden;
+  transform: none;
 }
 
 .diamond-garden-person__photo .diamond-ref-reveal {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
 }
 
-.diamond-garden-person--bride .diamond-garden-person__photo {
-  transform: rotate(-3deg);
-}
-
+.diamond-garden-person--bride .diamond-garden-person__photo,
 .diamond-garden-person--groom .diamond-garden-person__photo {
-  transform: rotate(4deg);
+  transform: none;
 }
 
 .diamond-garden-person__photo img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 18%;
   display: block;
 }
 
 .diamond-garden-person h3 {
   margin: 20px 0 8px;
+  padding: 0 28px;
   font-size: 24px;
   line-height: 1.15;
   font-weight: 700;
@@ -1400,7 +1411,8 @@
 
 .diamond-garden-person__parents {
   margin: 0;
-  max-width: 260px;
+  max-width: none;
+  padding: 0 28px;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 11px;
   line-height: 1.55;
@@ -1443,7 +1455,7 @@
   position: relative;
   width: 100% !important;
   max-width: 410px;
-  height: 842px;
+  height: auto;
   min-height: 842px;
   margin: 0 auto;
   padding: 0;
@@ -1469,15 +1481,24 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  height: 842px;
+  height: auto;
   min-height: 842px;
-  padding: 92px 34px 80px;
+  padding: 92px 22px 80px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   background: transparent;
+}
+
+.diamond-garden-event__block {
+  width: 100%;
+  margin: 8px 0 28px;
+}
+
+.diamond-garden-event__block:last-child {
+  margin-bottom: 0;
 }
 
 .diamond-garden-event__eyebrow {
@@ -1778,7 +1799,7 @@
   position: relative !important;
   width: 100% !important;
   max-width: 410px !important;
-  height: 842px !important;
+  height: auto !important;
   min-height: 842px !important;
   margin: 0 auto !important;
   padding: 0 !important;
@@ -1804,9 +1825,9 @@
   position: relative !important;
   z-index: 2 !important;
   width: 100% !important;
-  height: 842px !important;
+  height: auto !important;
   min-height: 842px !important;
-  padding: 92px 34px 80px !important;
+  padding: 92px 22px 80px !important;
   box-sizing: border-box !important;
   background: transparent !important;
 }
@@ -1944,13 +1965,13 @@
   }
 
   .diamond-garden-event {
-    height: calc(100vw * 1798 / 875) !important;
-    min-height: calc(100vw * 1798 / 875) !important;
+    height: auto !important;
+    min-height: 842px !important;
   }
 
   .diamond-garden-event__content {
-    height: calc(100vw * 1798 / 875) !important;
-    min-height: calc(100vw * 1798 / 875) !important;
+    height: auto !important;
+    min-height: 842px !important;
   }
 
   .diamond-garden-moments {
@@ -2216,8 +2237,8 @@
 
 .diamond-garden-event__map {
   width: 100% !important;
-  max-width: 320px !important;
-  height: 145px !important;
+  max-width: none !important;
+  height: 180px !important;
   margin: 18px auto 14px !important;
   border-radius: 18px !important;
   overflow: hidden !important;
@@ -2919,8 +2940,8 @@
 .diamond-garden-event__map {
   position: relative !important;
   z-index: 20 !important;
-  width: 278px !important;
-  height: 150px !important;
+  width: 100% !important;
+  height: 180px !important;
   margin: 24px auto 16px !important;
   border-radius: 18px !important;
   overflow: hidden !important;
@@ -2969,6 +2990,7 @@
   justify-content: center !important;
   gap: 8px !important;
   cursor: pointer !important;
+  text-decoration: none !important;
 }
 /* Champagne Rose: decorative layers must not block the button */
 .diamond-opening__bg,
@@ -3214,4 +3236,33 @@
   height: 100%;
   border: 0;
   object-fit: contain;
+}
+
+.diamond-garden-event {
+  overflow: visible !important;
+}
+
+.diamond-garden-event__content,
+.diamond-garden-event__block {
+  overflow: visible !important;
+}
+
+.diamond-garden-event__map,
+.diamond-garden-event__map.diamond-map-card {
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: box-shadow .3s ease, transform .3s ease !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .diamond-garden-event__map:hover,
+  .diamond-garden-event__map.diamond-map-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 18px 36px rgba(0, 0, 0, 0.14),
+      0 6px 14px rgba(0, 0, 0, 0.08) !important;
+  }
 }

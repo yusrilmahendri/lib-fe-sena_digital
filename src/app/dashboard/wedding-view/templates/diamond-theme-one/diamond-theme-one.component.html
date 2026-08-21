@@ -188,48 +188,48 @@
             </p>
           </div>
 
-          <div class="diamond-event__place" appOnceReveal="ref-fade" [orDelay]="400">
-            <p class="diamond-event__label">TEMPAT</p>
+          <div class="diamond-event__maps" *ngIf="getDiamondMapEvents().length">
+            <article
+              class="diamond-event__map-block"
+              *ngFor="let event of getDiamondMapEvents(); trackBy: trackByDiamondEvent; let i = index">
+              <div class="diamond-event__place" appOnceReveal="ref-fade" [orDelay]="400" [orStagger]="i * 80">
+                <p class="diamond-event__label">{{ getEventTypeLabel(event) }}</p>
 
-            <h3>
-              {{ getEventVenueName() || 'Tempat acara belum tersedia' }}
-            </h3>
+                <h3>
+                  {{ getDiamondEventVenue(event) || 'Tempat acara belum tersedia' }}
+                </h3>
 
-            <p>
-              {{ getEventAddress() || 'Alamat acara belum tersedia' }}
-            </p>
+                <p *ngIf="getEventAddress(event)">
+                  {{ getEventAddress(event) }}
+                </p>
+              </div>
+
+              <div class="diamond-ref-reveal" appOnceReveal="ref-fade" [orDelay]="400" [orStagger]="i * 80">
+                <div class="diamond-event__map diamond-map-card" *ngIf="getEventMapEmbedUrl(event)">
+                  <iframe
+                    [src]="getEventMapEmbedUrl(event)"
+                    [title]="'Lokasi ' + getEventTypeLabel(event)"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen>
+                  </iframe>
+                </div>
+              </div>
+
+              <a
+                class="diamond-event__maps-button"
+                *ngIf="getEventMapsLink(event)"
+                [href]="getEventMapsLink(event)"
+                target="_blank"
+                rel="noopener"
+                appOnceReveal="ref-fade-up"
+                [orDelay]="600"
+                [orStagger]="i * 80">
+                <i class="fas fa-map-marker-alt"></i>
+                Buka Google Maps
+              </a>
+            </article>
           </div>
-
-          <div class="diamond-ref-reveal" appOnceReveal="ref-fade" [orDelay]="400">
-            <div class="diamond-event__map" *ngIf="getMapEmbedUrl(); else mapPlaceholder">
-              <iframe
-                [src]="getMapEmbedUrl()"
-                title="Lokasi acara"
-                loading="lazy"
-                referrerpolicy="no-referrer-when-downgrade"
-                allowfullscreen>
-              </iframe>
-            </div>
-          </div>
-
-          <ng-template #mapPlaceholder>
-            <div class="diamond-event__map diamond-event__map--placeholder">
-              <i class="fas fa-map-marker-alt"></i>
-              <span>Preview maps belum tersedia</span>
-            </div>
-          </ng-template>
-
-          <a
-            class="diamond-event__maps-button"
-            *ngIf="getEventMapLink()"
-            [href]="getEventMapLink()"
-            target="_blank"
-            rel="noopener"
-            appOnceReveal="ref-fade-up"
-            [orDelay]="600">
-            <i class="fas fa-map-marker-alt"></i>
-            Buka Google Maps
-          </a>
 
           <p class="diamond-event__note" appOnceReveal="ref-fade-up" [orDelay]="400">
             Demi kenyamanan mohon gunakan akses utama atau alternatif yang tersedia.
