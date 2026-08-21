@@ -196,7 +196,7 @@
                 <p class="diamond-event__label">{{ getEventTypeLabel(event) }}</p>
 
                 <h3>
-                  {{ getDiamondEventVenue(event) || 'Tempat acara belum tersedia' }}
+                  {{ getEventLocationName(event) }}
                 </h3>
 
                 <p *ngIf="getEventAddress(event)">

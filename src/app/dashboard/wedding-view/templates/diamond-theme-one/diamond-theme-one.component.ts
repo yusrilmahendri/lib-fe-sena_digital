@@ -525,6 +525,16 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     ).trim();
   }
 
+  getEventLocationName(event?: any): string {
+    return String(
+      event?.location_name ||
+      event?.nama_tempat ||
+      event?.address ||
+      event?.alamat ||
+      ''
+    ).trim() || 'Tempat Acara Belum Tersedia';
+  }
+
   getEventMapEmbedUrl(event?: any): SafeResourceUrl | null {
     if (!event || !this.hasDiamondEventMap(event)) {
       return null;

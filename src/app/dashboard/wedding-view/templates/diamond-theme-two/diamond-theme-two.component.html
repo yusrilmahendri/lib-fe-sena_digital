@@ -238,7 +238,7 @@
             </p>
 
             <h3 appOnceReveal="ref-fade-down" [orDelay]="300" [orStagger]="i * 80">
-              {{ getDiamondEventVenue(event) || getEventVenueName(event) || 'Tempat acara belum tersedia' }}
+              {{ getEventLocationName(event) }}
             </h3>
 
             <p class="diamond-garden-event__address" *ngIf="getDetailEventAddress(event) || getEventAddress(event)" appOnceReveal="ref-fade-up" [orDelay]="400" [orStagger]="i * 80">
