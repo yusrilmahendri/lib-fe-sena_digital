@@ -941,9 +941,11 @@ main.sapphire-content.sapphire-content.theme-content--opened {
 .sapphire-journey-timeline {
   position: relative;
   z-index: 2;
-  display: grid;
-  gap: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
   padding-left: 24px;
+  max-width: 36em;
 }
 
 .sapphire-journey-timeline::before {
@@ -958,9 +960,8 @@ main.sapphire-content.sapphire-content.theme-content--opened {
 
 .sapphire-journey-item {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0;
+  display: block;
+  width: 100%;
   opacity: 1;
   visibility: visible;
   filter: none;
@@ -979,6 +980,8 @@ main.sapphire-content.sapphire-content.theme-content--opened {
 }
 
 .sapphire-journey-content {
+  display: block;
+  width: 100%;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(155, 63, 131, 0.1);
   border-radius: 18px;
@@ -987,48 +990,57 @@ main.sapphire-content.sapphire-content.theme-content--opened {
   backdrop-filter: blur(8px);
   opacity: 1;
   visibility: visible;
-  filter: none;
+  box-sizing: border-box;
 }
 
 .sapphire-journey-date {
+  display: block;
+  width: 100%;
   margin: 0 0 8px;
-  font-size: 11px;
-  line-height: 1.5;
-  letter-spacing: 2.4px;
+  font-size: 12px;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
   font-weight: 700;
   color: #8b4a79;
   text-transform: uppercase;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .sapphire-journey-title {
-  margin: 0 0 8px;
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
   font-size: 22px;
   line-height: 1.25;
   font-weight: 400;
   color: var(--sapphire-text);
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.sapphire-journey-lead,
+.sapphire-journey-description {
+  display: block;
+  width: 100%;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: left;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .sapphire-journey-lead {
-  margin: 0 0 6px;
-  font-size: 13px;
+  margin-bottom: 10px;
   font-weight: 600;
   font-style: italic;
-  line-height: 1.6;
   color: #8b4a79;
 }
 
 .sapphire-journey-description {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.8;
   color: var(--sapphire-muted);
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-  word-break: normal;
 }
 
 @media (max-width: 360px) {
@@ -1046,14 +1058,6 @@ main.sapphire-content.sapphire-content.theme-content--opened {
 
   .sapphire-journey-content {
     padding: 16px 16px 14px;
-  }
-
-  .sapphire-journey-title {
-    font-size: 20px;
-  }
-
-  .sapphire-journey-description {
-    font-size: 12.5px;
   }
 }
 

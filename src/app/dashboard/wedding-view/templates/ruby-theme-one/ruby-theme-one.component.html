@@ -220,7 +220,7 @@
 
       <section
         class="ruby-story-section"
-        *ngIf="loveStoryItems.length">
+        *ngIf="isStoryVisible() && loveStoryItems.length">
 
         <div class="ruby-story-content">
 
@@ -259,13 +259,13 @@
 
               <div class="ruby-story-card">
 
-                <span
+                <p
                   class="ruby-story-year"
                   *ngIf="story.date">
                   {{ story.date }}
-                </span>
+                </p>
 
-                <h3 *ngIf="story.title">
+                <h3 class="ruby-story-title" *ngIf="story.title">
                   {{ story.title }}
                 </h3>
 

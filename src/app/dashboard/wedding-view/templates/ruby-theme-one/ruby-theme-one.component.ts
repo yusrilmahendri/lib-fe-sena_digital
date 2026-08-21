@@ -366,7 +366,7 @@ export class RubyThemeOneComponent extends LavenderBloomThemeComponent implement
         };
       })
       .filter((item: RubyLoveStoryItem) =>
-        !!item.date || !!item.title || !!item.description
+        !!item.date || !!item.title || !!item.lead || !!item.description
       );
   }
 

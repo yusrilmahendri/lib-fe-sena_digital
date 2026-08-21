@@ -740,7 +740,7 @@ onGalleryTouchEnd(event: TouchEvent): void {
           lead: lead !== body ? lead : '',
           description: body,
         };
-      });
+      }).filter((story) => !!(story.date || story.title || story.lead || story.description));
     }
 
     return [];

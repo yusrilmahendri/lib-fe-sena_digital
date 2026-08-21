@@ -438,7 +438,7 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
         lead: lead !== body ? lead : '',
         description: body,
       };
-    });
+    }).filter((story) => !!(story.date || story.title || story.lead || story.description));
   }
 
   trackByJourneyStory(index: number, item: { id: number; title: string }): number | string {

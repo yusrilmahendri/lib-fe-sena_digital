@@ -301,12 +301,11 @@
             appOnceReveal="ref-fade-up"
             [orDelay]="400"
             [orStagger]="i * 80">
-            <span class="diamond-story-item__year" *ngIf="item.date">{{ item.date }}</span>
-            <div class="diamond-story-item__body">
-              <h3 *ngIf="item.title">{{ item.title }}</h3>
-              <p *ngIf="item.lead">{{ item.lead }}</p>
-              <p *ngIf="item.description">{{ item.description }}</p>
-            </div>
+            <span class="diamond-story-item__dot" aria-hidden="true"></span>
+            <p class="diamond-story-item__year" *ngIf="item.date">{{ item.date }}</p>
+            <h3 class="diamond-story-item__title" *ngIf="item.title">{{ item.title }}</h3>
+            <p class="diamond-story-item__lead" *ngIf="item.lead">{{ item.lead }}</p>
+            <p class="diamond-story-item__body" *ngIf="item.description">{{ item.description }}</p>
           </article>
         </div>
       </section>

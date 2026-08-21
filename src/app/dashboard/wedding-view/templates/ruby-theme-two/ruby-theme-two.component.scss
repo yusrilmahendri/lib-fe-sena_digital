@@ -825,6 +825,7 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
 .ruby-two-journey-timeline {
   position: relative;
   padding-left: 30px;
+  max-width: 36em;
 }
 
 .ruby-two-journey-timeline::before {
@@ -839,7 +840,9 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
 
 .ruby-two-journey-item {
   position: relative;
-  margin-bottom: 34px;
+  display: block;
+  width: 100%;
+  margin-bottom: 32px;
 }
 
 .ruby-two-journey-item:last-child {
@@ -858,40 +861,55 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
 }
 
 .ruby-two-journey-content {
+  display: block;
+  width: 100%;
   text-align: left;
 }
 
 .ruby-two-journey-year {
+  display: block;
+  width: 100%;
   color: #9b4de3;
-  font-size: 11px;
-  letter-spacing: 1px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   margin: 0 0 8px;
   font-weight: 600;
 }
 
-.ruby-two-journey-content h3 {
+.ruby-two-journey-title {
+  display: block;
+  width: 100%;
   color: #4b3b55;
-  font-size: 18px;
-  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  margin: 0 0 10px;
   font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.ruby-two-journey-lead,
+.ruby-two-journey-body {
+  display: block;
+  width: 100%;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: left;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .ruby-two-journey-lead {
   color: #9b4de3;
-  font-size: 13px;
   font-weight: 600;
   font-style: italic;
-  line-height: 1.6;
-  margin: 0 0 6px;
+  margin-bottom: 10px;
 }
 
 .ruby-two-journey-body {
   color: #7b6f82;
-  font-size: 13px;
-  line-height: 1.65;
-  margin: 0;
-  white-space: pre-line;
-  overflow-wrap: break-word;
 }
 
 .ruby-two-gallery-item,
