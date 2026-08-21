@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -12,6 +12,7 @@ import {
   resolveInvitationPhotoUrl,
   resolveInvitationVideoUrl,
 } from '../../../../shared/user-photo.model';
+import { normalizeYoutubeEmbedUrl } from '../../../../shared/wedding-theme-data.util';
 
 @Component({
   selector: 'wc-diamond-theme-one',
@@ -28,21 +29,28 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     minutes: '00',
     seconds: '00',
   };
+  selectedGalleryPhotoIndex = -1;
+  currentWishPage = 1;
+  wishPageSize = 3;
   private countdownInterval: any = null;
   private mapEmbedUrlCache = new Map<string, SafeResourceUrl>();
+  private lightboxTouchStartX = 0;
+  private lightboxTouchStartY = 0;
+  private readonly lightboxSwipeThreshold = 48;
 
   constructor(
     private diamondSanitizer: DomSanitizer,
     dashboardService: DashboardService,
-    toastService: ToastService,
+    private readonly diamondToast: ToastService,
     private readonly cdr: ChangeDetectorRef
   ) {
-    super(diamondSanitizer, dashboardService, toastService);
+    super(diamondSanitizer, dashboardService, diamondToast);
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
     this.startDiamondCountdown();
+    this.syncWishPage();
     if (!this.wishForm.kehadiran) {
       this.wishForm.kehadiran = 'hadir';
     }
@@ -52,8 +60,7 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     super.ngOnChanges(changes);
     if (changes['weddingData']) {
       this.startDiamondCountdown();
-    }
-    if (changes['weddingData']) {
+      this.syncWishPage();
       this.debugDiamondEvents();
       this.debugDiamondDate();
       this.debugDiamondMap();
@@ -139,20 +146,26 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   getGroomShortName(): string {
     const groom = this.getGroom() as any;
+    const data = this.weddingData as any;
     return this.firstFilled([
       groom?.nama_panggilan,
       groom?.nickname,
-      groom?.nama_lengkap,
+      data?.mempelai?.nama_panggilan_pria,
+      data?.mempelai?.pria?.nama_panggilan,
+      data?.mempelai_pria?.nama_panggilan,
       this.getGroomName(),
     ], '');
   }
 
   getBrideShortName(): string {
     const bride = this.getBride() as any;
+    const data = this.weddingData as any;
     return this.firstFilled([
       bride?.nama_panggilan,
       bride?.nickname,
-      bride?.nama_lengkap,
+      data?.mempelai?.nama_panggilan_wanita,
+      data?.mempelai?.wanita?.nama_panggilan,
+      data?.mempelai_wanita?.nama_panggilan,
       this.getBrideName(),
     ], '');
   }
@@ -743,6 +756,71 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return wishes.filter((item: any) => this.isRealGuestWish(item));
   }
 
+  get totalWishPages(): number {
+    const total = this.visibleGuestWishes.length;
+    if (!total) {
+      return 0;
+    }
+
+    return Math.ceil(total / this.wishPageSize);
+  }
+
+  get paginatedWishes(): any[] {
+    const wishes = this.visibleGuestWishes;
+    const totalPages = this.totalWishPages;
+    const page = totalPages > 0
+      ? Math.min(Math.max(this.currentWishPage, 1), totalPages)
+      : 1;
+    const start = (page - 1) * this.wishPageSize;
+
+    return wishes.slice(start, start + this.wishPageSize);
+  }
+
+  get wishPaginationItems(): Array<number | 'ellipsis'> {
+    const totalPages = this.totalWishPages;
+    const currentPage = totalPages > 0
+      ? Math.min(Math.max(this.currentWishPage, 1), totalPages)
+      : 1;
+
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPage <= 3) {
+      return [1, 2, 3, 'ellipsis', totalPages];
+    }
+
+    if (currentPage >= totalPages - 2) {
+      return [1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [1, 'ellipsis', currentPage, 'ellipsis', totalPages];
+  }
+
+  goToWishPage(page: number): void {
+    const totalPages = this.totalWishPages;
+    if (page < 1 || page > totalPages || page === this.currentWishPage) {
+      return;
+    }
+
+    this.currentWishPage = page;
+  }
+
+  goToPreviousWishPage(): void {
+    this.goToWishPage(this.currentWishPage - 1);
+  }
+
+  goToNextWishPage(): void {
+    this.goToWishPage(this.currentWishPage + 1);
+  }
+
+  private syncWishPage(): void {
+    const totalPages = this.totalWishPages;
+    if (this.currentWishPage < 1 || (totalPages > 0 && this.currentWishPage > totalPages) || (totalPages === 0 && this.currentWishPage !== 1)) {
+      this.currentWishPage = 1;
+    }
+  }
+
   getWishAttendanceLabel(status: string): string {
     const value = String(status || '').toLowerCase();
 
@@ -1055,12 +1133,34 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&location=${location}`;
   }
 
-  getLoveStoryItems(): Array<{ title: string; date: string; description: string }> {
-    return this.getStories().map((story: WeddingStory) => ({
-      title: story.title || 'Cerita Kami',
-      date: story.tanggal_cerita ? String(story.tanggal_cerita).slice(0, 4) : '',
-      description: story.lead_cerita || '',
-    })).filter((item) => !!item.title || !!item.description);
+  getLoveStoryItems(): Array<{ title: string; date: string; lead: string; description: string }> {
+    if (this.loveStoryItems?.length) {
+      return this.loveStoryItems.map((item) => ({
+        title: item.title || '',
+        date: item.date || item.year || '',
+        lead: item.lead || '',
+        description: item.description || '',
+      })).filter((item) => !!(item.date || item.title || item.lead || item.description));
+    }
+
+    return this.getStories().map((story: WeddingStory) => {
+      const lead = String((story as any).lead_cerita || (story as any).subtitle || '').trim();
+      const body = String(
+        (story as any).cerita ||
+        (story as any).content ||
+        (story as any).body ||
+        (story as any).description ||
+        (story as any).deskripsi ||
+        ''
+      ).trim();
+
+      return {
+        title: String(story.title || (story as any).judul || '').trim(),
+        date: story.tanggal_cerita ? String(story.tanggal_cerita) : '',
+        lead: lead && lead !== body ? lead : '',
+        description: body || lead,
+      };
+    }).filter((item) => !!(item.date || item.title || item.lead || item.description));
   }
 
   getStoryTrackBy(index: number, item: { title: string }): string {
@@ -1275,28 +1375,242 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   copyGiftNumber(account: any): void {
+    const bankName = String(
+      account?.nama_bank ||
+      account?.bank_name ||
+      account?.bank?.name ||
+      account?.bank?.nama_bank ||
+      ''
+    ).trim();
+    const owner = String(
+      account?.nama_pemilik ||
+      account?.account_name ||
+      account?.atas_nama ||
+      account?.account_holder ||
+      account?.pemilik ||
+      account?.owner ||
+      ''
+    ).trim();
     const number = String(
       account?.nomor_rekening ||
       account?.account_number ||
       account?.no_rekening ||
+      account?.rekening ||
       ''
     ).trim();
+    const text = [bankName, owner, number].filter(Boolean).join('\n');
 
-    if (!number) return;
-
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(number);
+    if (!text) {
       return;
     }
 
-    const textarea = document.createElement('textarea');
-    textarea.value = number;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
+    const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : null;
+    if (clipboard?.writeText) {
+      clipboard.writeText(text)
+        .then(() => this.diamondToast.showToast('Data rekening berhasil disalin', 'success'))
+        .catch(() => this.copyGiftNumberFallback(text));
+      return;
+    }
+
+    this.copyGiftNumberFallback(text);
+  }
+
+  private copyGiftNumberFallback(text: string): void {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', 'true');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (!copied) {
+        throw new Error('copy failed');
+      }
+      this.diamondToast.showToast('Data rekening berhasil disalin', 'success');
+    } catch {
+      this.diamondToast.showToast('Data rekening gagal disalin', 'error');
+    }
+  }
+
+  hasDiamondVideoUrl(item: any): boolean {
+    if (!item) {
+      return false;
+    }
+
+    const raw = String(
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video ||
+      item?.youtube_url ||
+      item?.youtube_link ||
+      item?.link_youtube ||
+      item?.youtube ||
+      ''
+    ).trim();
+
+    if (raw && raw !== 'null' && raw !== 'undefined') {
+      return true;
+    }
+
+    return isInvitationVideoMedia(item) || Boolean(resolveInvitationVideoUrl(item));
+  }
+
+  isDiamondVideoItem(item: any): boolean {
+    return this.hasDiamondVideoUrl(item);
+  }
+
+  override getGalleryVideoUrl(item: any): string {
+    if (!item) {
+      return '';
+    }
+
+    const rawVideoUrl = String(
+      item?.youtube_url ||
+      item?.youtube_link ||
+      item?.link_youtube ||
+      item?.video_url ||
+      item?.url_video ||
+      item?.link_video ||
+      item?.youtube ||
+      resolveInvitationVideoUrl(item) ||
+      ''
+    ).trim();
+
+    const youtubeEmbedUrl = normalizeYoutubeEmbedUrl(rawVideoUrl);
+    if (youtubeEmbedUrl) {
+      return youtubeEmbedUrl;
+    }
+
+    const resolvedVideoUrl = resolveInvitationVideoUrl(item) || rawVideoUrl;
+    if (/^https?:\/\//i.test(resolvedVideoUrl) && /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(resolvedVideoUrl)) {
+      return resolvedVideoUrl;
+    }
+
+    return youtubeEmbedUrl;
+  }
+
+  getDiamondFeaturedVideoItem(): any {
+    return this.getMomentCollageItems().find((item: any) => this.isDiamondVideoItem(item))
+      || this.getGalleryItems().find((item: any) => this.isDiamondVideoItem(item))
+      || this.getGalleryVideoItems()[0]
+      || null;
+  }
+
+  getMomentPhotoItems(): any[] {
+    return this.getMomentCollageItems().filter((item: any) => {
+      if (this.isDiamondVideoItem(item)) {
+        return false;
+      }
+
+      return Boolean(resolveInvitationPhotoUrl(item) || this.getGalleryPhotoUrl(item));
+    });
+  }
+
+  getDiamondLightboxPhotos(): any[] {
+    return this.getMomentPhotoItems();
+  }
+
+  getDiamondLightboxPhotoUrl(item: any): string {
+    return this.getMomentPhotoUrl(item) || this.getGalleryPhotoUrl(item) || '';
+  }
+
+  get isDiamondLightboxOpen(): boolean {
+    return this.selectedGalleryPhotoIndex >= 0 && this.getDiamondLightboxPhotos().length > 0;
+  }
+
+  get selectedDiamondLightboxPhoto(): any {
+    return this.getDiamondLightboxPhotos()[this.selectedGalleryPhotoIndex] || null;
+  }
+
+  openDiamondGalleryPhoto(index: number): void {
+    const photos = this.getDiamondLightboxPhotos();
+    if (index < 0 || index >= photos.length) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = index;
+  }
+
+  showPreviousDiamondGalleryPhoto(event?: Event): void {
+    event?.stopPropagation();
+    const total = this.getDiamondLightboxPhotos().length;
+    if (total <= 1) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = (this.selectedGalleryPhotoIndex - 1 + total) % total;
+  }
+
+  showNextDiamondGalleryPhoto(event?: Event): void {
+    event?.stopPropagation();
+    const total = this.getDiamondLightboxPhotos().length;
+    if (total <= 1) {
+      return;
+    }
+
+    this.selectedGalleryPhotoIndex = (this.selectedGalleryPhotoIndex + 1) % total;
+  }
+
+  override closeGalleryPhoto(): void {
+    super.closeGalleryPhoto();
+    this.selectedGalleryPhotoIndex = -1;
+  }
+
+  onDiamondLightboxTouchStart(event: TouchEvent): void {
+    const touch = event.changedTouches[0] || event.touches[0];
+    if (!touch) {
+      return;
+    }
+
+    this.lightboxTouchStartX = touch.clientX;
+    this.lightboxTouchStartY = touch.clientY;
+  }
+
+  onDiamondLightboxTouchEnd(event: TouchEvent): void {
+    const touch = event.changedTouches[0];
+    if (!touch) {
+      return;
+    }
+
+    const deltaX = touch.clientX - this.lightboxTouchStartX;
+    const deltaY = touch.clientY - this.lightboxTouchStartY;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (horizontalDistance < this.lightboxSwipeThreshold || horizontalDistance < verticalDistance * 1.2) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      this.showNextDiamondGalleryPhoto();
+      return;
+    }
+
+    this.showPreviousDiamondGalleryPhoto();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDiamondLightboxKeydown(event: KeyboardEvent): void {
+    if (!this.isDiamondLightboxOpen) {
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      this.closeGalleryPhoto();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      this.showPreviousDiamondGalleryPhoto();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      this.showNextDiamondGalleryPhoto();
+    }
   }
 
   getMomentCollageItems(): any[] {
@@ -1305,34 +1619,30 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     const source = collagePhotos.length ? collagePhotos : galleryPhotos;
 
     return source.filter((item: any) => {
-      const url = this.getMomentMediaUrl(item);
+      const url = this.getMomentMediaUrl(item) || this.getGalleryVideoUrl(item) || this.getGalleryPhotoUrl(item);
       return Boolean(url);
     });
   }
 
   getMomentFeaturedItem(): any {
-    const collagePhotos = this.getMomentCollageItems();
-    return collagePhotos[0] || null;
+    return this.getDiamondFeaturedVideoItem();
   }
 
   getMomentPhotosPartOne(): any[] {
-    const collagePhotos = this.getMomentCollageItems();
-
-    if (!collagePhotos.length) return [];
-
-    const remaining = this.getMomentFeaturedItem() ? collagePhotos.slice(1) : collagePhotos;
-
-    return remaining.slice(0, 4);
+    return this.getMomentPhotoItems().slice(0, 4);
   }
 
   getMomentPhotosPartTwo(): any[] {
-    const collagePhotos = this.getMomentCollageItems();
+    return this.getMomentPhotoItems().slice(4, 10);
+  }
 
-    if (!collagePhotos.length) return [];
-
-    const remaining = this.getMomentFeaturedItem() ? collagePhotos.slice(1) : collagePhotos;
-
-    return remaining.slice(4, 10);
+  trackByMomentPhoto(index: number, item: any): string | number {
+    return item?.id
+      || item?.foto_id
+      || item?.url_foto
+      || item?.url
+      || item?.photoUrl
+      || index;
   }
 
   getMomentPhotoUrl(item: any): string {
@@ -1364,23 +1674,39 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
   }
 
   isMomentVideo(item: any): boolean {
-    return isInvitationVideoMedia(item) || Boolean(resolveInvitationVideoUrl(item));
+    return this.hasDiamondVideoUrl(item);
   }
 
   openMomentVideo(item: any): void {
-    const videoUrl = String(
+    this.openGalleryVideo(item);
+  }
+
+  override openGalleryVideo(item: any): void {
+    if (this.getGalleryVideoUrl(item)) {
+      super.openGalleryVideo(item);
+      return;
+    }
+
+    const direct = String(
       resolveInvitationVideoUrl(item) ||
+      item?.url_video ||
+      item?.video_url ||
+      item?.link_video ||
       ''
     ).trim();
 
-    if (!videoUrl) return;
+    if (!direct || !/^https?:\/\//i.test(direct)) {
+      return;
+    }
 
-    window.open(videoUrl, '_blank');
+    this.selectedGalleryVideoTitle = item?.description || item?.nama_foto || 'Video undangan';
+    this.selectedGalleryVideoDirectUrl = direct;
+    this.selectedGalleryVideoUrl = null;
+    this.selectedGalleryVideoType = 'video';
   }
 
   getMomentsBackgroundUrl(index: number): string {
-    const gallery = this.getMomentCollageItems();
-    const photoItems = gallery.filter((item: any) => !this.isMomentVideo(item));
+    const photoItems = this.getMomentPhotoItems();
     const item = photoItems[index] || photoItems[0];
 
     return item ? this.getMomentPhotoUrl(item) : this.getCoverPhotoUrl();

@@ -13,7 +13,10 @@ export type OnceRevealVariant =
   | 'fade-left'
   | 'fade-right'
   | 'zoom'
-  | 'card';
+  | 'card'
+  | 'ref-fade'
+  | 'ref-fade-down'
+  | 'ref-fade-up';
 
 @Directive({
   selector: '[appOnceReveal]',

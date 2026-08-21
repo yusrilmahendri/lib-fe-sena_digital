@@ -49,6 +49,21 @@ $or-ease: cubic-bezier(0.22, 1, 0.36, 1);
   transform: translateY(36px) scale(0.975) !important;
 }
 
+.or[class].or--ref-fade:not(.or--visible) {
+  opacity: 0 !important;
+  transform: none !important;
+}
+
+.or[class].or--ref-fade-down:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translate3d(0, -24px, 0) !important;
+}
+
+.or[class].or--ref-fade-up:not(.or--visible) {
+  opacity: 0 !important;
+  transform: translate3d(0, 24px, 0) !important;
+}
+
 /* ── Revealed state — permanent ────────────────────────────── */
 
 .or[class].or--visible {

@@ -1,3 +1,5 @@
+@import '../diamond-motion';
+
 :host {
   display: block;
 }
@@ -1365,6 +1367,11 @@
   overflow: hidden;
 }
 
+.diamond-garden-person__photo .diamond-ref-reveal {
+  width: 100%;
+  height: 100%;
+}
+
 .diamond-garden-person--bride .diamond-garden-person__photo {
   transform: rotate(-3deg);
 }
@@ -1704,6 +1711,7 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  pointer-events: none;
 }
 
 .diamond-garden-moments__gallery {
@@ -2100,9 +2108,31 @@
 
 .diamond-garden-wishes__list {
   width: 100%;
+  max-height: 244px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(38, 59, 40, 0.35) transparent;
+}
+
+.diamond-garden-wishes__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.diamond-garden-wishes__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.diamond-garden-wishes__list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(38, 59, 40, 0.35);
 }
 
 .diamond-garden-wishes__card {
@@ -2168,6 +2198,10 @@
   .diamond-garden-wishes {
     width: 100% !important;
     max-width: none;
+  }
+
+  .diamond-garden-wishes__list {
+    max-height: 228px;
   }
 }
 
@@ -2327,11 +2361,14 @@
   max-width: 320px !important;
   height: 150px !important;
   margin: 0 auto 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
   border-radius: 10px !important;
   overflow: hidden !important;
   position: relative !important;
   z-index: 5 !important;
   background: transparent !important;
+  cursor: pointer !important;
 }
 
 .diamond-garden-moments__featured img,
@@ -2367,11 +2404,13 @@
   width: 102px !important;
   height: 150px !important;
   flex: 0 0 102px !important;
+  padding: 0 !important;
   border-radius: 8px !important;
   overflow: hidden !important;
   background: transparent !important;
   box-shadow: none !important;
   border: 0 !important;
+  cursor: pointer !important;
 }
 
 .diamond-garden-moments__slider .diamond-garden-moments__item img,
@@ -2508,6 +2547,10 @@
   line-height: 1.55 !important;
   font-weight: 400 !important;
   color: rgba(255, 255, 255, 0.86) !important;
+}
+
+.diamond-garden-story__body p + p {
+  margin-top: 8px !important;
 }
 
 @media (max-width: 380px) {
@@ -2908,44 +2951,53 @@
   cursor: pointer;
 }
 
-$garden-open-ease: cubic-bezier(0.22, 1, 0.36, 1);
+@include diamond-once-reveal-tuning;
 
-@keyframes gardenHeroPhotoEnter {
-  from {
-    opacity: 0;
-    transform: scale(1.06);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.diamond-garden-theme img,
+.diamond-garden-theme img.or,
+.diamond-garden-theme img.or[class],
+.diamond-garden-theme img.or[class]:not(.or--visible),
+.diamond-garden-theme img.or[class].or--visible {
+  opacity: 1 !important;
+  visibility: visible !important;
+  animation: none !important;
+  transition: none !important;
 }
 
-@keyframes gardenCoverFadeOut {
-  from {
-    opacity: 1;
-    visibility: visible;
-  }
-  to {
-    opacity: 0;
-    visibility: hidden;
-  }
+.diamond-garden-opening__media {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  @include diamond-ref-anim(diamondRefBgFade, 0ms, 2000ms);
 }
 
-@keyframes gardenOpenFadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.diamond-garden-opening__overlay {
+  @include diamond-ref-anim(diamondRefFade, 0ms, 2000ms);
 }
 
-@keyframes gardenFloralSway {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  50% { transform: translate3d(0, -8px, 0) rotate(1.2deg); }
+.diamond-garden-opening__eyebrow {
+  @include diamond-ref-anim(diamondRefFade, 200ms);
+}
+
+.diamond-garden-opening__content h1 {
+  @include diamond-ref-anim(diamondRefFadeDown, 300ms);
+}
+
+.diamond-garden-opening__date {
+  @include diamond-ref-anim(diamondRefFade, 400ms);
+}
+
+.diamond-garden-opening__guest-label {
+  @include diamond-ref-anim(diamondRefFade, 400ms);
+}
+
+.diamond-garden-opening__guest {
+  @include diamond-ref-anim(diamondRefFadeDown, 400ms);
+}
+
+.diamond-garden-opening__button {
+  @include diamond-ref-anim(diamondRefFadeUp, 600ms);
 }
 
 .diamond-garden-main.open {
@@ -2959,65 +3011,51 @@ $garden-open-ease: cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 20;
   width: 100%;
   height: 100vh;
-  background: var(--garden-green-deep);
+  background: $diamond-veil;
   pointer-events: none;
-  animation: gardenCoverFadeOut 700ms $garden-open-ease both;
+  animation: diamondRefCoverOut 800ms ease both;
 }
 
-.diamond-garden-main.open .theme-five-hero .hero-panel img {
-  animation: gardenHeroPhotoEnter 1000ms $garden-open-ease both;
-}
-
-.diamond-garden-main.open .theme-five-hero .hero-middle img {
-  animation-duration: 1100ms;
+.diamond-garden-main.open .theme-five-hero {
+  @include diamond-ref-anim(diamondRefFade, 0ms, 1800ms);
 }
 
 .diamond-garden-main.open .hero-top-text {
-  animation: gardenOpenFadeUp 780ms $garden-open-ease 160ms both;
+  @include diamond-ref-anim(diamondRefFade, 200ms, 1800ms);
 }
 
 .diamond-garden-main.open .hero-name {
-  animation: gardenOpenFadeUp 850ms $garden-open-ease 320ms both;
+  @include diamond-ref-anim(diamondRefFadeDown, 300ms, 1800ms);
 }
 
 .diamond-garden-main.open .hero-date {
-  animation: gardenOpenFadeUp 800ms $garden-open-ease 460ms both;
+  @include diamond-ref-anim(diamondRefFade, 400ms, 1800ms);
 }
 
 .diamond-garden-main.open .hero-scroll {
-  animation: gardenOpenFadeUp 750ms $garden-open-ease 600ms both;
+  @include diamond-ref-anim(diamondRefFadeUp, 600ms, 1800ms);
 }
 
-.diamond-garden-couple__frame,
-.diamond-garden-event__frame,
-.diamond-garden-moments__frame,
-.diamond-garden-wishes__frame,
-.diamond-garden-story__frame,
-.diamond-garden-gift__frame,
 .diamond-garden-floral {
-  animation: gardenFloralSway 10s ease-in-out infinite;
+  animation: diamondMotionFloralSway 10s ease-in-out infinite;
   will-change: transform;
 }
 
-.diamond-garden-event__frame,
-.diamond-garden-gift__frame {
-  animation-duration: 12s;
-  animation-delay: -4s;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .diamond-garden-main.open .theme-five-hero .hero-panel img,
+  .diamond-garden-opening__media,
+  .diamond-garden-opening__overlay,
+  .diamond-garden-opening__eyebrow,
+  .diamond-garden-opening__content h1,
+  .diamond-garden-opening__date,
+  .diamond-garden-opening__guest-label,
+  .diamond-garden-opening__guest,
+  .diamond-garden-opening__button,
+  .diamond-garden-main.open .theme-five-hero,
   .diamond-garden-main.open .hero-top-text,
   .diamond-garden-main.open .hero-name,
   .diamond-garden-main.open .hero-date,
   .diamond-garden-main.open .hero-scroll,
   .diamond-garden-main.open::before,
-  .diamond-garden-couple__frame,
-  .diamond-garden-event__frame,
-  .diamond-garden-moments__frame,
-  .diamond-garden-wishes__frame,
-  .diamond-garden-story__frame,
-  .diamond-garden-gift__frame,
   .diamond-garden-floral {
     animation: none !important;
   }
@@ -3025,4 +3063,110 @@ $garden-open-ease: cubic-bezier(0.22, 1, 0.36, 1);
   .diamond-garden-main.open::before {
     display: none;
   }
+}
+
+.diamond-photo-lightbox,
+.diamond-video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 62px 18px 54px;
+  background: rgba(8, 10, 9, 0.92);
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
+
+.diamond-photo-lightbox__bar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: 18px;
+  right: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.diamond-photo-lightbox__bar button,
+.diamond-photo-lightbox__nav,
+.diamond-video-modal__close {
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diamond-photo-lightbox__bar button,
+.diamond-video-modal__close {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.diamond-photo-lightbox__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 34px;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.diamond-photo-lightbox__nav--prev { left: 18px; }
+.diamond-photo-lightbox__nav--next { right: 18px; }
+
+.diamond-photo-lightbox__image {
+  width: 100%;
+  height: 100%;
+  max-width: min(960px, 100vw - 36px);
+  max-height: calc(100vh - 126px);
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.diamond-video-modal__panel {
+  position: relative;
+  width: min(100%, 720px);
+}
+
+.diamond-video-modal__close {
+  position: absolute;
+  top: -46px;
+  right: 0;
+  z-index: 2;
+}
+
+.diamond-video-modal__frame {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.diamond-video-modal__frame iframe,
+.diamond-video-modal__frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
 }

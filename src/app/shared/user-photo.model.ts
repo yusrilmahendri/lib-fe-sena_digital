@@ -203,6 +203,8 @@ function extractYoutubeVideoId(value: string | null | undefined): string {
     if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
       if (url.pathname === '/watch') return url.searchParams.get('v') || '';
       if (url.pathname.startsWith('/embed/')) return url.pathname.split('/').filter(Boolean)[1] || '';
+      if (url.pathname.startsWith('/shorts/')) return url.pathname.split('/').filter(Boolean)[1] || '';
+      if (url.pathname.startsWith('/live/')) return url.pathname.split('/').filter(Boolean)[1] || '';
     }
   } catch {
     return '';

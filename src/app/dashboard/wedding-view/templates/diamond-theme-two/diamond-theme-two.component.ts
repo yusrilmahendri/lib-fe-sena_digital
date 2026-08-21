@@ -1,11 +1,10 @@
-import { ChangeDetectorRef, Component, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
 import { WeddingEvent } from '../../../../services/wedding-data.service';
 import { DiamondThemeOneComponent } from '../diamond-theme-one/diamond-theme-one.component';
 import {
-  isInvitationVideoMedia,
   normalizeInvitationMediaUrl,
   resolveInvitationMediaUrlFromItem,
   resolveInvitationPhotoUrl,
@@ -22,7 +21,7 @@ interface DiamondGardenGalleryItem {
   templateUrl: './diamond-theme-two.component.html',
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
-export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit {
+export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit, OnChanges {
   diamondGardenMapSrc = '';
   diamondGardenMapSafeSrc: SafeResourceUrl | null = null;
   diamondGardenMapLink = '';
@@ -370,18 +369,36 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentPhotos(): string[] {
-    return this.getGardenMomentGallery()
+    return this.getGardenMomentPhotoItems()
       .map((item: any) => this.getGardenGalleryPhotoUrl(item))
       .filter((url: string) => !!url)
       .slice(0, 8);
   }
 
   getGardenMomentPhotoItems(): any[] {
-    return this.getGardenMomentGallery().slice(0, 8);
+    return this.getGardenMomentGallery()
+      .filter((item: any) => !this.isDiamondVideoItem(item))
+      .filter((item: any) => Boolean(this.getGardenGalleryPhotoUrl(item)))
+      .slice(0, 8);
   }
 
   getGardenFeaturedPhotoItem(): any {
-    return this.getGardenMomentPhotoItems()[0] || null;
+    return this.getGardenFeaturedVideoItem();
+  }
+
+  getGardenFeaturedVideoItem(): any {
+    return this.getGardenMomentGallery().find((item: any) => this.isDiamondVideoItem(item))
+      || this.getGalleryItems().find((item: any) => this.isDiamondVideoItem(item))
+      || this.getGalleryVideoItems()[0]
+      || null;
+  }
+
+  override getDiamondLightboxPhotos(): any[] {
+    return this.getGardenMomentPhotoItems();
+  }
+
+  override getDiamondLightboxPhotoUrl(item: any): string {
+    return this.getGardenGalleryPhotoUrl(item) || this.getMomentPhotoUrl(item) || '';
   }
 
   getGardenFeaturedPhoto(): string {
@@ -430,18 +447,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   isGardenMomentVideo(item: any): boolean {
-    return isInvitationVideoMedia(item) || Boolean(resolveInvitationVideoUrl(item));
+    return this.isDiamondVideoItem(item);
   }
 
   openGardenMomentVideo(item: any): void {
-    const videoUrl = String(
-      resolveInvitationVideoUrl(item) ||
-      ''
-    ).trim();
-
-    if (!videoUrl) return;
-
-    window.open(videoUrl, '_blank');
+    this.openGalleryVideo(item);
   }
 
   getGardenGuestWishes(): any[] {
@@ -468,9 +478,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getVisibleGardenWishes(): any[] {
-    return this.getGardenGuestWishes()
-      .filter((item: any) => this.isRealGardenWish(item))
-      .slice(0, 3);
+    return this.getGardenGuestWishes().filter((item: any) => this.isRealGardenWish(item));
   }
 
   getWishAttendance(wish: any): string {
@@ -853,22 +861,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   copyGardenGiftNumber(account: any): void {
-    const value = this.getGardenGiftNumber(account);
-    if (!value) return;
-
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(value);
-      return;
-    }
-
-    const textarea = document.createElement('textarea');
-    textarea.value = value;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
+    this.copyGiftNumber(account);
   }
 
   getGardenMapLink(event?: any): string {
@@ -1011,16 +1004,31 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.getEventAddress(event);
   }
 
-  getGardenStories(): Array<{ year: string; title: string; description: string }> {
-    return this.getStories().map((item: any) => ({
-      year: String(item?.year || item?.tahun || item?.date || item?.tanggal_cerita || item?.tanggal || '').trim(),
-      title: String(item?.title || item?.judul || item?.nama_cerita || 'Cerita Kami').trim(),
-      description: String(item?.description || item?.deskripsi || item?.lead_cerita || item?.cerita || item?.isi || '').trim(),
-    })).filter((item: any) => item.title || item.description);
+  getGardenStories(): Array<{ date: string; title: string; lead: string; body: string }> {
+    if (this.loveStoryItems?.length) {
+      return this.loveStoryItems.map((item) => ({
+        date: item.date || item.year || '',
+        title: item.title || '',
+        lead: item.lead || '',
+        body: item.description || '',
+      })).filter((item) => !!(item.date || item.title || item.lead || item.body));
+    }
+
+    return this.getStories().map((item: any) => {
+      const lead = String(item?.lead_cerita || item?.subtitle || item?.short_description || '').trim();
+      const body = String(item?.cerita || item?.content || item?.body || item?.description || item?.deskripsi || item?.isi || '').trim();
+
+      return {
+        date: String(item?.tanggal_cerita || item?.date || item?.tanggal || item?.year || item?.tahun || '').trim(),
+        title: String(item?.title || item?.judul || item?.nama_cerita || '').trim(),
+        lead: lead && lead !== body ? lead : '',
+        body: body || lead,
+      };
+    }).filter((item: any) => !!(item.date || item.title || item.lead || item.body));
   }
 
   trackByGardenStory(index: number, item: any): string {
-    return `${item?.year || index}-${item?.title || index}`;
+    return `${item?.date || index}-${item?.title || index}`;
   }
 
   getGardenHeroDateLabel(): string {

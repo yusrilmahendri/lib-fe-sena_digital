@@ -1,0 +1,95 @@
+/* Diamond reference motion — Elementor animated-slow:
+   fadeIn / fadeInDown / fadeInUp only. */
+
+$diamond-ref-ease: ease;
+$diamond-ref-duration: 1900ms;
+$diamond-veil: rgba(255, 252, 248, 0.82);
+
+@keyframes diamondRefFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes diamondRefFadeDown {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes diamondRefFadeUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes diamondRefBgFade {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes diamondRefCoverOut {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes diamondMotionFloralSway {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(1.15deg);
+  }
+}
+
+@mixin diamond-ref-anim($name, $delay: 0ms, $duration: $diamond-ref-duration) {
+  animation: $name $duration $diamond-ref-ease $delay both;
+}
+
+@mixin diamond-once-reveal-tuning {
+  .or {
+    --or-duration: #{$diamond-ref-duration};
+    transition-timing-function: $diamond-ref-ease, $diamond-ref-ease;
+  }
+
+  .or[class].or--ref-fade:not(.or--visible) {
+    opacity: 0 !important;
+    transform: none !important;
+  }
+
+  .or[class].or--ref-fade-down:not(.or--visible) {
+    opacity: 0 !important;
+    transform: translate3d(0, -24px, 0) !important;
+  }
+
+  .or[class].or--ref-fade-up:not(.or--visible) {
+    opacity: 0 !important;
+    transform: translate3d(0, 24px, 0) !important;
+  }
+}

@@ -1,7 +1,8 @@
 <section class="diamond-garden-theme" *ngIf="weddingData">
   <article class="diamond-garden-shell">
     <section class="diamond-garden-opening" *ngIf="!isInvitationOpened">
-      <div class="diamond-garden-opening__stack" [appParallax]="8">
+      <div class="diamond-garden-opening__media">
+        <div class="diamond-garden-opening__stack" [appParallax]="8">
         <img
           class="diamond-garden-opening__image diamond-garden-opening__image--top"
           [src]="getGardenHeroImage(0)"
@@ -25,6 +26,7 @@
           [style.object-fit]="getGardenHeroObjectFit(2)"
           [style.object-position]="getGardenHeroObjectPosition(2)"
           (error)="onGardenImageError($event)" />
+        </div>
       </div>
 
       <div class="diamond-garden-opening__overlay"></div>
@@ -33,8 +35,8 @@
         <p class="diamond-garden-opening__eyebrow">THE WEDDING OF</p>
 
         <h1>
-          {{ getGroomName() }} &amp;<br />
-          {{ getBrideName() }}
+          {{ getGroomShortName() }} &amp;<br />
+          {{ getBrideShortName() }}
         </h1>
 
         <p class="diamond-garden-opening__date">
@@ -79,7 +81,7 @@
             [style.object-position]="getGardenHeroObjectPosition(1)"
             (error)="onGardenImageError($event)" />
           <div class="hero-overlay"></div>
-          <div class="hero-name">{{ getGroomName() }} &amp; {{ getBrideName() }}</div>
+          <div class="hero-name">{{ getGroomShortName() }} &amp; {{ getBrideShortName() }}</div>
         </div>
 
         <div class="hero-panel hero-bottom">
@@ -112,20 +114,22 @@
           (error)="coupleFrame.style.display='none'" />
 
         <div class="diamond-garden-couple__content">
-          <p class="diamond-garden-couple__eyebrow" appOnceReveal="fade-up" [orDuration]="800">THE WEDDING COUPLE</p>
-          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Kedua Mempelai</h2>
+          <p class="diamond-garden-couple__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">THE WEDDING COUPLE</p>
+          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">Kedua Mempelai</h2>
 
-          <article class="diamond-garden-person diamond-garden-person--bride" appOnceReveal="fade-left" [orDelay]="220" [orDuration]="900">
+          <article class="diamond-garden-person diamond-garden-person--bride">
             <div class="diamond-garden-person__photo">
+              <div class="diamond-ref-reveal" appOnceReveal="ref-fade" [orDelay]="300">
               <img
                 [src]="getBridePhotoUrl()"
                 [alt]="getBrideName()"
                 (error)="onGardenImageError($event)" />
+              </div>
             </div>
 
-            <h3>{{ getBrideName() }}</h3>
+            <h3 appOnceReveal="ref-fade-down" [orDelay]="300">{{ getBrideName() }}</h3>
 
-            <p class="diamond-garden-person__parents">
+            <p class="diamond-garden-person__parents" appOnceReveal="ref-fade-up" [orDelay]="400">
               {{ getBrideParents() }}
             </p>
 
@@ -134,25 +138,29 @@
               *ngIf="getBrideInstagram()"
               [href]="getInstagramUrl(getBrideInstagram())"
               target="_blank"
-              rel="noopener">
+              rel="noopener"
+              appOnceReveal="ref-fade-up"
+              [orDelay]="600">
               <i class="fab fa-instagram"></i>
               {{ getBrideInstagram() }}
             </a>
           </article>
 
-          <div class="diamond-garden-couple__ampersand" appOnceReveal="fade-up" [orDelay]="340">&amp;</div>
+          <div class="diamond-garden-couple__ampersand" appOnceReveal="ref-fade" [orDelay]="400">&amp;</div>
 
-          <article class="diamond-garden-person diamond-garden-person--groom" appOnceReveal="fade-right" [orDelay]="420" [orDuration]="900">
+          <article class="diamond-garden-person diamond-garden-person--groom">
             <div class="diamond-garden-person__photo">
+              <div class="diamond-ref-reveal" appOnceReveal="ref-fade" [orDelay]="480">
               <img
                 [src]="getGroomPhotoUrl()"
                 [alt]="getGroomName()"
                 (error)="onGardenImageError($event)" />
+              </div>
             </div>
 
-            <h3>{{ getGroomName() }}</h3>
+            <h3 appOnceReveal="ref-fade-down" [orDelay]="480">{{ getGroomName() }}</h3>
 
-            <p class="diamond-garden-person__parents">
+            <p class="diamond-garden-person__parents" appOnceReveal="ref-fade-up" [orDelay]="580">
               {{ getGroomParents() }}
             </p>
 
@@ -161,7 +169,9 @@
               *ngIf="getGroomInstagram()"
               [href]="getInstagramUrl(getGroomInstagram())"
               target="_blank"
-              rel="noopener">
+              rel="noopener"
+              appOnceReveal="ref-fade-up"
+              [orDelay]="780">
               <i class="fab fa-instagram"></i>
               {{ getGroomInstagram() }}
             </a>
@@ -179,13 +189,13 @@
           (error)="eventFrame.style.display='none'" />
 
         <div class="diamond-garden-event__content">
-          <p class="diamond-garden-event__eyebrow" appOnceReveal="fade-up" [orDuration]="800">SAVE THE DATE</p>
+          <p class="diamond-garden-event__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">SAVE THE DATE</p>
 
-          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Akad Nikah</h2>
+          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">Akad Nikah</h2>
 
-          <p class="diamond-garden-event__intro" appOnceReveal="fade-up" [orDelay]="240" [orDuration]="850" [innerText]="getInvitationOpeningText()"></p>
+          <p class="diamond-garden-event__intro" appOnceReveal="ref-fade-up" [orDelay]="400" [innerText]="getInvitationOpeningText()"></p>
 
-          <div class="diamond-garden-event__date-row" appOnceReveal="card" [orDelay]="360">
+          <div class="diamond-garden-event__date-row" appOnceReveal="ref-fade" [orDelay]="300">
             <span class="diamond-garden-event__month">
               {{ getGardenEventMonthLabel(getAkadEvent()) }}
             </span>
@@ -199,19 +209,19 @@
             </span>
           </div>
 
-          <p class="diamond-garden-event__time" *ngIf="getAkadTimeLabel()">
+          <p class="diamond-garden-event__time" *ngIf="getAkadTimeLabel()" appOnceReveal="ref-fade-up" [orDelay]="400">
             {{ getAkadTimeLabel() }}
           </p>
 
-          <h3>
+          <h3 appOnceReveal="ref-fade-down" [orDelay]="300">
             {{ getDetailEventVenue(getAkadEvent()) || getEventVenueName(getAkadEvent()) || 'Tempat acara belum tersedia' }}
           </h3>
 
-          <p class="diamond-garden-event__address">
+          <p class="diamond-garden-event__address" appOnceReveal="ref-fade-up" [orDelay]="400">
             {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
           </p>
 
-          <div class="diamond-garden-event__map" appOnceReveal="zoom" [orDelay]="480" [orDuration]="950">
+          <div class="diamond-garden-event__map" appOnceReveal="ref-fade" [orDelay]="400">
             <iframe
               *ngIf="diamondGardenMapSafeSrc; else diamondGardenMapEmpty"
               class="diamond-garden-event__map-iframe"
@@ -233,7 +243,9 @@
             type="button"
             class="diamond-garden-event__location-button"
             *ngIf="diamondGardenMapLink"
-            (click)="openDiamondGardenMap()">
+            (click)="openDiamondGardenMap()"
+            appOnceReveal="ref-fade-up"
+            [orDelay]="600">
             <i class="fas fa-map-marker-alt"></i>
             Lihat Lokasi
           </button>
@@ -250,109 +262,81 @@
           (error)="momentsFrame.style.display='none'" />
 
         <div class="diamond-garden-moments__content">
-          <p class="diamond-garden-moments__eyebrow" appOnceReveal="fade-up" [orDuration]="800">SPECIAL MOMENTS</p>
+          <p class="diamond-garden-moments__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">SPECIAL MOMENTS</p>
 
-          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">
+          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">
             Moment Menuju<br />
             Hari Bahagia
           </h2>
 
-          <div class="diamond-garden-moments__countdown">
-            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="0">
+          <div class="diamond-garden-moments__countdown" appOnceReveal="ref-fade-up" [orDelay]="400">
+            <div class="diamond-garden-moments__time-box">
               <strong>{{ countdown.days }}</strong>
               <span>HARI</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="140">
+            <div class="diamond-garden-moments__time-box">
               <strong>{{ countdown.hours }}</strong>
               <span>JAM</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="280">
+            <div class="diamond-garden-moments__time-box">
               <strong>{{ countdown.minutes }}</strong>
               <span>MENIT</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="420">
+            <div class="diamond-garden-moments__time-box">
               <strong>{{ countdown.seconds }}</strong>
               <span>DETIK</span>
             </div>
           </div>
 
-          <div class="diamond-garden-moments__featured" *ngIf="getGardenFeaturedPhotoItem() as featuredPhoto" appOnceReveal="zoom" [orDelay]="280" [orDuration]="1000">
-            <video
-              *ngIf="isGardenMomentVideo(featuredPhoto); else diamondGardenFeaturedImage"
-              [src]="getGardenMomentMediaUrl(featuredPhoto)"
-              autoplay
-              muted
-              loop
-              playsinline
-              [style.object-fit]="getPhotoObjectFit(featuredPhoto)"
-              [style.object-position]="getPhotoObjectPosition(featuredPhoto)"
-              (error)="onGardenVideoError($event, featuredPhoto)">
-            </video>
-
-            <ng-template #diamondGardenFeaturedImage>
-              <img
-              [src]="getGardenGalleryPhotoUrl(featuredPhoto)"
-              alt="Moment utama"
+          <button
+            type="button"
+            class="diamond-garden-moments__featured"
+            *ngIf="getGardenFeaturedVideoItem() as featuredPhoto"
+            appOnceReveal="ref-fade"
+            [orDelay]="300"
+            (click)="openGalleryVideo(featuredPhoto)"
+            [attr.aria-label]="'Putar video'">
+            <img
+              [src]="getGalleryVideoCoverUrl(featuredPhoto) || getGardenGalleryPhotoUrl(featuredPhoto)"
+              alt="Video undangan"
               [style.object-fit]="getPhotoObjectFit(featuredPhoto)"
               [style.object-position]="getPhotoObjectPosition(featuredPhoto)"
               (error)="onGardenImageError($event)" />
-            </ng-template>
-          </div>
+            <span class="diamond-garden-moments__play" aria-hidden="true">
+              <i class="fas fa-play"></i>
+            </span>
+          </button>
 
-          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="fade-up" [orDelay]="360" [orDuration]="900">
+          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="ref-fade-up" [orDelay]="400">
             <div class="diamond-garden-moments__track">
-              <div
+              <button
+                type="button"
                 class="diamond-garden-moments__item"
-                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto">
-                <video
-                  *ngIf="isGardenMomentVideo(photo); else diamondGardenMomentImage"
-                  [src]="getGardenMomentMediaUrl(photo)"
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  [style.object-fit]="getPhotoObjectFit(photo)"
-                  [style.object-position]="getPhotoObjectPosition(photo)"
-                  (error)="onGardenVideoError($event, photo)">
-                </video>
-
-                <ng-template #diamondGardenMomentImage>
-                  <img
+                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto; let i = index"
+                (click)="openDiamondGalleryPhoto(i)">
+                <img
                   [src]="getGardenGalleryPhotoUrl(photo)"
                   alt="Moment pernikahan"
                   [style.object-fit]="getPhotoObjectFit(photo)"
                   [style.object-position]="getPhotoObjectPosition(photo)"
                   (error)="onGardenImageError($event)" />
-                </ng-template>
-              </div>
+              </button>
 
-              <div
+              <button
+                type="button"
                 class="diamond-garden-moments__item"
-                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto">
-                <video
-                  *ngIf="isGardenMomentVideo(photo); else diamondGardenMomentDuplicateImage"
-                  [src]="getGardenMomentMediaUrl(photo)"
-                  autoplay
-                  muted
-                  loop
-                  playsinline
-                  [style.object-fit]="getPhotoObjectFit(photo)"
-                  [style.object-position]="getPhotoObjectPosition(photo)"
-                  (error)="onGardenVideoError($event, photo)">
-                </video>
-
-                <ng-template #diamondGardenMomentDuplicateImage>
-                  <img
+                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto; let i = index"
+                (click)="openDiamondGalleryPhoto(i)">
+                <img
                   [src]="getGardenGalleryPhotoUrl(photo)"
                   alt="Moment pernikahan"
                   [style.object-fit]="getPhotoObjectFit(photo)"
                   [style.object-position]="getPhotoObjectPosition(photo)"
                   (error)="onGardenImageError($event)" />
-                </ng-template>
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -368,11 +352,11 @@
           (error)="wishesFrame.style.display='none'" />
 
         <div class="diamond-garden-wishes__content">
-          <p class="diamond-garden-wishes__eyebrow" appOnceReveal="fade-up" [orDuration]="800">DOA &amp; HARAPAN</p>
+          <p class="diamond-garden-wishes__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">DOA &amp; HARAPAN</p>
 
-          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Ucapan &amp; Doa</h2>
+          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">Ucapan &amp; Doa</h2>
 
-          <form class="diamond-garden-wishes__form" (ngSubmit)="submitWish()" #gardenWishForm="ngForm" appOnceReveal="card" [orDelay]="220">
+          <form class="diamond-garden-wishes__form" (ngSubmit)="submitWish()" #gardenWishForm="ngForm" appOnceReveal="ref-fade-up" [orDelay]="400">
             <label>
               <span>Nama Lengkap</span>
               <input
@@ -426,10 +410,7 @@
           <div class="diamond-garden-wishes__list" *ngIf="getVisibleGardenWishes().length; else noGardenWishes">
             <article
               class="diamond-garden-wishes__card"
-              *ngFor="let wish of getVisibleGardenWishes(); let i = index"
-              appOnceReveal="card"
-              [orDelay]="180"
-              [orStagger]="i * 140">
+              *ngFor="let wish of getVisibleGardenWishes(); trackBy: trackByWish">
               <div>
                 <h3>{{ wish?.nama || wish?.name || 'Tamu Undangan' }}</h3>
                 <p>{{ wish?.pesan || wish?.message || wish?.ucapan }}</p>
@@ -453,7 +434,7 @@
         </div>
       </section>
 
-      <section class="diamond-garden-story" *ngIf="isStoryVisible() && hasStories()">
+      <section class="diamond-garden-story" *ngIf="isStoryVisible() && getGardenStories().length">
         <img
           #storyFrame
           class="diamond-garden-story__frame"
@@ -463,22 +444,23 @@
           (error)="storyFrame.style.display='none'" />
 
         <div class="diamond-garden-story__content">
-          <p class="diamond-garden-story__eyebrow" appOnceReveal="fade-up" [orDuration]="800">OUR STORY</p>
-          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Cerita Perjalanan<br />Kami</h2>
+          <p class="diamond-garden-story__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">OUR STORY</p>
+          <h2 appOnceReveal="ref-fade-down" [orDelay]="300">Cerita Cinta</h2>
 
           <div class="diamond-garden-story__timeline">
             <article
               class="diamond-garden-story__item"
               *ngFor="let story of getGardenStories(); trackBy: trackByGardenStory; let i = index"
-              appOnceReveal="card"
-              [orDelay]="180"
-              [orStagger]="i * 140">
+              appOnceReveal="ref-fade"
+              [orDelay]="300"
+              [orStagger]="i * 80">
               <span class="diamond-garden-story__dot"></span>
 
               <div class="diamond-garden-story__body">
-                <span class="diamond-garden-story__year">{{ story.year }}</span>
-                <h3>{{ story.title }}</h3>
-                <p>{{ story.description }}</p>
+                <span class="diamond-garden-story__year" *ngIf="story.date">{{ story.date }}</span>
+                <h3 *ngIf="story.title">{{ story.title }}</h3>
+                <p *ngIf="story.lead">{{ story.lead }}</p>
+                <p *ngIf="story.body">{{ story.body }}</p>
               </div>
             </article>
           </div>
@@ -493,11 +475,11 @@
           aria-hidden="true" />
 
         <div class="diamond-garden-gift__content">
-          <p class="diamond-garden-gift__eyebrow" appOnceReveal="fade-up" [orDuration]="800">WEDDING GIFT</p>
-          <h2 class="diamond-garden-gift__title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Tanda Kasih</h2>
+          <p class="diamond-garden-gift__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">WEDDING GIFT</p>
+          <h2 class="diamond-garden-gift__title" appOnceReveal="ref-fade-down" [orDelay]="300">Tanda Kasih</h2>
 
           <div class="diamond-garden-gift__list" *ngIf="getGardenGiftAccounts().length > 0; else noGardenGift">
-            <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts(); let i = index" appOnceReveal="card" [orDelay]="220" [orStagger]="i * 140">
+            <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts(); let i = index" appOnceReveal="ref-fade-up" [orDelay]="400" [orStagger]="i * 80">
               <div class="diamond-garden-gift__icon">
                 <i class="fas fa-gift"></i>
               </div>
@@ -523,7 +505,7 @@
           </div>
 
           <ng-template #noGardenGift>
-            <div class="diamond-garden-gift__card diamond-garden-gift__card--empty">
+            <div class="diamond-garden-gift__card diamond-garden-gift__card--empty" appOnceReveal="ref-fade-up" [orDelay]="400">
               <div class="diamond-garden-gift__icon">
                 <i class="fas fa-gift"></i>
               </div>
@@ -547,25 +529,93 @@
         <div class="diamond-garden-footer__overlay"></div>
 
         <div class="diamond-garden-footer__content">
-          <p class="diamond-garden-footer__message" appOnceReveal="fade-up" [orDuration]="800" [innerText]="getClosingText()"></p>
+          <p class="diamond-garden-footer__message" appOnceReveal="ref-fade-up" [orDelay]="400" [innerText]="getClosingText()"></p>
 
-          <p class="diamond-garden-footer__label" appOnceReveal="fade-up" [orDelay]="120">KAMI YANG BERBAHAGIA</p>
+          <p class="diamond-garden-footer__label" appOnceReveal="ref-fade" [orDelay]="200">KAMI YANG BERBAHAGIA</p>
 
-          <h2 class="diamond-garden-footer__names" appOnceReveal="fade-up" [orDelay]="240">
+          <h2 class="diamond-garden-footer__names" appOnceReveal="ref-fade-down" [orDelay]="300">
             {{ getGroomName() || getBrideName() }}
             <span>&amp;</span>
             {{ getBrideName() || getGroomName() }}
           </h2>
 
-          <p class="diamond-garden-footer__date" appOnceReveal="fade-up" [orDelay]="360">{{ getGardenHeroDateLabel() }}</p>
+          <p class="diamond-garden-footer__date" appOnceReveal="ref-fade" [orDelay]="400">{{ getGardenHeroDateLabel() }}</p>
 
-          <div class="diamond-garden-footer__credit" appOnceReveal="fade-up" [orDelay]="480">
+          <div class="diamond-garden-footer__credit" appOnceReveal="ref-fade-up" [orDelay]="500">
             <p>Paket <strong>Diamond</strong></p>
             <span>Crafted with ♥ by</span>
             <strong>Sena Digital</strong>
           </div>
         </div>
       </section>
+    </div>
+
+    <div
+      class="diamond-photo-lightbox"
+      *ngIf="isDiamondLightboxOpen && selectedDiamondLightboxPhoto as photo"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galeri foto"
+      (click)="closeGalleryPhoto()"
+      (touchstart)="onDiamondLightboxTouchStart($event)"
+      (touchend)="onDiamondLightboxTouchEnd($event)">
+      <div class="diamond-photo-lightbox__bar">
+        <span>{{ selectedGalleryPhotoIndex + 1 }} / {{ getDiamondLightboxPhotos().length }}</span>
+        <button type="button" aria-label="Tutup galeri" (click)="closeGalleryPhoto(); $event.stopPropagation()">×</button>
+      </div>
+
+      <button
+        type="button"
+        class="diamond-photo-lightbox__nav diamond-photo-lightbox__nav--prev"
+        *ngIf="getDiamondLightboxPhotos().length > 1"
+        aria-label="Foto sebelumnya"
+        (click)="showPreviousDiamondGalleryPhoto($event)">
+        ‹
+      </button>
+
+      <img
+        class="diamond-photo-lightbox__image"
+        [src]="getDiamondLightboxPhotoUrl(photo)"
+        [alt]="getGardenMomentAlt(photo, selectedGalleryPhotoIndex)"
+        (click)="$event.stopPropagation()" />
+
+      <button
+        type="button"
+        class="diamond-photo-lightbox__nav diamond-photo-lightbox__nav--next"
+        *ngIf="getDiamondLightboxPhotos().length > 1"
+        aria-label="Foto berikutnya"
+        (click)="showNextDiamondGalleryPhoto($event)">
+        ›
+      </button>
+    </div>
+
+    <div
+      class="diamond-video-modal"
+      *ngIf="selectedGalleryVideoType"
+      role="dialog"
+      aria-modal="true"
+      (click)="closeGalleryVideo()">
+      <div class="diamond-video-modal__panel" (click)="$event.stopPropagation()">
+        <button class="diamond-video-modal__close" type="button" aria-label="Tutup video" (click)="closeGalleryVideo()">×</button>
+        <div class="diamond-video-modal__frame">
+          <iframe
+            *ngIf="selectedGalleryVideoType === 'youtube' && selectedGalleryVideoUrl"
+            [src]="selectedGalleryVideoUrl"
+            title="Video galeri"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+          <video
+            *ngIf="selectedGalleryVideoType === 'video' && selectedGalleryVideoDirectUrl"
+            [src]="selectedGalleryVideoDirectUrl"
+            autoplay
+            muted
+            controls
+            playsinline>
+          </video>
+        </div>
+      </div>
     </div>
   </article>
 </section>
