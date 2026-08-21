@@ -2543,6 +2543,7 @@
   color: rgba(255, 255, 255, 0.72) !important;
   letter-spacing: 0.14em !important;
   text-transform: uppercase !important;
+  text-align: left !important;
   font-weight: 500 !important;
 }
 
@@ -2554,6 +2555,7 @@
   line-height: 1.25 !important;
   font-weight: 700 !important;
   color: #dfc98e !important;
+  text-align: left !important;
   overflow-wrap: break-word !important;
 }
 
@@ -2565,11 +2567,23 @@
   font-size: 15px !important;
   line-height: 1.65 !important;
   font-weight: 400 !important;
-  text-align: left !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  text-align-last: left !important;
+  hyphens: auto !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
   white-space: normal !important;
   color: rgba(255, 255, 255, 0.86) !important;
+}
+
+@media (max-width: 600px) {
+  .diamond-garden-story__lead,
+  .diamond-garden-story__text {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+    text-align: justify !important;
+  }
 }
 
 .diamond-garden-story__lead {

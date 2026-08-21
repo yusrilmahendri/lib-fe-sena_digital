@@ -1003,6 +1003,7 @@ main.sapphire-content.sapphire-content.theme-content--opened {
   font-weight: 700;
   color: #8b4a79;
   text-transform: uppercase;
+  text-align: left;
   white-space: normal;
   overflow-wrap: break-word;
 }
@@ -1015,6 +1016,7 @@ main.sapphire-content.sapphire-content.theme-content--opened {
   line-height: 1.25;
   font-weight: 400;
   color: var(--sapphire-text);
+  text-align: left;
   white-space: normal;
   overflow-wrap: break-word;
 }
@@ -1026,10 +1028,22 @@ main.sapphire-content.sapphire-content.theme-content--opened {
   margin: 0;
   font-size: 15px;
   line-height: 1.65;
-  text-align: left;
+  text-align: justify;
+  text-justify: inter-word;
+  text-align-last: left;
+  hyphens: auto;
   word-break: normal;
   overflow-wrap: break-word;
   white-space: normal;
+}
+
+@media (max-width: 600px) {
+  .sapphire-journey-lead,
+  .sapphire-journey-description {
+    font-size: 15px;
+    line-height: 1.7;
+    text-align: justify;
+  }
 }
 
 .sapphire-journey-lead {

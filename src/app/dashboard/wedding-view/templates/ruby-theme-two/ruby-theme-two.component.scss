@@ -875,6 +875,7 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   text-transform: uppercase;
   margin: 0 0 8px;
   font-weight: 600;
+  text-align: left;
 }
 
 .ruby-two-journey-title {
@@ -885,6 +886,7 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   line-height: 1.25;
   margin: 0 0 10px;
   font-weight: 600;
+  text-align: left;
   overflow-wrap: break-word;
 }
 
@@ -895,10 +897,22 @@ main.ruby-two-main.ruby-two-main.theme-content--opened {
   margin: 0;
   font-size: 15px;
   line-height: 1.65;
-  text-align: left;
+  text-align: justify;
+  text-justify: inter-word;
+  text-align-last: left;
+  hyphens: auto;
   word-break: normal;
   overflow-wrap: break-word;
   white-space: normal;
+}
+
+@media (max-width: 600px) {
+  .ruby-two-journey-lead,
+  .ruby-two-journey-body {
+    font-size: 15px;
+    line-height: 1.7;
+    text-align: justify;
+  }
 }
 
 .ruby-two-journey-lead {
