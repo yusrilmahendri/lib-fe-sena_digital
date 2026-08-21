@@ -365,17 +365,19 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   getGardenMomentPhotos(): string[] {
-    return this.getGardenMomentPhotoItems()
+    return this.galleryPhotos
       .map((item: any) => this.getGardenGalleryPhotoUrl(item))
-      .filter((url: string) => !!url)
-      .slice(0, 8);
+      .filter((url: string) => !!url);
   }
 
   getGardenMomentPhotoItems(): any[] {
-    return this.getGardenMomentGallery()
+    return this.galleryPhotos;
+  }
+
+  get galleryPhotos(): any[] {
+    return this.getGardenGallery()
       .filter((item: any) => !this.isDiamondVideoItem(item))
-      .filter((item: any) => Boolean(this.getGardenGalleryPhotoUrl(item)))
-      .slice(0, 8);
+      .filter((item: any) => Boolean(this.getGardenGalleryPhotoUrl(item)));
   }
 
   getGardenFeaturedPhotoItem(): any {
@@ -390,7 +392,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   override getDiamondLightboxPhotos(): any[] {
-    return this.getGardenMomentPhotoItems();
+    return this.galleryPhotos;
   }
 
   override getDiamondLightboxPhotoUrl(item: any): string {

@@ -1614,10 +1614,10 @@
   width: 100% !important;
   max-width: 410px;
   height: auto;
-  min-height: 886px;
+  min-height: 0;
   margin: 0 auto;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
   color: #fff;
 }
@@ -1640,7 +1640,7 @@
   z-index: 2;
   width: 100%;
   height: auto;
-  min-height: 886px;
+  min-height: 0;
   padding: 70px 28px 72px;
   box-sizing: border-box;
   display: flex;
@@ -1648,6 +1648,7 @@
   align-items: center;
   text-align: center;
   background: transparent;
+  overflow: visible;
 }
 
 .diamond-garden-moments .diamond-video-section {
@@ -1870,10 +1871,10 @@
   width: 100% !important;
   max-width: 410px !important;
   height: auto !important;
-  min-height: 886px !important;
+  min-height: 0 !important;
   margin: 0 auto !important;
   padding: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background: transparent !important;
   color: #fff !important;
 }
@@ -1896,10 +1897,11 @@
   z-index: 2 !important;
   width: 100% !important;
   height: auto !important;
-  min-height: 886px !important;
+  min-height: 0 !important;
   padding: 70px 28px 72px !important;
   box-sizing: border-box !important;
   background: transparent !important;
+  overflow: visible !important;
 }
 
 .diamond-garden-moments__eyebrow {
@@ -1982,13 +1984,15 @@
   }
 
   .diamond-garden-moments {
-    height: calc(100vw * 1844 / 853) !important;
-    min-height: calc(100vw * 1844 / 853) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
   .diamond-garden-moments__content {
-    height: calc(100vw * 1844 / 853) !important;
-    min-height: calc(100vw * 1844 / 853) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 }
 
@@ -3278,37 +3282,35 @@
   }
 }
 
-.diamond-garden-moments__gallery {
-  width: 100% !important;
-  max-width: none !important;
+.diamond-garden-gallery-grid {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 10px !important;
+  gap: 12px !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
   margin: 16px 0 0 !important;
   overflow: visible !important;
-  animation: none !important;
 }
 
-.diamond-garden-moments__gallery .diamond-garden-moments__item {
+.diamond-garden-gallery-item {
   position: relative !important;
   display: block !important;
   width: 100% !important;
   height: auto !important;
   min-height: 0 !important;
-  flex: none !important;
+  max-height: none !important;
   aspect-ratio: 3 / 4 !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
-  border-radius: 10px !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
   background: #1a2e20 !important;
-  box-shadow: none !important;
   cursor: pointer !important;
 }
 
-.diamond-garden-moments__gallery .diamond-garden-moments__item img,
-.diamond-garden-moments__gallery .diamond-garden-moments__item video {
+.diamond-garden-gallery-item img {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
