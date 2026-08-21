@@ -162,18 +162,63 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
   }
 
+  getGroomShortName(): string {
+    const groom = this.getGroom() as any;
+    const data = this.weddingData as any;
+
+    return this.firstFilled([
+      groom?.nama_panggilan,
+      groom?.nickname,
+      data?.mempelai?.nama_panggilan_pria,
+      data?.mempelai?.pria?.nama_panggilan,
+      data?.mempelai_pria?.nama_panggilan,
+      data?.pria?.nama_panggilan,
+      groom?.nama_lengkap,
+      data?.mempelai?.nama_pria,
+      data?.mempelai?.pria?.nama_lengkap,
+      this.getGroomName(),
+    ]);
+  }
+
+  getBrideShortName(): string {
+    const bride = this.getBride() as any;
+    const data = this.weddingData as any;
+
+    return this.firstFilled([
+      bride?.nama_panggilan,
+      bride?.nickname,
+      data?.mempelai?.nama_panggilan_wanita,
+      data?.mempelai?.wanita?.nama_panggilan,
+      data?.mempelai_wanita?.nama_panggilan,
+      data?.wanita?.nama_panggilan,
+      bride?.nama_lengkap,
+      data?.mempelai?.nama_wanita,
+      data?.mempelai?.wanita?.nama_lengkap,
+      this.getBrideName(),
+    ]);
+  }
+
+  getCoupleShortNames(): string {
+    const groom = this.getGroomShortName();
+    const bride = this.getBrideShortName();
+
+    if (groom && bride) {
+      return `${groom} & ${bride}`;
+    }
+
+    return groom || bride;
+  }
+
   getCoupleNames(): string {
-    return `${this.getGroomDisplayName()} & ${this.getBrideDisplayName()}`;
+    return this.getCoupleShortNames();
   }
 
   getGroomDisplayName(): string {
-    const groom = this.getGroom();
-    return groom?.nama_panggilan || groom?.nama_lengkap || this.getGroomName();
+    return this.getGroomShortName();
   }
 
   getBrideDisplayName(): string {
-    const bride = this.getBride();
-    return bride?.nama_panggilan || bride?.nama_lengkap || this.getBrideName();
+    return this.getBrideShortName();
   }
 
   getWeddingDate(): string {
@@ -1314,5 +1359,14 @@ export class SapphireThemeOneComponent extends LavenderBloomThemeComponent imple
     }
 
     return rawDate;
+  }
+
+  private firstFilled(values: any[]): string {
+    return values
+      .map((value) => String(value ?? '').trim())
+      .find((value) => {
+        const normalized = value.toLowerCase();
+        return !!value && normalized !== 'null' && normalized !== 'undefined';
+      }) || '';
   }
 }

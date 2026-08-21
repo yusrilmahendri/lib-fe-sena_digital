@@ -10,7 +10,7 @@
     [style.background-position]="getCoverPhotoObjectPosition()">
     <div class="sapphire-opening__content" appRevealStagger>
       <p class="sapphire-opening__eyebrow">THE WEDDING OF</p>
-      <h1 class="sapphire-opening__names">{{ getGroomDisplayName() }} &amp; {{ getBrideDisplayName() }}</h1>
+      <h1 class="sapphire-opening__names">{{ getCoupleShortNames() }}</h1>
       <div class="sapphire-opening__date">
         <span>{{ getWeddingDayPart() }}</span><span>·</span>
         <span>{{ getWeddingMonthPart() }}</span><span>·</span>
@@ -38,7 +38,7 @@
       <div class="sapphire-post-hero__overlay"></div>
       <div class="sapphire-post-hero__content">
         <p class="sapphire-post-hero__eyebrow">THE WEDDING OF</p>
-        <h1 class="sapphire-post-hero__names">{{ getGroomName() }} &amp; {{ getBrideName() }}</h1>
+        <h1 class="sapphire-post-hero__names">{{ getCoupleShortNames() }}</h1>
         <div class="sapphire-post-hero__date">
           <span>{{ getWeddingDayPart() }}</span><span>·</span>
           <span>{{ getWeddingMonthPart() }}</span><span>·</span>
@@ -388,7 +388,7 @@
       <div class="sapphire-footer__content">
         <p class="sapphire-footer__thanks" appOnceReveal="fade-up">{{ getClosingText() }}</p>
         <span class="sapphire-footer__label" appOnceReveal="fade-up" [orDelay]="140">KAMI YANG BERBAHAGIA</span>
-        <h2 class="sapphire-footer__names" appOnceReveal="fade-up" [orDelay]="260">{{ getGroomName() }} &amp; {{ getBrideName() }}</h2>
+        <h2 class="sapphire-footer__names" appOnceReveal="fade-up" [orDelay]="260">{{ getCoupleShortNames() }}</h2>
         <time class="sapphire-footer__date" appOnceReveal="fade-up" [orDelay]="360">{{ getWeddingDate() }}</time>
         <small class="sapphire-footer__package">{{ getPackageLabelText() }}</small>
         <div class="sapphire-footer__credit">
