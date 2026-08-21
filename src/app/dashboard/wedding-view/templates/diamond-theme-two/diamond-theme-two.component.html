@@ -1,4 +1,4 @@
-<section class="diamond-garden-theme" appRevealScope="diamond-garden" *ngIf="weddingData">
+<section class="diamond-garden-theme" *ngIf="weddingData">
   <article class="diamond-garden-shell">
     <section class="diamond-garden-opening" *ngIf="!isInvitationOpened">
       <div class="diamond-garden-opening__stack" [appParallax]="8">
@@ -29,7 +29,7 @@
 
       <div class="diamond-garden-opening__overlay"></div>
 
-      <div class="diamond-garden-opening__content" appRevealStagger>
+      <div class="diamond-garden-opening__content">
         <p class="diamond-garden-opening__eyebrow">THE WEDDING OF</p>
 
         <h1>
@@ -112,10 +112,10 @@
           (error)="coupleFrame.style.display='none'" />
 
         <div class="diamond-garden-couple__content">
-          <p class="diamond-garden-couple__eyebrow">THE WEDDING COUPLE</p>
-          <h2>Kedua Mempelai</h2>
+          <p class="diamond-garden-couple__eyebrow" appOnceReveal="fade-up" [orDuration]="800">THE WEDDING COUPLE</p>
+          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Kedua Mempelai</h2>
 
-          <article class="diamond-garden-person diamond-garden-person--bride">
+          <article class="diamond-garden-person diamond-garden-person--bride" appOnceReveal="fade-left" [orDelay]="220" [orDuration]="900">
             <div class="diamond-garden-person__photo">
               <img
                 [src]="getBridePhotoUrl()"
@@ -140,9 +140,9 @@
             </a>
           </article>
 
-          <div class="diamond-garden-couple__ampersand">&amp;</div>
+          <div class="diamond-garden-couple__ampersand" appOnceReveal="fade-up" [orDelay]="340">&amp;</div>
 
-          <article class="diamond-garden-person diamond-garden-person--groom">
+          <article class="diamond-garden-person diamond-garden-person--groom" appOnceReveal="fade-right" [orDelay]="420" [orDuration]="900">
             <div class="diamond-garden-person__photo">
               <img
                 [src]="getGroomPhotoUrl()"
@@ -179,13 +179,13 @@
           (error)="eventFrame.style.display='none'" />
 
         <div class="diamond-garden-event__content">
-          <p class="diamond-garden-event__eyebrow">SAVE THE DATE</p>
+          <p class="diamond-garden-event__eyebrow" appOnceReveal="fade-up" [orDuration]="800">SAVE THE DATE</p>
 
-          <h2>Akad Nikah</h2>
+          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Akad Nikah</h2>
 
-          <p class="diamond-garden-event__intro" [innerText]="getInvitationOpeningText()"></p>
+          <p class="diamond-garden-event__intro" appOnceReveal="fade-up" [orDelay]="240" [orDuration]="850" [innerText]="getInvitationOpeningText()"></p>
 
-          <div class="diamond-garden-event__date-row">
+          <div class="diamond-garden-event__date-row" appOnceReveal="card" [orDelay]="360">
             <span class="diamond-garden-event__month">
               {{ getGardenEventMonthLabel(getAkadEvent()) }}
             </span>
@@ -211,7 +211,7 @@
             {{ getDetailEventAddress(getAkadEvent()) || getEventAddress(getAkadEvent()) || 'Alamat acara belum tersedia' }}
           </p>
 
-          <div class="diamond-garden-event__map">
+          <div class="diamond-garden-event__map" appOnceReveal="zoom" [orDelay]="480" [orDuration]="950">
             <iframe
               *ngIf="diamondGardenMapSafeSrc; else diamondGardenMapEmpty"
               class="diamond-garden-event__map-iframe"
@@ -250,36 +250,36 @@
           (error)="momentsFrame.style.display='none'" />
 
         <div class="diamond-garden-moments__content">
-          <p class="diamond-garden-moments__eyebrow">SPECIAL MOMENTS</p>
+          <p class="diamond-garden-moments__eyebrow" appOnceReveal="fade-up" [orDuration]="800">SPECIAL MOMENTS</p>
 
-          <h2>
+          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">
             Moment Menuju<br />
             Hari Bahagia
           </h2>
 
           <div class="diamond-garden-moments__countdown">
-            <div class="diamond-garden-moments__time-box">
+            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="0">
               <strong>{{ countdown.days }}</strong>
               <span>HARI</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box">
+            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="140">
               <strong>{{ countdown.hours }}</strong>
               <span>JAM</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box">
+            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="280">
               <strong>{{ countdown.minutes }}</strong>
               <span>MENIT</span>
             </div>
 
-            <div class="diamond-garden-moments__time-box">
+            <div class="diamond-garden-moments__time-box" appOnceReveal="fade-up" [orDelay]="220" [orStagger]="420">
               <strong>{{ countdown.seconds }}</strong>
               <span>DETIK</span>
             </div>
           </div>
 
-          <div class="diamond-garden-moments__featured" *ngIf="getGardenFeaturedPhotoItem() as featuredPhoto">
+          <div class="diamond-garden-moments__featured" *ngIf="getGardenFeaturedPhotoItem() as featuredPhoto" appOnceReveal="zoom" [orDelay]="280" [orDuration]="1000">
             <video
               *ngIf="isGardenMomentVideo(featuredPhoto); else diamondGardenFeaturedImage"
               [src]="getGardenMomentMediaUrl(featuredPhoto)"
@@ -302,7 +302,7 @@
             </ng-template>
           </div>
 
-          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length">
+          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="fade-up" [orDelay]="360" [orDuration]="900">
             <div class="diamond-garden-moments__track">
               <div
                 class="diamond-garden-moments__item"
@@ -368,11 +368,11 @@
           (error)="wishesFrame.style.display='none'" />
 
         <div class="diamond-garden-wishes__content">
-          <p class="diamond-garden-wishes__eyebrow">DOA &amp; HARAPAN</p>
+          <p class="diamond-garden-wishes__eyebrow" appOnceReveal="fade-up" [orDuration]="800">DOA &amp; HARAPAN</p>
 
-          <h2>Ucapan &amp; Doa</h2>
+          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Ucapan &amp; Doa</h2>
 
-          <form class="diamond-garden-wishes__form" (ngSubmit)="submitWish()" #gardenWishForm="ngForm">
+          <form class="diamond-garden-wishes__form" (ngSubmit)="submitWish()" #gardenWishForm="ngForm" appOnceReveal="card" [orDelay]="220">
             <label>
               <span>Nama Lengkap</span>
               <input
@@ -426,7 +426,10 @@
           <div class="diamond-garden-wishes__list" *ngIf="getVisibleGardenWishes().length; else noGardenWishes">
             <article
               class="diamond-garden-wishes__card"
-              *ngFor="let wish of getVisibleGardenWishes(); let i = index">
+              *ngFor="let wish of getVisibleGardenWishes(); let i = index"
+              appOnceReveal="card"
+              [orDelay]="180"
+              [orStagger]="i * 140">
               <div>
                 <h3>{{ wish?.nama || wish?.name || 'Tamu Undangan' }}</h3>
                 <p>{{ wish?.pesan || wish?.message || wish?.ucapan }}</p>
@@ -460,13 +463,16 @@
           (error)="storyFrame.style.display='none'" />
 
         <div class="diamond-garden-story__content">
-          <p class="diamond-garden-story__eyebrow">OUR STORY</p>
-          <h2>Cerita Perjalanan<br />Kami</h2>
+          <p class="diamond-garden-story__eyebrow" appOnceReveal="fade-up" [orDuration]="800">OUR STORY</p>
+          <h2 appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Cerita Perjalanan<br />Kami</h2>
 
           <div class="diamond-garden-story__timeline">
             <article
               class="diamond-garden-story__item"
-              *ngFor="let story of getGardenStories(); trackBy: trackByGardenStory">
+              *ngFor="let story of getGardenStories(); trackBy: trackByGardenStory; let i = index"
+              appOnceReveal="card"
+              [orDelay]="180"
+              [orStagger]="i * 140">
               <span class="diamond-garden-story__dot"></span>
 
               <div class="diamond-garden-story__body">
@@ -487,11 +493,11 @@
           aria-hidden="true" />
 
         <div class="diamond-garden-gift__content">
-          <p class="diamond-garden-gift__eyebrow">WEDDING GIFT</p>
-          <h2 class="diamond-garden-gift__title">Tanda Kasih</h2>
+          <p class="diamond-garden-gift__eyebrow" appOnceReveal="fade-up" [orDuration]="800">WEDDING GIFT</p>
+          <h2 class="diamond-garden-gift__title" appOnceReveal="fade-up" [orDelay]="120" [orDuration]="800">Tanda Kasih</h2>
 
           <div class="diamond-garden-gift__list" *ngIf="getGardenGiftAccounts().length > 0; else noGardenGift">
-            <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts()">
+            <div class="diamond-garden-gift__card" *ngFor="let account of getGardenGiftAccounts(); let i = index" appOnceReveal="card" [orDelay]="220" [orStagger]="i * 140">
               <div class="diamond-garden-gift__icon">
                 <i class="fas fa-gift"></i>
               </div>
@@ -541,19 +547,19 @@
         <div class="diamond-garden-footer__overlay"></div>
 
         <div class="diamond-garden-footer__content">
-          <p class="diamond-garden-footer__message" [innerText]="getClosingText()"></p>
+          <p class="diamond-garden-footer__message" appOnceReveal="fade-up" [orDuration]="800" [innerText]="getClosingText()"></p>
 
-          <p class="diamond-garden-footer__label">KAMI YANG BERBAHAGIA</p>
+          <p class="diamond-garden-footer__label" appOnceReveal="fade-up" [orDelay]="120">KAMI YANG BERBAHAGIA</p>
 
-          <h2 class="diamond-garden-footer__names">
+          <h2 class="diamond-garden-footer__names" appOnceReveal="fade-up" [orDelay]="240">
             {{ getGroomName() || getBrideName() }}
             <span>&amp;</span>
             {{ getBrideName() || getGroomName() }}
           </h2>
 
-          <p class="diamond-garden-footer__date">{{ getGardenHeroDateLabel() }}</p>
+          <p class="diamond-garden-footer__date" appOnceReveal="fade-up" [orDelay]="360">{{ getGardenHeroDateLabel() }}</p>
 
-          <div class="diamond-garden-footer__credit">
+          <div class="diamond-garden-footer__credit" appOnceReveal="fade-up" [orDelay]="480">
             <p>Paket <strong>Diamond</strong></p>
             <span>Crafted with ♥ by</span>
             <strong>Sena Digital</strong>

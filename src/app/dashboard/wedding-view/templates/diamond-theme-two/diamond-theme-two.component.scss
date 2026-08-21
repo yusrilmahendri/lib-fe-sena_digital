@@ -20,7 +20,8 @@
   min-height: 100vh;
   background: var(--garden-white);
   color: var(--garden-ink);
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   font-family: "Cormorant Garamond", "Georgia", "Times New Roman", serif;
 }
 
@@ -33,10 +34,16 @@
 
 .diamond-garden-main {
   display: none;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .diamond-garden-main.open {
   display: block;
+  pointer-events: auto;
 }
 
 .diamond-garden-opening {
@@ -1123,11 +1130,13 @@
   width: 100%;
   max-width: 420px;
   margin: 0 auto;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .diamond-garden-main.open {
   display: block;
+  pointer-events: auto;
 }
 
 @media (max-width: 430px) {
@@ -2897,4 +2906,123 @@
   pointer-events: auto !important;
   touch-action: manipulation;
   cursor: pointer;
+}
+
+$garden-open-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+@keyframes gardenHeroPhotoEnter {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gardenCoverFadeOut {
+  from {
+    opacity: 1;
+    visibility: visible;
+  }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes gardenOpenFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gardenFloralSway {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -8px, 0) rotate(1.2deg); }
+}
+
+.diamond-garden-main.open {
+  position: relative;
+}
+
+.diamond-garden-main.open::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 20;
+  width: 100%;
+  height: 100vh;
+  background: var(--garden-green-deep);
+  pointer-events: none;
+  animation: gardenCoverFadeOut 700ms $garden-open-ease both;
+}
+
+.diamond-garden-main.open .theme-five-hero .hero-panel img {
+  animation: gardenHeroPhotoEnter 1000ms $garden-open-ease both;
+}
+
+.diamond-garden-main.open .theme-five-hero .hero-middle img {
+  animation-duration: 1100ms;
+}
+
+.diamond-garden-main.open .hero-top-text {
+  animation: gardenOpenFadeUp 780ms $garden-open-ease 160ms both;
+}
+
+.diamond-garden-main.open .hero-name {
+  animation: gardenOpenFadeUp 850ms $garden-open-ease 320ms both;
+}
+
+.diamond-garden-main.open .hero-date {
+  animation: gardenOpenFadeUp 800ms $garden-open-ease 460ms both;
+}
+
+.diamond-garden-main.open .hero-scroll {
+  animation: gardenOpenFadeUp 750ms $garden-open-ease 600ms both;
+}
+
+.diamond-garden-couple__frame,
+.diamond-garden-event__frame,
+.diamond-garden-moments__frame,
+.diamond-garden-wishes__frame,
+.diamond-garden-story__frame,
+.diamond-garden-gift__frame,
+.diamond-garden-floral {
+  animation: gardenFloralSway 10s ease-in-out infinite;
+  will-change: transform;
+}
+
+.diamond-garden-event__frame,
+.diamond-garden-gift__frame {
+  animation-duration: 12s;
+  animation-delay: -4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diamond-garden-main.open .theme-five-hero .hero-panel img,
+  .diamond-garden-main.open .hero-top-text,
+  .diamond-garden-main.open .hero-name,
+  .diamond-garden-main.open .hero-date,
+  .diamond-garden-main.open .hero-scroll,
+  .diamond-garden-main.open::before,
+  .diamond-garden-couple__frame,
+  .diamond-garden-event__frame,
+  .diamond-garden-moments__frame,
+  .diamond-garden-wishes__frame,
+  .diamond-garden-story__frame,
+  .diamond-garden-gift__frame,
+  .diamond-garden-floral {
+    animation: none !important;
+  }
+
+  .diamond-garden-main.open::before {
+    display: none;
+  }
 }

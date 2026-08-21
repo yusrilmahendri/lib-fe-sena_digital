@@ -32,10 +32,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   constructor(
     svc: DashboardService,
     private readonly diamondGardenSanitizer: DomSanitizer,
-    diamondGardenChangeDetector: ChangeDetectorRef,
-    toastService: ToastService
+    toastService: ToastService,
+    diamondGardenChangeDetector: ChangeDetectorRef
   ) {
-    super(diamondGardenSanitizer, diamondGardenChangeDetector, svc, toastService);
+    super(diamondGardenSanitizer, svc, toastService, diamondGardenChangeDetector);
   }
 
   override ngOnInit(): void {
@@ -69,13 +69,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.hasOpened = true;
     this.openInvitationRequested.emit();
     document.body.classList.remove('modal-open');
-
-    setTimeout(() => {
-      const target = document.querySelector('.diamond-garden-main');
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
   }
 
   override getPrimaryDisplayName(): string {

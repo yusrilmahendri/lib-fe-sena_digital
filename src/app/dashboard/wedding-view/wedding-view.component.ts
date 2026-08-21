@@ -111,6 +111,10 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   sideIconsVisible: boolean = false;
   invitationOpened: boolean = false;
 
+  /** Once the guest opens the invitation it must stay open for the whole session,
+      even if the view re-initialises or the theme child is recreated. */
+  private invitationOpenedSticky = false;
+
   currentView: ContentView = ContentView.MAIN;
 
   // Wedding data properties
@@ -129,7 +133,9 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostBinding('class.theme-full-frame') get isFullFrameTheme(): boolean {
     return this.activeThemeRenderKey === 'ruby-theme-one'
       || this.activeThemeRenderKey === 'ruby-theme-two'
-      || this.activeThemeRenderKey === 'sapphire-theme-one';
+      || this.activeThemeRenderKey === 'sapphire-theme-one'
+      || this.activeThemeRenderKey === 'diamond-theme-one'
+      || this.activeThemeRenderKey === 'diamond-theme-two';
   }
   activeThemeComponent: Type<unknown> | null = null;
   domain: string | null = null; // Changed from coupleName to domain
@@ -261,7 +267,7 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('Restored current view from localStorage:', savedCurrentView);
       }
 
-      this.invitationOpened = false;
+      this.invitationOpened = this.invitationOpenedSticky;
       this.currentView = ContentView.MAIN;
       localStorage.removeItem(this.STORAGE_KEYS.INVITATION_OPENED);
       localStorage.removeItem(this.STORAGE_KEYS.IS_PLAYING);
@@ -1420,10 +1426,11 @@ export class WeddingViewComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openInvitation(): void {
+    // Match preview contract: flip opened + keep MAIN host mounted, then
+    // fire-and-forget side effects. Never gate theme destroy/recreate on this.
+    this.invitationOpenedSticky = true;
     this.invitationOpened = true;
-    // Always stay on MAIN so that the active theme component (ruby/lavender)
-    // remains rendered and shows its full scrollable content.
-    this.setCurrentView(ContentView.MAIN);
+    this.currentView = ContentView.MAIN;
 
     // Audio is a side-effect only — never block opening or scroll on play promise.
     if (!this.isPlaying) {

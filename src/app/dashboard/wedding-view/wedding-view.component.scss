@@ -106,8 +106,11 @@
 }
 
 :host.theme-full-frame .wedding-container {
+  width: 100%;
+  max-width: none;
   height: auto;
   max-height: none;
+  padding: 0;
   overflow: visible;
 }
 
@@ -120,13 +123,16 @@
 :host.theme-full-frame .wedding-container,
 :host.theme-full-frame wc-ruby-theme-one,
 :host.theme-full-frame wc-ruby-theme-two,
-:host.theme-full-frame wc-sapphire-theme-one {
+:host.theme-full-frame wc-sapphire-theme-one,
+:host.theme-full-frame wc-diamond-theme-one,
+:host.theme-full-frame wc-diamond-theme-two {
   display: block;
   width: 100%;
   max-width: 100%;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 /* When ruby-theme-two is active, strip the outer floral/image background */

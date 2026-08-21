@@ -33,16 +33,15 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   constructor(
     private diamondSanitizer: DomSanitizer,
-    private diamondChangeDetector: ChangeDetectorRef,
     dashboardService: DashboardService,
-    toastService: ToastService
+    toastService: ToastService,
+    private readonly cdr: ChangeDetectorRef
   ) {
     super(diamondSanitizer, dashboardService, toastService);
   }
 
   override ngOnInit(): void {
     super.ngOnInit();
-    this.setDiamondOpenedState(Boolean(this.invitationOpened));
     this.startDiamondCountdown();
     if (!this.wishForm.kehadiran) {
       this.wishForm.kehadiran = 'hadir';
@@ -51,11 +50,6 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
 
   override ngOnChanges(changes: SimpleChanges): void {
     super.ngOnChanges(changes);
-    if (
-      changes['invitationOpened']
-    ) {
-      this.setDiamondOpenedState(Boolean(changes['invitationOpened'].currentValue));
-    }
     if (changes['weddingData']) {
       this.startDiamondCountdown();
     }
@@ -71,36 +65,30 @@ export class DiamondThemeOneComponent extends RubyThemeOneComponent implements O
     super.ngOnDestroy();
   }
 
-  override openInvitation(event?: Event): void {
+  /**
+   * Champagne Rose opening is fully child-owned: `diamondOpened` is the only
+   * source of truth for the cover/main split in the template. The parent's
+   * `invitationOpened` input, `hasOpened`, `isInvitationOpened`, `isCoverVisible`
+   * and `currentView` are intentionally never read here — tracking, audio and
+   * any other parent side-effect run only *after* this fires and can never
+   * hold the cover on screen or close it back.
+   */
+  openDiamondThemeOne(event?: Event): void {
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (this.hasOpened) {
+    if (this.diamondOpened) {
       return;
     }
 
-    this.setDiamondOpenedState(true);
-    this.diamondChangeDetector.detectChanges();
+    // BUKA VISUAL DULU
+    this.diamondOpened = true;
+    this.cdr.detectChanges();
 
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-
-    this.openInvitationRequested.emit();
-
-    requestAnimationFrame(() => {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    });
-  }
-
-  private setDiamondOpenedState(opened: boolean): void {
-    this.diamondOpened = opened;
-    this.hasOpened = opened;
-    this.isOpening = false;
-    this.isInvitationOpened = opened;
-    this.isCoverVisible = !opened;
+    // Parent hanya side effect setelah child sudah open.
+    setTimeout(() => {
+      this.openInvitationRequested.emit();
+    }, 0);
   }
 
   override getPrimaryDisplayName(): string {

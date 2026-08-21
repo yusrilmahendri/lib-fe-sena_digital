@@ -1,4 +1,4 @@
-<div class="wedding-container" [class.no-outer-bg]="activeThemeRenderKey === 'ruby-theme-two'">
+<div class="wedding-container" [class.no-outer-bg]="isNeutralBackgroundTheme">
   <!-- Loading State -->
   <div class="wedding-loading" *ngIf="isLoading">
     <div class="loading-spinner">
@@ -88,8 +88,12 @@
     </ng-container>
 
     <ng-template #activeThemeTemplate>
-      <ng-container *ngIf="!isCurrentView(ContentView.GALLERY) && (!invitationOpened || isCurrentView(ContentView.MAIN))">
-        <ng-container [ngSwitch]="activeThemeRenderKey">
+      <!-- Same contract as theme-preview: keep the theme host mounted.
+           Opening is driven only by [invitationOpened], never by destroying
+           / recreating wc-* via invitationOpened in this *ngIf. -->
+      <ng-container
+        *ngIf="!isCurrentView(ContentView.GALLERY) && isCurrentView(ContentView.MAIN)"
+        [ngSwitch]="activeThemeRenderKey">
           <wc-ruby-theme-one
             *ngSwitchCase="'ruby-theme-one'"
             [weddingData]="weddingData"
@@ -140,7 +144,6 @@
           </wc-lavender-bloom-theme>
           <ng-container *ngSwitchDefault>
           </ng-container>
-        </ng-container>
       </ng-container>
 
       <div class="content themed-content-shell" *ngIf="invitationOpened && !isCurrentView(ContentView.GALLERY) && !isCurrentView(ContentView.MAIN)">
