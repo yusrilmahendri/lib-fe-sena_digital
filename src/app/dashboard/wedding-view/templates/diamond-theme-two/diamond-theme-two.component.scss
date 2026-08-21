@@ -1322,16 +1322,16 @@
   z-index: 2;
   min-height: 904px;
   height: auto;
-  padding: 78px 0 78px;
+  padding: 78px 28px 78px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   text-align: center;
 }
 
 .diamond-garden-couple__eyebrow {
   margin: 0 0 12px;
-  padding: 0 28px;
+  padding: 0;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 10px;
   line-height: 1;
@@ -1341,8 +1341,8 @@
 }
 
 .diamond-garden-couple h2 {
-  margin: 0 0 28px;
-  padding: 0 28px;
+  margin: 0 0 46px;
+  padding: 0;
   font-size: 33px;
   line-height: 1.12;
   font-weight: 700;
@@ -1358,41 +1358,45 @@
 }
 
 .diamond-garden-person--bride {
-  margin-bottom: 28px;
+  margin-bottom: 8px;
 }
 
 .diamond-garden-person--groom {
-  margin-top: 18px;
+  margin-top: 8px;
 }
 
 .diamond-garden-person__photo {
   position: relative;
-  width: 100%;
-  max-width: none;
-  aspect-ratio: 3 / 4;
-  min-height: 320px;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
+  width: 156px;
+  max-width: 156px;
+  height: 210px;
+  min-height: 0;
+  aspect-ratio: auto;
+  padding: 9px;
+  background: #fff;
+  box-shadow: 0 18px 28px rgba(0, 0, 0, 0.25);
   overflow: hidden;
   transform: none;
 }
 
 .diamond-garden-person__photo .diamond-ref-reveal {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  inset: auto;
   width: 100%;
   height: 100%;
 }
 
-.diamond-garden-person--bride .diamond-garden-person__photo,
+.diamond-garden-person--bride .diamond-garden-person__photo {
+  transform: rotate(-3.5deg);
+}
+
 .diamond-garden-person--groom .diamond-garden-person__photo {
-  transform: none;
+  transform: rotate(4deg);
 }
 
 .diamond-garden-person__photo img {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  inset: auto;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1402,7 +1406,7 @@
 
 .diamond-garden-person h3 {
   margin: 20px 0 8px;
-  padding: 0 28px;
+  padding: 0;
   font-size: 24px;
   line-height: 1.15;
   font-weight: 700;
@@ -1411,8 +1415,8 @@
 
 .diamond-garden-person__parents {
   margin: 0;
-  max-width: none;
-  padding: 0 28px;
+  max-width: 260px;
+  padding: 0;
   font-family: "Poppins", system-ui, sans-serif;
   font-size: 11px;
   line-height: 1.55;
@@ -1748,18 +1752,22 @@
 .diamond-garden-moments__gallery {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   background: transparent;
 }
 
 .diamond-garden-moments__item {
-  height: 158px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   background: transparent;
   box-shadow: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .diamond-garden-moments__item img,
@@ -1789,10 +1797,6 @@
 
   .diamond-garden-moments__time-box {
     height: 64px;
-  }
-
-  .diamond-garden-moments__item {
-    height: 142px;
   }
 }
 
@@ -1944,15 +1948,17 @@
 .diamond-garden-moments__gallery {
   width: 100% !important;
   display: grid !important;
-  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px !important;
   background: transparent !important;
 }
 
 .diamond-garden-moments__item {
-  height: 158px !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 4 !important;
   border: 0 !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -2412,31 +2418,35 @@
 
 .diamond-garden-moments__slider {
   width: 100% !important;
-  max-width: 334px !important;
-  margin: 0 auto !important;
-  overflow: hidden !important;
+  max-width: none !important;
+  margin: 16px 0 0 !important;
+  overflow: visible !important;
   position: relative !important;
   z-index: 5 !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
 }
 
 .diamond-garden-moments__track {
-  display: flex !important;
-  width: max-content !important;
-  gap: 10px !important;
-  animation: diamondGardenSlide 22s linear infinite !important;
-  will-change: transform !important;
+  display: contents !important;
+  width: auto !important;
+  gap: 0 !important;
+  animation: none !important;
+  will-change: auto !important;
 }
 
 .diamond-garden-moments__slider:hover .diamond-garden-moments__track {
-  animation-play-state: paused !important;
+  animation: none !important;
 }
 
 .diamond-garden-moments__slider .diamond-garden-moments__item {
-  width: 102px !important;
-  height: 150px !important;
-  flex: 0 0 102px !important;
+  width: 100% !important;
+  height: auto !important;
+  flex: none !important;
+  aspect-ratio: 3 / 4 !important;
   padding: 0 !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   overflow: hidden !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -3266,4 +3276,43 @@
       0 18px 36px rgba(0, 0, 0, 0.14),
       0 6px 14px rgba(0, 0, 0, 0.08) !important;
   }
+}
+
+.diamond-garden-moments__gallery {
+  width: 100% !important;
+  max-width: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  margin: 16px 0 0 !important;
+  overflow: visible !important;
+  animation: none !important;
+}
+
+.diamond-garden-moments__gallery .diamond-garden-moments__item {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  flex: none !important;
+  aspect-ratio: 3 / 4 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  background: #1a2e20 !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+}
+
+.diamond-garden-moments__gallery .diamond-garden-moments__item img,
+.diamond-garden-moments__gallery .diamond-garden-moments__item video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }

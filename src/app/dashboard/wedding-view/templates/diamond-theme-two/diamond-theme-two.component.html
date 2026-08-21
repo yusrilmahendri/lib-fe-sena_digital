@@ -329,34 +329,19 @@
             </div>
           </div>
 
-          <div class="diamond-garden-moments__slider" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="ref-fade-up" [orDelay]="400">
-            <div class="diamond-garden-moments__track">
-              <button
-                type="button"
-                class="diamond-garden-moments__item"
-                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto; let i = index"
-                (click)="openDiamondGalleryPhoto(i)">
-                <img
-                  [src]="getGardenGalleryPhotoUrl(photo)"
-                  alt="Moment pernikahan"
-                  [style.object-fit]="getPhotoObjectFit(photo)"
-                  [style.object-position]="getPhotoObjectPosition(photo)"
-                  (error)="onGardenImageError($event)" />
-              </button>
-
-              <button
-                type="button"
-                class="diamond-garden-moments__item"
-                *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto; let i = index"
-                (click)="openDiamondGalleryPhoto(i)">
-                <img
-                  [src]="getGardenGalleryPhotoUrl(photo)"
-                  alt="Moment pernikahan"
-                  [style.object-fit]="getPhotoObjectFit(photo)"
-                  [style.object-position]="getPhotoObjectPosition(photo)"
-                  (error)="onGardenImageError($event)" />
-              </button>
-            </div>
+          <div class="diamond-garden-moments__gallery" *ngIf="getGardenMomentPhotoItems().length" appOnceReveal="ref-fade-up" [orDelay]="400">
+            <button
+              type="button"
+              class="diamond-garden-moments__item"
+              *ngFor="let photo of getGardenMomentPhotoItems(); trackBy: trackByGardenPhoto; let i = index"
+              (click)="openDiamondGalleryPhoto(i)">
+              <img
+                [src]="getGardenGalleryPhotoUrl(photo)"
+                alt="Moment pernikahan"
+                [style.object-fit]="getPhotoObjectFit(photo)"
+                [style.object-position]="getPhotoObjectPosition(photo)"
+                (error)="onGardenImageError($event)" />
+            </button>
           </div>
         </div>
       </section>
