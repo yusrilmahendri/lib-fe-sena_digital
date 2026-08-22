@@ -315,10 +315,9 @@
           </div>
 
           <div
-            class="diamond-video-section"
-            *ngIf="diamondInlineYoutubeSrc"
-            appOnceReveal="ref-fade-up">
-            <div class="diamond-video-section__frame">
+            class="diamond-video-section diamond-garden-video-section"
+            *ngIf="diamondInlineYoutubeSrc">
+            <div class="diamond-video-section__frame diamond-garden-video-section__frame">
               <iframe
                 [src]="diamondInlineYoutubeSrc"
                 title="Wedding video"
@@ -329,7 +328,7 @@
             </div>
           </div>
 
-          <div class="diamond-garden-gallery-grid" *ngIf="galleryPhotos.length" appOnceReveal="ref-fade-up" [orDelay]="400">
+          <div class="diamond-garden-gallery-grid" *ngIf="galleryPhotos.length">
             <button
               type="button"
               class="diamond-garden-gallery-item"

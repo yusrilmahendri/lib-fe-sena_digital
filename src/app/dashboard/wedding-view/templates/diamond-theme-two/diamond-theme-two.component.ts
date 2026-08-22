@@ -374,7 +374,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.galleryPhotos;
   }
 
-  get galleryPhotos(): any[] {
+  override get galleryPhotos(): any[] {
     return this.getGardenGallery()
       .filter((item: any) => !this.isDiamondVideoItem(item))
       .filter((item: any) => Boolean(this.getGardenGalleryPhotoUrl(item)));
@@ -955,7 +955,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   getMomentGalleryItems(): DiamondGardenGalleryItem[] {
     const items = this.getSafeGalleryPhotos()
-      .slice(0, 4)
       .map((item, index) => ({
         photoUrl: this.getGalleryPhotoUrl(item),
         alt: this.getGalleryAlt(item, index),
