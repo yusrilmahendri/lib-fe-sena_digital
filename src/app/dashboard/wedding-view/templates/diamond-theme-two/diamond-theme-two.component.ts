@@ -29,15 +29,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   diamondGardenMapLink = '';
   diamondGardenMapDebug: any = null;
   private diamondGardenMapInitialized = false;
-  private diamondGardenGalleryInterval: ReturnType<typeof setInterval> | null = null;
+  private diamondGardenGalleryFrameId: number | null = null;
   private diamondGardenGalleryResumeTimeout: ReturnType<typeof setTimeout> | null = null;
-  private diamondGardenGalleryAutoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
-  private diamondGardenGallerySnapTimeout: ReturnType<typeof setTimeout> | null = null;
   private diamondGardenGalleryPausedByUser = false;
-  private diamondGardenGalleryAutoScrolling = false;
-  private diamondGardenGalleryCurrentIndex = 0;
-  private readonly diamondGardenGallerySlideDelay = 2800;
-  private readonly diamondGardenGalleryResumeDelay = 4000;
+  private diamondGardenGalleryDirection: 1 | -1 = 1;
+  private diamondGardenGalleryLastFrameTime = 0;
+  private diamondGardenGalleryIgnoreScrollUntil = 0;
+  private readonly diamondGardenGallerySpeed = 0.82;
+  private readonly diamondGardenGalleryEdgeEaseDistance = 120;
+  private readonly diamondGardenGalleryResumeDelay = 1800;
   private readonly diamondGardenVisibilityHandler = () => this.handleDiamondGardenVisibilityChange();
   private readonly diamondGardenResizeHandler = () => this.refreshDiamondGardenGalleryLayout();
 
@@ -89,8 +89,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   override ngOnDestroy(): void {
     this.stopDiamondGardenGalleryAutoSlide();
     this.clearDiamondGardenGalleryResumeTimeout();
-    this.clearDiamondGardenGalleryAutoScrollTimeout();
-    this.clearDiamondGardenGallerySnapTimeout();
     document.removeEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
     window.removeEventListener('resize', this.diamondGardenResizeHandler);
     super.ngOnDestroy();
@@ -122,20 +120,18 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
-    this.scheduleDiamondGardenGallerySnap();
   }
 
   onDiamondGardenGalleryScroll(): void {
-    if (this.diamondGardenGalleryAutoScrolling) {
+    if (performance.now() < this.diamondGardenGalleryIgnoreScrollUntil) {
       return;
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
-    this.scheduleDiamondGardenGallerySnap();
   }
 
   private startDiamondGardenGalleryAutoSlide(): void {
-    if (this.diamondGardenGalleryInterval || this.diamondGardenGalleryPausedByUser || document.hidden) {
+    if (this.diamondGardenGalleryFrameId !== null || this.diamondGardenGalleryPausedByUser || document.hidden) {
       return;
     }
 
@@ -145,22 +141,18 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       return;
     }
 
-    this.diamondGardenGalleryInterval = setInterval(() => {
-      if (document.hidden || !this.canAutoSlideDiamondGardenGallery()) {
-        return;
-      }
-
-      this.slideDiamondGardenGalleryByOneCard();
-    }, this.diamondGardenGallerySlideDelay);
+    this.diamondGardenGalleryLastFrameTime = 0;
+    this.diamondGardenGalleryFrameId = requestAnimationFrame((timestamp) => this.flowDiamondGardenGallery(timestamp));
   }
 
   private stopDiamondGardenGalleryAutoSlide(): void {
-    if (!this.diamondGardenGalleryInterval) {
+    if (this.diamondGardenGalleryFrameId === null) {
       return;
     }
 
-    clearInterval(this.diamondGardenGalleryInterval);
-    this.diamondGardenGalleryInterval = null;
+    cancelAnimationFrame(this.diamondGardenGalleryFrameId);
+    this.diamondGardenGalleryFrameId = null;
+    this.diamondGardenGalleryLastFrameTime = 0;
   }
 
   private scheduleDiamondGardenGalleryAutoSlideResume(): void {
@@ -178,24 +170,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
     clearTimeout(this.diamondGardenGalleryResumeTimeout);
     this.diamondGardenGalleryResumeTimeout = null;
-  }
-
-  private clearDiamondGardenGalleryAutoScrollTimeout(): void {
-    if (!this.diamondGardenGalleryAutoScrollTimeout) {
-      return;
-    }
-
-    clearTimeout(this.diamondGardenGalleryAutoScrollTimeout);
-    this.diamondGardenGalleryAutoScrollTimeout = null;
-  }
-
-  private clearDiamondGardenGallerySnapTimeout(): void {
-    if (!this.diamondGardenGallerySnapTimeout) {
-      return;
-    }
-
-    clearTimeout(this.diamondGardenGallerySnapTimeout);
-    this.diamondGardenGallerySnapTimeout = null;
   }
 
   private handleDiamondGardenVisibilityChange(): void {
@@ -218,28 +192,42 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     return this.galleryPhotos.length > this.getDiamondGardenVisibleGalleryCards(track);
   }
 
-  private slideDiamondGardenGalleryByOneCard(): void {
+  private flowDiamondGardenGallery(timestamp: number): void {
     const track = this.diamondGardenGalleryTrack?.nativeElement;
-    if (!track) {
+    if (document.hidden || !track || !this.canAutoSlideDiamondGardenGallery()) {
+      this.diamondGardenGalleryFrameId = null;
       return;
     }
 
-    const visibleCards = this.getDiamondGardenVisibleGalleryCards(track);
-    const maxStartIndex = Math.max(0, this.galleryPhotos.length - visibleCards);
-    if (maxStartIndex <= 0) {
+    const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
+    if (maxScroll <= 0) {
+      this.diamondGardenGalleryFrameId = null;
       return;
     }
 
-    const currentIndex = this.getNearestDiamondGardenGalleryIndex(track);
-    const targetIndex = currentIndex >= maxStartIndex ? 0 : currentIndex + 1;
+    if (track.scrollLeft >= maxScroll - 1) {
+      this.diamondGardenGalleryDirection = -1;
+    } else if (track.scrollLeft <= 1) {
+      this.diamondGardenGalleryDirection = 1;
+    }
 
-    this.diamondGardenGalleryAutoScrolling = true;
-    this.clearDiamondGardenGalleryAutoScrollTimeout();
-    this.scrollDiamondGardenGalleryToIndex(targetIndex, 'smooth');
-    this.diamondGardenGalleryAutoScrollTimeout = setTimeout(() => {
-      this.normalizeDiamondGardenGalleryPosition(targetIndex);
-      this.diamondGardenGalleryAutoScrolling = false;
-    }, 700);
+    const edgeDistance = this.diamondGardenGalleryDirection === 1
+      ? maxScroll - track.scrollLeft
+      : track.scrollLeft;
+    const speedFactor = this.clampDiamondGardenGallerySpeedFactor(edgeDistance / this.diamondGardenGalleryEdgeEaseDistance);
+    const frameRatio = this.diamondGardenGalleryLastFrameTime
+      ? Math.min((timestamp - this.diamondGardenGalleryLastFrameTime) / 16.67, 2)
+      : 1;
+    const movement = this.diamondGardenGalleryDirection * this.diamondGardenGallerySpeed * speedFactor * frameRatio;
+
+    this.diamondGardenGalleryLastFrameTime = timestamp;
+    this.diamondGardenGalleryIgnoreScrollUntil = performance.now() + 80;
+    track.scrollLeft = Math.max(0, Math.min(maxScroll, track.scrollLeft + movement));
+    this.diamondGardenGalleryFrameId = requestAnimationFrame((nextTimestamp) => this.flowDiamondGardenGallery(nextTimestamp));
+  }
+
+  private clampDiamondGardenGallerySpeedFactor(value: number): number {
+    return Math.min(Math.max(value, 0.75), 1);
   }
 
   private refreshDiamondGardenGalleryLayout(): void {
@@ -259,7 +247,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     track.style.setProperty('--diamond-garden-gallery-card-width', `${cardWidth}px`);
-    this.normalizeDiamondGardenGalleryPosition(this.getNearestDiamondGardenGalleryIndex(track));
   }
 
   private getDiamondGardenVisibleGalleryCards(track: HTMLElement): number {
@@ -272,84 +259,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       paddingLeft: parseFloat(style.paddingLeft || '0') || 0,
       paddingRight: parseFloat(style.paddingRight || '0') || 0,
     };
-  }
-
-  private getNearestDiamondGardenGalleryIndex(track: HTMLElement): number {
-    const items = this.getDiamondGardenGalleryItems(track);
-    if (!items.length) {
-      return 0;
-    }
-
-    let nearestIndex = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-
-    items.forEach((item, index) => {
-      const distance = Math.abs(track.scrollLeft - this.getDiamondGardenGalleryItemLeft(track, item));
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestIndex = index;
-      }
-    });
-
-    this.diamondGardenGalleryCurrentIndex = nearestIndex;
-    return nearestIndex;
-  }
-
-  private scrollDiamondGardenGalleryToIndex(index: number, behavior: ScrollBehavior): void {
-    const track = this.diamondGardenGalleryTrack?.nativeElement;
-    if (!track) {
-      return;
-    }
-
-    const item = this.getDiamondGardenGalleryItems(track)[index];
-    if (!item) {
-      return;
-    }
-
-    this.diamondGardenGalleryCurrentIndex = index;
-    track.scrollTo({
-      left: this.getDiamondGardenGalleryItemLeft(track, item),
-      behavior,
-    });
-  }
-
-  private normalizeDiamondGardenGalleryPosition(index = this.diamondGardenGalleryCurrentIndex): void {
-    const track = this.diamondGardenGalleryTrack?.nativeElement;
-    if (!track) {
-      return;
-    }
-
-    const items = this.getDiamondGardenGalleryItems(track);
-    const item = items[Math.max(0, Math.min(index, items.length - 1))];
-    if (!item) {
-      return;
-    }
-
-    track.scrollTo({
-      left: this.getDiamondGardenGalleryItemLeft(track, item),
-      behavior: 'auto',
-    });
-  }
-
-  private scheduleDiamondGardenGallerySnap(): void {
-    this.clearDiamondGardenGallerySnapTimeout();
-    this.diamondGardenGallerySnapTimeout = setTimeout(() => {
-      const track = this.diamondGardenGalleryTrack?.nativeElement;
-      if (!track) {
-        return;
-      }
-
-      this.normalizeDiamondGardenGalleryPosition(this.getNearestDiamondGardenGalleryIndex(track));
-    }, 180);
-  }
-
-  private getDiamondGardenGalleryItems(track: HTMLElement): HTMLElement[] {
-    return Array.from(track.querySelectorAll<HTMLElement>('.diamond-garden-gallery-item'));
-  }
-
-  private getDiamondGardenGalleryItemLeft(track: HTMLElement, item: HTMLElement): number {
-    const { paddingLeft } = this.getDiamondGardenGalleryPadding(track);
-    return item.offsetLeft - paddingLeft;
   }
 
   private getDiamondGardenGalleryGap(track: HTMLElement): number {

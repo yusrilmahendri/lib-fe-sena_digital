@@ -3339,7 +3339,7 @@
   padding: 0 12px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  scroll-snap-type: x mandatory !important;
+  scroll-snap-type: none !important;
   scroll-padding-left: 12px !important;
   scroll-padding-right: 12px !important;
   scrollbar-width: none !important;
@@ -3374,8 +3374,8 @@
   appearance: none !important;
   -webkit-appearance: none !important;
   position: relative !important;
-  scroll-snap-align: start !important;
-  scroll-snap-stop: always !important;
+  scroll-snap-align: none !important;
+  scroll-snap-stop: normal !important;
 }
 
 .diamond-garden-gallery-item img {
