@@ -334,20 +334,25 @@
             #diamondGardenGalleryTrack
             class="diamond-garden-gallery-track"
             *ngIf="galleryPhotos.length"
-            (touchstart)="pauseDiamondGardenGalleryAutoSlide()"
-            (pointerdown)="pauseDiamondGardenGalleryAutoSlide()"
+            (touchstart)="onDiamondGardenGalleryInteractionStart()"
+            (touchend)="onDiamondGardenGalleryInteractionEnd()"
+            (touchcancel)="onDiamondGardenGalleryInteractionEnd()"
+            (pointerdown)="onDiamondGardenGalleryInteractionStart()"
+            (pointerup)="onDiamondGardenGalleryInteractionEnd()"
+            (pointercancel)="onDiamondGardenGalleryInteractionEnd()"
+            (pointerleave)="onDiamondGardenGalleryInteractionEnd()"
             (wheel)="onDiamondGardenGalleryWheel($event)"
             (scroll)="onDiamondGardenGalleryScroll()">
             <button
               type="button"
               class="diamond-garden-gallery-item"
-              *ngFor="let photo of galleryPhotos; trackBy: trackByGardenPhoto; let i = index"
-              (click)="openDiamondGalleryPhoto(i)">
+              *ngFor="let item of getDiamondGardenFlowGalleryPhotos(); trackBy: trackByDiamondGardenFlowPhoto"
+              (click)="openDiamondGalleryPhoto(item.originalIndex)">
               <img
-                [src]="getGardenGalleryPhotoUrl(photo)"
+                [src]="getGardenGalleryPhotoUrl(item.photo)"
                 alt="Moment pernikahan"
-                [style.object-fit]="getPhotoObjectFit(photo)"
-                [style.object-position]="getPhotoObjectPosition(photo)"
+                [style.object-fit]="getPhotoObjectFit(item.photo)"
+                [style.object-position]="getPhotoObjectPosition(item.photo)"
                 (error)="onGardenImageError($event)" />
             </button>
           </div>

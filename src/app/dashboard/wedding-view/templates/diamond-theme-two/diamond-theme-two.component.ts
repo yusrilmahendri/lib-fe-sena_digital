@@ -30,14 +30,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   diamondGardenMapDebug: any = null;
   private diamondGardenMapInitialized = false;
   private diamondGardenGalleryFrameId: number | null = null;
+  private diamondGardenGalleryStartFrameId: number | null = null;
   private diamondGardenGalleryResumeTimeout: ReturnType<typeof setTimeout> | null = null;
   private diamondGardenGalleryPausedByUser = false;
   private diamondGardenGalleryDirection: 1 | -1 = 1;
-  private diamondGardenGalleryLastFrameTime = 0;
+  private diamondGardenGalleryPosition = 0;
   private diamondGardenGalleryIgnoreScrollUntil = 0;
-  private readonly diamondGardenGallerySpeed = 0.82;
-  private readonly diamondGardenGalleryEdgeEaseDistance = 120;
-  private readonly diamondGardenGalleryResumeDelay = 1800;
+  private readonly diamondGardenGallerySpeed = 0.9;
+  private readonly diamondGardenGalleryResumeDelay = 1400;
+  private readonly diamondGardenGalleryMinimumVisualItems = 6;
   private readonly diamondGardenVisibilityHandler = () => this.handleDiamondGardenVisibilityChange();
   private readonly diamondGardenResizeHandler = () => this.refreshDiamondGardenGalleryLayout();
 
@@ -59,10 +60,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   }
 
   override ngAfterViewInit(): void {
-    setTimeout(() => {
-      this.refreshDiamondGardenGalleryLayout();
-      this.startDiamondGardenGalleryAutoSlide();
-    }, 0);
+    this.scheduleDiamondGardenGalleryAutoFlowStart();
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -79,14 +77,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       this.diamondGardenMapLink = '';
       setTimeout(() => this.setupDiamondGardenMapOnce(), 300);
       setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
-      setTimeout(() => {
-        this.refreshDiamondGardenGalleryLayout();
-        this.startDiamondGardenGalleryAutoSlide();
-      }, 0);
+      this.scheduleDiamondGardenGalleryAutoFlowStart();
     }
   }
 
   override ngOnDestroy(): void {
+    if (this.diamondGardenGalleryStartFrameId !== null) {
+      cancelAnimationFrame(this.diamondGardenGalleryStartFrameId);
+      this.diamondGardenGalleryStartFrameId = null;
+    }
     this.stopDiamondGardenGalleryAutoSlide();
     this.clearDiamondGardenGalleryResumeTimeout();
     document.removeEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
@@ -102,15 +101,21 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.hasOpened = true;
     this.openInvitationRequested.emit();
     document.body.classList.remove('modal-open');
-    setTimeout(() => {
-      this.refreshDiamondGardenGalleryLayout();
-      this.startDiamondGardenGalleryAutoSlide();
-    }, 0);
+    this.scheduleDiamondGardenGalleryAutoFlowStart();
   }
 
   pauseDiamondGardenGalleryAutoSlide(): void {
     this.diamondGardenGalleryPausedByUser = true;
     this.stopDiamondGardenGalleryAutoSlide();
+  }
+
+  onDiamondGardenGalleryInteractionStart(): void {
+    this.clearDiamondGardenGalleryResumeTimeout();
+    this.pauseDiamondGardenGalleryAutoSlide();
+  }
+
+  onDiamondGardenGalleryInteractionEnd(): void {
+    this.syncDiamondGardenGalleryPositionFromTrack();
     this.scheduleDiamondGardenGalleryAutoSlideResume();
   }
 
@@ -120,6 +125,8 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
+    this.syncDiamondGardenGalleryPositionFromTrack();
+    this.scheduleDiamondGardenGalleryAutoSlideResume();
   }
 
   onDiamondGardenGalleryScroll(): void {
@@ -128,21 +135,39 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
+    this.syncDiamondGardenGalleryPositionFromTrack();
+    this.scheduleDiamondGardenGalleryAutoSlideResume();
+  }
+
+  private scheduleDiamondGardenGalleryAutoFlowStart(): void {
+    if (this.diamondGardenGalleryStartFrameId !== null) {
+      cancelAnimationFrame(this.diamondGardenGalleryStartFrameId);
+    }
+
+    this.diamondGardenGalleryStartFrameId = requestAnimationFrame(() => {
+      this.diamondGardenGalleryStartFrameId = requestAnimationFrame(() => {
+        this.diamondGardenGalleryStartFrameId = null;
+        this.refreshDiamondGardenGalleryLayout();
+        this.startDiamondGardenGalleryAutoSlide();
+      });
+    });
   }
 
   private startDiamondGardenGalleryAutoSlide(): void {
-    if (this.diamondGardenGalleryFrameId !== null || this.diamondGardenGalleryPausedByUser || document.hidden) {
+    if (this.diamondGardenGalleryPausedByUser || document.hidden || !this.galleryPhotos.length) {
       return;
     }
 
+    this.stopDiamondGardenGalleryAutoSlide();
     this.refreshDiamondGardenGalleryLayout();
 
-    if (!this.canAutoSlideDiamondGardenGallery()) {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
       return;
     }
 
-    this.diamondGardenGalleryLastFrameTime = 0;
-    this.diamondGardenGalleryFrameId = requestAnimationFrame((timestamp) => this.flowDiamondGardenGallery(timestamp));
+    this.diamondGardenGalleryPosition = track.scrollLeft;
+    this.diamondGardenGalleryFrameId = requestAnimationFrame(() => this.flowDiamondGardenGallery());
   }
 
   private stopDiamondGardenGalleryAutoSlide(): void {
@@ -152,7 +177,6 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
     cancelAnimationFrame(this.diamondGardenGalleryFrameId);
     this.diamondGardenGalleryFrameId = null;
-    this.diamondGardenGalleryLastFrameTime = 0;
   }
 
   private scheduleDiamondGardenGalleryAutoSlideResume(): void {
@@ -183,51 +207,46 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
   }
 
-  private canAutoSlideDiamondGardenGallery(): boolean {
+  private getDiamondGardenGalleryMaxScroll(): number {
     const track = this.diamondGardenGalleryTrack?.nativeElement;
-    if (!track || track.offsetWidth <= 0 || this.galleryPhotos.length <= 0) {
-      return false;
-    }
-
-    return this.galleryPhotos.length > this.getDiamondGardenVisibleGalleryCards(track);
+    return track ? Math.max(0, track.scrollWidth - track.clientWidth) : 0;
   }
 
-  private flowDiamondGardenGallery(timestamp: number): void {
+  private flowDiamondGardenGallery(): void {
     const track = this.diamondGardenGalleryTrack?.nativeElement;
-    if (document.hidden || !track || !this.canAutoSlideDiamondGardenGallery()) {
+    if (document.hidden || !track || this.diamondGardenGalleryPausedByUser) {
       this.diamondGardenGalleryFrameId = null;
       return;
     }
 
-    const maxScroll = Math.max(0, track.scrollWidth - track.clientWidth);
-    if (maxScroll <= 0) {
-      this.diamondGardenGalleryFrameId = null;
+    const maxScroll = this.getDiamondGardenGalleryMaxScroll();
+    if (maxScroll <= 1) {
+      this.diamondGardenGalleryFrameId = requestAnimationFrame(() => this.flowDiamondGardenGallery());
       return;
     }
 
-    if (track.scrollLeft >= maxScroll - 1) {
+    if (this.diamondGardenGalleryPosition >= maxScroll - 1) {
       this.diamondGardenGalleryDirection = -1;
-    } else if (track.scrollLeft <= 1) {
+      this.diamondGardenGalleryPosition = maxScroll - 1;
+    } else if (this.diamondGardenGalleryPosition <= 1) {
       this.diamondGardenGalleryDirection = 1;
+      this.diamondGardenGalleryPosition = 1;
     }
 
-    const edgeDistance = this.diamondGardenGalleryDirection === 1
-      ? maxScroll - track.scrollLeft
-      : track.scrollLeft;
-    const speedFactor = this.clampDiamondGardenGallerySpeedFactor(edgeDistance / this.diamondGardenGalleryEdgeEaseDistance);
-    const frameRatio = this.diamondGardenGalleryLastFrameTime
-      ? Math.min((timestamp - this.diamondGardenGalleryLastFrameTime) / 16.67, 2)
-      : 1;
-    const movement = this.diamondGardenGalleryDirection * this.diamondGardenGallerySpeed * speedFactor * frameRatio;
-
-    this.diamondGardenGalleryLastFrameTime = timestamp;
+    this.diamondGardenGalleryPosition += this.diamondGardenGalleryDirection * this.diamondGardenGallerySpeed;
+    this.diamondGardenGalleryPosition = Math.max(0, Math.min(maxScroll, this.diamondGardenGalleryPosition));
     this.diamondGardenGalleryIgnoreScrollUntil = performance.now() + 80;
-    track.scrollLeft = Math.max(0, Math.min(maxScroll, track.scrollLeft + movement));
-    this.diamondGardenGalleryFrameId = requestAnimationFrame((nextTimestamp) => this.flowDiamondGardenGallery(nextTimestamp));
+    track.scrollLeft = this.diamondGardenGalleryPosition;
+    this.diamondGardenGalleryFrameId = requestAnimationFrame(() => this.flowDiamondGardenGallery());
   }
 
-  private clampDiamondGardenGallerySpeedFactor(value: number): number {
-    return Math.min(Math.max(value, 0.75), 1);
+  private syncDiamondGardenGalleryPositionFromTrack(): void {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    this.diamondGardenGalleryPosition = track.scrollLeft;
   }
 
   private refreshDiamondGardenGalleryLayout(): void {
@@ -589,6 +608,28 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
 
   override getDiamondLightboxPhotos(): any[] {
     return this.galleryPhotos;
+  }
+
+  getDiamondGardenFlowGalleryPhotos(): Array<{ photo: any; originalIndex: number; visualIndex: number }> {
+    const photos = this.galleryPhotos;
+    if (!photos.length) {
+      return [];
+    }
+
+    const visualCount = Math.max(photos.length, this.diamondGardenGalleryMinimumVisualItems);
+    return Array.from({ length: visualCount }, (_, visualIndex) => {
+      const originalIndex = visualIndex % photos.length;
+      return {
+        photo: photos[originalIndex],
+        originalIndex,
+        visualIndex,
+      };
+    });
+  }
+
+  trackByDiamondGardenFlowPhoto(index: number, item: { photo: any; originalIndex: number; visualIndex: number }): string {
+    const photo = item.photo;
+    return `${item.visualIndex}-${item.originalIndex}-${photo?.id || photo?.photo_url || photo?.photo || photo}`;
   }
 
   override getDiamondLightboxPhotoUrl(item: any): string {
