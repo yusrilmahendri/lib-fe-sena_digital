@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DashboardService } from '../../../../dashboard.service';
 import { ToastService } from '../../../../toast.service';
@@ -21,12 +21,22 @@ interface DiamondGardenGalleryItem {
   templateUrl: './diamond-theme-two.component.html',
   styleUrls: ['./diamond-theme-two.component.scss'],
 })
-export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit, OnChanges {
+export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  @ViewChild('diamondGardenGalleryTrack') diamondGardenGalleryTrack?: ElementRef<HTMLElement>;
+
   diamondGardenMapSrc = '';
   diamondGardenMapSafeSrc: SafeResourceUrl | null = null;
   diamondGardenMapLink = '';
   diamondGardenMapDebug: any = null;
   private diamondGardenMapInitialized = false;
+  private diamondGardenGalleryInterval: ReturnType<typeof setInterval> | null = null;
+  private diamondGardenGalleryResumeTimeout: ReturnType<typeof setTimeout> | null = null;
+  private diamondGardenGalleryAutoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
+  private diamondGardenGalleryPausedByUser = false;
+  private diamondGardenGalleryAutoScrolling = false;
+  private readonly diamondGardenGallerySlideDelay = 2800;
+  private readonly diamondGardenGalleryResumeDelay = 4000;
+  private readonly diamondGardenVisibilityHandler = () => this.handleDiamondGardenVisibilityChange();
 
   constructor(
     svc: DashboardService,
@@ -41,6 +51,11 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     super.ngOnInit();
     setTimeout(() => this.setupDiamondGardenMapOnce(), 500);
     setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
+    document.addEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
+  }
+
+  override ngAfterViewInit(): void {
+    setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -57,7 +72,16 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       this.diamondGardenMapLink = '';
       setTimeout(() => this.setupDiamondGardenMapOnce(), 300);
       setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
+      setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
     }
+  }
+
+  override ngOnDestroy(): void {
+    this.stopDiamondGardenGalleryAutoSlide();
+    this.clearDiamondGardenGalleryResumeTimeout();
+    this.clearDiamondGardenGalleryAutoScrollTimeout();
+    document.removeEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
+    super.ngOnDestroy();
   }
 
   override openInvitation(event?: Event): void {
@@ -68,6 +92,162 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.hasOpened = true;
     this.openInvitationRequested.emit();
     document.body.classList.remove('modal-open');
+    setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
+  }
+
+  pauseDiamondGardenGalleryAutoSlide(): void {
+    this.diamondGardenGalleryPausedByUser = true;
+    this.stopDiamondGardenGalleryAutoSlide();
+    this.scheduleDiamondGardenGalleryAutoSlideResume();
+  }
+
+  onDiamondGardenGalleryWheel(event: WheelEvent): void {
+    if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
+      return;
+    }
+
+    this.pauseDiamondGardenGalleryAutoSlide();
+  }
+
+  onDiamondGardenGalleryScroll(): void {
+    if (this.diamondGardenGalleryAutoScrolling) {
+      return;
+    }
+
+    this.pauseDiamondGardenGalleryAutoSlide();
+  }
+
+  private startDiamondGardenGalleryAutoSlide(): void {
+    if (this.diamondGardenGalleryInterval || this.diamondGardenGalleryPausedByUser || document.hidden) {
+      return;
+    }
+
+    if (!this.canAutoSlideDiamondGardenGallery()) {
+      return;
+    }
+
+    this.diamondGardenGalleryInterval = setInterval(() => {
+      if (document.hidden || !this.canAutoSlideDiamondGardenGallery()) {
+        return;
+      }
+
+      this.slideDiamondGardenGalleryByOneCard();
+    }, this.diamondGardenGallerySlideDelay);
+  }
+
+  private stopDiamondGardenGalleryAutoSlide(): void {
+    if (!this.diamondGardenGalleryInterval) {
+      return;
+    }
+
+    clearInterval(this.diamondGardenGalleryInterval);
+    this.diamondGardenGalleryInterval = null;
+  }
+
+  private scheduleDiamondGardenGalleryAutoSlideResume(): void {
+    this.clearDiamondGardenGalleryResumeTimeout();
+    this.diamondGardenGalleryResumeTimeout = setTimeout(() => {
+      this.diamondGardenGalleryPausedByUser = false;
+      this.startDiamondGardenGalleryAutoSlide();
+    }, this.diamondGardenGalleryResumeDelay);
+  }
+
+  private clearDiamondGardenGalleryResumeTimeout(): void {
+    if (!this.diamondGardenGalleryResumeTimeout) {
+      return;
+    }
+
+    clearTimeout(this.diamondGardenGalleryResumeTimeout);
+    this.diamondGardenGalleryResumeTimeout = null;
+  }
+
+  private clearDiamondGardenGalleryAutoScrollTimeout(): void {
+    if (!this.diamondGardenGalleryAutoScrollTimeout) {
+      return;
+    }
+
+    clearTimeout(this.diamondGardenGalleryAutoScrollTimeout);
+    this.diamondGardenGalleryAutoScrollTimeout = null;
+  }
+
+  private handleDiamondGardenVisibilityChange(): void {
+    if (document.hidden) {
+      this.stopDiamondGardenGalleryAutoSlide();
+      return;
+    }
+
+    if (!this.diamondGardenGalleryPausedByUser) {
+      this.startDiamondGardenGalleryAutoSlide();
+    }
+  }
+
+  private canAutoSlideDiamondGardenGallery(): boolean {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track || track.offsetWidth <= 0 || this.galleryPhotos.length <= 0) {
+      return false;
+    }
+
+    return this.galleryPhotos.length > this.getDiamondGardenVisibleGalleryCards(track);
+  }
+
+  private slideDiamondGardenGalleryByOneCard(): void {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    const step = this.getDiamondGardenGallerySlideStep(track);
+    if (step <= 0) {
+      return;
+    }
+
+    const visibleCards = this.getDiamondGardenVisibleGalleryCards(track);
+    const maxStartIndex = Math.max(0, this.galleryPhotos.length - visibleCards);
+    if (maxStartIndex <= 0) {
+      return;
+    }
+
+    const currentIndex = Math.round(track.scrollLeft / step);
+    const targetIndex = currentIndex >= maxStartIndex ? 0 : currentIndex + 1;
+
+    this.diamondGardenGalleryAutoScrolling = true;
+    this.clearDiamondGardenGalleryAutoScrollTimeout();
+    track.scrollTo({
+      left: targetIndex * step,
+      behavior: 'smooth',
+    });
+    this.diamondGardenGalleryAutoScrollTimeout = setTimeout(() => {
+      this.diamondGardenGalleryAutoScrolling = false;
+    }, 700);
+  }
+
+  private getDiamondGardenGallerySlideStep(track: HTMLElement): number {
+    const item = track.querySelector<HTMLElement>('.diamond-garden-gallery-item');
+    if (!item) {
+      return 0;
+    }
+
+    return item.offsetWidth + this.getDiamondGardenGalleryGap(track);
+  }
+
+  private getDiamondGardenVisibleGalleryCards(track: HTMLElement): number {
+    const step = this.getDiamondGardenGallerySlideStep(track);
+    if (step <= 0) {
+      return 0;
+    }
+
+    const style = window.getComputedStyle(track);
+    const paddingLeft = parseFloat(style.paddingLeft || '0') || 0;
+    const paddingRight = parseFloat(style.paddingRight || '0') || 0;
+    const contentWidth = Math.max(0, track.clientWidth - paddingLeft - paddingRight);
+    const visibleCards = Math.round((contentWidth + this.getDiamondGardenGalleryGap(track)) / step);
+
+    return Math.max(1, visibleCards);
+  }
+
+  private getDiamondGardenGalleryGap(track: HTMLElement): number {
+    const style = window.getComputedStyle(track);
+    return parseFloat(style.columnGap || style.gap || '0') || 0;
   }
 
   override getPrimaryDisplayName(): string {

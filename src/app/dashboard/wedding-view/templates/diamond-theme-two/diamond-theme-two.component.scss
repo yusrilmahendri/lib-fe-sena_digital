@@ -3318,32 +3318,50 @@
   overflow: visible !important;
 }
 
-.diamond-garden-gallery-grid,
-.diamond-garden-gallery-grid.or,
-.diamond-garden-gallery-grid.or[class],
-.diamond-garden-gallery-grid.or[class]:not(.or--visible) {
+.diamond-garden-moments__inner--gallery {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.diamond-garden-gallery-track,
+.diamond-garden-gallery-track.or,
+.diamond-garden-gallery-track.or[class],
+.diamond-garden-gallery-track.or[class]:not(.or--visible) {
   position: relative !important;
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 12px !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 10px !important;
   width: 100% !important;
+  box-sizing: border-box !important;
   height: auto !important;
   max-height: none !important;
   margin: 16px 0 0 !important;
-  overflow: visible !important;
+  padding: 0 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  scroll-padding-left: 12px !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
   opacity: 1 !important;
   visibility: visible !important;
   transform: none !important;
-  flex: 0 0 auto !important;
   align-self: stretch !important;
+}
+
+.diamond-garden-gallery-track::-webkit-scrollbar {
+  display: none !important;
 }
 
 .diamond-garden-gallery-item {
   display: block !important;
-  width: 100% !important;
+  flex: 0 0 calc((100% - 20px) / 3) !important;
+  width: calc((100% - 20px) / 3) !important;
+  min-width: calc((100% - 20px) / 3) !important;
   height: auto !important;
   max-height: none !important;
   aspect-ratio: 3 / 4 !important;
+  box-sizing: border-box !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
@@ -3354,13 +3372,16 @@
   appearance: none !important;
   -webkit-appearance: none !important;
   position: relative !important;
+  scroll-snap-align: start !important;
+  scroll-snap-stop: always !important;
 }
 
 .diamond-garden-gallery-item img {
   width: 100% !important;
   height: 100% !important;
-  object-fit: cover !important;
   display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
 }
 
 .diamond-garden-video-section,
@@ -3481,5 +3502,13 @@
     margin: 0 !important;
     opacity: 1 !important;
     visibility: visible !important;
+  }
+}
+
+@media (max-width: 340px) {
+  .diamond-garden-gallery-item {
+    flex-basis: calc((100% - 10px) / 2) !important;
+    width: calc((100% - 10px) / 2) !important;
+    min-width: calc((100% - 10px) / 2) !important;
   }
 }

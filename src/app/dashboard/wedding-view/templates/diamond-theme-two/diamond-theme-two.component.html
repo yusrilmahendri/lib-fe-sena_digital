@@ -330,7 +330,14 @@
         </div>
 
         <div class="diamond-garden-moments__inner diamond-garden-moments__inner--gallery">
-          <div class="diamond-garden-gallery-grid" *ngIf="galleryPhotos.length">
+          <div
+            #diamondGardenGalleryTrack
+            class="diamond-garden-gallery-track"
+            *ngIf="galleryPhotos.length"
+            (touchstart)="pauseDiamondGardenGalleryAutoSlide()"
+            (pointerdown)="pauseDiamondGardenGalleryAutoSlide()"
+            (wheel)="onDiamondGardenGalleryWheel($event)"
+            (scroll)="onDiamondGardenGalleryScroll()">
             <button
               type="button"
               class="diamond-garden-gallery-item"
