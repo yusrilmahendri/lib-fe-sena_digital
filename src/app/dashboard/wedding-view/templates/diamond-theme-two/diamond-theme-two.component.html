@@ -284,7 +284,7 @@
           aria-hidden="true"
           (error)="momentsFrame.style.display='none'" />
 
-        <div class="diamond-garden-moments__content">
+        <div class="diamond-garden-moments__inner diamond-garden-moments__inner--intro">
           <p class="diamond-garden-moments__eyebrow" appOnceReveal="ref-fade" [orDelay]="200">SPECIAL MOMENTS</p>
 
           <h2 appOnceReveal="ref-fade-down" [orDelay]="300">
@@ -313,21 +313,23 @@
               <span>DETIK</span>
             </div>
           </div>
+        </div>
 
-          <div
-            class="diamond-video-section diamond-garden-video-section"
-            *ngIf="diamondInlineYoutubeSrc">
-            <div class="diamond-video-section__frame diamond-garden-video-section__frame">
-              <iframe
-                [src]="diamondInlineYoutubeSrc"
-                title="Wedding video"
-                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                allowfullscreen
-                loading="eager">
-              </iframe>
-            </div>
+        <div
+          class="diamond-video-section diamond-garden-video-section"
+          *ngIf="diamondInlineYoutubeSrc">
+          <div class="diamond-video-section__frame diamond-garden-video-section__frame">
+            <iframe
+              [src]="diamondInlineYoutubeSrc"
+              title="Wedding video"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowfullscreen
+              loading="eager">
+            </iframe>
           </div>
+        </div>
 
+        <div class="diamond-garden-moments__inner diamond-garden-moments__inner--gallery">
           <div class="diamond-garden-gallery-grid" *ngIf="galleryPhotos.length">
             <button
               type="button"
