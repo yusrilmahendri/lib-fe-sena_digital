@@ -3341,6 +3341,7 @@
   overflow-y: hidden !important;
   scroll-snap-type: x mandatory !important;
   scroll-padding-left: 12px !important;
+  scroll-padding-right: 12px !important;
   scrollbar-width: none !important;
   -webkit-overflow-scrolling: touch !important;
   opacity: 1 !important;
@@ -3355,9 +3356,10 @@
 
 .diamond-garden-gallery-item {
   display: block !important;
-  flex: 0 0 calc((100% - 20px) / 3) !important;
-  width: calc((100% - 20px) / 3) !important;
-  min-width: calc((100% - 20px) / 3) !important;
+  flex: 0 0 var(--diamond-garden-gallery-card-width, calc((100% - 20px) / 3)) !important;
+  flex-shrink: 0 !important;
+  width: var(--diamond-garden-gallery-card-width, calc((100% - 20px) / 3)) !important;
+  min-width: var(--diamond-garden-gallery-card-width, calc((100% - 20px) / 3)) !important;
   height: auto !important;
   max-height: none !important;
   aspect-ratio: 3 / 4 !important;
@@ -3507,8 +3509,8 @@
 
 @media (max-width: 340px) {
   .diamond-garden-gallery-item {
-    flex-basis: calc((100% - 10px) / 2) !important;
-    width: calc((100% - 10px) / 2) !important;
-    min-width: calc((100% - 10px) / 2) !important;
+    flex-basis: var(--diamond-garden-gallery-card-width, calc((100% - 10px) / 2)) !important;
+    width: var(--diamond-garden-gallery-card-width, calc((100% - 10px) / 2)) !important;
+    min-width: var(--diamond-garden-gallery-card-width, calc((100% - 10px) / 2)) !important;
   }
 }

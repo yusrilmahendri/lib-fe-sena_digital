@@ -32,11 +32,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
   private diamondGardenGalleryInterval: ReturnType<typeof setInterval> | null = null;
   private diamondGardenGalleryResumeTimeout: ReturnType<typeof setTimeout> | null = null;
   private diamondGardenGalleryAutoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
+  private diamondGardenGallerySnapTimeout: ReturnType<typeof setTimeout> | null = null;
   private diamondGardenGalleryPausedByUser = false;
   private diamondGardenGalleryAutoScrolling = false;
+  private diamondGardenGalleryCurrentIndex = 0;
   private readonly diamondGardenGallerySlideDelay = 2800;
   private readonly diamondGardenGalleryResumeDelay = 4000;
   private readonly diamondGardenVisibilityHandler = () => this.handleDiamondGardenVisibilityChange();
+  private readonly diamondGardenResizeHandler = () => this.refreshDiamondGardenGalleryLayout();
 
   constructor(
     svc: DashboardService,
@@ -52,10 +55,14 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     setTimeout(() => this.setupDiamondGardenMapOnce(), 500);
     setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
     document.addEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
+    window.addEventListener('resize', this.diamondGardenResizeHandler);
   }
 
   override ngAfterViewInit(): void {
-    setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
+    setTimeout(() => {
+      this.refreshDiamondGardenGalleryLayout();
+      this.startDiamondGardenGalleryAutoSlide();
+    }, 0);
   }
 
   override ngOnChanges(changes: SimpleChanges): void {
@@ -72,7 +79,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       this.diamondGardenMapLink = '';
       setTimeout(() => this.setupDiamondGardenMapOnce(), 300);
       setTimeout(() => this.setupDiamondGardenMapOnce(), 1200);
-      setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
+      setTimeout(() => {
+        this.refreshDiamondGardenGalleryLayout();
+        this.startDiamondGardenGalleryAutoSlide();
+      }, 0);
     }
   }
 
@@ -80,7 +90,9 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.stopDiamondGardenGalleryAutoSlide();
     this.clearDiamondGardenGalleryResumeTimeout();
     this.clearDiamondGardenGalleryAutoScrollTimeout();
+    this.clearDiamondGardenGallerySnapTimeout();
     document.removeEventListener('visibilitychange', this.diamondGardenVisibilityHandler);
+    window.removeEventListener('resize', this.diamondGardenResizeHandler);
     super.ngOnDestroy();
   }
 
@@ -92,7 +104,10 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.hasOpened = true;
     this.openInvitationRequested.emit();
     document.body.classList.remove('modal-open');
-    setTimeout(() => this.startDiamondGardenGalleryAutoSlide(), 0);
+    setTimeout(() => {
+      this.refreshDiamondGardenGalleryLayout();
+      this.startDiamondGardenGalleryAutoSlide();
+    }, 0);
   }
 
   pauseDiamondGardenGalleryAutoSlide(): void {
@@ -107,6 +122,7 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
+    this.scheduleDiamondGardenGallerySnap();
   }
 
   onDiamondGardenGalleryScroll(): void {
@@ -115,12 +131,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     }
 
     this.pauseDiamondGardenGalleryAutoSlide();
+    this.scheduleDiamondGardenGallerySnap();
   }
 
   private startDiamondGardenGalleryAutoSlide(): void {
     if (this.diamondGardenGalleryInterval || this.diamondGardenGalleryPausedByUser || document.hidden) {
       return;
     }
+
+    this.refreshDiamondGardenGalleryLayout();
 
     if (!this.canAutoSlideDiamondGardenGallery()) {
       return;
@@ -170,6 +189,15 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
     this.diamondGardenGalleryAutoScrollTimeout = null;
   }
 
+  private clearDiamondGardenGallerySnapTimeout(): void {
+    if (!this.diamondGardenGallerySnapTimeout) {
+      return;
+    }
+
+    clearTimeout(this.diamondGardenGallerySnapTimeout);
+    this.diamondGardenGallerySnapTimeout = null;
+  }
+
   private handleDiamondGardenVisibilityChange(): void {
     if (document.hidden) {
       this.stopDiamondGardenGalleryAutoSlide();
@@ -196,53 +224,132 @@ export class DiamondThemeTwoComponent extends DiamondThemeOneComponent implement
       return;
     }
 
-    const step = this.getDiamondGardenGallerySlideStep(track);
-    if (step <= 0) {
-      return;
-    }
-
     const visibleCards = this.getDiamondGardenVisibleGalleryCards(track);
     const maxStartIndex = Math.max(0, this.galleryPhotos.length - visibleCards);
     if (maxStartIndex <= 0) {
       return;
     }
 
-    const currentIndex = Math.round(track.scrollLeft / step);
+    const currentIndex = this.getNearestDiamondGardenGalleryIndex(track);
     const targetIndex = currentIndex >= maxStartIndex ? 0 : currentIndex + 1;
 
     this.diamondGardenGalleryAutoScrolling = true;
     this.clearDiamondGardenGalleryAutoScrollTimeout();
-    track.scrollTo({
-      left: targetIndex * step,
-      behavior: 'smooth',
-    });
+    this.scrollDiamondGardenGalleryToIndex(targetIndex, 'smooth');
     this.diamondGardenGalleryAutoScrollTimeout = setTimeout(() => {
+      this.normalizeDiamondGardenGalleryPosition(targetIndex);
       this.diamondGardenGalleryAutoScrolling = false;
     }, 700);
   }
 
-  private getDiamondGardenGallerySlideStep(track: HTMLElement): number {
-    const item = track.querySelector<HTMLElement>('.diamond-garden-gallery-item');
-    if (!item) {
-      return 0;
+  private refreshDiamondGardenGalleryLayout(): void {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
+      return;
     }
 
-    return item.offsetWidth + this.getDiamondGardenGalleryGap(track);
+    const visibleCards = this.getDiamondGardenVisibleGalleryCards(track);
+    const gap = this.getDiamondGardenGalleryGap(track);
+    const { paddingLeft, paddingRight } = this.getDiamondGardenGalleryPadding(track);
+    const available = track.clientWidth - paddingLeft - paddingRight - (gap * (visibleCards - 1));
+    const cardWidth = Math.floor(available / visibleCards);
+
+    if (cardWidth <= 0) {
+      return;
+    }
+
+    track.style.setProperty('--diamond-garden-gallery-card-width', `${cardWidth}px`);
+    this.normalizeDiamondGardenGalleryPosition(this.getNearestDiamondGardenGalleryIndex(track));
   }
 
   private getDiamondGardenVisibleGalleryCards(track: HTMLElement): number {
-    const step = this.getDiamondGardenGallerySlideStep(track);
-    if (step <= 0) {
+    return track.clientWidth <= 340 ? 2 : 3;
+  }
+
+  private getDiamondGardenGalleryPadding(track: HTMLElement): { paddingLeft: number; paddingRight: number } {
+    const style = window.getComputedStyle(track);
+    return {
+      paddingLeft: parseFloat(style.paddingLeft || '0') || 0,
+      paddingRight: parseFloat(style.paddingRight || '0') || 0,
+    };
+  }
+
+  private getNearestDiamondGardenGalleryIndex(track: HTMLElement): number {
+    const items = this.getDiamondGardenGalleryItems(track);
+    if (!items.length) {
       return 0;
     }
 
-    const style = window.getComputedStyle(track);
-    const paddingLeft = parseFloat(style.paddingLeft || '0') || 0;
-    const paddingRight = parseFloat(style.paddingRight || '0') || 0;
-    const contentWidth = Math.max(0, track.clientWidth - paddingLeft - paddingRight);
-    const visibleCards = Math.round((contentWidth + this.getDiamondGardenGalleryGap(track)) / step);
+    let nearestIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
 
-    return Math.max(1, visibleCards);
+    items.forEach((item, index) => {
+      const distance = Math.abs(track.scrollLeft - this.getDiamondGardenGalleryItemLeft(track, item));
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestIndex = index;
+      }
+    });
+
+    this.diamondGardenGalleryCurrentIndex = nearestIndex;
+    return nearestIndex;
+  }
+
+  private scrollDiamondGardenGalleryToIndex(index: number, behavior: ScrollBehavior): void {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    const item = this.getDiamondGardenGalleryItems(track)[index];
+    if (!item) {
+      return;
+    }
+
+    this.diamondGardenGalleryCurrentIndex = index;
+    track.scrollTo({
+      left: this.getDiamondGardenGalleryItemLeft(track, item),
+      behavior,
+    });
+  }
+
+  private normalizeDiamondGardenGalleryPosition(index = this.diamondGardenGalleryCurrentIndex): void {
+    const track = this.diamondGardenGalleryTrack?.nativeElement;
+    if (!track) {
+      return;
+    }
+
+    const items = this.getDiamondGardenGalleryItems(track);
+    const item = items[Math.max(0, Math.min(index, items.length - 1))];
+    if (!item) {
+      return;
+    }
+
+    track.scrollTo({
+      left: this.getDiamondGardenGalleryItemLeft(track, item),
+      behavior: 'auto',
+    });
+  }
+
+  private scheduleDiamondGardenGallerySnap(): void {
+    this.clearDiamondGardenGallerySnapTimeout();
+    this.diamondGardenGallerySnapTimeout = setTimeout(() => {
+      const track = this.diamondGardenGalleryTrack?.nativeElement;
+      if (!track) {
+        return;
+      }
+
+      this.normalizeDiamondGardenGalleryPosition(this.getNearestDiamondGardenGalleryIndex(track));
+    }, 180);
+  }
+
+  private getDiamondGardenGalleryItems(track: HTMLElement): HTMLElement[] {
+    return Array.from(track.querySelectorAll<HTMLElement>('.diamond-garden-gallery-item'));
+  }
+
+  private getDiamondGardenGalleryItemLeft(track: HTMLElement, item: HTMLElement): number {
+    const { paddingLeft } = this.getDiamondGardenGalleryPadding(track);
+    return item.offsetLeft - paddingLeft;
   }
 
   private getDiamondGardenGalleryGap(track: HTMLElement): number {
