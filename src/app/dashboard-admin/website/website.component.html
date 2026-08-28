@@ -43,7 +43,7 @@
             <span class="theme-card-order">Urutan {{ theme.displayOrder }}</span>
             <span class="theme-card-badge">{{ theme.category }}</span>
             <img
-              [src]="getThemeImage(theme)"
+              [src]="getThemePreviewUrl(theme)"
               [alt]="theme.name || theme.categoryData?.nama_kategori || 'Preview tema'"
               (error)="onThemeImageError($event)"
               class="theme-card-image" />
@@ -102,7 +102,8 @@
               <label
                 class="upload-btn"
                 [class.disabled]="!canActivateTheme(theme)"
-                [title]="getThemeDisabledReason(theme) || null">
+                [title]="getThemeDisabledReason(theme) || null"
+                (click)="openPreviewModal(theme)">
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/jpg,image/gif"
@@ -136,7 +137,7 @@
   <div class="theme-detail-grid">
     <div class="theme-detail-preview">
       <img
-        [src]="getThemeImage(selectedThemeDetail)"
+        [src]="getThemePreviewUrl(selectedThemeDetail)"
         [alt]="selectedThemeDetail.name || selectedThemeDetail.categoryData?.nama_kategori || 'Preview tema'"
         (error)="onThemeImageError($event)"
         class="theme-detail-image" />

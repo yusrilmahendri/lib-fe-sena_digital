@@ -40,6 +40,9 @@ interface AdminTheme {
 
 interface AdminThemeCard {
   key: string;
+  id?: number | string | null;
+  backendThemeId?: number | string | null;
+  slug?: string | null;
   name: string;
   category: ThemePreset['category'];
   fallbackImage: string;
@@ -109,6 +112,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   error: string | null = null;
   uploadingThemeKey: string | null = null;
   selectedThemeDetail: AdminThemeCard | null = null;
+  previewTargetTheme: AdminThemeCard | null = null;
 
   private subscriptions: Subscription[] = [];
   private notyf: Notyf;
@@ -300,45 +304,63 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     });
   }
 
+  openPreviewModal(theme: AdminThemeCard): void {
+    this.previewTargetTheme = theme;
+    this.logPreviewTarget(theme);
+  }
+
   onPreviewSelected(event: Event, theme: AdminThemeCard): void {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const targetTheme =
+      this.previewTargetTheme && this.previewTargetTheme.key === theme.key
+        ? this.previewTargetTheme
+        : theme;
+
+    this.previewTargetTheme = targetTheme;
+    this.logPreviewTarget(targetTheme);
 
     if (!file) {
       return;
     }
 
-    const categoryId = theme.categoryData?.id;
-
-    if (!categoryId) {
-      this.notyf.error(this.getThemeDisabledReason(theme) || 'Tema ini belum terhubung ke kategori user');
-      target.value = '';
+    const themeId = this.resolvePreviewThemeId(targetTheme);
+    if (!themeId) {
+      this.notyf.error(this.getThemeDisabledReason(targetTheme) || 'ID master tema tidak ditemukan.');
+      input.value = '';
       return;
     }
 
-    this.uploadingThemeKey = theme.key;
+    this.uploadingThemeKey = targetTheme.key;
 
-    this.websiteCategoryService.updatePreviewImage(categoryId, file).subscribe({
-      next: (result) => {
-        if (result.success) {
-          this.notyf.success(result.message || 'Preview tema berhasil diperbarui.');
-          this.patchThemePreviewFromResponse(categoryId, result.data);
-          this.loadWebsiteCategories();
-          this.loadAdminThemes();
-        } else {
-          this.notyf.error(result.error || 'Gagal memperbarui gambar preview');
+    this.themeService.updateThemePreview(themeId, file).subscribe({
+      next: (response) => {
+        if (response?.status === false) {
+          this.notyf.error(response?.message || 'Gagal memperbarui gambar preview');
+          this.resetPreviewUpload(input);
+          return;
         }
 
-        target.value = '';
-        this.uploadingThemeKey = null;
-        this.cdr.detectChanges();
+        const patched = this.applyThemePreviewUpdate(targetTheme, response?.data ?? response, file);
+        if (!patched) {
+          this.notyf.error('Preview terunggah, tetapi kartu tema yang diklik tidak ditemukan.');
+          this.resetPreviewUpload(input);
+          this.loadAdminThemes();
+          return;
+        }
+
+        this.notyf.success(response?.message || `Preview ${targetTheme.name} berhasil diperbarui.`);
+        this.resetPreviewUpload(input);
+
+        const updatedPreviewUrl = this.extractPreviewUrl(this.extractUpdatedTheme(response?.data ?? response));
+        if (!updatedPreviewUrl) {
+          this.loadAdminThemes();
+        }
       },
       error: (error) => {
         console.error('Error updating theme preview:', error);
         this.notyf.error(this.resolveCategoryUpdateError(error));
-        target.value = '';
-        this.uploadingThemeKey = null;
-        this.cdr.detectChanges();
+        this.resetPreviewUpload(input);
       }
     });
   }
@@ -352,16 +374,31 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     this.selectedThemeDetail = null;
   }
 
+  getThemePreviewUrl(theme: AdminThemeCard | null | undefined): string {
+    if (!theme) {
+      return this.themePlaceholderImage;
+    }
+
+    const rawPreview =
+      theme.preview_url ||
+      theme.preview ||
+      theme.preview_image ||
+      theme.image_url ||
+      theme.image ||
+      theme.thumbnail_image ||
+      theme.fallbackImage ||
+      this.themePlaceholderImage;
+
+    const absoluteUrl = this.toAbsoluteImageUrl(rawPreview) || this.themePlaceholderImage;
+    return this.withCacheBuster(absoluteUrl, theme['__preview_cache_buster']);
+  }
+
   getThemeImage(theme: any): string {
-    return theme?.preview_image
-      || theme?.preview
-      || theme?.image
-      || theme?.thumbnail_image
-      || this.themePlaceholderImage;
+    return this.getThemePreviewUrl(theme);
   }
 
   getThemePreviewImage(item: any): string {
-    return this.getThemeImage(item);
+    return this.getThemePreviewUrl(item);
   }
 
   onThemeImageError(event: Event): void {
@@ -372,7 +409,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   getThemeImageUrl(theme: AdminThemeCard): string {
-    return this.getThemeImage(theme);
+    return this.getThemePreviewUrl(theme);
   }
 
   getThemeStatusLabel(theme: AdminThemeCard): string {
@@ -557,13 +594,22 @@ export class WebsiteComponent implements OnInit, OnDestroy {
         resolvedCategorySlug: categoryData?.slug,
       });
 
+      const existingCard = this.themeCards.find((card) => card.key === preset.key);
+      const previewFields = this.mergePreviewFields(
+        this.pickPreviewFieldsFromSources(adminThemeData, categoryData),
+        existingCard
+      );
+
       return {
         key: preset.key,
+        id: adminThemeData?.id ?? existingCard?.id ?? null,
+        backendThemeId: adminThemeData?.id ?? existingCard?.backendThemeId ?? null,
+        slug: this.normalizeSlug(adminThemeData?.slug) || preset.adminSlug,
         name: preset.name,
         category: preset.category,
         fallbackImage: preset.fallbackImage,
         displayOrder: index + 1,
-        ...this.pickPreviewFields(categoryData || adminThemeData || {}),
+        ...previewFields,
         categoryData,
         adminThemeData
       };
@@ -625,82 +671,221 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     return map;
   }
 
-  private patchThemePreviewFromResponse(categoryId: number, responseData: WebsiteCategory | any): void {
-    const updatedCategory = this.normalizeUpdatedCategory(categoryId, responseData);
-    if (!updatedCategory) {
-      return;
+  private applyThemePreviewUpdate(
+    targetTheme: AdminThemeCard,
+    responseData: any,
+    file?: File
+  ): boolean {
+    const updatedTheme = this.extractUpdatedTheme(responseData);
+    const targetThemeId = this.resolvePreviewThemeId(targetTheme);
+    const updatedThemeId = Number(updatedTheme?.id || updatedTheme?.backendThemeId || 0) || null;
+    const rawPreviewUrl = this.extractPreviewUrl(updatedTheme);
+    const cacheBuster = Date.now();
+    const objectUrl = !rawPreviewUrl && file ? URL.createObjectURL(file) : '';
+    const storedPreviewUrl = rawPreviewUrl || objectUrl;
+
+    const idx = this.themeCards.findIndex((card) =>
+      this.isSamePreviewTheme(card, targetTheme, targetThemeId, updatedThemeId)
+    );
+
+    if (idx < 0) {
+      return false;
     }
 
-    const nextAllData = [...this.allData];
-    const existingIndex = nextAllData.findIndex((category) => Number(category?.id) === categoryId);
-    if (existingIndex >= 0) {
-      nextAllData[existingIndex] = {
-        ...nextAllData[existingIndex],
-        ...updatedCategory,
-      };
-    } else {
-      nextAllData.push(updatedCategory as WebsiteCategory);
-    }
-    this.allData = nextAllData;
+    const current = this.themeCards[idx];
+    const previewFields: ThemePreviewFields = {
+      image: storedPreviewUrl || current.image,
+      preview: storedPreviewUrl || current.preview,
+      preview_image: storedPreviewUrl || current.preview_image,
+      thumbnail_image: current.thumbnail_image,
+      image_url: storedPreviewUrl || current.image_url,
+      preview_url: storedPreviewUrl || current.preview_url,
+      updated_at: updatedTheme?.updated_at || new Date().toISOString(),
+      __preview_cache_buster: cacheBuster,
+    };
 
-    this.themeCards = this.themeCards.map((card) => {
-      if (Number(card.categoryData?.id) !== categoryId) {
-        return card;
+    const nextCards = [...this.themeCards];
+    nextCards[idx] = {
+      ...current,
+      ...previewFields,
+      id: updatedThemeId || current.id,
+      backendThemeId: updatedThemeId || current.backendThemeId,
+      slug: this.normalizeSlug(updatedTheme?.slug) || current.slug,
+      adminThemeData: current.adminThemeData
+        ? {
+            ...current.adminThemeData,
+            ...previewFields,
+            id: updatedThemeId || current.adminThemeData.id,
+            slug: updatedTheme?.slug || current.adminThemeData.slug,
+          }
+        : current.adminThemeData,
+    };
+    this.themeCards = nextCards;
+
+    if (current.adminThemeData) {
+      const mapSlug = this.normalizeSlug(this.resolveMasterThemeSlug(current.adminThemeData, current));
+      if (mapSlug) {
+        this.adminThemesMap.set(mapSlug, {
+          ...current.adminThemeData,
+          ...previewFields,
+          id: updatedThemeId || current.adminThemeData.id,
+        });
       }
+    }
 
-      const previewFields = this.pickPreviewFields(updatedCategory);
-      const mergedCategory = {
-        ...(card.categoryData || {}),
-        ...updatedCategory,
-      } as WebsiteCategory;
-
-      return {
-        ...card,
-        ...previewFields,
-        categoryData: mergedCategory,
-        adminThemeData: card.adminThemeData
-          ? {
-              ...card.adminThemeData,
-              ...previewFields,
-            }
-          : card.adminThemeData,
-      };
-    });
-
-    if (this.selectedThemeDetail && Number(this.selectedThemeDetail.categoryData?.id) === categoryId) {
-      const latest = this.themeCards.find((card) => card.key === this.selectedThemeDetail?.key);
-      const previewFields = this.pickPreviewFields(updatedCategory);
-      this.selectedThemeDetail = latest || {
-        ...this.selectedThemeDetail,
-        ...previewFields,
-        categoryData: {
-          ...(this.selectedThemeDetail.categoryData || {}),
-          ...updatedCategory,
-        } as WebsiteCategory,
-      };
+    if (this.selectedThemeDetail && this.isSamePreviewTheme(this.selectedThemeDetail, targetTheme, targetThemeId, updatedThemeId)) {
+      this.selectedThemeDetail = this.themeCards[idx];
     }
 
     this.cdr.detectChanges();
+    return true;
   }
 
-  private normalizeUpdatedCategory(categoryId: number, responseData: any): Partial<WebsiteCategory> | null {
-    const source = responseData?.category || responseData?.website_category || responseData?.data || responseData;
-    if (!source || typeof source !== 'object') {
+  private extractUpdatedTheme(responseData: any): any {
+    if (!responseData || typeof responseData !== 'object') {
       return null;
     }
 
-    const updatedAt = source.updated_at || new Date().toISOString();
+    return (
+      responseData.theme ||
+      responseData.jenis_thema ||
+      responseData.admin_theme ||
+      responseData.data ||
+      responseData
+    );
+  }
 
-    return {
-      ...source,
-      id: Number(source.id ?? categoryId),
-      image: source.image,
-      preview: source.preview,
-      preview_image: source.preview_image,
-      thumbnail_image: source.thumbnail_image,
-      updated_at: updatedAt,
-      __preview_cache_buster: updatedAt,
-    } as Partial<WebsiteCategory>;
+  private extractPreviewUrl(source: any): string {
+    if (!source || typeof source !== 'object') {
+      return '';
+    }
+
+    const candidate = this.firstString([
+      source.preview_url,
+      source.preview,
+      source.preview_image,
+      source.image_url,
+      source.image,
+      source.thumbnail_image,
+      source.url,
+      source.path,
+      source.file_url,
+      source.preview_path,
+    ]);
+
+    return this.toAbsoluteImageUrl(candidate);
+  }
+
+  private isSamePreviewTheme(
+    card: AdminThemeCard,
+    targetTheme: AdminThemeCard,
+    targetThemeId: number | null,
+    updatedThemeId: number | null
+  ): boolean {
+    if (card.key && targetTheme.key && card.key === targetTheme.key) {
+      return true;
+    }
+
+    const cardThemeId = this.resolvePreviewThemeId(card);
+    if (targetThemeId && cardThemeId && cardThemeId === targetThemeId) {
+      return true;
+    }
+
+    if (updatedThemeId && cardThemeId && cardThemeId === updatedThemeId) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private resolvePreviewThemeId(theme: AdminThemeCard | null | undefined): number | null {
+    if (!theme) {
+      return null;
+    }
+
+    const rawId = this.firstPresent([
+      theme.backendThemeId,
+      theme.id,
+      this.getThemeConnectionDetail(theme).masterThemeId,
+      theme.adminThemeData?.id,
+    ]);
+    const themeId = Number(rawId);
+    return Number.isFinite(themeId) && themeId > 0 ? themeId : null;
+  }
+
+  private logPreviewTarget(theme: AdminThemeCard | null): void {
+    console.log('[PreviewTarget]', {
+      id: theme?.id,
+      backendThemeId: theme?.backendThemeId,
+      slug: theme?.slug || theme?.adminThemeData?.slug,
+      name: theme?.name
+    });
+  }
+
+  private resetPreviewUpload(input: HTMLInputElement): void {
+    input.value = '';
+    this.uploadingThemeKey = null;
+    this.previewTargetTheme = null;
+    this.cdr.detectChanges();
+  }
+
+  private toAbsoluteImageUrl(path: string | null | undefined): string {
+    const raw = String(path || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    if (
+      raw.startsWith('blob:') ||
+      raw.startsWith('data:') ||
+      raw.startsWith('assets/')
+    ) {
+      return raw;
+    }
+
+    const resolved = this.websiteCategoryService.getImageUrl(raw);
+    if (resolved && resolved !== raw) {
+      return resolved;
+    }
+
+    if (/^https?:\/\//i.test(raw) || raw.startsWith('/')) {
+      return resolved || raw;
+    }
+
+    return this.websiteCategoryService.getImageUrl(
+      raw.startsWith('storage/') ? raw : `storage/${raw}`
+    ) || raw;
+  }
+
+  private withCacheBuster(url: string, buster?: string | number | null): string {
+    if (!url || !buster) {
+      return url;
+    }
+
+    if (
+      url.startsWith('assets/') ||
+      url.startsWith('data:') ||
+      url.startsWith('blob:')
+    ) {
+      return url;
+    }
+
+    return `${url}${url.includes('?') ? '&' : '?'}v=${buster}`;
+  }
+
+  private hasPreviewValue(source: ThemePreviewFields | Record<string, any> | null | undefined): boolean {
+    if (!source) {
+      return false;
+    }
+
+    return !!(
+      source.preview_url ||
+      source.preview ||
+      source.preview_image ||
+      source.image_url ||
+      source.image ||
+      source.thumbnail_image
+    );
   }
 
   private pickPreviewFields(source: any): ThemePreviewFields {
@@ -712,8 +897,55 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       image_url: source?.image_url,
       preview_url: source?.preview_url,
       updated_at: source?.updated_at || new Date().toISOString(),
-      __preview_cache_buster: source?.__preview_cache_buster,
+      __preview_cache_buster: source?.['__preview_cache_buster'],
     };
+  }
+
+  private pickPreviewFieldsFromSources(
+    adminThemeData: AdminTheme | null,
+    categoryData: WebsiteCategory | null
+  ): ThemePreviewFields {
+    const fromTheme = this.pickPreviewFields(adminThemeData || {});
+    if (this.hasPreviewValue(fromTheme)) {
+      return fromTheme;
+    }
+
+    const categoryThemeId = Number(categoryData?.theme_id);
+    const adminId = Number(adminThemeData?.id);
+    const categoryBelongsToTheme =
+      !!categoryThemeId &&
+      !!adminId &&
+      categoryThemeId === adminId;
+
+    if (categoryBelongsToTheme && this.hasPreviewValue(categoryData)) {
+      return this.pickPreviewFields(categoryData);
+    }
+
+    return fromTheme;
+  }
+
+  private mergePreviewFields(
+    incoming: ThemePreviewFields,
+    existing?: AdminThemeCard
+  ): ThemePreviewFields {
+    const hasIncoming = this.hasPreviewValue(incoming);
+    const merged: ThemePreviewFields = hasIncoming
+      ? { ...incoming }
+      : {
+          image: existing?.image,
+          preview: existing?.preview,
+          preview_image: existing?.preview_image,
+          thumbnail_image: existing?.thumbnail_image,
+          image_url: existing?.image_url,
+          preview_url: existing?.preview_url,
+          updated_at: incoming.updated_at || existing?.updated_at || new Date().toISOString(),
+        };
+
+    if (existing?.['__preview_cache_buster']) {
+      merged['__preview_cache_buster'] = existing['__preview_cache_buster'];
+    }
+
+    return merged;
   }
 
   /**

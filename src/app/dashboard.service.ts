@@ -1479,8 +1479,14 @@ export interface Theme {
   id: number;
   category_id: number;
   name: string;
+  slug?: string;
   price: number;
   preview: string;
+  preview_image?: string | null;
+  thumbnail_image?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  preview_url?: string | null;
   url_thema: string;
   demo_url: string;
   is_active: boolean;
@@ -1887,6 +1893,21 @@ export class ThemeService {
     return this.dashboardService.httpSvc.put<ApiResponse<Theme>>(
       `${this.dashboardService.getUrl(DashboardServiceType.THEME_ADMIN_THEMES_UPDATE)}/${id}`,
       request
+    );
+  }
+
+  /**
+   * Upload theme preview image by master theme ID.
+   * POST /admin/themes/{themeId} with _method=PUT so PHP receives multipart files.
+   */
+  updateThemePreview(themeId: number, file: File): Observable<ApiResponse<Theme>> {
+    const formData = new FormData();
+    formData.append('_method', 'PUT');
+    formData.append('preview', file);
+
+    return this.dashboardService.httpSvc.post<ApiResponse<Theme>>(
+      `${this.dashboardService.getUrl(DashboardServiceType.THEME_ADMIN_THEMES_UPDATE)}/${themeId}`,
+      formData
     );
   }
 

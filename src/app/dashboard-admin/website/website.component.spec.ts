@@ -19,7 +19,8 @@ describe('WebsiteComponent', () => {
     list: jasmine.createSpy('list').and.returnValue(of({ data: [] }))
   };
   const themeServiceMock = {
-    toggleThemeActivation: jasmine.createSpy('toggleThemeActivation').and.returnValue(of({ status: true }))
+    toggleThemeActivation: jasmine.createSpy('toggleThemeActivation').and.returnValue(of({ status: true })),
+    updateThemePreview: jasmine.createSpy('updateThemePreview').and.returnValue(of({ status: true, data: {} }))
   };
 
   beforeEach(async () => {
