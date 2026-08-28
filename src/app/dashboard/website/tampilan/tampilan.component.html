@@ -84,7 +84,7 @@
             (click)="onThemeCardClick(theme, $event)">
           <div class="theme-card__media">
             <img
-              [src]="theme.image"
+              [src]="resolveThemePreview(theme)"
               [alt]="'Preview tema ' + getThemeDisplayName(theme)"
               loading="lazy"
               (error)="onImageError($event, theme)" />

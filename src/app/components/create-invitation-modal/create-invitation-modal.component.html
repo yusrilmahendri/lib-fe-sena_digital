@@ -124,7 +124,7 @@
           (click)="selectTheme(theme)"
         >
           <span class="ci-theme__thumb">
-            <img [src]="getThemeImage(theme)" [alt]="theme.name" (error)="onThemeImgError(theme)" />
+            <img [src]="resolveThemePreview(theme)" [alt]="theme.name" (error)="onThemeImgError(theme)" />
           </span>
           <span class="ci-theme__name">{{ theme.name }}</span>
         </button>

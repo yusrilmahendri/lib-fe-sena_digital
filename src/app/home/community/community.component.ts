@@ -19,6 +19,7 @@ import {
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../theme-package-access.util';
+import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
 
 type ThemeFilter =
   | 'Semua'
@@ -43,6 +44,13 @@ interface ThemeCard {
   fallbackImage: string;
   previewUrl: string;
   shareUrl: string;
+  preview_url?: string | null;
+  preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  updated_at?: string | null;
 }
 
 interface FallbackThemeSeed {
@@ -228,9 +236,17 @@ export class CommunityComponent implements OnInit, OnDestroy {
   }
 
   onThemeImgError(theme: ThemeCard): void {
-    if (theme.image !== theme.fallbackImage) {
-      theme.image = theme.fallbackImage;
-    }
+    theme.preview_url = null;
+    theme.preview_image = null;
+    theme.preview = null;
+    theme.thumbnail_image = null;
+    theme.image_url = null;
+    theme.thumbnail_url = null;
+    theme.image = theme.fallbackImage;
+  }
+
+  resolveThemePreview(theme: ThemeCard): string {
+    return resolveThemePreviewSrc(theme, theme.fallbackImage);
   }
 
   openThemeDetail(theme: ThemeCard): void {
@@ -321,7 +337,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
       name: theme.name,
       tier: theme.tier,
       category: theme.badge,
-      image: theme.image,
+      image: this.resolveThemePreview(theme),
       fallbackImage: theme.fallbackImage,
     });
   }
@@ -436,13 +452,9 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
     const fallbackImage = fallbackSeed.image;
     const name = fallbackSeed.name;
-    const previewUrl = item?.demo_url || item?.preview_url || item?.url_thema || '';
-    const image =
-      item?.thumbnail_image ||
-      item?.preview_image ||
-      item?.image ||
-      item?.preview ||
-      fallbackImage;
+    const demoUrl = String(item?.demo_url || item?.url_thema || '').trim();
+    const previewFields = copyThemePreviewFields(item);
+    const image = resolveThemePreviewSrc({ ...item, ...previewFields }, fallbackImage);
     const description =
       item?.description ||
       item?.category_description ||
@@ -459,8 +471,9 @@ export class CommunityComponent implements OnInit, OnDestroy {
       features,
       image,
       fallbackImage,
-      previewUrl,
-      shareUrl: previewUrl || this.getThemeFallbackShareUrl({ slug: fallbackSeed.slug } as ThemeCard),
+      previewUrl: demoUrl,
+      shareUrl: demoUrl || this.getThemeFallbackShareUrl({ slug: fallbackSeed.slug } as ThemeCard),
+      ...previewFields,
     };
   }
 
@@ -527,6 +540,11 @@ export class CommunityComponent implements OnInit, OnDestroy {
             description: mappedTheme.description || fallbackTheme.description,
             image: mappedTheme.image || fallbackTheme.image,
             fallbackImage: fallbackTheme.fallbackImage,
+            preview_url: mappedTheme.preview_url ?? fallbackTheme.preview_url,
+            preview_image: mappedTheme.preview_image ?? fallbackTheme.preview_image,
+            preview: mappedTheme.preview ?? fallbackTheme.preview,
+            thumbnail_image: mappedTheme.thumbnail_image ?? fallbackTheme.thumbnail_image,
+            updated_at: mappedTheme.updated_at ?? fallbackTheme.updated_at,
             shareUrl: mappedTheme.shareUrl || fallbackTheme.shareUrl,
           }
         : fallbackTheme;

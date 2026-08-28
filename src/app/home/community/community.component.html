@@ -63,7 +63,7 @@
           <span class="theme-card__badge">{{ theme.badge }}</span>
           <img
             class="theme-card__img"
-            [src]="theme.image"
+            [src]="resolveThemePreview(theme)"
             [alt]="'Tema undangan ' + theme.name"
             loading="lazy"
             (error)="onThemeImgError(theme)"
@@ -139,7 +139,7 @@
             <span class="theme-phone__notch" aria-hidden="true"></span>
             <div class="theme-phone__screen">
               <img
-                [src]="theme.image"
+                [src]="resolveThemePreview(theme)"
                 [alt]="'Preview tema ' + theme.name"
                 (error)="onThemeImgError(theme)"
               />

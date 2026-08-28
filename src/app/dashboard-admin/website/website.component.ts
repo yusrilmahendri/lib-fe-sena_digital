@@ -12,6 +12,7 @@ import {
   ThemeAccessMap,
   ThemeCategoryName,
 } from '../../theme-package-access.util';
+import { resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
 
 interface ThemePreset {
   key: string;
@@ -57,6 +58,11 @@ interface AdminThemeCard {
   preview_url?: string | null;
   updated_at?: string | null;
   [key: string]: any;
+}
+
+interface SelectedPreviewTheme {
+  id: number;
+  slug: string;
 }
 
 interface AdminThemeConnectionDetail {
@@ -113,6 +119,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   uploadingThemeKey: string | null = null;
   selectedThemeDetail: AdminThemeCard | null = null;
   previewTargetTheme: AdminThemeCard | null = null;
+  selectedTheme: SelectedPreviewTheme | null = null;
 
   private subscriptions: Subscription[] = [];
   private notyf: Notyf;
@@ -179,14 +186,19 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
         this.adminThemesMap.clear();
         themes.forEach((theme: AdminTheme) => {
-          const slug = this.normalizeSlug(this.resolveMasterThemeSlug(theme));
-          if (slug) {
-            this.adminThemesMap.set(slug, theme);
+          const recordSlug = this.normalizeSlug(theme.slug);
+          if (recordSlug && !this.isPackageSlug(recordSlug)) {
+            this.adminThemesMap.set(recordSlug, theme);
           }
 
-          const legacySlug = this.normalizeSlug(theme.slug);
-          if (legacySlug && legacySlug !== slug && !this.isPackageSlug(legacySlug)) {
-            this.adminThemesMap.set(legacySlug, theme);
+          const preset = this.themePresets.find((item) => {
+            const presetSlug = this.normalizeSlug(item.adminSlug || item.key);
+            const presetKey = this.normalizeSlug(item.key);
+            return presetSlug === recordSlug || presetKey === recordSlug;
+          });
+          if (preset) {
+            this.adminThemesMap.set(this.normalizeSlug(preset.adminSlug || preset.key), theme);
+            this.adminThemesMap.set(this.normalizeSlug(preset.key), theme);
           }
         });
 
@@ -306,32 +318,30 @@ export class WebsiteComponent implements OnInit, OnDestroy {
 
   openPreviewModal(theme: AdminThemeCard): void {
     this.previewTargetTheme = theme;
+    this.selectedTheme = this.snapshotSelectedTheme(theme);
     this.logPreviewTarget(theme);
   }
 
   onPreviewSelected(event: Event, theme: AdminThemeCard): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    const targetTheme =
-      this.previewTargetTheme && this.previewTargetTheme.key === theme.key
-        ? this.previewTargetTheme
-        : theme;
 
-    this.previewTargetTheme = targetTheme;
-    this.logPreviewTarget(targetTheme);
+    this.previewTargetTheme = theme;
+    this.selectedTheme = this.snapshotSelectedTheme(theme);
+    this.logPreviewTarget(theme);
 
     if (!file) {
       return;
     }
 
-    const themeId = this.resolvePreviewThemeId(targetTheme);
+    const themeId = this.selectedTheme?.id ?? null;
     if (!themeId) {
-      this.notyf.error(this.getThemeDisabledReason(targetTheme) || 'ID master tema tidak ditemukan.');
+      this.notyf.error('ID tema tidak ditemukan. Preview tidak dapat diubah.');
       input.value = '';
       return;
     }
 
-    this.uploadingThemeKey = targetTheme.key;
+    this.uploadingThemeKey = theme.key;
 
     this.themeService.updateThemePreview(themeId, file).subscribe({
       next: (response) => {
@@ -341,7 +351,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
           return;
         }
 
-        const patched = this.applyThemePreviewUpdate(targetTheme, response?.data ?? response, file);
+        const patched = this.applyThemePreviewUpdate(this.selectedTheme, theme, response?.data ?? response, file);
         if (!patched) {
           this.notyf.error('Preview terunggah, tetapi kartu tema yang diklik tidak ditemukan.');
           this.resetPreviewUpload(input);
@@ -349,7 +359,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
           return;
         }
 
-        this.notyf.success(response?.message || `Preview ${targetTheme.name} berhasil diperbarui.`);
+        this.notyf.success(response?.message || `Preview ${theme.name} berhasil diperbarui.`);
         this.resetPreviewUpload(input);
 
         const updatedPreviewUrl = this.extractPreviewUrl(this.extractUpdatedTheme(response?.data ?? response));
@@ -379,18 +389,10 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       return this.themePlaceholderImage;
     }
 
-    const rawPreview =
-      theme.preview_url ||
-      theme.preview ||
-      theme.preview_image ||
-      theme.image_url ||
-      theme.image ||
-      theme.thumbnail_image ||
-      theme.fallbackImage ||
-      this.themePlaceholderImage;
-
-    const absoluteUrl = this.toAbsoluteImageUrl(rawPreview) || this.themePlaceholderImage;
-    return this.withCacheBuster(absoluteUrl, theme['__preview_cache_buster']);
+    return resolveThemePreviewSrc(
+      theme,
+      theme.fallbackImage || this.themePlaceholderImage
+    ) || this.themePlaceholderImage;
   }
 
   getThemeImage(theme: any): string {
@@ -672,22 +674,32 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   }
 
   private applyThemePreviewUpdate(
-    targetTheme: AdminThemeCard,
+    selected: SelectedPreviewTheme | null,
+    clickedTheme: AdminThemeCard,
     responseData: any,
     file?: File
   ): boolean {
+    const selectedTheme = selected || this.snapshotSelectedTheme(clickedTheme);
+    if (!selectedTheme) {
+      return false;
+    }
+
     const updatedTheme = this.extractUpdatedTheme(responseData);
-    const targetThemeId = this.resolvePreviewThemeId(targetTheme);
-    const updatedThemeId = Number(updatedTheme?.id || updatedTheme?.backendThemeId || 0) || null;
-    const rawPreviewUrl = this.extractPreviewUrl(updatedTheme);
+    const responseId = Number(updatedTheme?.id) || null;
+    const responseSlug = this.normalizeSlug(updatedTheme?.slug);
+    const responseMatchesSelected =
+      (!responseId && !responseSlug) ||
+      this.matchesSelectedTheme(
+        { id: responseId, slug: responseSlug },
+        selectedTheme
+      );
+
+    const rawPreviewUrl = responseMatchesSelected ? this.extractPreviewUrl(updatedTheme) : '';
     const cacheBuster = Date.now();
     const objectUrl = !rawPreviewUrl && file ? URL.createObjectURL(file) : '';
     const storedPreviewUrl = rawPreviewUrl || objectUrl;
 
-    const idx = this.themeCards.findIndex((card) =>
-      this.isSamePreviewTheme(card, targetTheme, targetThemeId, updatedThemeId)
-    );
-
+    const idx = this.themeCards.findIndex((card) => this.cardMatchesSelectedTheme(card, selectedTheme));
     if (idx < 0) {
       return false;
     }
@@ -700,7 +712,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
       thumbnail_image: current.thumbnail_image,
       image_url: storedPreviewUrl || current.image_url,
       preview_url: storedPreviewUrl || current.preview_url,
-      updated_at: updatedTheme?.updated_at || new Date().toISOString(),
+      updated_at: (responseMatchesSelected && updatedTheme?.updated_at) || new Date().toISOString(),
       __preview_cache_buster: cacheBuster,
     };
 
@@ -708,32 +720,31 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     nextCards[idx] = {
       ...current,
       ...previewFields,
-      id: updatedThemeId || current.id,
-      backendThemeId: updatedThemeId || current.backendThemeId,
-      slug: this.normalizeSlug(updatedTheme?.slug) || current.slug,
+      id: current.id,
+      backendThemeId: current.backendThemeId,
+      slug: current.slug,
       adminThemeData: current.adminThemeData
         ? {
             ...current.adminThemeData,
             ...previewFields,
-            id: updatedThemeId || current.adminThemeData.id,
-            slug: updatedTheme?.slug || current.adminThemeData.slug,
+            id: current.adminThemeData.id,
+            slug: current.adminThemeData.slug,
           }
         : current.adminThemeData,
     };
     this.themeCards = nextCards;
 
-    if (current.adminThemeData) {
-      const mapSlug = this.normalizeSlug(this.resolveMasterThemeSlug(current.adminThemeData, current));
-      if (mapSlug) {
-        this.adminThemesMap.set(mapSlug, {
-          ...current.adminThemeData,
-          ...previewFields,
-          id: updatedThemeId || current.adminThemeData.id,
-        });
-      }
+    const mapSlug = this.normalizeSlug(current.slug || current.adminThemeData?.slug || selectedTheme.slug);
+    if (mapSlug && current.adminThemeData) {
+      this.adminThemesMap.set(mapSlug, {
+        ...current.adminThemeData,
+        ...previewFields,
+        id: current.adminThemeData.id,
+        slug: current.adminThemeData.slug,
+      });
     }
 
-    if (this.selectedThemeDetail && this.isSamePreviewTheme(this.selectedThemeDetail, targetTheme, targetThemeId, updatedThemeId)) {
+    if (this.selectedThemeDetail && this.cardMatchesSelectedTheme(this.selectedThemeDetail, selectedTheme)) {
       this.selectedThemeDetail = this.themeCards[idx];
     }
 
@@ -744,6 +755,16 @@ export class WebsiteComponent implements OnInit, OnDestroy {
   private extractUpdatedTheme(responseData: any): any {
     if (!responseData || typeof responseData !== 'object') {
       return null;
+    }
+
+    if (
+      responseData.id != null &&
+      (responseData.slug ||
+        responseData.preview_url ||
+        responseData.preview_image ||
+        responseData.preview)
+    ) {
+      return responseData;
     }
 
     return (
@@ -776,48 +797,82 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     return this.toAbsoluteImageUrl(candidate);
   }
 
-  private isSamePreviewTheme(
-    card: AdminThemeCard,
-    targetTheme: AdminThemeCard,
-    targetThemeId: number | null,
-    updatedThemeId: number | null
-  ): boolean {
-    if (card.key && targetTheme.key && card.key === targetTheme.key) {
-      return true;
+  private snapshotSelectedTheme(theme: AdminThemeCard | null | undefined): SelectedPreviewTheme | null {
+    const id = this.resolveRecordThemeId(theme);
+    if (!id) {
+      return null;
     }
 
-    const cardThemeId = this.resolvePreviewThemeId(card);
-    if (targetThemeId && cardThemeId && cardThemeId === targetThemeId) {
-      return true;
-    }
-
-    if (updatedThemeId && cardThemeId && cardThemeId === updatedThemeId) {
-      return true;
-    }
-
-    return false;
+    return {
+      id,
+      slug: this.getCanonicalThemeSlug(theme)
+    };
   }
 
-  private resolvePreviewThemeId(theme: AdminThemeCard | null | undefined): number | null {
+  private resolveRecordThemeId(theme: AdminThemeCard | null | undefined): number | null {
     if (!theme) {
       return null;
     }
 
     const rawId = this.firstPresent([
-      theme.backendThemeId,
-      theme.id,
-      this.getThemeConnectionDetail(theme).masterThemeId,
       theme.adminThemeData?.id,
+      theme.id,
     ]);
     const themeId = Number(rawId);
     return Number.isFinite(themeId) && themeId > 0 ? themeId : null;
   }
 
+  private getCanonicalThemeSlug(theme: AdminThemeCard | null | undefined): string {
+    if (!theme) {
+      return '';
+    }
+
+    const slug = this.normalizeSlug(
+      theme.slug ||
+      theme.adminThemeData?.slug ||
+      this.findPresetAdminSlug(theme.key)
+    );
+    return this.isPackageSlug(slug) ? this.findPresetAdminSlug(theme.key) : slug;
+  }
+
+  private cardMatchesSelectedTheme(card: AdminThemeCard, selected: SelectedPreviewTheme): boolean {
+    const cardId = this.resolveRecordThemeId(card);
+    const cardSlug = this.getCanonicalThemeSlug(card);
+    return this.matchesSelectedTheme({ id: cardId, slug: cardSlug }, selected);
+  }
+
+  private matchesSelectedTheme(
+    candidate: { id?: number | null; slug?: string | null },
+    selected: SelectedPreviewTheme
+  ): boolean {
+    const candidateId = Number(candidate.id) || null;
+    if (selected.id && candidateId && candidateId === selected.id) {
+      return true;
+    }
+
+    return this.slugsMatchExact(candidate.slug, selected.slug);
+  }
+
+  private slugsMatchExact(left: string | null | undefined, right: string | null | undefined): boolean {
+    const a = this.normalizeSlug(left);
+    const b = this.normalizeSlug(right);
+    if (!a || !b) {
+      return false;
+    }
+
+    if (a === b) {
+      return true;
+    }
+
+    // Champagne Rose record slug vs public preset key. Never alias garden-whisper ↔ diamond-garden.
+    const champagneRose = new Set(['champagne-rose', 'diamond']);
+    return champagneRose.has(a) && champagneRose.has(b);
+  }
+
   private logPreviewTarget(theme: AdminThemeCard | null): void {
     console.log('[PreviewTarget]', {
-      id: theme?.id,
-      backendThemeId: theme?.backendThemeId,
-      slug: theme?.slug || theme?.adminThemeData?.slug,
+      id: this.selectedTheme?.id ?? this.resolveRecordThemeId(theme),
+      slug: this.selectedTheme?.slug || this.getCanonicalThemeSlug(theme),
       name: theme?.name
     });
   }
@@ -826,6 +881,7 @@ export class WebsiteComponent implements OnInit, OnDestroy {
     input.value = '';
     this.uploadingThemeKey = null;
     this.previewTargetTheme = null;
+    this.selectedTheme = null;
     this.cdr.detectChanges();
   }
 

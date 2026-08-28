@@ -1585,6 +1585,7 @@ export interface PublicTheme {
   target_package?: string | null;
   features: string[];
   description?: string;
+  updated_at?: string | null;
 }
 
 export interface PublicCategoryWithThemes {

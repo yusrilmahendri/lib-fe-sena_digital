@@ -23,6 +23,7 @@ import {
   ThemeAccessMap,
   ThemeCategoryName,
 } from '../../theme-package-access.util';
+import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -48,6 +49,13 @@ interface ThemeOption {
   image?: string;
   /** Local landing-page asset used as the guaranteed fallback. */
   fallbackImage: string;
+  preview_url?: string | null;
+  preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  updated_at?: string | null;
 }
 
 interface ThemeCatalogSeed {
@@ -58,6 +66,13 @@ interface ThemeCatalogSeed {
   name: string;
   slug: string;
   packageTier: PaidThemePackageTier;
+  preview_url?: string | null;
+  preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  updated_at?: string | null;
 }
 
 /** Resolved package mapping for a tier (from /v1/paket-undangan). */
@@ -399,6 +414,7 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           tier,
           image: theme.image,
           fallbackImage: theme.fallbackImage,
+          ...copyThemePreviewFields(theme),
         }));
 
       if (filtered.length) {
@@ -466,12 +482,9 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
           name: this.getRegistrationThemeName(preset),
           category: preset.category,
           packageTier: preset.packageTier,
-          image:
-            theme.thumbnail_image ||
-            theme.preview_image ||
-            theme.image ||
-            undefined,
+          image: resolveThemePreviewSrc(theme, preset.fallbackImage),
           fallbackImage: preset.fallbackImage,
+          ...copyThemePreviewFields(theme),
         });
 
         return result;
@@ -530,13 +543,15 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     this.selectedTheme = theme;
   }
 
-  /** Image priority: backend image → local landing asset → default fallback. */
+  /** Image priority: API preview → static fallback last. */
+  resolveThemePreview(theme: ThemeOption): string {
+    return this.getThemeImage(theme);
+  }
+
   getThemeImage(theme: ThemeOption): string {
-    return (
-      theme.image ||
-      theme.fallbackImage ||
-      this.defaultThemeImages[theme.slug] ||
-      this.defaultThemeImages['default']
+    return resolveThemePreviewSrc(
+      theme,
+      theme.fallbackImage || this.defaultThemeImages['default']
     );
   }
 
@@ -544,11 +559,13 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
   onThemeImgError(theme: ThemeOption): void {
     const fallback =
       theme.fallbackImage ||
-      this.defaultThemeImages[theme.slug] ||
       this.defaultThemeImages['default'];
-    if (theme.image !== fallback) {
-      theme.image = fallback;
-    }
+    theme.preview_url = null;
+    theme.preview_image = null;
+    theme.preview = null;
+    theme.thumbnail_image = null;
+    theme.image_url = null;
+    theme.image = fallback;
   }
 
   isThemeSelected(theme: ThemeOption): boolean {

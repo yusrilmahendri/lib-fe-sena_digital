@@ -29,7 +29,7 @@ import {
 } from '../../../theme-package-access.util';
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
-import { environment } from '../../../../environments/environment';
+import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../../shared/theme-preview.util';
 import { WeddingDataService } from '../../../services/wedding-data.service';
 import { resolvePaymentState } from '../../../shared/payment-status.util';
 
@@ -56,6 +56,13 @@ interface ThemeCard {
   category: ThemeCategoryName | 'Legacy';
   isLegacy?: boolean;
   imageFallback?: string;
+  preview_url?: string | null;
+  preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  updated_at?: string | null;
   requiredPackageTier: PaidPackageTier | null;
   is_active: boolean;
   category_is_active: boolean;
@@ -92,11 +99,7 @@ const PACKAGE_TABS: PackageTab[] = [
   { tier: 'diamond', label: 'Diamond' },
 ];
 
-const FIXED_THEME_PRESETS = PUBLIC_THEME_PRESETS.map((preset) => ({
-  ...preset,
-  fallbackImage:
-    preset.slug === 'soft-ivory' ? 'assets/themas3.png' : preset.fallbackImage,
-}));
+const FIXED_THEME_PRESETS = PUBLIC_THEME_PRESETS;
 
 @Component({
   selector: 'wc-tampilan',
@@ -663,6 +666,7 @@ export class TampilanComponent implements OnInit, OnDestroy {
         slug: preset.slug,
         image: this.getThemeImage(theme, preset.category),
         imageFallback: preset.fallbackImage,
+        ...copyThemePreviewFields(theme),
         url_thema: theme.url_thema || '',
         demo_url: theme.demo_url || '',
         price: theme.price || 0,
@@ -738,34 +742,15 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get theme image from API response
+   * Get theme cover from the shared API preview resolver.
+   * Static assets are only used when the backend sends no preview.
    */
-  private getThemeImage(theme: PublicTheme, category: ThemeCategoryName): string {
-    const url =
-      theme.preview_image ||
-      theme.preview ||
-      theme.image ||
-      theme.thumbnail_image ||
-      theme.image_url ||
-      theme.preview_url;
-
-    return url ? this.resolveThemeImageUrl(url) : this.getThemeFallbackImage(theme.name, category);
+  resolveThemePreview(theme: ThemeCard): string {
+    return resolveThemePreviewSrc(theme, theme.imageFallback || 'assets/images/theme-placeholder.jpg');
   }
 
-  private resolveThemeImageUrl(url: string): string {
-    const raw = String(url || '').trim();
-    if (!raw) return '';
-    if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('data:') || raw.startsWith('assets/')) {
-      return raw;
-    }
-
-    const apiOrigin = environment.apiBaseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '');
-    const cleanPath = raw.replace(/^\/+/, '');
-    if (cleanPath.startsWith('storage/')) {
-      return `${apiOrigin}/${cleanPath}`;
-    }
-
-    return `${apiOrigin}/storage/${cleanPath}`;
+  private getThemeImage(theme: PublicTheme, category: ThemeCategoryName): string {
+    return resolveThemePreviewSrc(theme, this.getThemeFallbackImage(theme.name, category));
   }
 
   setActiveTab(tab: ThemeFilterTier): void {
@@ -1192,12 +1177,17 @@ export class TampilanComponent implements OnInit, OnDestroy {
   }
 
   onImageError(event: Event, theme: ThemeCard): void {
+    theme.preview_url = null;
+    theme.preview_image = null;
+    theme.preview = null;
+    theme.thumbnail_image = null;
+    theme.image_url = null;
+    theme.thumbnail_url = null;
     const target = event.target as HTMLImageElement | null;
-    if (target) {
-      const fallback = theme.imageFallback || 'assets/images/theme-placeholder.jpg';
-      if (!target.src.includes(fallback)) {
-        target.src = fallback;
-      }
+    const fallback = theme.imageFallback || 'assets/images/theme-placeholder.jpg';
+    theme.image = fallback;
+    if (target && !target.src.includes(fallback)) {
+      target.src = fallback;
     }
   }
 

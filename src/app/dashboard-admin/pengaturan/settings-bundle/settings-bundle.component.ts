@@ -15,7 +15,7 @@ import {
   resolvePackageTier,
   resolvePublicThemeSlug,
 } from 'src/app/theme-package-access.util';
-import { environment } from 'src/environments/environment';
+import { resolveThemePreview as resolveThemePreviewSrc, copyThemePreviewFields } from 'src/app/shared/theme-preview.util';
 
 type PackageTier = 'trial' | 'ruby' | 'sapphire' | 'diamond';
 
@@ -65,6 +65,13 @@ interface ThemeOption {
   slug: string;
   name: string;
   thumbnail: string;
+  preview_url?: string | null;
+  preview_image?: string | null;
+  preview?: string | null;
+  thumbnail_image?: string | null;
+  image_url?: string | null;
+  thumbnail_url?: string | null;
+  updated_at?: string | null;
 }
 
 @Component({
@@ -284,7 +291,10 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
   }
 
   getThemeThumb(theme: ThemeOption | null): string {
-    return theme?.thumbnail || 'assets/landing/template-2.png';
+    if (!theme) {
+      return 'assets/landing/template-2.png';
+    }
+    return resolveThemePreviewSrc(theme, theme.thumbnail || 'assets/landing/template-2.png');
   }
 
   trackCard(_index: number, card: PackageCardState): string {
@@ -538,21 +548,13 @@ export class SettingsBundleComponent implements OnInit, OnDestroy {
       id: Number(theme.id) || null,
       slug,
       name: theme.name || theme.nama_kategori || preset?.name || slug,
-      thumbnail: this.resolveThemeImage(theme) || preset?.fallbackImage || 'assets/landing/template-2.png',
+      thumbnail: resolveThemePreviewSrc(theme, preset?.fallbackImage || 'assets/landing/template-2.png'),
+      ...copyThemePreviewFields(theme),
     };
   }
 
   private resolveThemeImage(theme: any): string {
-    const image = theme.thumbnail_image || theme.preview_image || theme.image || theme.preview;
-    if (!image) return '';
-    const value = String(image);
-    if (/^https?:\/\//i.test(value) || value.startsWith('assets/')) {
-      return value;
-    }
-    if (value.startsWith('/storage')) {
-      return `${environment.apiBaseUrl.replace(/\/api\/?$/, '')}${value}`;
-    }
-    return value;
+    return resolveThemePreviewSrc(theme);
   }
 
   private resolveTrialThemeSlug(packageData: PackageData): string {
