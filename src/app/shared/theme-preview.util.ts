@@ -30,19 +30,61 @@ export function copyThemePreviewFields(source: any): Record<string, any> {
   };
 }
 
+/**
+ * Bind a live API theme record to a product card by exact record slug.
+ * Do not use package aliases that collapse two live themes
+ * (modern-vows ≠ garden-whisper, velvet-mauve ≠ diamond-garden).
+ */
+const CARD_SLUG_TO_RECORD_SLUGS: Record<string, string[]> = {
+  'soft-ivory': ['soft-ivory'],
+  'lavender-bloom': ['lavender-bloom'],
+  'garden-whisper': ['garden-whisper'],
+  diamond: ['champagne-rose', 'diamond'],
+  'champagne-rose': ['champagne-rose', 'diamond'],
+  'diamond-garden': ['diamond-garden'],
+};
+
+export function themeRecordMatchesCardSlug(
+  recordSlug: string | null | undefined,
+  cardSlug: string | null | undefined
+): boolean {
+  const record = String(recordSlug || '').trim().toLowerCase();
+  const card = String(cardSlug || '').trim().toLowerCase();
+  if (!record || !card) {
+    return false;
+  }
+
+  const allowed = CARD_SLUG_TO_RECORD_SLUGS[card] || [card];
+  return allowed.includes(record);
+}
+
+export function pickApiThemeForCardSlug<T extends { slug?: string | null }>(
+  themes: T[] | null | undefined,
+  cardSlug: string
+): T | null {
+  if (!Array.isArray(themes) || !cardSlug) {
+    return null;
+  }
+
+  return themes.find((theme) => themeRecordMatchesCardSlug(theme?.slug, cardSlug)) || null;
+}
+
 export function pickThemePreviewRaw(theme: any): string {
   if (!theme || typeof theme !== 'object') {
     return '';
   }
 
+  // Runtime contract from GET /api/themes/categories:
+  // `preview` is the admin-uploaded cover file. `preview_url` is null;
+  // `demo_url` / `url_thema` are theme routes like /themes/{slug}, not images.
   const candidates = [
-    theme.preview_url,
-    theme.preview_image,
     theme.preview,
+    theme.preview_image,
     theme.thumbnail_image,
     theme.image,
     theme.image_url,
     theme.thumbnail_url,
+    theme.preview_url,
   ];
 
   for (const candidate of candidates) {
@@ -66,16 +108,21 @@ export function getThemePreviewVersion(theme: any): string {
   }
 
   const updated = theme.updated_at || theme.updatedAt;
-  if (!updated) {
-    return '';
+  if (updated) {
+    const parsed = Date.parse(String(updated));
+    if (!Number.isNaN(parsed)) {
+      return String(parsed);
+    }
+
+    const raw = String(updated).trim();
+    if (raw) {
+      return raw;
+    }
   }
 
-  const parsed = Date.parse(String(updated));
-  if (!Number.isNaN(parsed)) {
-    return String(parsed);
-  }
-
-  return String(updated).trim();
+  const preview = String(theme.preview || theme.preview_image || '');
+  const fileStamp = preview.match(/(\d{14})/);
+  return fileStamp ? fileStamp[1] : '';
 }
 
 export function withStableThemePreviewCacheBuster(url: string, version: string): string {
@@ -144,7 +191,7 @@ export function isLikelyThemePreviewImage(value: string): boolean {
     return false;
   }
 
-  if (/\/preview-theme\//i.test(raw)) {
+  if (/\/preview-theme\//i.test(raw) || /\/themes\/[a-z0-9-]+\/?(\?|$)/i.test(raw)) {
     return false;
   }
 

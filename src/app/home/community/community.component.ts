@@ -19,7 +19,11 @@ import {
   ThemeCategoryName,
   ThemePackageTier,
 } from '../../theme-package-access.util';
-import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
+import {
+  copyThemePreviewFields,
+  pickApiThemeForCardSlug,
+  resolveThemePreview as resolveThemePreviewSrc,
+} from '../../shared/theme-preview.util';
 
 type ThemeFilter =
   | 'Semua'
@@ -397,16 +401,12 @@ export class CommunityComponent implements OnInit, OnDestroy {
       this.themeService.getPublicPopularThemes({ type: 'website', limit: 24 }).subscribe({
         next: (res) => {
           const list = Array.isArray(res?.data) ? res.data : [];
-          const mappedThemes = list
-            .map((item) => {
-              const slug = resolvePublicThemeSlug(item);
-              return slug ? this.mapTheme(item, slug) : null;
-            })
-            .filter((theme): theme is ThemeCard => !!theme?.name);
+          const mappedThemes = this.fallbackThemeSeeds.map((seed) => {
+            const item = pickApiThemeForCardSlug(list, seed.slug);
+            return item ? this.mapTheme(item, seed.slug) : this.createFallbackTheme(seed);
+          });
 
-          this.themes = mappedThemes.length
-            ? this.mergeMappedThemesWithFallback(mappedThemes)
-            : this.createFallbackThemes();
+          this.themes = mappedThemes;
           this.isLoading = false;
 
           if (!mappedThemes.length && !useDefaultOnEmpty) {
@@ -424,21 +424,19 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   private mapThemesFromCategories(categories: PublicCategoryWithThemes[]): ThemeCard[] {
     const safeCategories = Array.isArray(categories) ? categories : [];
-    const mappedThemes = safeCategories.flatMap((category) => {
+    const apiThemes = safeCategories.flatMap((category) => {
       const themes = Array.isArray(category?.jenis_themas) ? category.jenis_themas : [];
-
-      return themes
-        .filter((item: any) => item?.is_active !== false)
-        .map((item) => {
-          const slug = resolvePublicThemeSlug(item);
-          return slug ? this.mapTheme(item, slug) : null;
-        })
-        .filter((theme): theme is ThemeCard => !!theme);
+      return themes.filter((item: any) => item?.is_active !== false);
     });
 
-    return mappedThemes.length
-      ? this.mergeMappedThemesWithFallback(mappedThemes)
-      : this.createFallbackThemes();
+    if (!apiThemes.length) {
+      return this.createFallbackThemes();
+    }
+
+    return this.fallbackThemeSeeds.map((seed) => {
+      const item = pickApiThemeForCardSlug(apiThemes, seed.slug);
+      return item ? this.mapTheme(item, seed.slug) : this.createFallbackTheme(seed);
+    });
   }
 
   private mapTheme(
@@ -508,8 +506,11 @@ export class CommunityComponent implements OnInit, OnDestroy {
 
   private createFallbackThemes(): ThemeCard[] {
     const seeds = Array.isArray(this.fallbackThemeSeeds) ? this.fallbackThemeSeeds : [];
+    return seeds.map((theme) => this.createFallbackTheme(theme));
+  }
 
-    return seeds.map((theme) => ({
+  private createFallbackTheme(theme: FallbackThemeSeed): ThemeCard {
+    return {
       id: undefined,
       slug: theme.slug,
       name: theme.name,
@@ -521,34 +522,7 @@ export class CommunityComponent implements OnInit, OnDestroy {
       fallbackImage: theme.image,
       previewUrl: '',
       shareUrl: this.getThemeFallbackShareUrl({ slug: theme.slug }),
-    }));
-  }
-
-  private mergeMappedThemesWithFallback(mappedThemes: ThemeCard[]): ThemeCard[] {
-    const fallbackThemes = this.createFallbackThemes();
-    const mappedBySlug = new Map(
-      (Array.isArray(mappedThemes) ? mappedThemes : []).map((theme) => [theme.slug, theme] as const)
-    );
-
-    return fallbackThemes.map((fallbackTheme) => {
-      const mappedTheme = mappedBySlug.get(fallbackTheme.slug);
-      return mappedTheme
-        ? {
-            ...fallbackTheme,
-            ...mappedTheme,
-            features: mappedTheme.features?.length ? mappedTheme.features : fallbackTheme.features,
-            description: mappedTheme.description || fallbackTheme.description,
-            image: mappedTheme.image || fallbackTheme.image,
-            fallbackImage: fallbackTheme.fallbackImage,
-            preview_url: mappedTheme.preview_url ?? fallbackTheme.preview_url,
-            preview_image: mappedTheme.preview_image ?? fallbackTheme.preview_image,
-            preview: mappedTheme.preview ?? fallbackTheme.preview,
-            thumbnail_image: mappedTheme.thumbnail_image ?? fallbackTheme.thumbnail_image,
-            updated_at: mappedTheme.updated_at ?? fallbackTheme.updated_at,
-            shareUrl: mappedTheme.shareUrl || fallbackTheme.shareUrl,
-          }
-        : fallbackTheme;
-    });
+    };
   }
 
   private getFallbackSeed(slug: string): FallbackThemeSeed | null {

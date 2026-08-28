@@ -29,7 +29,7 @@ import {
 } from '../../../theme-package-access.util';
 import { normalizeThemeSlug } from '../../../theme-render.registry';
 import { getFriendlyErrorMessage } from '../../../shared/api-error-message.util';
-import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../../shared/theme-preview.util';
+import { copyThemePreviewFields, pickApiThemeForCardSlug, resolveThemePreview as resolveThemePreviewSrc } from '../../../shared/theme-preview.util';
 import { WeddingDataService } from '../../../services/wedding-data.service';
 import { resolvePaymentState } from '../../../shared/payment-status.util';
 
@@ -539,13 +539,14 @@ export class TampilanComponent implements OnInit, OnDestroy {
     );
 
     flattenedThemes.forEach((entry: any) => {
-      const normalizedSlug = normalizeThemeSlug(entry?.slug);
-      const preset = getThemePresetBySlug(normalizedSlug);
-      if (!preset) {
+      const matchedPreset = FIXED_THEME_PRESETS.find((preset) =>
+        pickApiThemeForCardSlug([entry], preset.slug)
+      );
+      if (!matchedPreset || backendThemesBySlug.has(matchedPreset.slug)) {
         return;
       }
 
-      backendThemesBySlug.set(preset.slug, {
+      backendThemesBySlug.set(matchedPreset.slug, {
         theme: entry as PublicTheme,
         category: (entry?.category || {}) as PublicCategoryWithThemes,
       });

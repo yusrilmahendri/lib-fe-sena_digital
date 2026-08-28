@@ -23,7 +23,7 @@ import {
   ThemeAccessMap,
   ThemeCategoryName,
 } from '../../theme-package-access.util';
-import { copyThemePreviewFields, resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
+import { copyThemePreviewFields, pickApiThemeForCardSlug, resolveThemePreview as resolveThemePreviewSrc } from '../../shared/theme-preview.util';
 
 export type CreateInvitationStep =
   | 'couple-detail'
@@ -469,8 +469,8 @@ export class CreateInvitationModalComponent implements OnInit, OnDestroy {
     const catalog = categories.flatMap((category) => {
       const themes = Array.isArray(category?.jenis_themas) ? category.jenis_themas : [];
       return themes.reduce<ThemeCatalogSeed[]>((result, theme) => {
-        const preset = getThemePresetBySlug(
-          (theme as any)?.slug || this.slugifyThemeName(theme.name)
+        const preset = PUBLIC_THEME_PRESETS.find((item) =>
+          pickApiThemeForCardSlug([theme], item.slug)
         );
         if (!preset) {
           return result;
